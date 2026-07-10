@@ -1,0 +1,1 @@
+- [Security decisions](security-decisions.md) — Key auth/security patterns; JWT, CORS, admin bootstrap, IDOR, file upload rules

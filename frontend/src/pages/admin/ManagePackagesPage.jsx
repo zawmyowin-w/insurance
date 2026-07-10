@@ -1,0 +1,186 @@
+import React, { useEffect, useState } from 'react'
+import api from '../../services/api'
+import { toast } from 'react-toastify'
+
+const EMPTY = { name: '', type: 'LIFE', description: '', coverageMin: '', coverageMax: '', premiumRate: '', durations: '1,2,3,5', benefits: '', active: true }
+
+export default function ManagePackagesPage() {
+  const [packages, setPackages] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
+  const [editing, setEditing] = useState(null)
+  const [form, setForm] = useState(EMPTY)
+  const [saving, setSaving] = useState(false)
+
+  const fetchPackages = () => {
+    api.get('/admin/packages').then(res => setPackages(Array.isArray(res.data) ? res.data : [])).catch(() => setPackages([])).finally(() => setLoading(false))
+  }
+  useEffect(() => { fetchPackages() }, [])
+
+  const handleChange = e => {
+    const { name, value, type, checked } = e.target
+    setForm(f => ({ ...f, [name]: type === 'checkbox' ? checked : value }))
+  }
+
+  const handleSubmit = async e => {
+    e.preventDefault()
+    setSaving(true)
+    try {
+      const payload = {
+        ...form,
+        coverageMin: Number(form.coverageMin),
+        coverageMax: Number(form.coverageMax),
+        premiumRate: Number(form.premiumRate),
+        durations: form.durations.split(',').map(d => Number(d.trim())).filter(Boolean),
+        benefits: form.benefits.split('\n').map(b => b.trim()).filter(Boolean),
+      }
+      if (editing) {
+        await api.put(`/admin/packages/${editing}`, payload)
+        toast.success('Package updated')
+      } else {
+        await api.post('/admin/packages', payload)
+        toast.success('Package created')
+      }
+      setShowForm(false); setEditing(null); setForm(EMPTY); fetchPackages()
+    } catch (err) { toast.error(err.response?.data?.message || 'Failed') } finally { setSaving(false) }
+  }
+
+  const handleEdit = (pkg) => {
+    setEditing(pkg.id)
+    setForm({ ...pkg, durations: (pkg.durations || []).join(', '), benefits: (pkg.benefits || []).join('\n') })
+    setShowForm(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const handleToggle = async (id, active) => {
+    try {
+      await api.put(`/admin/packages/${id}/toggle`, { active: !active })
+      toast.success(active ? 'Package deactivated' : 'Package activated')
+      fetchPackages()
+    } catch { toast.error('Failed to toggle') }
+  }
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Delete this package? This cannot be undone.')) return
+    try { await api.delete(`/admin/packages/${id}`); toast.success('Deleted'); fetchPackages() } catch { toast.error('Failed to delete') }
+  }
+
+  const typeColors = { LIFE: '#dc2626', HEALTH: '#16a34a', VEHICLE: '#1d4ed8', PROPERTY: '#ca8a04' }
+
+  return (
+    <div className="fade-in">
+      <div className="d-flex align-items-center justify-content-between mb-4">
+        <div>
+          <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Insurance Packages</h4>
+          <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>Create and manage insurance plans</p>
+        </div>
+        <button className="btn-primary-custom" style={{ fontSize: '0.88rem', padding: '0.45rem 1rem' }} onClick={() => { setShowForm(!showForm); setEditing(null); setForm(EMPTY) }}>
+          <i className={`bi bi-${showForm ? 'x-lg' : 'plus-circle'} me-1`}></i>{showForm ? 'Cancel' : 'New Package'}
+        </button>
+      </div>
+
+      {/* Form */}
+      {showForm && (
+        <div className="card-custom mb-4 fade-in">
+          <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1.25rem' }}>{editing ? 'Edit Package' : 'Create New Package'}</h6>
+          <form onSubmit={handleSubmit}>
+            <div className="row g-3">
+              <div className="col-12 col-md-6">
+                <label className="form-label-custom">Package Name *</label>
+                <input name="name" required className="form-control-custom w-100" value={form.name} onChange={handleChange} />
+              </div>
+              <div className="col-12 col-md-3">
+                <label className="form-label-custom">Type *</label>
+                <select name="type" required className="form-select-custom w-100" value={form.type} onChange={handleChange}>
+                  {['LIFE', 'HEALTH', 'VEHICLE', 'PROPERTY'].map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              <div className="col-12 col-md-3">
+                <label className="form-label-custom">Premium Rate (%) *</label>
+                <input name="premiumRate" type="number" required step="0.001" min="0" max="1" className="form-control-custom w-100"
+                  placeholder="0.02 = 2%" value={form.premiumRate} onChange={handleChange} />
+              </div>
+              <div className="col-12 col-md-6">
+                <label className="form-label-custom">Min Coverage (MMK) *</label>
+                <input name="coverageMin" type="number" required className="form-control-custom w-100" value={form.coverageMin} onChange={handleChange} />
+              </div>
+              <div className="col-12 col-md-6">
+                <label className="form-label-custom">Max Coverage (MMK) *</label>
+                <input name="coverageMax" type="number" required className="form-control-custom w-100" value={form.coverageMax} onChange={handleChange} />
+              </div>
+              <div className="col-12 col-md-6">
+                <label className="form-label-custom">Duration Options (comma-separated years)</label>
+                <input name="durations" className="form-control-custom w-100" placeholder="1, 2, 3, 5" value={form.durations} onChange={handleChange} />
+              </div>
+              <div className="col-12 col-md-6">
+                <label className="form-label-custom">Active</label>
+                <div className="d-flex align-items-center gap-2 mt-1">
+                  <input type="checkbox" name="active" checked={form.active} onChange={handleChange} id="pkgActive" />
+                  <label htmlFor="pkgActive" style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', cursor: 'pointer' }}>Package is active and visible to customers</label>
+                </div>
+              </div>
+              <div className="col-12">
+                <label className="form-label-custom">Description</label>
+                <textarea name="description" rows={2} className="form-control-custom w-100" style={{ resize: 'vertical' }} value={form.description} onChange={handleChange} />
+              </div>
+              <div className="col-12">
+                <label className="form-label-custom">Benefits (one per line)</label>
+                <textarea name="benefits" rows={4} className="form-control-custom w-100" style={{ resize: 'vertical' }}
+                  placeholder="Death benefit payout&#10;Accidental coverage&#10;24/7 support" value={form.benefits} onChange={handleChange} />
+              </div>
+            </div>
+            <div className="d-flex gap-2 mt-3">
+              <button type="submit" disabled={saving} className="btn-primary-custom" style={{ justifyContent: 'center' }}>
+                {saving ? <><span className="spinner-border spinner-border-sm me-2"></span>Saving...</> : (editing ? 'Update Package' : 'Create Package')}
+              </button>
+              <button type="button" className="btn-outline-custom" onClick={() => { setShowForm(false); setEditing(null); setForm(EMPTY) }}>Cancel</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Table */}
+      {loading ? (
+        <div className="text-center py-5"><div className="spinner-border" style={{ color: 'var(--primary)' }}></div></div>
+      ) : packages.length === 0 ? (
+        <div className="card-custom text-center py-5">
+          <i className="bi bi-box-seam" style={{ fontSize: '3rem', color: 'var(--border)' }}></i>
+          <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>No packages yet</h5>
+        </div>
+      ) : (
+        <div className="card-custom p-0">
+          <div className="table-custom">
+            <table className="w-100">
+              <thead>
+                <tr>{['Name', 'Type', 'Coverage Range (MMK)', 'Rate', 'Durations', 'Status', 'Actions'].map(h => <th key={h}>{h}</th>)}</tr>
+              </thead>
+              <tbody>
+                {packages.map(pkg => (
+                  <tr key={pkg.id}>
+                    <td style={{ fontWeight: 600 }}>{pkg.name}</td>
+                    <td><span style={{ fontSize: '0.78rem', fontWeight: 700, color: typeColors[pkg.type] || '#6b7280' }}>{pkg.type}</span></td>
+                    <td style={{ fontSize: '0.85rem' }}>{Number(pkg.coverageMin).toLocaleString()} – {Number(pkg.coverageMax).toLocaleString()}</td>
+                    <td style={{ color: 'var(--accent)', fontWeight: 600 }}>{(pkg.premiumRate * 100).toFixed(1)}%</td>
+                    <td style={{ fontSize: '0.85rem' }}>{(pkg.durations || []).join(', ')} yr</td>
+                    <td>
+                      <span className={`badge-status ${pkg.active ? 'badge-active' : 'badge-cancelled'}`}>{pkg.active ? 'Active' : 'Inactive'}</span>
+                    </td>
+                    <td>
+                      <div className="d-flex gap-1">
+                        <button className="btn-primary-sm" onClick={() => handleEdit(pkg)} style={{ padding: '0.3rem 0.6rem' }}><i className="bi bi-pencil"></i></button>
+                        <button className="btn-outline-custom" style={{ padding: '0.3rem 0.6rem', fontSize: '0.78rem' }} onClick={() => handleToggle(pkg.id, pkg.active)}>
+                          {pkg.active ? 'Deactivate' : 'Activate'}
+                        </button>
+                        <button className="btn-danger-sm" onClick={() => handleDelete(pkg.id)} style={{ padding: '0.3rem 0.6rem' }}><i className="bi bi-trash"></i></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

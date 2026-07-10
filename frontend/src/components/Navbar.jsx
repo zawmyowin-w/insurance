@@ -1,0 +1,188 @@
+import React, { useState } from 'react'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
+
+export default function Navbar() {
+  const { t, i18n } = useTranslation()
+  const { user, logout } = useAuth()
+  const { theme, toggleTheme } = useTheme()
+  const navigate = useNavigate()
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  const toggleLang = () => {
+    i18n.changeLanguage(i18n.language === 'en' ? 'my' : 'en')
+  }
+
+  const handleLogout = () => {
+    logout()
+    navigate('/')
+  }
+
+  const dashboardPath = user?.role === 'ADMIN' ? '/admin/dashboard'
+    : user?.role === 'AGENT' ? '/agent/dashboard'
+    : '/customer/dashboard'
+
+  const publicLinks = [
+    { to: '/plans', label: t('nav.plans') },
+    { to: '/how-it-works', label: t('nav.howItWorks') },
+    { to: '/contact', label: t('nav.contact') },
+  ]
+
+  const authLinks = user ? [
+    { to: `${dashboardPath.replace('/dashboard','/applications')}`, label: t('nav.applications'), roles: ['CUSTOMER'] },
+    { to: `${dashboardPath.replace('/dashboard','/claims')}`, label: t('nav.claims'), roles: ['CUSTOMER'] },
+  ] : []
+
+  return (
+    <nav className="navbar-custom">
+      <div className="container">
+        <div className="d-flex align-items-center justify-content-between w-100">
+
+          {/* Brand */}
+          <Link to="/" className="d-flex align-items-center gap-2 text-decoration-none" style={{ flexShrink: 0 }}>
+            <div className="navbar-brand-logo">
+              <i className="bi bi-shield-check" style={{ fontSize: '1rem' }}></i>
+            </div>
+            <span className="navbar-brand-text d-none d-sm-inline">
+              {t('brand')}
+            </span>
+          </Link>
+
+          {/* Center nav links – desktop */}
+          <div className="d-none d-lg-flex align-items-center gap-1">
+            {publicLinks.map(link => (
+              <NavLink key={link.to} to={link.to} className={({ isActive }) =>
+                `navbar-nav-link ${isActive ? 'active' : ''}`}>
+                {link.label}
+              </NavLink>
+            ))}
+            {user && user.role === 'CUSTOMER' && (
+              <>
+                <NavLink to="/customer/applications" className={({ isActive }) =>
+                  `navbar-nav-link ${isActive ? 'active' : ''}`}>
+                  {t('nav.applications')}
+                </NavLink>
+                <NavLink to="/customer/claims" className={({ isActive }) =>
+                  `navbar-nav-link ${isActive ? 'active' : ''}`}>
+                  {t('nav.claims')}
+                </NavLink>
+              </>
+            )}
+          </div>
+
+          {/* Right controls */}
+          <div className="d-flex align-items-center gap-2">
+            {/* Language toggle */}
+            <button className="icon-btn" onClick={toggleLang} title="Switch Language">
+              <span style={{ fontSize: '0.78rem', fontWeight: 600, lineHeight: 1 }}>
+                {i18n.language === 'en' ? 'မြန်မာ' : 'EN'}
+              </span>
+            </button>
+
+            {/* Theme toggle */}
+            <button className="icon-btn" onClick={toggleTheme} title="Toggle theme">
+              <i className={`bi bi-${theme === 'light' ? 'sun' : 'moon-stars'}`}></i>
+            </button>
+
+            {/* Auth buttons or user menu */}
+            {!user ? (
+              <>
+                <Link to="/login" className="btn-login d-none d-sm-inline">
+                  {t('nav.login')}
+                </Link>
+                <Link to="/register" className="btn-register">
+                  {t('nav.register')}
+                </Link>
+              </>
+            ) : (
+              <div className="dropdown">
+                <button className="icon-btn d-flex align-items-center gap-1" data-bs-toggle="dropdown">
+                  <div style={{
+                    width: 32, height: 32, borderRadius: '50%',
+                    background: 'var(--primary)', color: '#fff',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '0.85rem', fontWeight: 700
+                  }}>
+                    {user.name?.charAt(0).toUpperCase()}
+                  </div>
+                </button>
+                <ul className="dropdown-menu dropdown-menu-end" style={{
+                  background: 'var(--bg-card)', border: '1px solid var(--border)',
+                  borderRadius: '10px', minWidth: '180px', boxShadow: 'var(--shadow-lg)'
+                }}>
+                  <li>
+                    <span className="dropdown-item-text" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', padding: '0.5rem 1rem' }}>
+                      {user.name}
+                      <div style={{ fontSize: '0.78rem', opacity: 0.7 }}>{user.role}</div>
+                    </span>
+                  </li>
+                  <li><hr className="dropdown-divider" style={{ borderColor: 'var(--border)' }} /></li>
+                  <li>
+                    <Link className="dropdown-item" to={dashboardPath} style={{ color: 'var(--text-primary)', fontSize: '0.88rem' }}>
+                      <i className="bi bi-speedometer2 me-2"></i>{t('nav.dashboard')}
+                    </Link>
+                  </li>
+                  {user.role === 'CUSTOMER' && (
+                    <li>
+                      <Link className="dropdown-item" to="/customer/notifications" style={{ color: 'var(--text-primary)', fontSize: '0.88rem' }}>
+                        <i className="bi bi-bell me-2"></i>{t('nav.notifications')}
+                      </Link>
+                    </li>
+                  )}
+                  <li><hr className="dropdown-divider" style={{ borderColor: 'var(--border)' }} /></li>
+                  <li>
+                    <button className="dropdown-item" onClick={handleLogout} style={{ color: '#dc2626', fontSize: '0.88rem' }}>
+                      <i className="bi bi-box-arrow-right me-2"></i>{t('nav.logout')}
+                    </button>
+                  </li>
+                </ul>
+              </div>
+            )}
+
+            {/* Mobile hamburger */}
+            <button className="icon-btn d-lg-none" onClick={() => setMenuOpen(v => !v)}>
+              <i className={`bi bi-${menuOpen ? 'x-lg' : 'list'}`}></i>
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile menu */}
+        {menuOpen && (
+          <div className="d-lg-none mt-2 pb-2 border-top" style={{ borderColor: 'var(--border)' }}>
+            <div className="d-flex flex-column gap-1 pt-2">
+              {publicLinks.map(link => (
+                <NavLink key={link.to} to={link.to}
+                  className={({ isActive }) => `navbar-nav-link ${isActive ? 'active' : ''}`}
+                  onClick={() => setMenuOpen(false)}>
+                  {link.label}
+                </NavLink>
+              ))}
+              {user && user.role === 'CUSTOMER' && (
+                <>
+                  <NavLink to="/customer/applications" className="navbar-nav-link" onClick={() => setMenuOpen(false)}>
+                    {t('nav.applications')}
+                  </NavLink>
+                  <NavLink to="/customer/claims" className="navbar-nav-link" onClick={() => setMenuOpen(false)}>
+                    {t('nav.claims')}
+                  </NavLink>
+                </>
+              )}
+              {!user && (
+                <div className="d-flex gap-2 mt-1">
+                  <Link to="/login" className="btn-login" onClick={() => setMenuOpen(false)}>
+                    {t('nav.login')}
+                  </Link>
+                  <Link to="/register" className="btn-register" onClick={() => setMenuOpen(false)}>
+                    {t('nav.register')}
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </nav>
+  )
+}

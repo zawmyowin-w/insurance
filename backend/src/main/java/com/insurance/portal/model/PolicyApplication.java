@@ -1,0 +1,82 @@
+package com.insurance.portal.model;
+
+import com.insurance.portal.model.enums.ApplicationStatus;
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Entity
+@Table(name = "policy_applications")
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class PolicyApplication {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private User customer;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "package_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private InsurancePackage insurancePackage;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "agent_id")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private User agent;
+
+    @Column(name = "coverage_amount", nullable = false, precision = 20, scale = 2)
+    private BigDecimal coverageAmount;
+
+    @Column(nullable = false)
+    private Integer duration; // years
+
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private ApplicationStatus status = ApplicationStatus.PENDING;
+
+    @Column(columnDefinition = "TEXT")
+    private String notes; // customer notes
+
+    @Column(name = "agent_note", columnDefinition = "TEXT")
+    private String agentNote;
+
+    @Column(name = "admin_note", columnDefinition = "TEXT")
+    private String adminNote;
+
+    @Column(name = "revision_deadline")
+    private LocalDateTime revisionDeadline;
+
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "application", fetch = FetchType.LAZY)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<Claim> claims;
+
+    @OneToMany(mappedBy = "application", fetch = FetchType.LAZY)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<Payment> payments;
+}
