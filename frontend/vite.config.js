@@ -7,6 +7,10 @@ export default defineConfig({
     port: 5000,
     host: '0.0.0.0',
     allowedHosts: true,
+    fs: {
+      // Allow serving files from workspace root so node_modules (bootstrap-icons fonts) are reachable
+      allow: ['..'],
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:8080',
@@ -17,6 +21,6 @@ export default defineConfig({
   preview: {
     host: '0.0.0.0',
     port: 5000,
-    allowedHosts: 'all',
+    allowedHosts: true,
   }
 })
