@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
 import ProtectedRoute from './components/ProtectedRoute'
-import OfflineBanner from './components/OfflineBanner'
 
 // Public pages
 import HomePage from './pages/HomePage'
@@ -44,7 +43,6 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <BrowserRouter>
-          <OfflineBanner />
           <Routes>
             {/* Public */}
             <Route path="/" element={<HomePage />} />
