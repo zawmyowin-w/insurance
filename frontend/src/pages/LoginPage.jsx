@@ -4,6 +4,12 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { toast } from 'react-toastify'
 
+const DEMO_ACCOUNTS = [
+  { label: 'Admin', email: 'admin@dicp.com.mm', password: 'Admin@123', icon: 'bi-shield-fill-check', color: 'var(--primary)' },
+  { label: 'Agent', email: 'agent@dicp.com.mm', password: 'Agent@123', icon: 'bi-person-badge-fill', color: 'var(--secondary)' },
+  { label: 'Customer', email: 'customer@dicp.com.mm', password: 'Customer@123', icon: 'bi-person-fill', color: 'var(--accent)' },
+]
+
 export default function LoginPage() {
   const { t } = useTranslation()
   const { login } = useAuth()
@@ -21,13 +27,21 @@ export default function LoginPage() {
     try {
       const user = await login(form.email, form.password)
       toast.success(t('auth.loginSuccess'))
-      const redirect = from || (user.role === 'ADMIN' ? '/admin/dashboard' : user.role === 'AGENT' ? '/agent/dashboard' : '/customer/dashboard')
+      const redirect = from || (
+        user.role === 'ADMIN' ? '/admin/dashboard' :
+        user.role === 'AGENT' ? '/agent/dashboard' :
+        '/customer/dashboard'
+      )
       navigate(redirect, { replace: true })
     } catch (err) {
-      toast.error(err.response?.data?.message || t('auth.loginError'))
+      toast.error(err.response?.data?.message || err.message || t('auth.loginError'))
     } finally {
       setLoading(false)
     }
+  }
+
+  const fillDemo = (email, password) => {
+    setForm({ email, password })
   }
 
   return (
@@ -47,6 +61,37 @@ export default function LoginPage() {
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
             {t('auth.loginSubtitle')}
           </p>
+        </div>
+
+        {/* Demo account quick-fill */}
+        <div style={{
+          background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)',
+          borderRadius: 10, padding: '0.75rem 1rem', marginBottom: '1.25rem'
+        }}>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <i className="bi bi-lightning-charge-fill me-1" style={{ color: 'var(--accent)' }}></i>
+            Demo accounts (click to fill)
+          </p>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            {DEMO_ACCOUNTS.map(acc => (
+              <button
+                key={acc.email}
+                type="button"
+                onClick={() => fillDemo(acc.email, acc.password)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '0.35rem',
+                  padding: '0.3rem 0.65rem', borderRadius: 6, border: `1px solid ${acc.color}20`,
+                  background: `${acc.color}10`, color: acc.color, fontSize: '0.8rem',
+                  fontWeight: 600, cursor: 'pointer', transition: 'all 0.15s'
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = `${acc.color}20`}
+                onMouseLeave={e => e.currentTarget.style.background = `${acc.color}10`}
+              >
+                <i className={`bi ${acc.icon}`}></i>
+                {acc.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         <form onSubmit={handleSubmit}>
