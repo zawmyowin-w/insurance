@@ -13,4 +13,6 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     List<Payment> findAllByCustomer(User customer);
     List<Payment> findAllByStatus(PaymentStatus status);
     boolean existsByApplication_IdAndStatus(Long applicationId, PaymentStatus status);
+
+    void deleteAllByCustomer(User customer);
 }

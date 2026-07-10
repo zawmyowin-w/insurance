@@ -88,7 +88,27 @@ public class AdminController {
     @DeleteMapping("/users/{id}")
     @Transactional
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {
-        userRepo.deleteById(id);
+        User user = userRepo.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+
+        // 1. Delete notifications belonging to this user
+        notifRepo.deleteAllByRecipient(user);
+
+        if (user.getRole() == Role.CUSTOMER) {
+            // 2. Delete payments made by this customer
+            paymentRepo.deleteAllByCustomer(user);
+            // 3. Delete claims submitted by this customer
+            claimRepo.deleteAllByCustomer(user);
+            // 4. Delete applications submitted by this customer
+            appRepo.deleteAllByCustomer(user);
+        } else if (user.getRole() == Role.AGENT) {
+            // 2. Unlink agent from claims (keep the records, just clear the agent ref)
+            claimRepo.clearAgentFromClaims(user);
+            // 3. Unlink agent from applications
+            appRepo.clearAgentFromApplications(user);
+        }
+
+        // 5. Finally delete the user
+        userRepo.delete(user);
         return ResponseEntity.ok(Map.of("message", "User deleted"));
     }
 

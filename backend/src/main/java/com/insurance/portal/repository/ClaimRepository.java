@@ -17,4 +17,10 @@ public interface ClaimRepository extends JpaRepository<Claim, Long> {
     List<Claim> findAllByStatus(ClaimStatus status);
     long countByCustomerAndStatus(User customer, ClaimStatus status);
     long countByStatus(ClaimStatus status);
+
+    void deleteAllByCustomer(User customer);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("UPDATE Claim c SET c.agent = null WHERE c.agent = :agent")
+    void clearAgentFromClaims(User agent);
 }

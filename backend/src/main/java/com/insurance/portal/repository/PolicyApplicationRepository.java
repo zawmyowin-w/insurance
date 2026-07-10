@@ -22,4 +22,10 @@ public interface PolicyApplicationRepository extends JpaRepository<PolicyApplica
 
     @Query("SELECT a FROM PolicyApplication a WHERE a.customer = :customer AND a.status = 'APPROVED'")
     List<PolicyApplication> findApprovedByCustomer(User customer);
+
+    void deleteAllByCustomer(User customer);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("UPDATE PolicyApplication a SET a.agent = null WHERE a.agent = :agent")
+    void clearAgentFromApplications(User agent);
 }
