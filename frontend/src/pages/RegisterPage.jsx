@@ -24,6 +24,10 @@ export default function RegisterPage() {
       toast.error(t('auth.phoneInvalid'))
       return
     }
+    if (!/[A-Z]/.test(form.password)) { toast.error(t('auth.pwdUppercase')); return }
+    if (!/[a-z]/.test(form.password)) { toast.error(t('auth.pwdLowercase')); return }
+    if (!/[0-9]/.test(form.password)) { toast.error(t('auth.pwdNumber')); return }
+    if (!/[^A-Za-z0-9]/.test(form.password)) { toast.error(t('auth.pwdSpecial')); return }
     if (form.password !== form.confirmPassword) {
       toast.error(t('auth.passwordMismatch'))
       return

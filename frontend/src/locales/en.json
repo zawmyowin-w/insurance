@@ -102,6 +102,10 @@
     "passwordMismatch": "Passwords do not match",
     "mustAgree": "Please agree to the terms",
     "phoneInvalid": "Phone number must be exactly 11 digits",
+    "pwdUppercase": "Password must contain at least one uppercase letter (A–Z)",
+    "pwdLowercase": "Password must contain at least one lowercase letter (a–z)",
+    "pwdNumber": "Password must contain at least one number (0–9)",
+    "pwdSpecial": "Password must contain at least one special character (!@#$...)",
     "termsLink": "Terms of Service",
     "privacyLink": "Privacy Policy"
   },
