@@ -43,15 +43,20 @@ export default function AdminNotificationsPage() {
                   <option value="ALL">All Users</option>
                   <option value="CUSTOMER">All Customers</option>
                   <option value="AGENT">All Agents</option>
+                  <option value="SPECIFIC_AGENT">Specific Agent</option>
                   <option value="SPECIFIC">Specific User</option>
                 </select>
               </div>
-              {form.targetRole === 'SPECIFIC' && (
+              {(form.targetRole === 'SPECIFIC' || form.targetRole === 'SPECIFIC_AGENT') && (
                 <div className="mb-3">
-                  <label className="form-label-custom">Select User</label>
+                  <label className="form-label-custom">
+                    {form.targetRole === 'SPECIFIC_AGENT' ? 'Select Agent' : 'Select User'}
+                  </label>
                   <select required className="form-select-custom w-100" value={form.targetUserId} onChange={e => setForm(f => ({ ...f, targetUserId: e.target.value }))}>
-                    <option value="">Choose user...</option>
-                    {users.map(u => <option key={u.id} value={u.id}>{u.name} ({u.role})</option>)}
+                    <option value="">Choose {form.targetRole === 'SPECIFIC_AGENT' ? 'agent' : 'user'}...</option>
+                    {users
+                      .filter(u => form.targetRole === 'SPECIFIC_AGENT' ? u.role === 'AGENT' : true)
+                      .map(u => <option key={u.id} value={u.id}>{u.name} ({u.email})</option>)}
                   </select>
                 </div>
               )}
@@ -94,7 +99,7 @@ export default function AdminNotificationsPage() {
                         <div style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--text-primary)' }}>{n.title}</div>
                         <div style={{ color: 'var(--text-secondary)', fontSize: '0.83rem' }}>{n.message}</div>
                         <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.25rem' }}>
-                          To: {n.targetRole || 'Specific'} · {n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}
+                          To: {n.targetRole === 'SPECIFIC_AGENT' ? 'Specific Agent' : n.targetRole === 'SPECIFIC' ? 'Specific User' : n.targetRole || 'Specific'} · {n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}
                         </div>
                       </div>
                     </div>

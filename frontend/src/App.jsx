@@ -43,6 +43,7 @@ import ManageUsersPage from './pages/admin/ManageUsersPage'
 import AdminApplicationsPage from './pages/admin/AdminApplicationsPage'
 import AdminClaimsPage from './pages/admin/AdminClaimsPage'
 import AdminNotificationsPage from './pages/admin/AdminNotificationsPage'
+import AdminFormBuilderPage from './pages/admin/AdminFormBuilderPage'
 
 export default function App() {
   return (
@@ -93,6 +94,7 @@ export default function App() {
               <Route path="users" element={<ManageUsersPage />} />
               <Route path="applications" element={<AdminApplicationsPage />} />
               <Route path="claims" element={<AdminClaimsPage />} />
+              <Route path="forms" element={<AdminFormBuilderPage />} />
               <Route path="notifications" element={<AdminNotificationsPage />} />
             </Route>
 
