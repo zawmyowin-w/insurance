@@ -3,10 +3,11 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { toast } from 'react-toastify'
+import GoogleButton from '../components/GoogleButton'
 
 export default function LoginPage() {
   const { t } = useTranslation()
-  const { login } = useAuth()
+  const { login, googleLogin } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [form, setForm] = useState({ email: '', password: '' })
@@ -109,6 +110,26 @@ export default function LoginPage() {
               : t('auth.login')}
           </button>
         </form>
+
+        {/* Divider */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', margin: '1.25rem 0' }}>
+          <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+          <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>or</span>
+          <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
+        </div>
+
+        <GoogleButton
+          onSuccess={async (data) => {
+            const user = await googleLogin(data)
+            toast.success(t('auth.loginSuccess'))
+            const redirect = from || (
+              user.role === 'ADMIN' ? '/admin/dashboard' :
+              user.role === 'AGENT' ? '/agent/dashboard' :
+              '/customer/dashboard'
+            )
+            navigate(redirect, { replace: true })
+          }}
+        />
 
         <div className="text-center mt-4">
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>

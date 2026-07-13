@@ -35,6 +35,14 @@ export function AuthProvider({ children }) {
     return data.user
   }
 
+  const googleLogin = async (backendData) => {
+    // backendData = { token, user } already fetched by GoogleButton
+    localStorage.setItem('token', backendData.token)
+    setToken(backendData.token)
+    setUser(backendData.user)
+    return backendData.user
+  }
+
   const logout = () => {
     localStorage.removeItem('token')
     setToken(null)
@@ -42,7 +50,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout, setUser }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, googleLogin, logout, setUser }}>
       {children}
     </AuthContext.Provider>
   )

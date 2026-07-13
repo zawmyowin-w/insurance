@@ -87,7 +87,7 @@ public class SecurityConfig {
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 // Public auth endpoints only — /auth/me intentionally excluded (requires valid JWT)
-                .requestMatchers("/auth/login", "/auth/register").permitAll()
+                .requestMatchers("/auth/login", "/auth/register", "/auth/google").permitAll()
                 .requestMatchers(HttpMethod.GET, "/packages/public").permitAll()
                 .requestMatchers("/contact").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
