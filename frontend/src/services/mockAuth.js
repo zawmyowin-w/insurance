@@ -70,9 +70,6 @@ export function mockLogin(email, password) {
   if (!user) {
     return Promise.reject({ response: { data: { message: 'Invalid email or password' } } })
   }
-  if (!user.emailVerified) {
-    return Promise.reject({ response: { data: { message: 'EMAIL_NOT_VERIFIED', email } } })
-  }
   const { password: _pw, ...safeUser } = user
   const token = makeToken(safeUser)
   return Promise.resolve({ token, user: safeUser })

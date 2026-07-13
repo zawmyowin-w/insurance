@@ -29,12 +29,7 @@ export default function LoginPage() {
       navigate(redirect, { replace: true })
     } catch (err) {
       const msg = err.response?.data?.message || ''
-      if (msg === 'EMAIL_NOT_VERIFIED') {
-        toast.warn(t('auth.emailNotVerified'))
-        navigate(`/verify-email?email=${encodeURIComponent(err.response.data.email)}`)
-      } else {
-        toast.error(msg || t('auth.loginError'))
-      }
+      toast.error(msg || t('auth.loginError'))
     } finally {
       setLoading(false)
     }
