@@ -62,12 +62,16 @@ export function otpSecondsLeft(email, type) {
 export async function sendOtpEmail(email, code, type) {
   if (SERVICE_ID && PUB_KEY) {
     const templateId = type === 'verify' ? VERIFY_TPL : RESET_TPL
+    const cleanKey = PUB_KEY.trim()
+    const cleanSvc = SERVICE_ID.trim()
+    const cleanTpl = templateId.trim()
+    console.info(`[EmailJS debug] svc="${cleanSvc}" tpl="${cleanTpl}" key_len=${cleanKey.length} key_preview="${cleanKey.slice(0,4)}..."`)
     // EmailJS v4: publicKey must be passed as an object, not a plain string
     await emailjs.send(
-      SERVICE_ID.trim(),
-      templateId.trim(),
+      cleanSvc,
+      cleanTpl,
       { to_email: email, otp_code: code, valid_minutes: '5' },
-      { publicKey: PUB_KEY.trim() },
+      { publicKey: cleanKey },
     )
   } else {
     // Demo mode — return code so UI can display it
