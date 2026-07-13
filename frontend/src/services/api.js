@@ -5,6 +5,13 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
+// Request interceptor — attach JWT from localStorage on every request
+api.interceptors.request.use(cfg => {
+  const token = localStorage.getItem('token')
+  if (token) cfg.headers.Authorization = `Bearer ${token}`
+  return cfg
+})
+
 // Response interceptor — handle 401 globally
 api.interceptors.response.use(
   res => res,

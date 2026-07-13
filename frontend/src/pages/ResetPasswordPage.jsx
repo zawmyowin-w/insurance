@@ -3,7 +3,9 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'react-toastify'
 import { verifyOtp, issueOtp, otpSecondsLeft } from '../services/otpService'
-import { mockUpdatePassword } from '../services/mockAuth'
+// NOTE: mockUpdatePassword removed. A backend /auth/reset-password endpoint
+// (TODO) is needed to persist the new password. Currently the OTP is verified
+// client-side but the password update is a no-op until that endpoint exists.
 
 const BOX_COUNT = 6
 
@@ -83,7 +85,7 @@ export default function ResetPasswordPage() {
       focus(0)
       return
     }
-    mockUpdatePassword(email, password)
+    // TODO: call POST /auth/reset-password { email, password } once backend endpoint exists
     setLoading(false)
     toast.success(t('auth.resetSuccess'))
     navigate('/login')

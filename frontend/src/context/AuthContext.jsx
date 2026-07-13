@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import api from '../services/api'
-import { mockRegister, mockLogin, mockMe } from '../services/mockAuth'
 
 const AuthContext = createContext(null)
 
@@ -12,8 +11,8 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (!token) { setLoading(false); return }
 
-    mockMe(token)
-      .then(u => setUser(u))
+    api.get('/auth/me')
+      .then(res => setUser(res.data))
       .catch(() => {
         localStorage.removeItem('token')
         setToken(null)
@@ -22,17 +21,18 @@ export function AuthProvider({ children }) {
   }, [])
 
   const login = async (email, password) => {
-    const { token: t, user: u } = await mockLogin(email, password)
-    localStorage.setItem('token', t)
-    setToken(t)
-    setUser(u)
-    return u
+    const { data } = await api.post('/auth/login', { email, password })
+    localStorage.setItem('token', data.token)
+    setToken(data.token)
+    setUser(data.user)
+    return data.user
   }
 
-  const register = async (data) => {
-    const { user: u } = await mockRegister(data)
-    // token not issued yet — user must verify email first
-    return u
+  const register = async (formData) => {
+    const { data } = await api.post('/auth/register', formData)
+    // Backend issues a token on registration, but we preserve the existing
+    // email-verification flow — the user is directed to verify email before login.
+    return data.user
   }
 
   const logout = () => {

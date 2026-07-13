@@ -18,7 +18,7 @@ Both services run as Replit workflows and start automatically:
 
 Note: Replit's managed database is PostgreSQL, not MySQL, so MySQL 8 was installed as a system dependency (`mysql80`) and is run as a self-managed local server whose data lives in the project's `.mysql/` directory (gitignored). If you'd rather use Replit's managed Postgres, the backend's JPA/Hibernate layer would need a Postgres driver + dialect swap and `database/schema.sql` would need Postgres-flavored DDL.
 
-The **frontend currently uses mock auth/data** (`frontend/src/services/mockAuth.js`) and is not yet wired to call the real backend API at `/api/...` — they run side by side but aren't integrated. See the "Full API integration" follow-up task if you want the frontend calling the real Spring Boot backend.
+The **frontend is wired to the real backend** for authentication (login, register, session restore via `/auth/me`). The Vite dev server proxies all `/api` requests to the Spring Boot backend on port 8080. `frontend/src/services/mockAuth.js` is no longer imported anywhere and can be deleted once password-reset and email-verification backend endpoints are added (see follow-up tasks).
 
 ### Manual backend run (outside the workflow)
 

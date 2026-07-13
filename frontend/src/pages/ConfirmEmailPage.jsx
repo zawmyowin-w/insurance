@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useSearchParams, Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { consumeVerifyToken } from '../services/emailVerifyService'
-import { mockVerifyEmail } from '../services/mockAuth'
 
 /** Landing page for the link inside the confirmation email. */
 export default function ConfirmEmailPage() {
@@ -24,7 +23,9 @@ export default function ConfirmEmailPage() {
 
     const result = consumeVerifyToken(token)
     if (result.ok) {
-      mockVerifyEmail(result.email)
+      // NOTE: mockVerifyEmail removed — email verification state is now managed
+      // by the backend. A backend /auth/verify-email endpoint (TODO) would
+      // confirm the token server-side and mark the user as verified in the DB.
       setEmail(result.email)
       setStatus('success')
       // Go straight to the login page as soon as the email is confirmed.

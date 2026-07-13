@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'react-toastify'
 import { issueOtp } from '../services/otpService'
-import { mockGetUserByEmail } from '../services/mockAuth'
 
 export default function ForgotPasswordPage() {
   const { t } = useTranslation()
@@ -14,8 +13,10 @@ export default function ForgotPasswordPage() {
   const handleSubmit = async e => {
     e.preventDefault()
     setLoading(true)
-    const user = mockGetUserByEmail(email)
-    if (!user) { toast.error(t('auth.emailNotFound')); setLoading(false); return }
+    // NOTE: Email-existence check removed — the backend does not yet expose
+    // a public check-email endpoint. The OTP flow proceeds unconditionally;
+    // a backend /auth/forgot-password endpoint (TODO) will validate the email
+    // server-side and send the reset code.
 
     try {
       const code = await issueOtp(email, 'reset')
