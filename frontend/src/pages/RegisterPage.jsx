@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { toast } from 'react-toastify'
+import { issueOtp } from '../services/otpService'
 
 const rules = [
   { key: 'len',     test: p => p.length >= 8,          label: { en: 'At least 8 characters',          my: 'အနည်းဆုံး ၈ လုံး' } },
@@ -50,8 +51,14 @@ export default function RegisterPage() {
     try {
       const { confirmPassword, ...payload } = form
       await register({ ...payload, role: 'CUSTOMER' })
-      toast.success(t('auth.registerSuccess'))
-      navigate('/login')
+      // issue OTP and go to verify page
+      const code = await issueOtp(payload.email, 'verify')
+      if (!import.meta.env.VITE_EMAILJS_SERVICE_ID) {
+        toast.info(`Demo OTP: ${code}`, { autoClose: 20000 })
+      } else {
+        toast.success(t('otp.sent'))
+      }
+      navigate(`/verify-email?email=${encodeURIComponent(payload.email)}`)
     } catch (err) {
       toast.error(err.response?.data?.message || t('auth.registerError'))
     } finally {

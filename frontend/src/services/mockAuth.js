@@ -37,6 +37,7 @@ function decodeToken(token) {
       address: 'Yangon, Myanmar',
       role: 'ADMIN',
       password: 'Admin@123',
+      emailVerified: true,
     })
     saveUsers(users)
   }
@@ -55,12 +56,12 @@ export function mockRegister(data) {
     address: data.address || '',
     role: data.role || 'CUSTOMER',
     password: data.password,
+    emailVerified: false,
   }
   users.push(user)
   saveUsers(users)
   const { password, ...safeUser } = user
-  const token = makeToken(safeUser)
-  return Promise.resolve({ token, user: safeUser })
+  return Promise.resolve({ user: safeUser })
 }
 
 export function mockLogin(email, password) {
@@ -68,6 +69,9 @@ export function mockLogin(email, password) {
   const user = users.find(u => u.email === email && u.password === password)
   if (!user) {
     return Promise.reject({ response: { data: { message: 'Invalid email or password' } } })
+  }
+  if (!user.emailVerified) {
+    return Promise.reject({ response: { data: { message: 'EMAIL_NOT_VERIFIED', email } } })
   }
   const { password: _pw, ...safeUser } = user
   const token = makeToken(safeUser)
@@ -82,4 +86,26 @@ export function mockMe(token) {
   if (!user) return Promise.reject({ response: { status: 401 } })
   const { password, ...safeUser } = user
   return Promise.resolve(safeUser)
+}
+
+export function mockVerifyEmail(email) {
+  const users = getUsers()
+  const idx = users.findIndex(u => u.email === email)
+  if (idx === -1) return false
+  users[idx].emailVerified = true
+  saveUsers(users)
+  return true
+}
+
+export function mockGetUserByEmail(email) {
+  return getUsers().find(u => u.email === email) || null
+}
+
+export function mockUpdatePassword(email, newPassword) {
+  const users = getUsers()
+  const idx = users.findIndex(u => u.email === email)
+  if (idx === -1) return false
+  users[idx].password = newPassword
+  saveUsers(users)
+  return true
 }

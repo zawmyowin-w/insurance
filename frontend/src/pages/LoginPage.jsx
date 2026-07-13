@@ -28,7 +28,13 @@ export default function LoginPage() {
       )
       navigate(redirect, { replace: true })
     } catch (err) {
-      toast.error(err.response?.data?.message || t('auth.loginError'))
+      const msg = err.response?.data?.message || ''
+      if (msg === 'EMAIL_NOT_VERIFIED') {
+        toast.warn(t('auth.emailNotVerified'))
+        navigate(`/verify-email?email=${encodeURIComponent(err.response.data.email)}`)
+      } else {
+        toast.error(msg || t('auth.loginError'))
+      }
     } finally {
       setLoading(false)
     }
@@ -94,6 +100,12 @@ export default function LoginPage() {
                 <i className={`bi bi-eye${showPwd ? '-slash' : ''}`}></i>
               </button>
             </div>
+          </div>
+
+          <div style={{ textAlign: 'right', marginTop: '-0.5rem', marginBottom: '1rem' }}>
+            <Link to="/forgot-password" style={{ color: 'var(--primary)', fontSize: '0.85rem', textDecoration: 'none', fontWeight: 500 }}>
+              {t('auth.forgotPassword')}
+            </Link>
           </div>
 
           <button type="submit" disabled={loading} className="btn-primary-custom w-100" style={{ justifyContent: 'center' }}>

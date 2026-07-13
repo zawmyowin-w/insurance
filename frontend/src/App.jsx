@@ -13,6 +13,9 @@ import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import TermsPage from './pages/TermsPage'
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
+import OtpVerifyPage from './pages/OtpVerifyPage'
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 
 // Customer pages
 import CustomerLayout from './pages/customer/CustomerLayout'
@@ -55,6 +58,9 @@ export default function App() {
             <Route path="/register" element={<RegisterPage />} />
             <Route path="/terms" element={<TermsPage />} />
             <Route path="/privacy" element={<PrivacyPolicyPage />} />
+            <Route path="/verify-email" element={<OtpVerifyPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
 
             {/* Customer */}
             <Route path="/customer" element={<ProtectedRoute role="CUSTOMER"><CustomerLayout /></ProtectedRoute>}>

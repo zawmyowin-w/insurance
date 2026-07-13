@@ -30,10 +30,8 @@ export function AuthProvider({ children }) {
   }
 
   const register = async (data) => {
-    const { token: t, user: u } = await mockRegister(data)
-    localStorage.setItem('token', t)
-    setToken(t)
-    setUser(u)
+    const { user: u } = await mockRegister(data)
+    // token not issued yet — user must verify email first
     return u
   }
 
