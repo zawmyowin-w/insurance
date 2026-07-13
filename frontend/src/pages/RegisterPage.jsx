@@ -27,7 +27,7 @@ export default function RegisterPage() {
   const { register } = useAuth()
   const navigate = useNavigate()
   const [form, setForm] = useState({
-    name: '', email: '', phone: '', address: '', password: '', confirmPassword: ''
+    name: '', email: '', address: '', password: '', confirmPassword: ''
   })
   const [loading, setLoading] = useState(false)
   const [showPwd, setShowPwd] = useState(false)
@@ -42,14 +42,12 @@ export default function RegisterPage() {
 
   const handleSubmit = async e => {
     e.preventDefault()
-    const digitsOnly = form.phone.replace(/\D/g, '')
-    if (digitsOnly.length < 9 || digitsOnly.length > 11) { toast.error(t('auth.phoneInvalid')); return }
     if (!allRulesPassed) { toast.error(t('auth.pwdWeak')); return }
     if (form.password !== form.confirmPassword) { toast.error(t('auth.passwordMismatch')); return }
     if (!agree) { toast.error(t('auth.mustAgree')); return }
     setLoading(true)
     const { confirmPassword, ...payload } = form
-    // Step 1: create account
+    // Step 1: create account (phone omitted — not required)
     try {
       await register({ ...payload, role: 'CUSTOMER' })
     } catch (err) {
@@ -102,12 +100,7 @@ export default function RegisterPage() {
               <input name="email" type="email" required className="form-control-custom w-100"
                 placeholder="you@example.com" value={form.email} onChange={handleChange} />
             </div>
-            <div className="col-12 col-sm-6">
-              <label className="form-label-custom">{t('auth.phone')} *</label>
-              <input name="phone" required className="form-control-custom w-100"
-                placeholder="+95 9 xxx xxx xxx" value={form.phone} onChange={handleChange} />
-            </div>
-            <div className="col-12 col-sm-6">
+            <div className="col-12">
               <label className="form-label-custom">{t('auth.address')}</label>
               <input name="address" className="form-control-custom w-100"
                 placeholder="Yangon, Myanmar" value={form.address} onChange={handleChange} />
