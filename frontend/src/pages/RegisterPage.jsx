@@ -48,22 +48,28 @@ export default function RegisterPage() {
     if (form.password !== form.confirmPassword) { toast.error(t('auth.passwordMismatch')); return }
     if (!agree) { toast.error(t('auth.mustAgree')); return }
     setLoading(true)
+    const { confirmPassword, ...payload } = form
+    // Step 1: create account
     try {
-      const { confirmPassword, ...payload } = form
       await register({ ...payload, role: 'CUSTOMER' })
-      // issue OTP and go to verify page
+    } catch (err) {
+      toast.error(err.response?.data?.message || t('auth.registerError'))
+      setLoading(false)
+      return
+    }
+    // Step 2: send OTP (account already created — always navigate even if email fails)
+    try {
       const code = await issueOtp(payload.email, 'verify')
       if (!import.meta.env.VITE_EMAILJS_SERVICE_ID) {
         toast.info(`Demo OTP: ${code}`, { autoClose: 20000 })
       } else {
         toast.success(t('otp.sent'))
       }
-      navigate(`/verify-email?email=${encodeURIComponent(payload.email)}`)
-    } catch (err) {
-      toast.error(err.response?.data?.message || t('auth.registerError'))
-    } finally {
-      setLoading(false)
+    } catch {
+      toast.warn(t('otp.sendError'))
     }
+    setLoading(false)
+    navigate(`/verify-email?email=${encodeURIComponent(payload.email)}`)
   }
 
   return (
