@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { toast } from 'react-toastify'
-import { sendVerificationEmail } from '../services/emailVerifyService'
+import { issueOtp } from '../services/otpService'
 
 const rules = [
   { key: 'len',     test: p => p.length >= 8,          label: { en: 'At least 8 characters',          my: 'အနည်းဆုံး ၈ လုံး' } },
@@ -57,12 +57,16 @@ export default function RegisterPage() {
       setLoading(false)
       return
     }
-    // Step 2: send confirmation email (account already created — always navigate even if email fails)
+    // Step 2: issue OTP for email verification
     try {
-      await sendVerificationEmail(payload.email)
-      toast.success(t('emailVerify.sent'))
+      const code = await issueOtp(payload.email, 'verify')
+      if (!import.meta.env.VITE_EMAILJS_SERVICE_ID) {
+        toast.info(`Demo OTP: ${code}`, { autoClose: 15000 })
+      } else {
+        toast.success(t('otp.sent') || 'Verification code sent!')
+      }
     } catch {
-      toast.warn(t('emailVerify.sendError'))
+      toast.warn(t('otp.sendError') || 'Could not send code — check your email later.')
     }
     setLoading(false)
     navigate(`/verify-email?email=${encodeURIComponent(payload.email)}`)
