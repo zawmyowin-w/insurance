@@ -1,2 +1,3 @@
 - [Security decisions](security-decisions.md) — Key auth/security patterns; JWT, CORS, admin bootstrap, IDOR, file upload rules
 - [Self-managed background service (MySQL)](local-service-in-workflow.md) — start it inside the workflow's script, not via ShellExec nohup/disown, or it dies between tool calls
+- [One-shot effects under React.StrictMode](react-strictmode-oneshot-effects.md) — a token-consuming useEffect can silently show a false "failed" state on its StrictMode double-invoke; guard with a ref

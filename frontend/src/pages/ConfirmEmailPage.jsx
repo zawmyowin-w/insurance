@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useSearchParams, Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { consumeVerifyToken } from '../services/emailVerifyService'
@@ -14,8 +14,14 @@ export default function ConfirmEmailPage() {
 
   const [status, setStatus] = useState('checking') // checking | success | error
   const [email, setEmail] = useState(emailParam)
+  const ranRef = useRef(false)
 
   useEffect(() => {
+    // Guard against React.StrictMode's double-invoke of effects in dev,
+    // which would otherwise consume the one-time token twice.
+    if (ranRef.current) return
+    ranRef.current = true
+
     const result = consumeVerifyToken(token)
     if (result.ok) {
       mockVerifyEmail(result.email)
