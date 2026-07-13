@@ -179,6 +179,23 @@
     "vehicle": "Vehicle Insurance",
     "property": "Property Insurance"
   },
+  "emailVerify": {
+    "title": "Email Confirmation Required",
+    "sentTo": "We sent the email to",
+    "checkInbox": "Check your inbox to activate the account. If the confirmation email is not in your inbox, please check the Spam. Thank you.",
+    "resend": "Resend Email",
+    "resending": "Resending...",
+    "resent": "Confirmation email resent! Check your inbox.",
+    "sent": "Confirmation email sent! Check your inbox.",
+    "sendError": "Failed to send confirmation email. Please try again.",
+    "demoHint": "Demo mode — no email provider configured. Click the link below to confirm:",
+    "confirming": "Confirming your email...",
+    "confirmSuccessTitle": "Email confirmed!",
+    "confirmSuccessDesc": "Your account is now active. You can log in.",
+    "goToLogin": "Go to Login",
+    "confirmErrorTitle": "Confirmation link invalid or expired",
+    "confirmErrorDesc": "This confirmation link is no longer valid. Please request a new one."
+  },
   "otp": {
     "title": "Verify your email",
     "subtitle": "We sent a 6-digit code to",

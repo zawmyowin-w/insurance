@@ -179,6 +179,23 @@
     "vehicle": "ယာဉ် အာမခံ",
     "property": "ပိုင်ဆိုင်မှု အာမခံ"
   },
+  "emailVerify": {
+    "title": "Email အတည်ပြုရန် လိုအပ်ပါသည်",
+    "sentTo": "Email ကို ဤလိပ်စာသို့ ပို့လိုက်ပါပြီ -",
+    "checkInbox": "အကောင့်ကို အသက်သွင်းရန် သင့် Inbox ကိုစစ်ပါ။ Confirmation Email ကို Inbox တွင် မတွေ့ပါက Spam Folder ကို စစ်ကြည့်ပါ။ ကျေးဇူးတင်ပါသည်။",
+    "resend": "Email ထပ်ပို့ရန်",
+    "resending": "ပို့နေသည်...",
+    "resent": "Confirmation Email ထပ်ပို့ပြီးပါပြီ! Inbox ကို စစ်ပါ",
+    "sent": "Confirmation Email ပို့ပြီးပါပြီ! Inbox ကို စစ်ပါ",
+    "sendError": "Confirmation Email ပို့မှု မအောင်မြင်ပါ။ ထပ်မံကြိုးစားပါ",
+    "demoHint": "Demo mode — Email provider မသတ်မှတ်ရသေးပါ။ အတည်ပြုရန် အောက်ပါလင့်ခ်ကို နှိပ်ပါ -",
+    "confirming": "သင့် Email ကို အတည်ပြုနေသည်...",
+    "confirmSuccessTitle": "Email အတည်ပြုပြီးပါပြီ!",
+    "confirmSuccessDesc": "သင့်အကောင့် အသက်ဝင်ပါပြီ။ ယခု ဝင်ရောက်နိုင်ပါပြီ",
+    "goToLogin": "ဝင်ရောက်ရန်",
+    "confirmErrorTitle": "Confirmation Link မှားနေသည် သို့မဟုတ် သက်တမ်းကုန်သွားပါပြီ",
+    "confirmErrorDesc": "ဤ Confirmation Link သက်တမ်းကုန်သွားပါပြီ။ အသစ်တစ်ခု ပြန်တောင်းပါ"
+  },
   "otp": {
     "title": "Email ကို အတည်ပြုရန်",
     "subtitle": "ဂဏန်း ၆ လုံး Code ကို ဤ Email သို့ ပို့လိုက်ပြီ",
