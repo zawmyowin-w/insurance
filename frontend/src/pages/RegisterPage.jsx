@@ -43,7 +43,7 @@ export default function RegisterPage() {
   const handleSubmit = async e => {
     e.preventDefault()
     const digitsOnly = form.phone.replace(/\D/g, '')
-    if (digitsOnly.length !== 11) { toast.error(t('auth.phoneInvalid')); return }
+    if (digitsOnly.length < 9 || digitsOnly.length > 11) { toast.error(t('auth.phoneInvalid')); return }
     if (!allRulesPassed) { toast.error(t('auth.pwdWeak')); return }
     if (form.password !== form.confirmPassword) { toast.error(t('auth.passwordMismatch')); return }
     if (!agree) { toast.error(t('auth.mustAgree')); return }

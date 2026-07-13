@@ -27,10 +27,13 @@ export default function ConfirmEmailPage() {
       mockVerifyEmail(result.email)
       setEmail(result.email)
       setStatus('success')
+      // Auto-redirect straight to login once the email is confirmed.
+      const timer = setTimeout(() => navigate('/login', { replace: true }), 1500)
+      return () => clearTimeout(timer)
     } else {
       setStatus('error')
     }
-  }, [token])
+  }, [token, navigate])
 
   return (
     <div className="auth-page">

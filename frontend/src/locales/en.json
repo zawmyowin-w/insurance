@@ -114,7 +114,7 @@
     "emailNotVerified": "Please verify your email before logging in",
     "passwordMismatch": "Passwords do not match",
     "mustAgree": "Please agree to the terms",
-    "phoneInvalid": "Phone number must be exactly 11 digits",
+    "phoneInvalid": "Phone number must be 9 to 11 digits",
     "pwdWeak": "Please meet all password requirements before continuing",
     "pwdUppercase": "Password must contain at least one uppercase letter (A–Z)",
     "pwdLowercase": "Password must contain at least one lowercase letter (a–z)",
