@@ -49,7 +49,7 @@ export default function RegisterPage() {
     const { confirmPassword, ...payload } = form
     // Step 1: create account (phone omitted — not required)
     try {
-      await register({ ...payload, role: 'CUSTOMER' })
+      await register(payload)
     } catch (err) {
       toast.error(err.response?.data?.message || t('auth.registerError'))
       setLoading(false)
