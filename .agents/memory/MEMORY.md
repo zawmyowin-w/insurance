@@ -1,1 +1,2 @@
 - [Security decisions](security-decisions.md) — Key auth/security patterns; JWT, CORS, admin bootstrap, IDOR, file upload rules
+- [Self-managed background service (MySQL)](local-service-in-workflow.md) — start it inside the workflow's script, not via ShellExec nohup/disown, or it dies between tool calls

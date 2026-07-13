@@ -6,22 +6,24 @@ A full-stack digital insurance portal for Myanmar with three user roles: Custome
 
 - **Frontend**: React 18 + Vite + Bootstrap 5 + react-i18next
 - **Backend**: Spring Boot 3.2 + Spring Security + JWT + Spring Data JPA
-- **Database**: MySQL 8+ (H2 in-memory for dev/testing)
-- **Port**: Frontend `5173`, Backend `8080`
+- **Database**: MySQL 8 (self-managed local instance, data under `.mysql/`)
+- **Port**: Frontend `5000` (webview workflow), Backend `8080` (console workflow)
 
-## Running the Frontend (for preview)
+## Running on Replit
+
+Both services run as Replit workflows and start automatically:
+
+- **Start application** — `cd frontend && npm run dev` (Vite on port 5000, shown in the preview pane)
+- **Backend** — `cd backend && bash start-backend.sh` (initializes/starts a local MySQL 8 server under `.mysql/data`, creates the `insurance_portal` database, loads `database/schema.sql`, then runs the Spring Boot app on port 8080 with context path `/api`)
+
+Note: Replit's managed database is PostgreSQL, not MySQL, so MySQL 8 was installed as a system dependency (`mysql80`) and is run as a self-managed local server whose data lives in the project's `.mysql/` directory (gitignored). If you'd rather use Replit's managed Postgres, the backend's JPA/Hibernate layer would need a Postgres driver + dialect swap and `database/schema.sql` would need Postgres-flavored DDL.
+
+The **frontend currently uses mock auth/data** (`frontend/src/services/mockAuth.js`) and is not yet wired to call the real backend API at `/api/...` — they run side by side but aren't integrated. See the "Full API integration" follow-up task if you want the frontend calling the real Spring Boot backend.
+
+### Manual backend run (outside the workflow)
 
 ```bash
-cd frontend && npm install && npm run dev
-```
-
-## Running the Backend (requires Java 17 + MySQL)
-
-```bash
-# Configure database in backend/src/main/resources/application.properties
-cd backend && ./mvnw spring-boot:run
-# OR for dev mode with H2 in-memory:
-cd backend && ./mvnw spring-boot:run -Dspring.profiles.active=dev
+cd backend && bash start-backend.sh
 ```
 
 ## Default Admin Account
