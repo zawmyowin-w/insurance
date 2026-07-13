@@ -14,23 +14,22 @@ export default function ForgotPasswordPage() {
   const handleSubmit = async e => {
     e.preventDefault()
     setLoading(true)
+    const user = mockGetUserByEmail(email)
+    if (!user) { toast.error(t('auth.emailNotFound')); setLoading(false); return }
+
     try {
-      const user = mockGetUserByEmail(email)
-      if (!user) { toast.error(t('auth.emailNotFound')); setLoading(false); return }
-
       const code = await issueOtp(email, 'reset')
-
       if (!import.meta.env.VITE_EMAILJS_SERVICE_ID) {
         toast.info(`Demo OTP: ${code}`, { autoClose: 15000 })
       } else {
         toast.success(t('otp.sent'))
       }
-      navigate(`/reset-password?email=${encodeURIComponent(email)}`)
-    } catch {
-      toast.error(t('otp.sendError'))
-    } finally {
-      setLoading(false)
+    } catch (err) {
+      console.error('[EmailJS error]', err)
+      toast.warn(t('otp.sendError'))
     }
+    setLoading(false)
+    navigate(`/reset-password?email=${encodeURIComponent(email)}`)
   }
 
   return (
