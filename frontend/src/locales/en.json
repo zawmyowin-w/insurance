@@ -100,7 +100,10 @@
     "haveAccount": "Already have an account?",
     "loginHere": "Log in here",
     "passwordMismatch": "Passwords do not match",
-    "mustAgree": "Please agree to the terms"
+    "mustAgree": "Please agree to the terms",
+    "phoneInvalid": "Phone number must be exactly 11 digits",
+    "termsLink": "Terms of Service",
+    "privacyLink": "Privacy Policy"
   },
   "dash": {
     "welcome": "Good day",

@@ -19,6 +19,11 @@ export default function RegisterPage() {
 
   const handleSubmit = async e => {
     e.preventDefault()
+    const digitsOnly = form.phone.replace(/\D/g, '')
+    if (digitsOnly.length !== 11) {
+      toast.error(t('auth.phoneInvalid'))
+      return
+    }
     if (form.password !== form.confirmPassword) {
       toast.error(t('auth.passwordMismatch'))
       return
@@ -29,7 +34,7 @@ export default function RegisterPage() {
       const { confirmPassword, ...payload } = form
       await register({ ...payload, role: 'CUSTOMER' })
       toast.success(t('auth.registerSuccess'))
-      navigate('/customer/dashboard')
+      navigate('/login')
     } catch (err) {
       toast.error(err.response?.data?.message || t('auth.registerError'))
     } finally {
@@ -105,8 +110,8 @@ export default function RegisterPage() {
               style={{ marginTop: '0.2rem', flexShrink: 0 }} />
             <label htmlFor="agree" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', cursor: 'pointer' }}>
               {t('auth.agreeText')}{' '}
-              <a href="#" style={{ color: 'var(--primary)' }}>Terms of Service</a>{' & '}
-              <a href="#" style={{ color: 'var(--primary)' }}>Privacy Policy</a>
+              <Link to="/terms" target="_blank" style={{ color: 'var(--primary)' }}>{t('auth.termsLink')}</Link>{' & '}
+              <Link to="/privacy" target="_blank" style={{ color: 'var(--primary)' }}>{t('auth.privacyLink')}</Link>
             </label>
           </div>
 
