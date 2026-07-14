@@ -228,10 +228,6 @@ VALUES
     1
 );
 
--- ─── Schema migrations (idempotent) ──────────────────────────────
--- Make legacy insurance_type column nullable (replaced by package_id FK)
-ALTER TABLE form_templates MODIFY COLUMN insurance_type VARCHAR(20) NULL DEFAULT NULL;
-
 -- ═══════════════════════════════════════════════════════════════════
 -- END OF SCHEMA
 -- ═══════════════════════════════════════════════════════════════════
