@@ -14,6 +14,7 @@ public class ClaimResponse {
     private Long customerId;
     private String customerName;
     private Long applicationId;
+    private Long packageId;
     private String policyName;
     private String agentName;
     private String claimType;
@@ -23,6 +24,7 @@ public class ClaimResponse {
     private String status;
     private String agentNote;
     private String adminNote;
+    private String formData;
     private int documentCount;
     private LocalDateTime createdAt;
 
@@ -36,6 +38,7 @@ public class ClaimResponse {
         if (claim.getApplication() != null) {
             dto.setApplicationId(claim.getApplication().getId());
             if (claim.getApplication().getInsurancePackage() != null) {
+                dto.setPackageId(claim.getApplication().getInsurancePackage().getId());
                 dto.setPolicyName(claim.getApplication().getInsurancePackage().getName());
             }
         }
@@ -49,6 +52,7 @@ public class ClaimResponse {
         dto.setStatus(claim.getStatus().name());
         dto.setAgentNote(claim.getAgentNote());
         dto.setAdminNote(claim.getAdminNote());
+        dto.setFormData(claim.getFormData());
         dto.setDocumentCount(FileStorageUtil.fromJsonArray(claim.getDocumentsPath()).size());
         dto.setCreatedAt(claim.getCreatedAt());
         return dto;

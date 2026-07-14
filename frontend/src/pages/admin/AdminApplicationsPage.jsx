@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
+import FormDetailModal from '../../components/FormDetailModal'
 
 export default function AdminApplicationsPage() {
   const [apps, setApps] = useState([])
@@ -9,9 +10,13 @@ export default function AdminApplicationsPage() {
   const [selected, setSelected] = useState(null)
   const [actionNote, setActionNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [viewItem, setViewItem] = useState(null)
 
   const fetchApps = () => {
-    api.get(`/admin/applications${filter !== 'ALL' ? `?status=${filter}` : ''}`).then(res => setApps(Array.isArray(res.data) ? res.data : [])).catch(() => setApps([])).finally(() => setLoading(false))
+    api.get(`/admin/applications${filter !== 'ALL' ? `?status=${filter}` : ''}`)
+      .then(res => setApps(Array.isArray(res.data) ? res.data : []))
+      .catch(() => setApps([]))
+      .finally(() => setLoading(false))
   }
   useEffect(() => { setLoading(true); fetchApps() }, [filter])
 
@@ -32,7 +37,6 @@ export default function AdminApplicationsPage() {
         <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>Review and approve/reject policy applications</p>
       </div>
 
-      {/* Status filter */}
       <div className="d-flex gap-2 mb-4 flex-wrap">
         {['ALL', 'PENDING', 'VERIFIED', 'APPROVED', 'REJECTED'].map(f => (
           <button key={f} onClick={() => setFilter(f)} style={{
@@ -68,7 +72,7 @@ export default function AdminApplicationsPage() {
                       </div>
                       <span className={`badge-status badge-${app.status?.toLowerCase()}`}>{app.status}</span>
                     </div>
-                    <div className="d-flex gap-3 flex-wrap">
+                    <div className="d-flex gap-3 flex-wrap mb-2">
                       {[
                         { label: 'Plan', value: app.packageName || app.package?.name },
                         { label: 'Type', value: app.packageType || app.package?.type },
@@ -83,8 +87,15 @@ export default function AdminApplicationsPage() {
                         </div>
                       ))}
                     </div>
-                    {app.notes && <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0.75rem 0 0' }}>Note: {app.notes}</p>}
-                    {app.agentNote && <p style={{ color: '#1d4ed8', fontSize: '0.85rem', margin: '0.25rem 0 0' }}>Agent: {app.agentNote}</p>}
+                    {/* View button */}
+                    <button onClick={() => setViewItem(app)} style={{
+                      padding: '0.3rem 0.8rem', borderRadius: 7, border: '1.5px solid var(--border)',
+                      background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer',
+                      fontSize: '0.8rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4
+                    }}>
+                      <i className="bi bi-eye"></i> View Details
+                    </button>
+                    {app.agentNote && <p style={{ color: '#1d4ed8', fontSize: '0.85rem', margin: '0.5rem 0 0' }}>Agent: {app.agentNote}</p>}
                   </div>
                   {(app.status === 'VERIFIED') && (
                     <div className="col-12 col-md-4 mt-3 mt-md-0">
@@ -99,7 +110,7 @@ export default function AdminApplicationsPage() {
                             </button>
                             <button className="btn-danger-sm" onClick={() => handleAction(app.id, 'reject')} disabled={submitting}>✗ Reject</button>
                             <button style={{ background: '#f59e0b', color: '#fff', border: 'none', borderRadius: 6, padding: '0.4rem 0.7rem', fontSize: '0.82rem', cursor: 'pointer' }}
-                              onClick={() => handleAction(app.id, 'revise')} disabled={submitting}>↩ Request Revise</button>
+                              onClick={() => handleAction(app.id, 'revise')} disabled={submitting}>↩ Revise</button>
                             <button className="btn-outline-custom" style={{ padding: '0.3rem 0.6rem', fontSize: '0.82rem' }} onClick={() => setSelected(null)}>Cancel</button>
                           </div>
                         </div>
@@ -117,6 +128,10 @@ export default function AdminApplicationsPage() {
           ))}
         </div>
       )}
+
+      <FormDetailModal
+        show={!!viewItem} onClose={() => setViewItem(null)}
+        type="application" item={viewItem} role="admin" />
     </div>
   )
 }

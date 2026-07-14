@@ -70,19 +70,28 @@ public class PolicyApplication {
     @Column(name = "policy_number", length = 50)
     private String policyNumber;
 
-    /** JSON: customer personal details (name, NRC, DOB, etc.) */
+    /** JSON: customer personal details (name, NRC, DOB, etc.) — legacy field */
     @Column(name = "common_info", columnDefinition = "TEXT")
     private String commonInfo;
 
-    /** JSON: plan-specific fields (beneficiary, vehicle info, etc.) */
+    /** JSON: plan-specific fields (beneficiary, vehicle info, etc.) — legacy field */
     @Column(name = "extra_info", columnDefinition = "TEXT")
     private String extraInfo;
+
+    /**
+     * JSON: dynamic form submission data.
+     * Format: { "fieldId": "value", ... }
+     * For IMAGE_UPLOAD/PDF_UPLOAD fields: value is the server-stored file path.
+     * For CHECKBOX fields: value is a JSON array of selected option strings.
+     */
+    @Column(name = "form_data", columnDefinition = "TEXT")
+    private String formData;
 
     /** Calculated total premium amount */
     @Column(name = "premium_amount", precision = 20, scale = 2)
     private BigDecimal premiumAmount;
 
-    /** JSON array of server-stored paths for uploaded supporting documents (ID photo, proof docs, etc.) */
+    /** JSON array of server-stored paths for uploaded supporting documents */
     @Column(name = "documents_path", columnDefinition = "TEXT")
     private String documentsPath;
 

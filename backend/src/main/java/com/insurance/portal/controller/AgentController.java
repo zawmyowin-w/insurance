@@ -192,12 +192,53 @@ public class AgentController {
         return streamFile(docs.get(index));
     }
 
+    /** Serve a file uploaded into a dynamic form field for an application */
+    @GetMapping("/applications/{id}/form-file/{fieldId}")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getApplicationFormFile(@PathVariable Long id, @PathVariable String fieldId,
+            @AuthenticationPrincipal UserDetails principal) {
+        User agent = getAgent(principal);
+        PolicyApplication app = appRepo.findById(id).orElseThrow();
+        if (app.getAgent() == null || !app.getAgent().getId().equals(agent.getId()))
+            return ResponseEntity.status(403).build();
+        return serveFormFile(app.getFormData(), fieldId);
+    }
+
+    /** Serve a file uploaded into a dynamic form field for a claim */
+    @GetMapping("/claims/{id}/form-file/{fieldId}")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getClaimFormFile(@PathVariable Long id, @PathVariable String fieldId,
+            @AuthenticationPrincipal UserDetails principal) {
+        User agent = getAgent(principal);
+        Claim claim = claimRepo.findById(id).orElseThrow();
+        if (claim.getAgent() == null || !claim.getAgent().getId().equals(agent.getId()))
+            return ResponseEntity.status(403).build();
+        return serveFormFile(claim.getFormData(), fieldId);
+    }
+
     private ResponseEntity<?> streamFile(String path) {
         File file = new File(path);
         if (!file.exists()) return ResponseEntity.notFound().build();
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(FileStorageUtil.contentTypeFor(path)))
                 .body(new FileSystemResource(file));
+    }
+
+    @SuppressWarnings("unchecked")
+    private ResponseEntity<?> serveFormFile(String formDataJson, String fieldId) {
+        if (formDataJson == null) return ResponseEntity.notFound().build();
+        try {
+            Map<String, Object> data = new com.fasterxml.jackson.databind.ObjectMapper().readValue(formDataJson, Map.class);
+            Object val = data.get(fieldId);
+            if (val == null) return ResponseEntity.notFound().build();
+            File file = new File(val.toString());
+            if (!file.exists()) return ResponseEntity.notFound().build();
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(FileStorageUtil.contentTypeFor(val.toString())))
+                    .body(new FileSystemResource(file));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
     @GetMapping("/notifications")

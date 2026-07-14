@@ -8,8 +8,10 @@ import java.util.List;
 import java.util.Optional;
 
 public interface FormTemplateRepository extends JpaRepository<FormTemplate, Long> {
-    List<FormTemplate> findAllByInsuranceType(String insuranceType);
-    List<FormTemplate> findAllByFormType(FormType formType);
-    List<FormTemplate> findAllByInsuranceTypeAndFormType(String insuranceType, FormType formType);
-    Optional<FormTemplate> findFirstByInsuranceTypeAndFormTypeAndActiveTrue(String insuranceType, FormType formType);
+    List<FormTemplate> findAllByInsurancePackageId(Long packageId);
+    Optional<FormTemplate> findByInsurancePackageIdAndFormType(Long packageId, FormType formType);
+    boolean existsByInsurancePackageIdAndFormType(Long packageId, FormType formType);
+
+    // Legacy — kept for backward compat during migration; prefer package-based queries
+    Optional<FormTemplate> findFirstByInsurancePackageIdAndFormTypeAndActiveTrue(Long packageId, FormType formType);
 }

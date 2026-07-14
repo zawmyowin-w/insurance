@@ -38,11 +38,43 @@ CREATE TABLE IF NOT EXISTS insurance_packages (
     premium_rate  DECIMAL(8,4)         NOT NULL COMMENT '0.0200 = 2% per year',
     durations     VARCHAR(50)          DEFAULT '1,2,3,5' COMMENT 'comma-separated years',
     benefits      TEXT                 COMMENT 'newline-separated benefit items',
+    exclusions    TEXT,
+    eligibility   TEXT,
+    policy_term   INT,
     active        TINYINT(1)           NOT NULL DEFAULT 1,
     created_at    DATETIME             NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at    DATETIME             NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_packages_type   (type),
     INDEX idx_packages_active (active)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ─── form_templates ───────────────────────────────────────────────
+-- Each insurance plan has at most ONE APPLICATION form and ONE CLAIM form.
+CREATE TABLE IF NOT EXISTS form_templates (
+    id             BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name           VARCHAR(255)         NOT NULL,
+    package_id     BIGINT               NOT NULL,
+    form_type      ENUM('APPLICATION','CLAIM') NOT NULL,
+    description    TEXT,
+    active         TINYINT(1)           NOT NULL DEFAULT 1,
+    created_at     DATETIME             NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at     DATETIME             NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_template_package FOREIGN KEY (package_id) REFERENCES insurance_packages (id) ON DELETE CASCADE,
+    UNIQUE KEY uk_form_template_package_type (package_id, form_type),
+    INDEX idx_template_package (package_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ─── form_fields ──────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS form_fields (
+    id            BIGINT AUTO_INCREMENT PRIMARY KEY,
+    template_id   BIGINT               NOT NULL,
+    field_label   VARCHAR(255)         NOT NULL,
+    field_type    ENUM('LABEL','TEXT','TEXTAREA','CHECKBOX','IMAGE_UPLOAD','PDF_UPLOAD') NOT NULL,
+    field_options TEXT                 COMMENT 'JSON array of options for CHECKBOX fields',
+    required      TINYINT(1)           NOT NULL DEFAULT 0,
+    sort_order    INT                  NOT NULL DEFAULT 0,
+    CONSTRAINT fk_field_template FOREIGN KEY (template_id) REFERENCES form_templates (id) ON DELETE CASCADE,
+    INDEX idx_field_template (template_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ─── policy_applications ──────────────────────────────────────────
@@ -59,7 +91,13 @@ CREATE TABLE IF NOT EXISTS policy_applications (
     agent_note        TEXT,
     admin_note        TEXT,
     revision_deadline DATETIME,
-    documents_path    TEXT COMMENT 'JSON array of uploaded supporting document paths',
+    risk_level        VARCHAR(10),
+    policy_number     VARCHAR(50),
+    common_info       TEXT               COMMENT 'legacy JSON personal info',
+    extra_info        TEXT               COMMENT 'legacy JSON plan-specific info',
+    form_data         TEXT               COMMENT 'JSON map of dynamic form field values: {fieldId: value}',
+    premium_amount    DECIMAL(20,2),
+    documents_path    TEXT               COMMENT 'JSON array of uploaded supporting document paths',
     created_at        DATETIME            NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at        DATETIME            NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_app_customer FOREIGN KEY (customer_id) REFERENCES users (id) ON DELETE CASCADE,
@@ -80,7 +118,8 @@ CREATE TABLE IF NOT EXISTS claims (
     amount            DECIMAL(20,2)       NOT NULL,
     description       TEXT,
     incident_date     DATE,
-    documents_path    TEXT COMMENT 'JSON array of uploaded claim evidence document paths',
+    documents_path    TEXT,
+    form_data         TEXT               COMMENT 'JSON map of dynamic claim form field values',
     status            ENUM('PENDING','VERIFIED','APPROVED','REJECTED','REVISION_REQUESTED')
                                           NOT NULL DEFAULT 'PENDING',
     agent_note        TEXT,
@@ -88,77 +127,60 @@ CREATE TABLE IF NOT EXISTS claims (
     revision_deadline DATETIME,
     created_at        DATETIME            NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at        DATETIME            NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_claim_application FOREIGN KEY (application_id) REFERENCES policy_applications (id) ON DELETE CASCADE,
-    CONSTRAINT fk_claim_customer    FOREIGN KEY (customer_id)    REFERENCES users (id) ON DELETE CASCADE,
-    CONSTRAINT fk_claim_agent       FOREIGN KEY (agent_id)       REFERENCES users (id) ON DELETE SET NULL,
-    INDEX idx_claims_customer (customer_id),
-    INDEX idx_claims_agent    (agent_id),
-    INDEX idx_claims_status   (status)
+    CONSTRAINT fk_claim_app      FOREIGN KEY (application_id) REFERENCES policy_applications (id),
+    CONSTRAINT fk_claim_customer FOREIGN KEY (customer_id)    REFERENCES users (id) ON DELETE CASCADE,
+    CONSTRAINT fk_claim_agent    FOREIGN KEY (agent_id)       REFERENCES users (id) ON DELETE SET NULL,
+    INDEX idx_claim_app      (application_id),
+    INDEX idx_claim_customer (customer_id),
+    INDEX idx_claim_agent    (agent_id),
+    INDEX idx_claim_status   (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ─── payments ─────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS payments (
-    id               BIGINT AUTO_INCREMENT PRIMARY KEY,
-    application_id   BIGINT              NOT NULL,
-    customer_id      BIGINT              NOT NULL,
-    amount           DECIMAL(20,2),
-    payment_type     ENUM('PREMIUM','RENEWAL') NOT NULL DEFAULT 'PREMIUM',
-    payment_method   VARCHAR(30) COMMENT 'KBZ_PAY | WAVE_PAY | AYA_PAY',
-    screenshot_path  VARCHAR(500),
-    status           ENUM('PENDING','VERIFIED','REJECTED') NOT NULL DEFAULT 'PENDING',
-    notes            TEXT,
-    verified_by      VARCHAR(150),
-    created_at       DATETIME            NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at       DATETIME            NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT fk_payment_application FOREIGN KEY (application_id) REFERENCES policy_applications (id) ON DELETE CASCADE,
-    CONSTRAINT fk_payment_customer    FOREIGN KEY (customer_id)    REFERENCES users (id) ON DELETE CASCADE,
-    INDEX idx_payments_application (application_id),
-    INDEX idx_payments_customer    (customer_id),
-    INDEX idx_payments_status      (status)
+    id              BIGINT AUTO_INCREMENT PRIMARY KEY,
+    application_id  BIGINT              NOT NULL,
+    customer_id     BIGINT              NOT NULL,
+    amount          DECIMAL(20,2)       NOT NULL,
+    payment_type    ENUM('PREMIUM','RENEWAL') NOT NULL DEFAULT 'PREMIUM',
+    payment_method  VARCHAR(50),
+    screenshot_path VARCHAR(500),
+    notes           TEXT,
+    status          ENUM('PENDING','APPROVED','REJECTED') NOT NULL DEFAULT 'PENDING',
+    created_at      DATETIME            NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME            NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_pay_app      FOREIGN KEY (application_id) REFERENCES policy_applications (id),
+    CONSTRAINT fk_pay_customer FOREIGN KEY (customer_id)    REFERENCES users (id) ON DELETE CASCADE,
+    INDEX idx_pay_app      (application_id),
+    INDEX idx_pay_customer (customer_id),
+    INDEX idx_pay_status   (status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ─── notifications ────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS notifications (
     id           BIGINT AUTO_INCREMENT PRIMARY KEY,
-    recipient_id BIGINT               NOT NULL,
-    title        VARCHAR(255)         NOT NULL,
-    message      TEXT                 NOT NULL,
-    type         ENUM('INFO','APPROVAL','REJECTION','PAYMENT','CLAIM','REMINDER')
-                                      NOT NULL DEFAULT 'INFO',
-    is_read      TINYINT(1)           NOT NULL DEFAULT 0,
-    target_role  VARCHAR(20),
-    created_at   DATETIME             NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    recipient_id BIGINT              NOT NULL,
+    title        VARCHAR(255)        NOT NULL,
+    message      TEXT,
+    type         ENUM('INFO','APPROVAL','REJECTION','REMINDER','SYSTEM') NOT NULL DEFAULT 'INFO',
+    is_read      TINYINT(1)          NOT NULL DEFAULT 0,
+    created_at   DATETIME            NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_notif_recipient FOREIGN KEY (recipient_id) REFERENCES users (id) ON DELETE CASCADE,
-    INDEX idx_notif_recipient (recipient_id),
-    INDEX idx_notif_read      (is_read)
+    INDEX idx_notif_recipient (recipient_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ─── feedback ─────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS feedback (
-    id           BIGINT AUTO_INCREMENT PRIMARY KEY,
-    customer_id  BIGINT,
-    name         VARCHAR(150),
-    email        VARCHAR(191),
-    subject      VARCHAR(255),
-    message      TEXT                 NOT NULL,
-    created_at   DATETIME             NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_feedback_customer FOREIGN KEY (customer_id) REFERENCES users (id) ON DELETE SET NULL
+    id         BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name       VARCHAR(150),
+    email      VARCHAR(191),
+    subject    VARCHAR(255),
+    message    TEXT,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ═══════════════════════════════════════════════════════════════════
--- SEED DATA
--- ═══════════════════════════════════════════════════════════════════
-
--- ── User Seed Notes ────────────────────────────────────────────────────────────
--- Admin and agent accounts are NOT seeded here.
--- The application automatically creates the admin account on first startup using
--- credentials provided via the ADMIN_EMAIL and ADMIN_PASSWORD environment variables.
--- Agent accounts are created through the Admin portal (POST /admin/users/agents).
--- ──────────────────────────────────────────────────────────────────────────────
-
--- Sample insurance packages
-INSERT IGNORE INTO insurance_packages
-    (name, type, description, coverage_min, coverage_max, premium_rate, durations, benefits, active)
+-- ─── Seed Data ────────────────────────────────────────────────────
+INSERT IGNORE INTO insurance_packages (name, type, description, coverage_min, coverage_max, premium_rate, durations, benefits, active)
 VALUES
 (
     'Basic Life Protection',

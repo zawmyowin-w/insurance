@@ -11,7 +11,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "form_templates")
+@Table(
+    name = "form_templates",
+    uniqueConstraints = @UniqueConstraint(
+        name = "uk_form_template_package_type",
+        columnNames = {"package_id", "form_type"}
+    )
+)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -25,13 +31,16 @@ public class FormTemplate {
     @Column(nullable = false)
     private String name;
 
-    /** LIFE | HEALTH | VEHICLE | PROPERTY */
-    @Column(name = "insurance_type", nullable = false, length = 20)
-    private String insuranceType;
+    /** FK to the specific insurance plan/package this form belongs to */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "package_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private InsurancePackage insurancePackage;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "form_type", nullable = false)
-    private FormType formType;
+    private FormType formType;  // APPLICATION | CLAIM
 
     @Column(columnDefinition = "TEXT")
     private String description;

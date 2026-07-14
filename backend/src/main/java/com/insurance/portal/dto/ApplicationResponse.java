@@ -26,6 +26,7 @@ public class ApplicationResponse {
     private String adminNote;
     private String commonInfo;
     private String extraInfo;
+    private String formData;
     private String policyNumber;
     private String riskLevel;
     private BigDecimal premiumAmount;
@@ -57,6 +58,7 @@ public class ApplicationResponse {
         dto.setAdminNote(app.getAdminNote());
         dto.setCommonInfo(app.getCommonInfo());
         dto.setExtraInfo(app.getExtraInfo());
+        dto.setFormData(app.getFormData());
         dto.setPolicyNumber(app.getPolicyNumber());
         dto.setRiskLevel(app.getRiskLevel());
         dto.setPremiumAmount(app.getPremiumAmount());

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
+import FormDetailModal from '../../components/FormDetailModal'
 
 export default function AdminClaimsPage() {
   const [claims, setClaims] = useState([])
@@ -9,9 +10,13 @@ export default function AdminClaimsPage() {
   const [selected, setSelected] = useState(null)
   const [actionNote, setActionNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [viewItem, setViewItem] = useState(null)
 
   const fetchClaims = () => {
-    api.get(`/admin/claims${filter !== 'ALL' ? `?status=${filter}` : ''}`).then(res => setClaims(Array.isArray(res.data) ? res.data : [])).catch(() => setClaims([])).finally(() => setLoading(false))
+    api.get(`/admin/claims${filter !== 'ALL' ? `?status=${filter}` : ''}`)
+      .then(res => setClaims(Array.isArray(res.data) ? res.data : []))
+      .catch(() => setClaims([]))
+      .finally(() => setLoading(false))
   }
   useEffect(() => { setLoading(true); fetchClaims() }, [filter])
 
@@ -66,10 +71,10 @@ export default function AdminClaimsPage() {
                       </div>
                       <span className={`badge-status badge-${claim.status?.toLowerCase()}`}>{claim.status}</span>
                     </div>
-                    <div className="d-flex gap-3 flex-wrap">
+                    <div className="d-flex gap-3 flex-wrap mb-2">
                       {[
                         { label: 'Policy', value: claim.policyName || claim.policy?.packageName },
-                        { label: 'Claim Amount', value: `${Number(claim.amount).toLocaleString()} MMK` },
+                        { label: 'Amount', value: `${Number(claim.amount).toLocaleString()} MMK` },
                         { label: 'Incident Date', value: claim.incidentDate ? new Date(claim.incidentDate).toLocaleDateString() : '—' },
                         { label: 'Submitted', value: claim.createdAt ? new Date(claim.createdAt).toLocaleDateString() : '—' },
                         { label: 'Agent', value: claim.agentName || claim.agent?.name || 'N/A' },
@@ -80,8 +85,14 @@ export default function AdminClaimsPage() {
                         </div>
                       ))}
                     </div>
-                    {claim.description && <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '0.75rem 0 0' }}>{claim.description}</p>}
-                    {claim.agentNote && <p style={{ color: '#1d4ed8', fontSize: '0.85rem', margin: '0.25rem 0 0' }}>Agent: {claim.agentNote}</p>}
+                    <button onClick={() => setViewItem(claim)} style={{
+                      padding: '0.3rem 0.8rem', borderRadius: 7, border: '1.5px solid var(--border)',
+                      background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer',
+                      fontSize: '0.8rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4
+                    }}>
+                      <i className="bi bi-eye"></i> View Details
+                    </button>
+                    {claim.agentNote && <p style={{ color: '#1d4ed8', fontSize: '0.85rem', margin: '0.5rem 0 0' }}>Agent: {claim.agentNote}</p>}
                   </div>
                   {claim.status === 'VERIFIED' && (
                     <div className="col-12 col-md-4 mt-3 mt-md-0">
@@ -113,6 +124,10 @@ export default function AdminClaimsPage() {
           ))}
         </div>
       )}
+
+      <FormDetailModal
+        show={!!viewItem} onClose={() => setViewItem(null)}
+        type="claim" item={viewItem} role="admin" />
     </div>
   )
 }

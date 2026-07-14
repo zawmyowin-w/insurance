@@ -55,6 +55,14 @@ public class Claim {
     @Column(name = "documents_path")
     private String documentsPath;
 
+    /**
+     * JSON: dynamic claim form submission data.
+     * Format: { "fieldId": "value", ... }
+     * For IMAGE_UPLOAD/PDF_UPLOAD fields: value is the server-stored file path.
+     */
+    @Column(name = "form_data", columnDefinition = "TEXT")
+    private String formData;
+
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private ClaimStatus status = ClaimStatus.PENDING;

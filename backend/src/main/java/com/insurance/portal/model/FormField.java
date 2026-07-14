@@ -29,6 +29,10 @@ public class FormField {
     @Column(name = "field_type", nullable = false)
     private FieldType fieldType;
 
+    /** For CHECKBOX: JSON array of option strings, e.g. ["Yes","No"] or ["Option A","Option B"] */
+    @Column(name = "field_options", columnDefinition = "TEXT")
+    private String fieldOptions;
+
     @Builder.Default
     private boolean required = false;
 

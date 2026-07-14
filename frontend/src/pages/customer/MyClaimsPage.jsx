@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
+import FormDetailModal from '../../components/FormDetailModal'
 
 export default function MyClaimsPage() {
-  const { t } = useTranslation()
   const [claims, setClaims] = useState([])
   const [loading, setLoading] = useState(true)
+  const [viewItem, setViewItem] = useState(null)
 
   useEffect(() => {
     api.get('/customer/claims')
@@ -33,38 +33,52 @@ export default function MyClaimsPage() {
         <div className="card-custom text-center py-5">
           <i className="bi bi-file-earmark-medical" style={{ fontSize: '3rem', color: 'var(--border)' }}></i>
           <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>No claims submitted yet</h5>
-          <Link to="/customer/submit-claim" className="btn-primary-custom mt-3" style={{ display: 'inline-flex' }}>
-            Submit a Claim
-          </Link>
+          <Link to="/customer/submit-claim" className="btn-primary-custom mt-3" style={{ display: 'inline-flex' }}>Submit a Claim</Link>
         </div>
       ) : (
-        <div className="card-custom p-0">
-          <div className="table-custom">
-            <table className="w-100">
-              <thead>
-                <tr>
-                  {['#', 'Policy', 'Claim Type', 'Amount (MMK)', 'Status', 'Submitted', 'Notes'].map(h => <th key={h}>{h}</th>)}
-                </tr>
-              </thead>
-              <tbody>
-                {claims.map(claim => (
-                  <tr key={claim.id}>
-                    <td style={{ color: 'var(--text-muted)', fontWeight: 500 }}>#{claim.id}</td>
-                    <td style={{ fontWeight: 500 }}>{claim.policyName || claim.policy?.packageName}</td>
-                    <td>{claim.claimType}</td>
-                    <td>{Number(claim.amount).toLocaleString()}</td>
-                    <td><span className={`badge-status badge-${claim.status?.toLowerCase()}`}>{claim.status}</span></td>
-                    <td>{claim.createdAt ? new Date(claim.createdAt).toLocaleDateString() : '—'}</td>
-                    <td style={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                      {claim.adminNote || claim.agentNote || '—'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <div className="d-flex flex-column gap-3">
+          {claims.map(claim => (
+            <div key={claim.id} className="card-custom">
+              <div className="row align-items-center g-2">
+                <div className="col-12 col-md-7">
+                  <div className="d-flex align-items-center gap-3 mb-1">
+                    <div>
+                      <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.95rem' }}>
+                        {claim.policyName || claim.policy?.packageName}
+                      </div>
+                      <small style={{ color: 'var(--text-muted)' }}>
+                        #{claim.id} · {claim.claimType} · {claim.createdAt ? new Date(claim.createdAt).toLocaleDateString() : '—'}
+                      </small>
+                    </div>
+                    <span className={`badge-status badge-${claim.status?.toLowerCase()}`}>{claim.status}</span>
+                  </div>
+                  <div className="d-flex gap-3 flex-wrap" style={{ fontSize: '0.83rem' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>Amount: <strong style={{ color: 'var(--text-primary)' }}>{Number(claim.amount).toLocaleString()} MMK</strong></span>
+                    {claim.incidentDate && <span style={{ color: 'var(--text-muted)' }}>Incident: <strong style={{ color: 'var(--text-primary)' }}>{new Date(claim.incidentDate).toLocaleDateString()}</strong></span>}
+                  </div>
+                  {claim.adminNote && <p style={{ color: '#16a34a', fontSize: '0.82rem', margin: '0.4rem 0 0' }}><i className="bi bi-check-circle me-1"></i>{claim.adminNote}</p>}
+                  {claim.agentNote && <p style={{ color: '#1d4ed8', fontSize: '0.82rem', margin: '0.25rem 0 0' }}><i className="bi bi-person me-1"></i>Agent: {claim.agentNote}</p>}
+                </div>
+                <div className="col-12 col-md-5">
+                  <div className="d-flex justify-content-md-end">
+                    <button onClick={() => setViewItem(claim)} style={{
+                      padding: '0.4rem 0.9rem', borderRadius: 8, border: '1.5px solid #d97706',
+                      background: 'transparent', color: '#d97706', cursor: 'pointer',
+                      fontWeight: 600, fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: 4
+                    }}>
+                      <i className="bi bi-eye"></i> View Form
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
+
+      <FormDetailModal
+        show={!!viewItem} onClose={() => setViewItem(null)}
+        type="claim" item={viewItem} role="customer" />
     </div>
   )
 }

@@ -1,11 +1,14 @@
 package com.insurance.portal.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.insurance.portal.dto.*;
 import com.insurance.portal.model.*;
 import com.insurance.portal.model.enums.*;
 import com.insurance.portal.repository.*;
 import com.insurance.portal.util.FileStorageUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
@@ -63,37 +67,55 @@ public class CustomerController {
                 .map(ApplicationResponse::from).toList();
     }
 
+    /**
+     * Submit an insurance application.
+     * Accepts multipart/form-data with:
+     *   - packageId, coverageAmount, duration (required)
+     *   - formData: JSON string {fieldId: value, ...} from the dynamic form
+     *   - File fields named "file_<fieldId>" for IMAGE_UPLOAD / PDF_UPLOAD fields
+     *   - notes, commonInfo, extraInfo (legacy / optional)
+     */
     @PostMapping(value = "/applications", consumes = {"multipart/form-data"})
     @Transactional
-    public ResponseEntity<?> submitApplication(@AuthenticationPrincipal UserDetails principal,
-                                               @RequestParam String packageId,
-                                               @RequestParam String coverageAmount,
-                                               @RequestParam String duration,
-                                               @RequestParam(required = false) String notes,
-                                               @RequestParam(required = false) String commonInfo,
-                                               @RequestParam(required = false) String extraInfo,
-                                               @RequestParam(required = false) List<MultipartFile> documents) {
+    public ResponseEntity<?> submitApplication(
+            @AuthenticationPrincipal UserDetails principal,
+            @RequestParam String packageId,
+            @RequestParam String coverageAmount,
+            @RequestParam String duration,
+            @RequestParam(required = false) String notes,
+            @RequestParam(required = false) String commonInfo,
+            @RequestParam(required = false) String extraInfo,
+            @RequestParam(required = false) String formData,
+            @RequestParam Map<String, String> allParams,
+            @RequestPart(required = false) Map<String, MultipartFile> allFiles,
+            @RequestParam(required = false) List<MultipartFile> documents) {
+
         User user = getUser(principal);
         Long pkgId = Long.valueOf(packageId);
         InsurancePackage pkg = packageRepo.findById(pkgId)
                 .orElseThrow(() -> new RuntimeException("Package not found"));
-        if (!pkg.isActive()) return ResponseEntity.badRequest().body(Map.of("message", "This package is no longer available"));
+        if (!pkg.isActive())
+            return ResponseEntity.badRequest().body(Map.of("message", "This package is no longer available"));
 
         BigDecimal coverage = new BigDecimal(coverageAmount);
         int dur = Integer.parseInt(duration);
 
-        // Calculate risk and premium
         String riskLevel = calculateRisk(pkg.getType(), commonInfo, extraInfo);
         BigDecimal premiumAmount = calculatePremium(coverage, pkg.getPremiumRate(), dur, riskLevel);
         String policyNumber = generatePolicyNumber(pkg.getType());
 
-        // Assign first available agent matching insurance type
         List<User> agents = userRepo.findAllByRoleAndActive(Role.AGENT, true);
         User agent = agents.stream()
                 .filter(a -> a.getInsuranceType() == null
                         || "ALL".equals(a.getInsuranceType())
                         || a.getInsuranceType().equals(pkg.getType()))
                 .findFirst().orElse(agents.isEmpty() ? null : agents.get(0));
+
+        // Process dynamic form file uploads: fields named "file_<fieldId>"
+        String processedFormData = formData;
+        if (allFiles != null && !allFiles.isEmpty() && formData != null) {
+            processedFormData = processFormFileUploads(formData, allFiles, "applications", "app_field");
+        }
 
         String documentsJson;
         try {
@@ -113,6 +135,7 @@ public class CustomerController {
                 .notes(notes)
                 .commonInfo(commonInfo)
                 .extraInfo(extraInfo)
+                .formData(processedFormData)
                 .riskLevel(riskLevel)
                 .premiumAmount(premiumAmount)
                 .policyNumber(policyNumber)
@@ -129,13 +152,10 @@ public class CustomerController {
         User user = getUser(principal);
         PolicyApplication app = appRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Application not found"));
-        // Ownership check
-        if (!app.getCustomer().getId().equals(user.getId())) {
+        if (!app.getCustomer().getId().equals(user.getId()))
             return ResponseEntity.status(403).body(Map.of("message", "Forbidden"));
-        }
-        if (app.getStatus() != ApplicationStatus.PENDING) {
+        if (app.getStatus() != ApplicationStatus.PENDING)
             return ResponseEntity.badRequest().body(Map.of("message", "Only PENDING applications can be cancelled"));
-        }
         app.setStatus(ApplicationStatus.CANCELLED);
         appRepo.save(app);
         return ResponseEntity.ok(Map.of("message", "Application cancelled"));
@@ -151,28 +171,40 @@ public class CustomerController {
                 .map(ClaimResponse::from).toList();
     }
 
-    @PostMapping("/claims")
+    /**
+     * Submit an insurance claim.
+     * Accepts multipart/form-data with:
+     *   - applicationId, claimType, amount, description, incidentDate (required)
+     *   - formData: JSON string {fieldId: value, ...} from the dynamic claim form
+     *   - File fields named "file_<fieldId>" for upload fields
+     */
+    @PostMapping(value = "/claims", consumes = {"multipart/form-data"})
     @Transactional
-    public ResponseEntity<?> submitClaim(@AuthenticationPrincipal UserDetails principal,
-                                         @RequestParam String applicationId,
-                                         @RequestParam String claimType,
-                                         @RequestParam String amount,
-                                         @RequestParam String description,
-                                         @RequestParam String incidentDate,
-                                         @RequestParam(required = false) List<MultipartFile> documents) {
+    public ResponseEntity<?> submitClaim(
+            @AuthenticationPrincipal UserDetails principal,
+            @RequestParam String applicationId,
+            @RequestParam String claimType,
+            @RequestParam String amount,
+            @RequestParam String description,
+            @RequestParam String incidentDate,
+            @RequestParam(required = false) String formData,
+            @RequestPart(required = false) Map<String, MultipartFile> allFiles,
+            @RequestParam(required = false) List<MultipartFile> documents) {
+
         User user = getUser(principal);
         PolicyApplication app = appRepo.findById(Long.valueOf(applicationId))
                 .orElseThrow(() -> new RuntimeException("Application not found"));
-        // Ownership check - claim must be for own approved application
-        if (!app.getCustomer().getId().equals(user.getId())) {
+        if (!app.getCustomer().getId().equals(user.getId()))
             return ResponseEntity.status(403).body(Map.of("message", "This application does not belong to you"));
-        }
-        if (app.getStatus() != ApplicationStatus.APPROVED) {
+        if (app.getStatus() != ApplicationStatus.APPROVED)
             return ResponseEntity.badRequest().body(Map.of("message", "Claims can only be submitted for APPROVED policies"));
-        }
-        // Only one claim allowed per policy, regardless of that claim's current status
-        if (claimRepo.existsByApplication_Id(app.getId())) {
+        if (claimRepo.existsByApplication_Id(app.getId()))
             return ResponseEntity.badRequest().body(Map.of("message", "A claim has already been submitted for this policy. Only one claim is allowed per policy."));
+
+        // Process dynamic form file uploads
+        String processedFormData = formData;
+        if (allFiles != null && !allFiles.isEmpty() && formData != null) {
+            processedFormData = processFormFileUploads(formData, allFiles, "claims", "claim_field");
         }
 
         String documentsJson;
@@ -193,6 +225,7 @@ public class CustomerController {
                 .description(description)
                 .incidentDate(LocalDate.parse(incidentDate))
                 .documentsPath(documentsJson)
+                .formData(processedFormData)
                 .status(ClaimStatus.PENDING)
                 .build();
         return ResponseEntity.ok(ClaimResponse.from(claimRepo.save(claim)));
@@ -208,7 +241,7 @@ public class CustomerController {
                 .map(PaymentResponse::from).toList();
     }
 
-    private static final java.util.Set<String> VALID_PAYMENT_METHODS = java.util.Set.of("KBZ_PAY", "WAVE_PAY", "AYA_PAY");
+    private static final Set<String> VALID_PAYMENT_METHODS = Set.of("KBZ_PAY", "WAVE_PAY", "AYA_PAY");
 
     @PostMapping("/payments")
     @Transactional
@@ -220,23 +253,16 @@ public class CustomerController {
         User user = getUser(principal);
         PolicyApplication app = appRepo.findById(Long.valueOf(applicationId))
                 .orElseThrow(() -> new RuntimeException("Application not found"));
-        // Ownership check
-        if (!app.getCustomer().getId().equals(user.getId())) {
+        if (!app.getCustomer().getId().equals(user.getId()))
             return ResponseEntity.status(403).body(Map.of("message", "This application does not belong to you"));
-        }
-        if (app.getStatus() != ApplicationStatus.APPROVED) {
+        if (app.getStatus() != ApplicationStatus.APPROVED)
             return ResponseEntity.badRequest().body(Map.of("message", "Payment can only be submitted for APPROVED applications"));
-        }
-        // Check if pending payment already exists
-        if (paymentRepo.existsByApplication_IdAndStatus(app.getId(), PaymentStatus.PENDING)) {
+        if (paymentRepo.existsByApplication_IdAndStatus(app.getId(), PaymentStatus.PENDING))
             return ResponseEntity.badRequest().body(Map.of("message", "A pending payment already exists for this application"));
-        }
-        if (paymentMethod == null || !VALID_PAYMENT_METHODS.contains(paymentMethod)) {
+        if (paymentMethod == null || !VALID_PAYMENT_METHODS.contains(paymentMethod))
             return ResponseEntity.badRequest().body(Map.of("message", "Please select a valid payment method (KBZPay, Wave Pay, or AYA Pay)"));
-        }
-        if (screenshot == null || screenshot.isEmpty()) {
+        if (screenshot == null || screenshot.isEmpty())
             return ResponseEntity.badRequest().body(Map.of("message", "A payment proof screenshot is required"));
-        }
 
         String screenshotPath;
         try {
@@ -248,19 +274,15 @@ public class CustomerController {
         }
 
         Payment payment = Payment.builder()
-                .application(app)
-                .customer(user)
+                .application(app).customer(user)
                 .amount(app.getPremiumAmount())
-                .paymentType("PREMIUM")
-                .paymentMethod(paymentMethod)
-                .screenshotPath(screenshotPath)
-                .notes(notes)
-                .status(PaymentStatus.PENDING)
-                .build();
+                .paymentType("PREMIUM").paymentMethod(paymentMethod)
+                .screenshotPath(screenshotPath).notes(notes)
+                .status(PaymentStatus.PENDING).build();
         return ResponseEntity.ok(PaymentResponse.from(paymentRepo.save(payment)));
     }
 
-    // ── Active Policies (APPROVED applications) ─────────────────────
+    // ── Active Policies ─────────────────────────────────────────────
     @GetMapping("/policies")
     @Transactional(readOnly = true)
     public List<?> getActivePolicies(@AuthenticationPrincipal UserDetails principal) {
@@ -284,7 +306,6 @@ public class CustomerController {
                 }).toList();
     }
 
-    // Renew an existing active policy
     @PostMapping("/applications/{id}/renew")
     @Transactional
     public ResponseEntity<?> renewPolicy(@PathVariable Long id,
@@ -307,12 +328,34 @@ public class CustomerController {
                 .notes("Renewal of policy " + original.getPolicyNumber())
                 .commonInfo(original.getCommonInfo())
                 .extraInfo(original.getExtraInfo())
+                .formData(original.getFormData())
                 .riskLevel(original.getRiskLevel())
                 .premiumAmount(original.getPremiumAmount())
                 .policyNumber(newPolicyNumber)
                 .status(ApplicationStatus.PENDING)
                 .build();
         return ResponseEntity.ok(ApplicationResponse.from(appRepo.save(renewal)));
+    }
+
+    // ── Form field file serving ──────────────────────────────────────
+    @GetMapping("/applications/{id}/form-file/{fieldId}")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getApplicationFormFile(@PathVariable Long id, @PathVariable String fieldId,
+            @AuthenticationPrincipal UserDetails principal) {
+        User user = getUser(principal);
+        PolicyApplication app = appRepo.findById(id).orElseThrow();
+        if (!app.getCustomer().getId().equals(user.getId())) return ResponseEntity.status(403).build();
+        return serveFormFile(app.getFormData(), fieldId);
+    }
+
+    @GetMapping("/claims/{id}/form-file/{fieldId}")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getClaimFormFile(@PathVariable Long id, @PathVariable String fieldId,
+            @AuthenticationPrincipal UserDetails principal) {
+        User user = getUser(principal);
+        Claim claim = claimRepo.findById(id).orElseThrow();
+        if (!claim.getCustomer().getId().equals(user.getId())) return ResponseEntity.status(403).build();
+        return serveFormFile(claim.getFormData(), fieldId);
     }
 
     // ── Notifications ────────────────────────────────────────────────
@@ -322,17 +365,57 @@ public class CustomerController {
         User user = getUser(principal);
         return notifRepo.findAllByRecipientOrderByCreatedAtDesc(user).stream().map(n -> {
             Map<String, Object> m = new HashMap<>();
-            m.put("id", n.getId());
-            m.put("title", n.getTitle());
-            m.put("message", n.getMessage());
-            m.put("type", n.getType().name());
-            m.put("read", n.isRead());
-            m.put("createdAt", n.getCreatedAt());
+            m.put("id", n.getId()); m.put("title", n.getTitle()); m.put("message", n.getMessage());
+            m.put("type", n.getType().name()); m.put("read", n.isRead()); m.put("createdAt", n.getCreatedAt());
             return m;
         }).toList();
     }
 
     // ── Helper methods ───────────────────────────────────────────────
+    @SuppressWarnings("unchecked")
+    private ResponseEntity<?> serveFormFile(String formDataJson, String fieldId) {
+        if (formDataJson == null) return ResponseEntity.notFound().build();
+        try {
+            Map<String, Object> data = new ObjectMapper().readValue(formDataJson, Map.class);
+            Object val = data.get(fieldId);
+            if (val == null) return ResponseEntity.notFound().build();
+            File file = new File(val.toString());
+            if (!file.exists()) return ResponseEntity.notFound().build();
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(FileStorageUtil.contentTypeFor(val.toString())))
+                    .body(new FileSystemResource(file));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    /**
+     * Replaces placeholder values in formData JSON for file upload fields.
+     * Fields named "file_<fieldId>" in allFiles are saved and their paths
+     * replace the corresponding fieldId entry in formData.
+     */
+    private String processFormFileUploads(String formData, Map<String, MultipartFile> allFiles,
+                                          String subDir, String prefix) {
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            @SuppressWarnings("unchecked")
+            Map<String, Object> dataMap = mapper.readValue(formData, Map.class);
+            for (Map.Entry<String, MultipartFile> entry : allFiles.entrySet()) {
+                String key = entry.getKey();
+                if (key.startsWith("file_") && entry.getValue() != null && !entry.getValue().isEmpty()) {
+                    String fieldId = key.substring(5); // strip "file_"
+                    try {
+                        String path = FileStorageUtil.saveDocument(entry.getValue(), subDir, prefix);
+                        if (path != null) dataMap.put(fieldId, path);
+                    } catch (Exception ignored) {}
+                }
+            }
+            return mapper.writeValueAsString(dataMap);
+        } catch (Exception e) {
+            return formData; // return original if parsing fails
+        }
+    }
+
     private String calculateRisk(String type, String commonInfoJson, String extraInfoJson) {
         int score = 0;
         try {
@@ -340,8 +423,7 @@ public class CustomerController {
                 java.util.regex.Matcher m = java.util.regex.Pattern.compile("\"dob\"\\s*:\\s*\"(\\d{4})-").matcher(commonInfoJson);
                 if (m.find()) {
                     int age = java.time.Year.now().getValue() - Integer.parseInt(m.group(1));
-                    if (age > 55) score += 3;
-                    else if (age > 40) score += 1;
+                    if (age > 55) score += 3; else if (age > 40) score += 1;
                 }
             }
             if (extraInfoJson != null) {
@@ -355,9 +437,8 @@ public class CustomerController {
                 if ("MOTOR".equals(type) || "VEHICLE".equals(type)) {
                     java.util.regex.Matcher m = java.util.regex.Pattern.compile("\"vehicleYear\"\\s*:\\s*\"?(\\d{4})").matcher(extraInfoJson);
                     if (m.find()) {
-                        int vehicleAge = java.time.Year.now().getValue() - Integer.parseInt(m.group(1));
-                        if (vehicleAge > 10) score += 3;
-                        else if (vehicleAge > 5) score += 1;
+                        int va = java.time.Year.now().getValue() - Integer.parseInt(m.group(1));
+                        if (va > 10) score += 3; else if (va > 5) score += 1;
                     }
                 }
             }
@@ -368,7 +449,8 @@ public class CustomerController {
     private BigDecimal calculatePremium(BigDecimal coverage, BigDecimal rate, int duration, String risk) {
         double multiplier = "HIGH".equals(risk) ? 1.5 : "MEDIUM".equals(risk) ? 1.2 : 1.0;
         if (rate == null) return BigDecimal.ZERO;
-        return coverage.multiply(rate).multiply(BigDecimal.valueOf(duration)).multiply(BigDecimal.valueOf(multiplier)).setScale(2, java.math.RoundingMode.HALF_UP);
+        return coverage.multiply(rate).multiply(BigDecimal.valueOf(duration))
+                .multiply(BigDecimal.valueOf(multiplier)).setScale(2, java.math.RoundingMode.HALF_UP);
     }
 
     private String generatePolicyNumber(String type) {

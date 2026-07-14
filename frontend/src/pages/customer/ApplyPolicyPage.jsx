@@ -4,40 +4,19 @@ import { useAuth } from '../../context/AuthContext'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 
-const ALL_TYPES = ['LIFE', 'HEALTH', 'TRAVEL', 'MOTOR', 'EDUCATION', 'VEHICLE', 'PROPERTY']
+const ALL_TYPES = ['LIFE', 'HEALTH', 'VEHICLE', 'PROPERTY']
 const TYPE_META = {
-  LIFE:      { color: '#dc2626', bg: '#fef2f2',  icon: 'bi-heart-pulse',  label: 'Life Insurance' },
-  HEALTH:    { color: '#16a34a', bg: '#f0fdf4',  icon: 'bi-hospital',     label: 'Health Insurance' },
-  TRAVEL:    { color: '#0891b2', bg: '#ecfeff',  icon: 'bi-airplane',     label: 'Travel Insurance' },
-  MOTOR:     { color: '#d97706', bg: '#fffbeb',  icon: 'bi-car-front',    label: 'Motor Insurance' },
-  EDUCATION: { color: '#7c3aed', bg: '#f5f3ff',  icon: 'bi-mortarboard',  label: 'Education Insurance' },
-  VEHICLE:   { color: '#2563eb', bg: '#eff6ff',  icon: 'bi-truck',        label: 'Vehicle Insurance' },
-  PROPERTY:  { color: '#ca8a04', bg: '#fefce8',  icon: 'bi-house-check',  label: 'Property Insurance' },
+  LIFE:     { color: '#dc2626', bg: '#fef2f2', icon: 'bi-heart-pulse',  label: 'Life Insurance' },
+  HEALTH:   { color: '#16a34a', bg: '#f0fdf4', icon: 'bi-hospital',     label: 'Health Insurance' },
+  VEHICLE:  { color: '#2563eb', bg: '#eff6ff', icon: 'bi-truck',        label: 'Vehicle Insurance' },
+  PROPERTY: { color: '#ca8a04', bg: '#fefce8', icon: 'bi-house-check',  label: 'Property Insurance' },
 }
 
 const STEPS = [
-  { id: 1, title: 'Select Plan',    icon: 'bi-grid-3x3-gap' },
-  { id: 2, title: 'Personal Info',  icon: 'bi-person-vcard' },
-  { id: 3, title: 'Plan Details',   icon: 'bi-clipboard-data' },
-  { id: 4, title: 'Risk & Premium', icon: 'bi-calculator' },
-  { id: 5, title: 'Review',         icon: 'bi-check2-circle' },
+  { id: 1, title: 'Select Plan',   icon: 'bi-grid-3x3-gap' },
+  { id: 2, title: 'Fill Form',     icon: 'bi-ui-checks' },
+  { id: 3, title: 'Review',        icon: 'bi-check2-circle' },
 ]
-
-const calcRisk = (type, com, ext) => {
-  let s = 0
-  if (com.dob) { const age = new Date().getFullYear() - new Date(com.dob).getFullYear(); if (age > 55) s += 3; else if (age > 40) s += 1 }
-  if (type === 'LIFE') { if (ext.smoking) s += 2; if (ext.hasDisease) s += 2 }
-  if (type === 'HEALTH' && ext.existingDiseases?.trim()) s += 2
-  if ((type === 'MOTOR' || type === 'VEHICLE') && ext.vehicleYear) {
-    const va = new Date().getFullYear() - parseInt(ext.vehicleYear)
-    if (va > 10) s += 3; else if (va > 5) s += 1
-  }
-  return s <= 1 ? 'LOW' : s <= 3 ? 'MEDIUM' : 'HIGH'
-}
-const calcPremium = (cov, rate, dur, risk) => Math.round(cov * rate * dur * (risk === 'HIGH' ? 1.5 : risk === 'MEDIUM' ? 1.2 : 1.0))
-
-const initCommon = { fullName: '', fatherName: '', nrc: '', dob: '', phone: '', email: '', address: '', occupation: '', maritalStatus: 'Single', monthlyIncome: '' }
-const initExtra = { beneficiaryName: '', beneficiaryRelation: '', smoking: false, hasDisease: false, diseaseDetails: '', bloodType: '', existingDiseases: '', allergies: '', preferredHospital: '', passportNumber: '', destination: '', travelDate: '', returnDate: '', vehicleReg: '', engineNumber: '', chassisNumber: '', vehicleValue: '', drivingLicense: '', vehicleYear: '', studentName: '', studentDob: '', parentName: '', schoolName: '', educationGoal: '' }
 
 export default function ApplyPolicyPage() {
   const { user } = useAuth()
@@ -49,328 +28,487 @@ export default function ApplyPolicyPage() {
   const [plans, setPlans] = useState([])
   const [typeFilter, setTypeFilter] = useState('ALL')
   const [selectedPlan, setSelectedPlan] = useState(null)
-  const [common, setCommon] = useState({ ...initCommon, fullName: user?.name || '', email: user?.email || '' })
-  const [extra, setExtra] = useState(initExtra)
   const [coverage, setCoverage] = useState('')
   const [duration, setDuration] = useState(1)
-  const [docs, setDocs] = useState([])
+  const [notes, setNotes] = useState('')
+
+  // Dynamic form state
+  const [template, setTemplate] = useState(null)
+  const [templateLoading, setTemplateLoading] = useState(false)
+  const [fieldValues, setFieldValues] = useState({})   // fieldId -> value (text/checkbox)
+  const [fieldFiles, setFieldFiles]   = useState({})   // fieldId -> File
+
   const [submitting, setSubmitting] = useState(false)
 
+  // Load plans
   useEffect(() => {
     api.get('/packages/public').then(res => {
       const pkgs = Array.isArray(res.data) ? res.data : []
       setPlans(pkgs)
       if (preselectedId) {
         const p = pkgs.find(x => x.id === Number(preselectedId))
-        if (p) { setSelectedPlan(p); setCoverage(String(p.coverageMin || '')); setStep(2) }
+        if (p) { selectPlan(p); }
       }
     }).catch(() => {})
   }, [])
 
-  const risk    = selectedPlan ? calcRisk(selectedPlan.type, common, extra) : 'LOW'
-  const premium = selectedPlan && coverage ? calcPremium(Number(coverage), selectedPlan.premiumRate, duration, risk) : null
-
-  const setC = (k, v) => setCommon(c => ({ ...c, [k]: v }))
-  const setE = (k, v) => setExtra(x => ({ ...x, [k]: v }))
+  // Load form template when plan is selected
+  useEffect(() => {
+    if (!selectedPlan) { setTemplate(null); return }
+    setTemplateLoading(true)
+    setFieldValues({})
+    setFieldFiles({})
+    api.get(`/forms/public?packageId=${selectedPlan.id}&formType=APPLICATION`)
+      .then(res => setTemplate(res.data))
+      .catch(() => setTemplate(null))
+      .finally(() => setTemplateLoading(false))
+  }, [selectedPlan?.id])
 
   const selectPlan = (plan) => {
-    setSelectedPlan(plan); setCoverage(String(plan.coverageMin || '')); setStep(2)
+    setSelectedPlan(plan)
+    setCoverage(String(plan.coverageMin || ''))
+    setDuration((plan.durations?.[0]) || 1)
+    setStep(2)
   }
 
-  const submit = async () => {
+  const handleFieldValue = (fieldId, value) => setFieldValues(v => ({ ...v, [String(fieldId)]: value }))
+  const handleFieldFile  = (fieldId, file)  => setFieldFiles(v => ({ ...v, [String(fieldId)]: file }))
+  const handleCheckboxOption = (fieldId, option, checked) => {
+    setFieldValues(prev => {
+      const current = Array.isArray(prev[String(fieldId)]) ? prev[String(fieldId)] : []
+      const next = checked ? [...current, option] : current.filter(o => o !== option)
+      return { ...prev, [String(fieldId)]: next }
+    })
+  }
+
+  const validateForm = () => {
+    if (!coverage || isNaN(Number(coverage)) || Number(coverage) <= 0) {
+      toast.error('Please enter a valid coverage amount'); return false
+    }
+    if (selectedPlan && Number(coverage) < Number(selectedPlan.coverageMin)) {
+      toast.error(`Coverage must be at least ${Number(selectedPlan.coverageMin).toLocaleString()} MMK`); return false
+    }
+    if (selectedPlan && Number(coverage) > Number(selectedPlan.coverageMax)) {
+      toast.error(`Coverage cannot exceed ${Number(selectedPlan.coverageMax).toLocaleString()} MMK`); return false
+    }
+    if (template?.fields) {
+      for (const field of template.fields) {
+        if (field.fieldType === 'LABEL' || !field.required) continue
+        const val = fieldValues[String(field.id)]
+        const file = fieldFiles[String(field.id)]
+        if ((field.fieldType === 'IMAGE_UPLOAD' || field.fieldType === 'PDF_UPLOAD') && !file) {
+          toast.error(`"${field.fieldLabel}" is required`); return false
+        }
+        if (field.fieldType !== 'IMAGE_UPLOAD' && field.fieldType !== 'PDF_UPLOAD') {
+          if (val === undefined || val === null || val === '' || (Array.isArray(val) && val.length === 0)) {
+            toast.error(`"${field.fieldLabel}" is required`); return false
+          }
+        }
+      }
+    }
+    return true
+  }
+
+  const handleSubmit = async () => {
+    if (!validateForm()) return
     setSubmitting(true)
     try {
+      // Build formData JSON (non-file values)
+      const formDataObj = {}
+      Object.entries(fieldValues).forEach(([k, v]) => {
+        formDataObj[k] = Array.isArray(v) ? JSON.stringify(v) : v
+      })
+
       const fd = new FormData()
       fd.append('packageId', selectedPlan.id)
-      fd.append('coverageAmount', Number(coverage))
+      fd.append('coverageAmount', coverage)
       fd.append('duration', duration)
-      fd.append('commonInfo', JSON.stringify(common))
-      fd.append('extraInfo', JSON.stringify(extra))
-      fd.append('notes', `Risk: ${risk} | Est. Premium: ${premium?.toLocaleString()} MMK`)
-      docs.forEach(d => fd.append('documents', d))
+      fd.append('notes', notes)
+      fd.append('formData', JSON.stringify(formDataObj))
+
+      // Append file fields
+      Object.entries(fieldFiles).forEach(([fieldId, file]) => {
+        if (file) fd.append(`file_${fieldId}`, file)
+      })
+
       await api.post('/customer/applications', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
       toast.success('Application submitted successfully!')
       navigate('/customer/applications')
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Submission failed')
-    } finally { setSubmitting(false) }
+      toast.error(err.response?.data?.message || 'Failed to submit application')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
-  // ── UI helpers ──────────────────────────────────────────────────────
-  const meta = selectedPlan ? (TYPE_META[selectedPlan.type] || { color: '#6b7280', bg: '#f3f4f6', icon: 'bi-shield', label: selectedPlan.type }) : null
-
-  const StepProgress = () => (
-    <div className="d-flex align-items-center justify-content-center mb-4 gap-0 flex-wrap">
-      {STEPS.map((s, i) => (
-        <React.Fragment key={s.id}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, cursor: step > s.id ? 'pointer' : 'default' }}
-               onClick={() => step > s.id && setStep(s.id)}>
-            <div style={{ width: 38, height: 38, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '0.82rem', transition: 'all 0.2s', background: step === s.id ? 'var(--primary)' : step > s.id ? '#16a34a' : 'var(--bg-secondary)', color: step >= s.id ? '#fff' : 'var(--text-muted)' }}>
-              {step > s.id ? <i className="bi bi-check2" style={{ fontSize: '1rem' }}></i> : s.id}
-            </div>
-            <span style={{ fontSize: '0.66rem', color: step === s.id ? 'var(--primary)' : 'var(--text-muted)', fontWeight: step === s.id ? 700 : 400, whiteSpace: 'nowrap' }}>{s.title}</span>
-          </div>
-          {i < STEPS.length - 1 && <div style={{ height: 2, flex: 1, minWidth: 20, maxWidth: 50, background: step > s.id + 1 ? '#16a34a' : step > s.id ? 'var(--primary)' : 'var(--border)', margin: '0 4px', marginBottom: 22, transition: 'background 0.2s' }}></div>}
-        </React.Fragment>
-      ))}
-    </div>
-  )
-
-  const NavBtn = ({ back, next, nextLabel = 'Continue', disabled }) => (
-    <div className="d-flex gap-2 mt-4">
-      {back && <button type="button" onClick={back} className="btn-outline-custom"><i className="bi bi-arrow-left me-1"></i>Back</button>}
-      <button type="button" onClick={next} disabled={disabled || submitting} className="btn-primary-custom flex-grow-1" style={{ justifyContent: 'center' }}>
-        {submitting && <span className="spinner-border spinner-border-sm me-2"></span>}
-        {nextLabel}<i className="bi bi-arrow-right ms-2"></i>
-      </button>
-    </div>
-  )
-
-  const Field = ({ label, value }) => (
-    <div className="d-flex gap-2 mb-2" style={{ fontSize: '0.88rem' }}>
-      <span style={{ color: 'var(--text-muted)', minWidth: 150, flexShrink: 0 }}>{label}</span>
-      <span style={{ color: 'var(--text-primary)', fontWeight: 500 }}>{value || '—'}</span>
-    </div>
-  )
+  const filteredPlans = typeFilter === 'ALL' ? plans : plans.filter(p => p.type === typeFilter)
+  const durations = selectedPlan?.durations || [1, 2, 3, 5]
+  const premium = selectedPlan && coverage
+    ? Math.round(Number(coverage) * selectedPlan.premiumRate * duration)
+    : null
 
   return (
     <div className="fade-in">
       <div className="mb-4">
         <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Apply for Insurance</h4>
-        <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>Complete all steps to submit your application</p>
+        <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>Select a plan and fill in the required details</p>
       </div>
-      <StepProgress />
 
-      {/* ── STEP 1: Select Plan ── */}
+      {/* Step indicator */}
+      <div className="d-flex align-items-center gap-0 mb-5" style={{ maxWidth: 500 }}>
+        {STEPS.map((s, idx) => (
+          <React.Fragment key={s.id}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: idx < STEPS.length - 1 ? 'none' : 1 }}>
+              <div style={{
+                width: 36, height: 36, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: step >= s.id ? 'var(--primary)' : 'var(--bg-secondary)',
+                color: step >= s.id ? '#fff' : 'var(--text-muted)',
+                fontWeight: 700, fontSize: '0.85rem', transition: 'all 0.2s',
+                border: `2px solid ${step >= s.id ? 'var(--primary)' : 'var(--border)'}`
+              }}>
+                {step > s.id ? <i className="bi bi-check2"></i> : s.id}
+              </div>
+              <span style={{ fontSize: '0.72rem', color: step >= s.id ? 'var(--primary)' : 'var(--text-muted)', marginTop: 4, fontWeight: 600, whiteSpace: 'nowrap' }}>{s.title}</span>
+            </div>
+            {idx < STEPS.length - 1 && (
+              <div style={{ flex: 1, height: 2, background: step > s.id ? 'var(--primary)' : 'var(--border)', margin: '0 8px', marginBottom: 20, transition: 'all 0.2s' }}></div>
+            )}
+          </React.Fragment>
+        ))}
+      </div>
+
+      {/* ── Step 1: Plan selection ── */}
       {step === 1 && (
-        <div className="fade-in">
-          <div className="d-flex gap-2 mb-3 flex-wrap">
+        <>
+          <div className="d-flex gap-2 mb-4 flex-wrap">
             {['ALL', ...ALL_TYPES].map(t => (
-              <button key={t} onClick={() => setTypeFilter(t)} style={{ padding: '0.3rem 0.85rem', borderRadius: 99, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '0.78rem', background: typeFilter === t ? 'var(--primary)' : 'var(--bg-secondary)', color: typeFilter === t ? '#fff' : 'var(--text-secondary)' }}>
-                {TYPE_META[t] && <i className={`bi ${TYPE_META[t].icon} me-1`}></i>}{t}
-              </button>
+              <button key={t} onClick={() => setTypeFilter(t)} style={{
+                padding: '0.4rem 1rem', borderRadius: 20, border: 'none', cursor: 'pointer',
+                fontWeight: 600, fontSize: '0.82rem',
+                background: typeFilter === t ? 'var(--primary)' : 'var(--bg-secondary)',
+                color: typeFilter === t ? '#fff' : 'var(--text-secondary)',
+              }}>{t}</button>
             ))}
           </div>
-          <div className="row g-3">
-            {plans.filter(p => typeFilter === 'ALL' || p.type === typeFilter).map(plan => {
-              const m = TYPE_META[plan.type] || { color: '#6b7280', bg: '#f3f4f6', icon: 'bi-shield', label: plan.type }
-              return (
-                <div key={plan.id} className="col-12 col-md-6 col-lg-4">
-                  <div className="card-custom h-100" style={{ border: '2px solid var(--border)', cursor: 'pointer' }}
-                       onMouseEnter={e => e.currentTarget.style.borderColor = m.color}
-                       onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}>
-                    <div className="d-flex align-items-center gap-3 mb-2">
-                      <div style={{ width: 44, height: 44, borderRadius: 10, background: m.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        <i className={`bi ${m.icon}`} style={{ color: m.color, fontSize: '1.3rem' }}></i>
-                      </div>
-                      <div><div style={{ fontSize: '0.7rem', color: m.color, fontWeight: 700 }}>{m.label}</div><div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.92rem' }}>{plan.name}</div></div>
-                    </div>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.82rem', marginBottom: '0.75rem' }}>{plan.description}</p>
-                    <div className="row g-2 mb-3">
-                      <div className="col-6"><div style={{ background: 'var(--bg-secondary)', borderRadius: 6, padding: '0.35rem 0.55rem' }}><div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Premium Rate</div><div style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '0.88rem' }}>{(plan.premiumRate * 100).toFixed(1)}%/yr</div></div></div>
-                      <div className="col-6"><div style={{ background: 'var(--bg-secondary)', borderRadius: 6, padding: '0.35rem 0.55rem' }}><div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Policy Term</div><div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.82rem' }}>{plan.policyTerm ? `≤${plan.policyTerm}yr` : 'Flexible'}</div></div></div>
-                      <div className="col-12"><div style={{ background: 'var(--bg-secondary)', borderRadius: 6, padding: '0.35rem 0.55rem' }}><div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Coverage (MMK)</div><div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.82rem' }}>{Number(plan.coverageMin).toLocaleString()} – {Number(plan.coverageMax).toLocaleString()}</div></div></div>
-                    </div>
-                    {(plan.benefits || []).slice(0, 3).map((b, i) => <div key={i} style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: 3 }}><i className="bi bi-check-circle-fill me-1" style={{ color: '#16a34a' }}></i>{b}</div>)}
-                    <button onClick={() => selectPlan(plan)} className="btn-primary-custom w-100 mt-3" style={{ justifyContent: 'center', background: m.color, borderColor: m.color, fontSize: '0.88rem' }}>
-                      <i className="bi bi-check-circle me-2"></i>Select This Plan
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* ── STEP 2: Personal Info ── */}
-      {step === 2 && (
-        <div className="fade-in">
-          <div className="card-custom">
-            {meta && (
-              <div className="d-flex align-items-center gap-3 mb-4 p-3" style={{ background: meta.bg, borderRadius: 10 }}>
-                <i className={`bi ${meta.icon}`} style={{ color: meta.color, fontSize: '1.3rem' }}></i>
-                <div style={{ fontWeight: 700, color: meta.color }}>{selectedPlan.name}</div>
-                <button onClick={() => setStep(1)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.82rem' }}><i className="bi bi-arrow-left me-1"></i>Change</button>
-              </div>
-            )}
-            <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>Personal Information (Required for all plans)</h6>
+          {filteredPlans.length === 0 ? (
+            <div className="card-custom text-center py-5">
+              <i className="bi bi-box-seam" style={{ fontSize: '3rem', color: 'var(--border)' }}></i>
+              <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>No plans available</h5>
+            </div>
+          ) : (
             <div className="row g-3">
-              <div className="col-12 col-md-6"><label className="form-label-custom">Full Name *</label><input required className="form-control-custom w-100" placeholder="As per NRC card" value={common.fullName} onChange={e => setC('fullName', e.target.value)} /></div>
-              <div className="col-12 col-md-6"><label className="form-label-custom">Father's Name *</label><input required className="form-control-custom w-100" value={common.fatherName} onChange={e => setC('fatherName', e.target.value)} /></div>
-              <div className="col-12 col-md-6"><label className="form-label-custom">NRC Number *</label><input required className="form-control-custom w-100" placeholder="12/KAKANA(N)123456" value={common.nrc} onChange={e => setC('nrc', e.target.value)} /></div>
-              <div className="col-12 col-md-6"><label className="form-label-custom">Date of Birth *</label><input required type="date" className="form-control-custom w-100" value={common.dob} onChange={e => setC('dob', e.target.value)} max={new Date().toISOString().split('T')[0]} /></div>
-              <div className="col-12 col-md-6"><label className="form-label-custom">Phone Number *</label><input required className="form-control-custom w-100" placeholder="09xxxxxxxxx" value={common.phone} onChange={e => setC('phone', e.target.value)} /></div>
-              <div className="col-12 col-md-6"><label className="form-label-custom">Email Address</label><input type="email" className="form-control-custom w-100" value={common.email} onChange={e => setC('email', e.target.value)} /></div>
-              <div className="col-12"><label className="form-label-custom">Home Address *</label><textarea rows={2} className="form-control-custom w-100" style={{ resize: 'vertical' }} placeholder="Township, City, State/Division" value={common.address} onChange={e => setC('address', e.target.value)} /></div>
-              <div className="col-12 col-md-4"><label className="form-label-custom">Occupation *</label><input required className="form-control-custom w-100" placeholder="e.g. Engineer, Teacher, Driver" value={common.occupation} onChange={e => setC('occupation', e.target.value)} /></div>
-              <div className="col-12 col-md-4"><label className="form-label-custom">Marital Status</label><select className="form-select-custom w-100" value={common.maritalStatus} onChange={e => setC('maritalStatus', e.target.value)}>{['Single', 'Married', 'Divorced', 'Widowed'].map(m => <option key={m}>{m}</option>)}</select></div>
-              <div className="col-12 col-md-4"><label className="form-label-custom">Monthly Income (MMK) *</label><input required type="number" className="form-control-custom w-100" placeholder="300000" value={common.monthlyIncome} onChange={e => setC('monthlyIncome', e.target.value)} /></div>
-            </div>
-            <NavBtn back={() => setStep(1)} next={() => {
-              if (!common.fullName || !common.nrc || !common.dob || !common.phone || !common.address || !common.occupation || !common.monthlyIncome) { toast.error('Please fill all required fields'); return }
-              setStep(3)
-            }} />
-          </div>
-        </div>
-      )}
-
-      {/* ── STEP 3: Plan-Specific Info + Coverage ── */}
-      {step === 3 && selectedPlan && (
-        <div className="fade-in">
-          <div className="card-custom">
-            <h6 style={{ fontWeight: 700, color: meta?.color || 'var(--text-primary)', marginBottom: '1rem' }}>
-              <i className={`bi ${meta?.icon} me-2`}></i>{selectedPlan.type} — Additional Details
-            </h6>
-            <div className="row g-3">
-              {/* LIFE */}
-              {selectedPlan.type === 'LIFE' && <>
-                <div className="col-12 col-md-6"><label className="form-label-custom">Beneficiary Name *</label><input required className="form-control-custom w-100" value={extra.beneficiaryName} onChange={e => setE('beneficiaryName', e.target.value)} /></div>
-                <div className="col-12 col-md-6"><label className="form-label-custom">Relationship *</label><select required className="form-select-custom w-100" value={extra.beneficiaryRelation} onChange={e => setE('beneficiaryRelation', e.target.value)}><option value="">Select...</option>{['Spouse','Child','Parent','Sibling','Other'].map(r=><option key={r}>{r}</option>)}</select></div>
-                <div className="col-12 col-md-6"><label className="form-label-custom">Do you smoke?</label><select className="form-select-custom w-100" value={extra.smoking?'yes':'no'} onChange={e => setE('smoking', e.target.value==='yes')}><option value="no">No</option><option value="yes">Yes</option></select></div>
-                <div className="col-12 col-md-6"><label className="form-label-custom">Existing diseases?</label><select className="form-select-custom w-100" value={extra.hasDisease?'yes':'no'} onChange={e => setE('hasDisease', e.target.value==='yes')}><option value="no">No</option><option value="yes">Yes</option></select></div>
-                {extra.hasDisease && <div className="col-12"><label className="form-label-custom">Disease Details</label><textarea rows={2} className="form-control-custom w-100" style={{resize:'vertical'}} value={extra.diseaseDetails} onChange={e => setE('diseaseDetails', e.target.value)} placeholder="Describe existing conditions..." /></div>}
-              </>}
-              {/* HEALTH */}
-              {selectedPlan.type === 'HEALTH' && <>
-                <div className="col-12 col-md-4"><label className="form-label-custom">Blood Type</label><select className="form-select-custom w-100" value={extra.bloodType} onChange={e => setE('bloodType', e.target.value)}><option value="">Unknown</option>{['A+','A-','B+','B-','AB+','AB-','O+','O-'].map(t=><option key={t}>{t}</option>)}</select></div>
-                <div className="col-12 col-md-8"><label className="form-label-custom">Existing Diseases / Medical Conditions</label><input className="form-control-custom w-100" placeholder="e.g. Diabetes, Hypertension (or none)" value={extra.existingDiseases} onChange={e => setE('existingDiseases', e.target.value)} /></div>
-                <div className="col-12 col-md-6"><label className="form-label-custom">Allergies</label><input className="form-control-custom w-100" placeholder="e.g. Penicillin (or none)" value={extra.allergies} onChange={e => setE('allergies', e.target.value)} /></div>
-                <div className="col-12 col-md-6"><label className="form-label-custom">Preferred Hospital</label><input className="form-control-custom w-100" placeholder="e.g. Yangon General Hospital" value={extra.preferredHospital} onChange={e => setE('preferredHospital', e.target.value)} /></div>
-              </>}
-              {/* TRAVEL */}
-              {selectedPlan.type === 'TRAVEL' && <>
-                <div className="col-12 col-md-6"><label className="form-label-custom">Passport Number *</label><input required className="form-control-custom w-100" placeholder="e.g. AB1234567" value={extra.passportNumber} onChange={e => setE('passportNumber', e.target.value)} /></div>
-                <div className="col-12 col-md-6"><label className="form-label-custom">Destination Country *</label><input required className="form-control-custom w-100" placeholder="e.g. Thailand, Japan, USA" value={extra.destination} onChange={e => setE('destination', e.target.value)} /></div>
-                <div className="col-12 col-md-6"><label className="form-label-custom">Travel Start Date *</label><input required type="date" className="form-control-custom w-100" value={extra.travelDate} onChange={e => setE('travelDate', e.target.value)} /></div>
-                <div className="col-12 col-md-6"><label className="form-label-custom">Return Date *</label><input required type="date" className="form-control-custom w-100" value={extra.returnDate} onChange={e => setE('returnDate', e.target.value)} /></div>
-              </>}
-              {/* MOTOR / VEHICLE */}
-              {(selectedPlan.type === 'MOTOR' || selectedPlan.type === 'VEHICLE') && <>
-                <div className="col-12 col-md-6"><label className="form-label-custom">Vehicle Registration No. *</label><input required className="form-control-custom w-100" value={extra.vehicleReg} onChange={e => setE('vehicleReg', e.target.value)} /></div>
-                <div className="col-12 col-md-6"><label className="form-label-custom">Vehicle Year *</label><input required type="number" className="form-control-custom w-100" placeholder="e.g. 2018" min="1990" max={new Date().getFullYear()} value={extra.vehicleYear} onChange={e => setE('vehicleYear', e.target.value)} /></div>
-                <div className="col-12 col-md-6"><label className="form-label-custom">Engine Number *</label><input required className="form-control-custom w-100" value={extra.engineNumber} onChange={e => setE('engineNumber', e.target.value)} /></div>
-                <div className="col-12 col-md-6"><label className="form-label-custom">Chassis Number *</label><input required className="form-control-custom w-100" value={extra.chassisNumber} onChange={e => setE('chassisNumber', e.target.value)} /></div>
-                <div className="col-12 col-md-6"><label className="form-label-custom">Vehicle Value (MMK) *</label><input required type="number" className="form-control-custom w-100" value={extra.vehicleValue} onChange={e => setE('vehicleValue', e.target.value)} /></div>
-                <div className="col-12 col-md-6"><label className="form-label-custom">Driving License No. *</label><input required className="form-control-custom w-100" value={extra.drivingLicense} onChange={e => setE('drivingLicense', e.target.value)} /></div>
-              </>}
-              {/* EDUCATION */}
-              {selectedPlan.type === 'EDUCATION' && <>
-                <div className="col-12 col-md-6"><label className="form-label-custom">Student Full Name *</label><input required className="form-control-custom w-100" value={extra.studentName} onChange={e => setE('studentName', e.target.value)} /></div>
-                <div className="col-12 col-md-6"><label className="form-label-custom">Student Date of Birth *</label><input required type="date" className="form-control-custom w-100" value={extra.studentDob} onChange={e => setE('studentDob', e.target.value)} /></div>
-                <div className="col-12 col-md-6"><label className="form-label-custom">Parent / Guardian Name *</label><input required className="form-control-custom w-100" value={extra.parentName} onChange={e => setE('parentName', e.target.value)} /></div>
-                <div className="col-12 col-md-6"><label className="form-label-custom">School / University *</label><input required className="form-control-custom w-100" value={extra.schoolName} onChange={e => setE('schoolName', e.target.value)} /></div>
-                <div className="col-12"><label className="form-label-custom">Education Goal</label><input className="form-control-custom w-100" placeholder="e.g. Complete Bachelor's by 2028" value={extra.educationGoal} onChange={e => setE('educationGoal', e.target.value)} /></div>
-              </>}
-              {selectedPlan.type === 'PROPERTY' && (
-                <div className="col-12"><div className="p-3" style={{ background: 'var(--bg-secondary)', borderRadius: 8, fontSize: '0.88rem', color: 'var(--text-secondary)' }}>Property details will be collected by your assigned agent during verification. Please proceed to the next step.</div></div>
-              )}
-            </div>
-
-            {/* Coverage & Duration */}
-            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '1.25rem' }}>
-              <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.75rem' }}>Coverage & Duration</div>
-              <div className="row g-3">
-                <div className="col-12 col-md-6">
-                  <label className="form-label-custom">Coverage Amount (MMK) *</label>
-                  <input required type="number" className="form-control-custom w-100" value={coverage} min={selectedPlan.coverageMin} max={selectedPlan.coverageMax} step={500000} onChange={e => setCoverage(e.target.value)} />
-                  <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>Range: {Number(selectedPlan.coverageMin).toLocaleString()} – {Number(selectedPlan.coverageMax).toLocaleString()} MMK</small>
-                </div>
-                <div className="col-12 col-md-6">
-                  <label className="form-label-custom">Policy Duration (Years) *</label>
-                  <select className="form-select-custom w-100" value={duration} onChange={e => setDuration(Number(e.target.value))}>
-                    {(selectedPlan.durations || [1, 2, 3, 5]).map(d => <option key={d} value={d}>{d} Year{d > 1 ? 's' : ''}</option>)}
-                  </select>
-                </div>
-              </div>
-            </div>
-            <NavBtn back={() => setStep(2)} next={() => { if (!coverage) { toast.error('Enter coverage amount'); return } setStep(4) }} />
-          </div>
-        </div>
-      )}
-
-      {/* ── STEP 4: Risk & Premium ── */}
-      {step === 4 && selectedPlan && (
-        <div className="fade-in">
-          <div className="card-custom">
-            <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1.5rem' }}>Risk Assessment & Premium Calculation</h6>
-            <div className="row g-3 mb-4">
-              {['LOW', 'MEDIUM', 'HIGH'].map(r => {
-                const rc = r === 'LOW' ? '#16a34a' : r === 'MEDIUM' ? '#d97706' : '#dc2626'
-                const rb = r === 'LOW' ? '#f0fdf4' : r === 'MEDIUM' ? '#fffbeb' : '#fef2f2'
-                const ri = r === 'LOW' ? 'bi-shield-check' : r === 'MEDIUM' ? 'bi-shield-exclamation' : 'bi-shield-x'
+              {filteredPlans.map(plan => {
+                const meta = TYPE_META[plan.type] || {}
                 return (
-                  <div key={r} className="col-4">
-                    <div style={{ padding: '1rem', borderRadius: 12, textAlign: 'center', border: `2.5px solid ${risk === r ? rc : 'var(--border)'}`, background: risk === r ? rb : 'var(--bg-secondary)', opacity: risk === r ? 1 : 0.45, transition: 'all 0.2s' }}>
-                      <i className={`bi ${ri}`} style={{ fontSize: '1.5rem', color: rc }}></i>
-                      <div style={{ fontWeight: 800, color: rc, marginTop: 4, fontSize: '0.88rem' }}>{r}</div>
-                      <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{r === 'LOW' ? '1.0×' : r === 'MEDIUM' ? '1.2×' : '1.5×'} rate</div>
+                  <div key={plan.id} className="col-12 col-md-6">
+                    <div onClick={() => selectPlan(plan)} style={{
+                      padding: '1.25rem', borderRadius: 14, cursor: 'pointer',
+                      border: `2px solid ${meta.color || 'var(--border)'}22`,
+                      background: meta.bg || 'var(--bg-secondary)',
+                      transition: 'all 0.15s',
+                    }} className="h-100">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '0.75rem' }}>
+                        <i className={`bi ${meta.icon || 'bi-shield'}`} style={{ fontSize: '1.5rem', color: meta.color }}></i>
+                        <div>
+                          <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{plan.name}</div>
+                          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: meta.color }}>{plan.type}</span>
+                        </div>
+                      </div>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 0.75rem' }}>{plan.description}</p>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
+                        <span style={{ color: 'var(--text-muted)' }}>{Number(plan.coverageMin).toLocaleString()} – {Number(plan.coverageMax).toLocaleString()} MMK</span>
+                        <span style={{ fontWeight: 700, color: meta.color }}>{(plan.premiumRate * 100).toFixed(1)}%/yr</span>
+                      </div>
+                      <button style={{
+                        marginTop: '0.75rem', width: '100%', padding: '0.5rem', borderRadius: 8,
+                        border: 'none', background: meta.color, color: '#fff',
+                        fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer'
+                      }}>Select This Plan →</button>
                     </div>
                   </div>
                 )
               })}
             </div>
-            <div className="mb-4 p-3" style={{ background: 'var(--bg-secondary)', borderRadius: 8, fontSize: '0.83rem', color: 'var(--text-secondary)' }}>
-              <strong>Risk factors:</strong> Age, {selectedPlan.type === 'LIFE' ? 'smoking status, existing diseases' : selectedPlan.type === 'HEALTH' ? 'medical history' : selectedPlan.type === 'MOTOR' || selectedPlan.type === 'VEHICLE' ? 'vehicle age & value' : selectedPlan.type === 'TRAVEL' ? 'travel destination' : 'general profile'}
-            </div>
-            <div className="premium-result mb-4">
-              <div className="premium-result-label">Estimated Total Premium</div>
-              <div className="premium-result-amount">{premium ? premium.toLocaleString() : '—'} <span style={{ fontSize: '1rem' }}>MMK</span></div>
-              <div style={{ fontSize: '0.82rem', opacity: 0.8, marginTop: 4 }}>
-                Coverage: {Number(coverage).toLocaleString()} MMK · {duration} yr{duration > 1 ? 's' : ''} · {(selectedPlan.premiumRate * 100).toFixed(1)}% × {risk === 'HIGH' ? '1.5×' : risk === 'MEDIUM' ? '1.2×' : '1.0×'}
+          )}
+        </>
+      )}
+
+      {/* ── Step 2: Fill Form ── */}
+      {step === 2 && selectedPlan && (
+        <div className="row g-4">
+          <div className="col-12 col-lg-8">
+            <div className="card-custom">
+              {/* Plan summary */}
+              <div style={{ padding: '0.75rem 1rem', borderRadius: 8, background: 'var(--bg-secondary)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <i className={`bi ${TYPE_META[selectedPlan.type]?.icon || 'bi-shield'}`} style={{ fontSize: '1.4rem', color: TYPE_META[selectedPlan.type]?.color, flexShrink: 0 }}></i>
+                <div className="flex-grow-1">
+                  <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{selectedPlan.name}</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{selectedPlan.type} • {(selectedPlan.premiumRate * 100).toFixed(1)}% premium rate</div>
+                </div>
+                <button onClick={() => { setStep(1); setSelectedPlan(null) }} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.82rem' }}>
+                  Change Plan
+                </button>
+              </div>
+
+              {/* Coverage & duration */}
+              <div className="row g-3 mb-3">
+                <div className="col-12 col-sm-6">
+                  <label className="form-label-custom">Coverage Amount (MMK) *</label>
+                  <input type="number" className="form-control-custom w-100"
+                    value={coverage}
+                    min={selectedPlan.coverageMin} max={selectedPlan.coverageMax}
+                    onChange={e => setCoverage(e.target.value)} />
+                  <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
+                    Range: {Number(selectedPlan.coverageMin).toLocaleString()} – {Number(selectedPlan.coverageMax).toLocaleString()} MMK
+                  </small>
+                </div>
+                <div className="col-12 col-sm-6">
+                  <label className="form-label-custom">Duration (years) *</label>
+                  <select className="form-select-custom w-100" value={duration} onChange={e => setDuration(Number(e.target.value))}>
+                    {(Array.isArray(durations) ? durations : String(durations).split(',').map(Number)).map(d => (
+                      <option key={d} value={d}>{d} year{d > 1 ? 's' : ''}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Dynamic form fields */}
+              {templateLoading && (
+                <div className="text-center py-3">
+                  <span className="spinner-border spinner-border-sm me-2" style={{ color: 'var(--primary)' }}></span>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Loading form fields...</span>
+                </div>
+              )}
+
+              {!templateLoading && template && template.fields?.length > 0 && (
+                <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '0.5rem' }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)', marginBottom: '1rem' }}>
+                    {template.name}
+                  </div>
+                  <DynamicFormFields
+                    fields={template.fields}
+                    fieldValues={fieldValues}
+                    fieldFiles={fieldFiles}
+                    onValue={handleFieldValue}
+                    onFile={handleFieldFile}
+                    onCheckboxOption={handleCheckboxOption}
+                  />
+                </div>
+              )}
+
+              {!templateLoading && !template && (
+                <div style={{ padding: '0.75rem 1rem', borderRadius: 8, background: '#fef3c7', border: '1px solid #fcd34d', marginBottom: '1rem', fontSize: '0.85rem', color: '#92400e' }}>
+                  <i className="bi bi-exclamation-triangle me-2"></i>
+                  No application form has been configured for this plan yet. Contact the administrator.
+                </div>
+              )}
+
+              {/* Additional notes */}
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '0.75rem' }}>
+                <label className="form-label-custom">Additional Notes (optional)</label>
+                <textarea rows={2} className="form-control-custom w-100" style={{ resize: 'vertical' }}
+                  placeholder="Any additional information..."
+                  value={notes} onChange={e => setNotes(e.target.value)} />
+              </div>
+
+              <div className="d-flex gap-2 mt-4">
+                <button onClick={() => setStep(3)} className="btn-primary-custom flex-grow-1" style={{ justifyContent: 'center' }}
+                  disabled={templateLoading}>
+                  Review Application →
+                </button>
+                <button onClick={() => { setStep(1); setSelectedPlan(null) }} className="btn-outline-custom">
+                  Back
+                </button>
               </div>
             </div>
-            <NavBtn back={() => setStep(3)} next={() => setStep(5)} nextLabel="Proceed to Review" />
+          </div>
+
+          {/* Premium estimate */}
+          <div className="col-12 col-lg-4">
+            <div className="card-custom">
+              <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>Premium Estimate</h6>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.88rem' }}>
+                {[
+                  ['Plan', selectedPlan.name],
+                  ['Type', selectedPlan.type],
+                  ['Coverage', coverage ? Number(coverage).toLocaleString() + ' MMK' : '—'],
+                  ['Duration', duration + ' year(s)'],
+                  ['Rate', (selectedPlan.premiumRate * 100).toFixed(1) + '%/year'],
+                ].map(([l, v]) => (
+                  <div key={l} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: 'var(--text-muted)' }}>{l}</span>
+                    <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{v}</span>
+                  </div>
+                ))}
+                <div style={{ borderTop: '1px solid var(--border)', paddingTop: '0.6rem', marginTop: '0.25rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '1rem' }}>
+                    <span>Est. Premium</span>
+                    <span style={{ color: 'var(--primary)' }}>
+                      {premium ? Number(premium).toLocaleString() + ' MMK' : '—'}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)', marginTop: 4 }}>
+                    Final amount determined at approval
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
 
-      {/* ── STEP 5: Review & Submit ── */}
-      {step === 5 && selectedPlan && (
-        <div className="fade-in">
-          <div className="card-custom">
-            <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1.5rem' }}>Review Your Application</h6>
-            <div className="mb-4">
-              <div style={{ fontWeight: 600, fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.5rem' }}>Plan Details</div>
-              <Field label="Plan" value={selectedPlan.name} />
-              <Field label="Type" value={selectedPlan.type} />
-              <Field label="Coverage Amount" value={`${Number(coverage).toLocaleString()} MMK`} />
-              <Field label="Duration" value={`${duration} year${duration > 1 ? 's' : ''}`} />
-              <Field label="Risk Level" value={risk} />
-              <Field label="Estimated Premium" value={premium ? `${premium.toLocaleString()} MMK` : '—'} />
+      {/* ── Step 3: Review & Submit ── */}
+      {step === 3 && selectedPlan && (
+        <div className="row g-4">
+          <div className="col-12 col-lg-8">
+            <div className="card-custom">
+              <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1.25rem' }}>Review Your Application</h6>
+
+              {/* Plan info */}
+              <ReviewRow label="Plan" value={selectedPlan.name} />
+              <ReviewRow label="Type" value={selectedPlan.type} />
+              <ReviewRow label="Coverage" value={Number(coverage).toLocaleString() + ' MMK'} />
+              <ReviewRow label="Duration" value={duration + ' year(s)'} />
+              <ReviewRow label="Est. Premium" value={premium ? Number(premium).toLocaleString() + ' MMK' : '—'} />
+              {notes && <ReviewRow label="Notes" value={notes} />}
+
+              {/* Dynamic form summary */}
+              {template?.fields && template.fields.filter(f => f.fieldType !== 'LABEL').length > 0 && (
+                <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '1rem' }}>
+                  <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
+                    Form Details
+                  </div>
+                  {template.fields.filter(f => f.fieldType !== 'LABEL').map(field => {
+                    const val = fieldValues[String(field.id)]
+                    const file = fieldFiles[String(field.id)]
+                    let display = '—'
+                    if ((field.fieldType === 'IMAGE_UPLOAD' || field.fieldType === 'PDF_UPLOAD') && file) {
+                      display = file.name
+                    } else if (Array.isArray(val)) {
+                      display = val.join(', ') || '—'
+                    } else if (val) {
+                      display = val
+                    }
+                    return <ReviewRow key={field.id} label={field.fieldLabel} value={display} />
+                  })}
+                </div>
+              )}
+
+              <div className="d-flex gap-2 mt-4">
+                <button onClick={handleSubmit} disabled={submitting} className="btn-primary-custom flex-grow-1" style={{ justifyContent: 'center' }}>
+                  {submitting ? <><span className="spinner-border spinner-border-sm me-2"></span>Submitting...</> : <><i className="bi bi-send me-2"></i>Submit Application</>}
+                </button>
+                <button onClick={() => setStep(2)} className="btn-outline-custom" disabled={submitting}>Back</button>
+              </div>
             </div>
-            <div className="mb-4" style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
-              <div style={{ fontWeight: 600, fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.5rem' }}>Personal Info</div>
-              <Field label="Full Name" value={common.fullName} />
-              <Field label="NRC" value={common.nrc} />
-              <Field label="Date of Birth" value={common.dob} />
-              <Field label="Phone" value={common.phone} />
-              <Field label="Occupation" value={common.occupation} />
-              <Field label="Monthly Income" value={common.monthlyIncome ? `${Number(common.monthlyIncome).toLocaleString()} MMK` : ''} />
-            </div>
-            <div className="mb-4" style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
-              <div style={{ fontWeight: 600, fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.5rem' }}>Supporting Documents</div>
-              <label className="form-label-custom">Upload ID Card Photo / Proof Documents</label>
-              <input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp"
-                className="form-control-custom w-100"
-                onChange={e => setDocs(Array.from(e.target.files))} />
-              <small style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>
-                Your assigned agent will review these documents. (PDF, JPG, PNG, WEBP){docs.length > 0 ? ` — ${docs.length} file(s) selected` : ''}
-              </small>
-            </div>
-            <div className="p-3 mb-4" style={{ background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: 10, fontSize: '0.85rem', color: '#92400e' }}>
-              <i className="bi bi-info-circle me-2"></i>
-              After submission, an agent will review your application and forward to admin for approval. Final premium may be adjusted after document verification.
-            </div>
-            <div className="d-flex gap-2">
-              <button type="button" onClick={() => setStep(4)} className="btn-outline-custom"><i className="bi bi-arrow-left me-2"></i>Back</button>
-              <button type="button" onClick={submit} disabled={submitting} className="btn-primary-custom flex-grow-1" style={{ justifyContent: 'center', background: '#16a34a', borderColor: '#16a34a' }}>
-                {submitting ? <span className="spinner-border spinner-border-sm me-2"></span> : <i className="bi bi-send me-2"></i>}
-                Submit Application
-              </button>
+          </div>
+          <div className="col-12 col-lg-4">
+            <div className="card-custom">
+              <h6 style={{ fontWeight: 600, marginBottom: '0.75rem', color: 'var(--text-primary)' }}>📋 What Happens Next</h6>
+              {[
+                'Application submitted and assigned to an agent',
+                'Agent verifies your information',
+                'Admin makes final approval decision',
+                'You receive a notification with the outcome',
+                'Approved: make your premium payment',
+              ].map((s, i) => (
+                <div key={i} className="d-flex align-items-start gap-2 mb-2">
+                  <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', flexShrink: 0, marginTop: 1 }}>{i + 1}</div>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{s}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
+      )}
+    </div>
+  )
+}
+
+function ReviewRow({ label, value }) {
+  return (
+    <div className="d-flex gap-2 mb-2" style={{ fontSize: '0.88rem' }}>
+      <span style={{ color: 'var(--text-muted)', minWidth: 140, flexShrink: 0 }}>{label}</span>
+      <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{value || '—'}</span>
+    </div>
+  )
+}
+
+function DynamicFormFields({ fields, fieldValues, fieldFiles, onValue, onFile, onCheckboxOption }) {
+  if (!fields || fields.length === 0) return null
+  return (
+    <div className="d-flex flex-column gap-3">
+      {fields.map(field => (
+        <DynamicField key={field.id} field={field}
+          value={fieldValues[String(field.id)]}
+          file={fieldFiles[String(field.id)]}
+          onValue={v => onValue(field.id, v)}
+          onFile={f => onFile(field.id, f)}
+          onCheckboxOption={(opt, checked) => onCheckboxOption(field.id, opt, checked)} />
+      ))}
+    </div>
+  )
+}
+
+function DynamicField({ field, value, file, onValue, onFile, onCheckboxOption }) {
+  if (field.fieldType === 'LABEL') {
+    return (
+      <div style={{
+        padding: '0.6rem 0.9rem', borderRadius: 8,
+        background: 'var(--bg-secondary)', borderLeft: '3px solid var(--primary)',
+        fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.9rem'
+      }}>
+        {field.fieldLabel}
+      </div>
+    )
+  }
+
+  let options = []
+  if (field.fieldType === 'CHECKBOX' && field.fieldOptions) {
+    try { options = JSON.parse(field.fieldOptions) } catch { options = ['Yes', 'No'] }
+  }
+  const selectedOptions = Array.isArray(value) ? value : []
+
+  return (
+    <div>
+      <label className="form-label-custom">
+        {field.fieldLabel} {field.required && <span style={{ color: '#dc2626' }}>*</span>}
+      </label>
+      {field.fieldType === 'TEXT' && (
+        <input className="form-control-custom w-100" value={value || ''}
+          required={field.required} onChange={e => onValue(e.target.value)} />
+      )}
+      {field.fieldType === 'TEXTAREA' && (
+        <textarea rows={3} className="form-control-custom w-100" style={{ resize: 'vertical' }}
+          value={value || ''} required={field.required} onChange={e => onValue(e.target.value)} />
+      )}
+      {field.fieldType === 'CHECKBOX' && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: 4 }}>
+          {options.map(opt => (
+            <label key={opt} style={{
+              display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer',
+              padding: '0.35rem 0.75rem', borderRadius: 8, fontSize: '0.88rem', color: 'var(--text-primary)',
+              border: selectedOptions.includes(opt) ? '1.5px solid var(--primary)' : '1.5px solid var(--border)',
+              background: selectedOptions.includes(opt) ? 'var(--bg-secondary)' : 'transparent',
+            }}>
+              <input type="checkbox"
+                checked={selectedOptions.includes(opt)}
+                onChange={e => onCheckboxOption(opt, e.target.checked)} />
+              {opt}
+            </label>
+          ))}
+        </div>
+      )}
+      {field.fieldType === 'IMAGE_UPLOAD' && (
+        <input type="file" accept=".jpg,.jpeg,.png,.webp" className="form-control-custom w-100"
+          required={field.required} onChange={e => onFile(e.target.files[0] || null)} />
+      )}
+      {field.fieldType === 'PDF_UPLOAD' && (
+        <input type="file" accept=".pdf,.jpg,.jpeg,.png" className="form-control-custom w-100"
+          required={field.required} onChange={e => onFile(e.target.files[0] || null)} />
+      )}
+      {file && (
+        <small style={{ color: '#16a34a', fontSize: '0.78rem', marginTop: 2, display: 'block' }}>✓ {file.name}</small>
       )}
     </div>
   )

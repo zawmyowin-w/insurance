@@ -1,16 +1,21 @@
 package com.insurance.portal.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.insurance.portal.dto.*;
 import com.insurance.portal.model.*;
 import com.insurance.portal.model.enums.*;
 import com.insurance.portal.repository.*;
+import com.insurance.portal.util.FileStorageUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.File;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -347,7 +352,41 @@ public class AdminController {
         return ResponseEntity.ok(Map.of("sent", notifications.size()));
     }
 
+    // ── Form field file serving ───────────────────────────────────────
+    /** Serve a file uploaded into a dynamic form field for an application */
+    @GetMapping("/applications/{id}/form-file/{fieldId}")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getApplicationFormFile(@PathVariable Long id, @PathVariable String fieldId) {
+        PolicyApplication app = appRepo.findById(id).orElseThrow();
+        return serveFormFile(app.getFormData(), fieldId);
+    }
+
+    /** Serve a file uploaded into a dynamic form field for a claim */
+    @GetMapping("/claims/{id}/form-file/{fieldId}")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getClaimFormFile(@PathVariable Long id, @PathVariable String fieldId) {
+        Claim claim = claimRepo.findById(id).orElseThrow();
+        return serveFormFile(claim.getFormData(), fieldId);
+    }
+
     // ── Helpers ───────────────────────────────────────────────────────
+    @SuppressWarnings("unchecked")
+    private ResponseEntity<?> serveFormFile(String formDataJson, String fieldId) {
+        if (formDataJson == null) return ResponseEntity.notFound().build();
+        try {
+            Map<String, Object> data = new ObjectMapper().readValue(formDataJson, Map.class);
+            Object val = data.get(fieldId);
+            if (val == null) return ResponseEntity.notFound().build();
+            File file = new File(val.toString());
+            if (!file.exists()) return ResponseEntity.notFound().build();
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(FileStorageUtil.contentTypeFor(val.toString())))
+                    .body(new FileSystemResource(file));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
     private void sendNotification(User recipient, String title, String message, NotificationType type) {
         notifRepo.save(Notification.builder()
                 .recipient(recipient).title(title).message(message).type(type).build());

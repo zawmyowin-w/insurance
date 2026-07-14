@@ -1,20 +1,42 @@
 import React, { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 
-const INSURANCE_TYPES = ['LIFE', 'HEALTH', 'TRAVEL', 'MOTOR', 'EDUCATION', 'VEHICLE', 'PROPERTY']
+const INSURANCE_TYPES = ['LIFE', 'HEALTH', 'VEHICLE', 'PROPERTY']
 const EMPTY = { name: '', type: 'LIFE', description: '', coverageMin: '', coverageMax: '', premiumRate: '', durations: '1,2,3,5', benefits: '', eligibility: '', exclusions: '', policyTerm: '', active: true }
 
 export default function ManagePackagesPage() {
+  const navigate = useNavigate()
   const [packages, setPackages] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(EMPTY)
   const [saving, setSaving] = useState(false)
+  const [pkgForms, setPkgForms] = useState({})  // packageId -> { APPLICATION, CLAIM }
 
   const fetchPackages = () => {
-    api.get('/admin/packages').then(res => setPackages(Array.isArray(res.data) ? res.data : [])).catch(() => setPackages([])).finally(() => setLoading(false))
+    api.get('/admin/packages')
+      .then(res => {
+        const pkgs = Array.isArray(res.data) ? res.data : []
+        setPackages(pkgs)
+        // Load form status for all packages
+        pkgs.forEach(pkg => {
+          api.get(`/admin/packages/${pkg.id}/forms`)
+            .then(r => {
+              const forms = Array.isArray(r.data) ? r.data : []
+              setPkgForms(prev => ({
+                ...prev,
+                [pkg.id]: {
+                  APPLICATION: forms.find(f => f.formType === 'APPLICATION') || null,
+                  CLAIM: forms.find(f => f.formType === 'CLAIM') || null,
+                }
+              }))
+            }).catch(() => {})
+        })
+      }).catch(() => setPackages([]))
+      .finally(() => setLoading(false))
   }
   useEffect(() => { fetchPackages() }, [])
 
@@ -69,14 +91,18 @@ export default function ManagePackagesPage() {
     try { await api.delete(`/admin/packages/${id}`); toast.success('Deleted'); fetchPackages() } catch { toast.error('Failed to delete') }
   }
 
-  const typeColors = { LIFE: '#dc2626', HEALTH: '#16a34a', TRAVEL: '#0891b2', MOTOR: '#d97706', EDUCATION: '#7c3aed', VEHICLE: '#1d4ed8', PROPERTY: '#ca8a04' }
+  const handleManageForm = (pkg) => {
+    navigate('/admin/form-builder', { state: { packageId: pkg.id } })
+  }
+
+  const typeColors = { LIFE: '#dc2626', HEALTH: '#16a34a', VEHICLE: '#1d4ed8', PROPERTY: '#ca8a04' }
 
   return (
     <div className="fade-in">
       <div className="d-flex align-items-center justify-content-between mb-4">
         <div>
           <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Insurance Packages</h4>
-          <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>Create and manage insurance plans</p>
+          <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>Create and manage insurance plans and their forms</p>
         </div>
         <button className="btn-primary-custom" style={{ fontSize: '0.88rem', padding: '0.45rem 1rem' }} onClick={() => { setShowForm(!showForm); setEditing(null); setForm(EMPTY) }}>
           <i className={`bi bi-${showForm ? 'x-lg' : 'plus-circle'} me-1`}></i>{showForm ? 'Cancel' : 'New Package'}
@@ -124,7 +150,7 @@ export default function ManagePackagesPage() {
                 <label className="form-label-custom">Active</label>
                 <div className="d-flex align-items-center gap-2 mt-1">
                   <input type="checkbox" name="active" checked={form.active} onChange={handleChange} id="pkgActive" />
-                  <label htmlFor="pkgActive" style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', cursor: 'pointer' }}>Package is active and visible to customers</label>
+                  <label htmlFor="pkgActive" style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', cursor: 'pointer' }}>Visible to customers</label>
                 </div>
               </div>
               <div className="col-12">
@@ -139,12 +165,12 @@ export default function ManagePackagesPage() {
               <div className="col-12 col-md-6">
                 <label className="form-label-custom">Eligibility Requirements</label>
                 <textarea name="eligibility" rows={3} className="form-control-custom w-100" style={{ resize: 'vertical' }}
-                  placeholder="e.g. Age 18–65, Myanmar citizen, no critical illness history" value={form.eligibility} onChange={handleChange} />
+                  placeholder="e.g. Age 18–65, Myanmar citizen" value={form.eligibility} onChange={handleChange} />
               </div>
               <div className="col-12 col-md-6">
-                <label className="form-label-custom">Exclusions (what is not covered)</label>
+                <label className="form-label-custom">Exclusions</label>
                 <textarea name="exclusions" rows={3} className="form-control-custom w-100" style={{ resize: 'vertical' }}
-                  placeholder="e.g. Pre-existing conditions, war/terrorism, self-harm" value={form.exclusions} onChange={handleChange} />
+                  placeholder="e.g. Pre-existing conditions" value={form.exclusions} onChange={handleChange} />
               </div>
             </div>
             <div className="d-flex gap-2 mt-3">
@@ -166,39 +192,68 @@ export default function ManagePackagesPage() {
           <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>No packages yet</h5>
         </div>
       ) : (
-        <div className="card-custom p-0">
-          <div className="table-custom">
-            <table className="w-100">
-              <thead>
-                <tr>{['Name', 'Type', 'Coverage Range (MMK)', 'Rate', 'Durations', 'Status', 'Actions'].map(h => <th key={h}>{h}</th>)}</tr>
-              </thead>
-              <tbody>
-                {packages.map(pkg => (
-                  <tr key={pkg.id}>
-                    <td style={{ fontWeight: 600 }}>{pkg.name}</td>
-                    <td><span style={{ fontSize: '0.78rem', fontWeight: 700, color: typeColors[pkg.type] || '#6b7280' }}>{pkg.type}</span></td>
-                    <td style={{ fontSize: '0.85rem' }}>{Number(pkg.coverageMin).toLocaleString()} – {Number(pkg.coverageMax).toLocaleString()}</td>
-                    <td style={{ color: 'var(--accent)', fontWeight: 600 }}>{(pkg.premiumRate * 100).toFixed(1)}%</td>
-                    <td style={{ fontSize: '0.85rem' }}>{(pkg.durations || []).join(', ')} yr</td>
-                    <td>
-                      <span className={`badge-status ${pkg.active ? 'badge-active' : 'badge-cancelled'}`}>{pkg.active ? 'Active' : 'Inactive'}</span>
-                    </td>
-                    <td>
-                      <div className="d-flex gap-1">
-                        <button className="btn-primary-sm" onClick={() => handleEdit(pkg)} style={{ padding: '0.3rem 0.6rem' }}><i className="bi bi-pencil"></i></button>
-                        <button className="btn-outline-custom" style={{ padding: '0.3rem 0.6rem', fontSize: '0.78rem' }} onClick={() => handleToggle(pkg.id, pkg.active)}>
-                          {pkg.active ? 'Deactivate' : 'Activate'}
-                        </button>
-                        <button className="btn-danger-sm" onClick={() => handleDelete(pkg.id)} style={{ padding: '0.3rem 0.6rem' }}><i className="bi bi-trash"></i></button>
+        <div className="d-flex flex-column gap-3">
+          {packages.map(pkg => {
+            const pForms = pkgForms[pkg.id] || {}
+            const hasAppForm = !!pForms.APPLICATION
+            const hasClaimForm = !!pForms.CLAIM
+            return (
+              <div key={pkg.id} className="card-custom">
+                <div className="row align-items-center g-2">
+                  <div className="col-12 col-md-5">
+                    <div className="d-flex align-items-center gap-3">
+                      <div>
+                        <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{pkg.name}</div>
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginTop: 3 }}>
+                          <span style={{ fontSize: '0.78rem', fontWeight: 700, color: typeColors[pkg.type] || '#6b7280' }}>{pkg.type}</span>
+                          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>·</span>
+                          <span style={{ fontSize: '0.78rem', color: 'var(--accent)', fontWeight: 600 }}>{(pkg.premiumRate * 100).toFixed(1)}%</span>
+                          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>·</span>
+                          <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>{(pkg.durations || []).join(', ')} yr</span>
+                        </div>
                       </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      <span className={`badge-status ${pkg.active ? 'badge-active' : 'badge-cancelled'}`}>{pkg.active ? 'Active' : 'Inactive'}</span>
+                    </div>
+                  </div>
+                  <div className="col-12 col-md-4">
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>FORMS:</span>
+                      <FormBadge label="Application" exists={hasAppForm} onClick={() => handleManageForm(pkg)} />
+                      <FormBadge label="Claim" exists={hasClaimForm} onClick={() => handleManageForm(pkg)} />
+                    </div>
+                  </div>
+                  <div className="col-12 col-md-3">
+                    <div className="d-flex gap-1 flex-wrap justify-content-md-end">
+                      <button className="btn-outline-custom" style={{ padding: '0.3rem 0.7rem', fontSize: '0.78rem' }}
+                        onClick={() => handleManageForm(pkg)} title="Manage forms">
+                        <i className="bi bi-ui-checks me-1"></i>Forms
+                      </button>
+                      <button className="btn-primary-sm" onClick={() => handleEdit(pkg)} style={{ padding: '0.3rem 0.6rem' }}><i className="bi bi-pencil"></i></button>
+                      <button className="btn-outline-custom" style={{ padding: '0.3rem 0.6rem', fontSize: '0.78rem' }} onClick={() => handleToggle(pkg.id, pkg.active)}>
+                        {pkg.active ? 'Deactivate' : 'Activate'}
+                      </button>
+                      <button className="btn-danger-sm" onClick={() => handleDelete(pkg.id)} style={{ padding: '0.3rem 0.6rem' }}><i className="bi bi-trash"></i></button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
         </div>
       )}
     </div>
+  )
+}
+
+function FormBadge({ label, exists, onClick }) {
+  return (
+    <button onClick={onClick} style={{
+      padding: '0.2rem 0.6rem', borderRadius: 99, border: 'none', cursor: 'pointer',
+      fontSize: '0.72rem', fontWeight: 700,
+      background: exists ? '#dcfce7' : '#fee2e2',
+      color: exists ? '#16a34a' : '#dc2626',
+    }} title={exists ? `${label} form exists` : `No ${label} form — click to build`}>
+      {exists ? '✓' : '✗'} {label}
+    </button>
   )
 }
