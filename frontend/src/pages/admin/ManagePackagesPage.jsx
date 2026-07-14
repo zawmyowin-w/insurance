@@ -92,7 +92,7 @@ export default function ManagePackagesPage() {
   }
 
   const handleManageForm = (pkg) => {
-    navigate('/admin/form-builder', { state: { packageId: pkg.id } })
+    navigate('/admin/forms', { state: { packageId: pkg.id } })
   }
 
   const typeColors = { LIFE: '#dc2626', HEALTH: '#16a34a', VEHICLE: '#1d4ed8', PROPERTY: '#ca8a04' }

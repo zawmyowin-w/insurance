@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 
@@ -22,6 +23,7 @@ const emptyForm  = (pkgId, formType) => ({
 })
 
 export default function AdminFormBuilderPage() {
+  const location = useLocation()
   const [packages, setPackages] = useState([])
   const [pkgLoading, setPkgLoading] = useState(true)
   const [selectedPkg, setSelectedPkg] = useState(null)
@@ -34,9 +36,18 @@ export default function AdminFormBuilderPage() {
 
   useEffect(() => {
     api.get('/admin/packages')
-      .then(res => setPackages(Array.isArray(res.data) ? res.data : []))
+      .then(res => {
+        const pkgs = Array.isArray(res.data) ? res.data : []
+        setPackages(pkgs)
+        const wantedId = location.state?.packageId
+        if (wantedId) {
+          const wanted = pkgs.find(p => p.id === wantedId)
+          if (wanted) loadForms(wanted)
+        }
+      })
       .catch(() => toast.error('Failed to load packages'))
       .finally(() => setPkgLoading(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const loadForms = (pkg) => {
