@@ -4,6 +4,7 @@ import com.insurance.portal.dto.*;
 import com.insurance.portal.model.*;
 import com.insurance.portal.model.enums.*;
 import com.insurance.portal.repository.*;
+import com.insurance.portal.util.FileStorageUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -12,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
@@ -63,28 +63,28 @@ public class CustomerController {
                 .map(ApplicationResponse::from).toList();
     }
 
-    @PostMapping("/applications")
+    @PostMapping(value = "/applications", consumes = {"multipart/form-data"})
     @Transactional
     public ResponseEntity<?> submitApplication(@AuthenticationPrincipal UserDetails principal,
-                                               @RequestBody Map<String, Object> req) {
+                                               @RequestParam String packageId,
+                                               @RequestParam String coverageAmount,
+                                               @RequestParam String duration,
+                                               @RequestParam(required = false) String notes,
+                                               @RequestParam(required = false) String commonInfo,
+                                               @RequestParam(required = false) String extraInfo,
+                                               @RequestParam(required = false) List<MultipartFile> documents) {
         User user = getUser(principal);
-        Long pkgId = Long.valueOf(req.get("packageId").toString());
+        Long pkgId = Long.valueOf(packageId);
         InsurancePackage pkg = packageRepo.findById(pkgId)
                 .orElseThrow(() -> new RuntimeException("Package not found"));
         if (!pkg.isActive()) return ResponseEntity.badRequest().body(Map.of("message", "This package is no longer available"));
 
-        BigDecimal coverageAmount = new BigDecimal(req.get("coverageAmount").toString());
-        int duration = Integer.parseInt(req.get("duration").toString());
-
-        // commonInfo / extraInfo arrive as JSON strings from the frontend
-        String commonInfoJson = req.containsKey("commonInfo") && req.get("commonInfo") != null
-                ? serializeToJson(req.get("commonInfo")) : null;
-        String extraInfoJson = req.containsKey("extraInfo") && req.get("extraInfo") != null
-                ? serializeToJson(req.get("extraInfo")) : null;
+        BigDecimal coverage = new BigDecimal(coverageAmount);
+        int dur = Integer.parseInt(duration);
 
         // Calculate risk and premium
-        String riskLevel = calculateRisk(pkg.getType(), commonInfoJson, extraInfoJson);
-        BigDecimal premiumAmount = calculatePremium(coverageAmount, pkg.getPremiumRate(), duration, riskLevel);
+        String riskLevel = calculateRisk(pkg.getType(), commonInfo, extraInfo);
+        BigDecimal premiumAmount = calculatePremium(coverage, pkg.getPremiumRate(), dur, riskLevel);
         String policyNumber = generatePolicyNumber(pkg.getType());
 
         // Assign first available agent matching insurance type
@@ -95,18 +95,28 @@ public class CustomerController {
                         || a.getInsuranceType().equals(pkg.getType()))
                 .findFirst().orElse(agents.isEmpty() ? null : agents.get(0));
 
+        String documentsJson;
+        try {
+            documentsJson = FileStorageUtil.toJsonArray(FileStorageUtil.saveDocuments(documents, "applications", "app"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Failed to save uploaded documents"));
+        }
+
         PolicyApplication app = PolicyApplication.builder()
                 .customer(user)
                 .insurancePackage(pkg)
                 .agent(agent)
-                .coverageAmount(coverageAmount)
-                .duration(duration)
-                .notes(req.containsKey("notes") ? req.get("notes").toString() : null)
-                .commonInfo(commonInfoJson)
-                .extraInfo(extraInfoJson)
+                .coverageAmount(coverage)
+                .duration(dur)
+                .notes(notes)
+                .commonInfo(commonInfo)
+                .extraInfo(extraInfo)
                 .riskLevel(riskLevel)
                 .premiumAmount(premiumAmount)
                 .policyNumber(policyNumber)
+                .documentsPath(documentsJson)
                 .status(ApplicationStatus.PENDING)
                 .build();
         return ResponseEntity.ok(ApplicationResponse.from(appRepo.save(app)));
@@ -160,6 +170,20 @@ public class CustomerController {
         if (app.getStatus() != ApplicationStatus.APPROVED) {
             return ResponseEntity.badRequest().body(Map.of("message", "Claims can only be submitted for APPROVED policies"));
         }
+        // Only one claim allowed per policy, regardless of that claim's current status
+        if (claimRepo.existsByApplication_Id(app.getId())) {
+            return ResponseEntity.badRequest().body(Map.of("message", "A claim has already been submitted for this policy. Only one claim is allowed per policy."));
+        }
+
+        String documentsJson;
+        try {
+            documentsJson = FileStorageUtil.toJsonArray(FileStorageUtil.saveDocuments(documents, "claims", "claim"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Failed to save uploaded documents"));
+        }
+
         Claim claim = Claim.builder()
                 .application(app)
                 .customer(user)
@@ -168,6 +192,7 @@ public class CustomerController {
                 .amount(new BigDecimal(amount))
                 .description(description)
                 .incidentDate(LocalDate.parse(incidentDate))
+                .documentsPath(documentsJson)
                 .status(ClaimStatus.PENDING)
                 .build();
         return ResponseEntity.ok(ClaimResponse.from(claimRepo.save(claim)));
@@ -176,29 +201,20 @@ public class CustomerController {
     // ── Payments ─────────────────────────────────────────────────────
     @GetMapping("/payments")
     @Transactional(readOnly = true)
-    public List<?> getPayments(@AuthenticationPrincipal UserDetails principal) {
+    public List<PaymentResponse> getPayments(@AuthenticationPrincipal UserDetails principal) {
         User user = getUser(principal);
         return paymentRepo.findAllByCustomer(user).stream()
                 .sorted(Comparator.comparing(Payment::getCreatedAt).reversed())
-                .map(p -> {
-                    Map<String, Object> m = new HashMap<>();
-                    m.put("id", p.getId());
-                    m.put("policyName", p.getApplication() != null
-                            && p.getApplication().getInsurancePackage() != null
-                            ? p.getApplication().getInsurancePackage().getName() : "");
-                    m.put("amount", p.getAmount());
-                    m.put("paymentType", p.getPaymentType());
-                    m.put("status", p.getStatus().name());
-                    m.put("verifiedBy", p.getVerifiedBy());
-                    m.put("createdAt", p.getCreatedAt());
-                    return m;
-                }).toList();
+                .map(PaymentResponse::from).toList();
     }
+
+    private static final java.util.Set<String> VALID_PAYMENT_METHODS = java.util.Set.of("KBZ_PAY", "WAVE_PAY", "AYA_PAY");
 
     @PostMapping("/payments")
     @Transactional
     public ResponseEntity<?> submitPayment(@AuthenticationPrincipal UserDetails principal,
                                            @RequestParam String applicationId,
+                                           @RequestParam(required = false) String paymentMethod,
                                            @RequestParam(required = false) MultipartFile screenshot,
                                            @RequestParam(required = false) String notes) {
         User user = getUser(principal);
@@ -215,53 +231,33 @@ public class CustomerController {
         if (paymentRepo.existsByApplication_IdAndStatus(app.getId(), PaymentStatus.PENDING)) {
             return ResponseEntity.badRequest().body(Map.of("message", "A pending payment already exists for this application"));
         }
+        if (paymentMethod == null || !VALID_PAYMENT_METHODS.contains(paymentMethod)) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Please select a valid payment method (KBZPay, Wave Pay, or AYA Pay)"));
+        }
+        if (screenshot == null || screenshot.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "A payment proof screenshot is required"));
+        }
 
-        String screenshotPath = null;
-        if (screenshot != null && !screenshot.isEmpty()) {
-            try {
-                // Validate content type — only allow common image formats
-                String contentType = screenshot.getContentType();
-                String ext = switch (contentType != null ? contentType.toLowerCase() : "") {
-                    case "image/jpeg" -> ".jpg";
-                    case "image/png"  -> ".png";
-                    case "image/webp" -> ".webp";
-                    case "image/gif"  -> ".gif";
-                    default -> throw new RuntimeException("Unsupported file type. Only JPEG, PNG, WEBP, and GIF are allowed.");
-                };
-                // Ignore client filename — generate server-side UUID name to prevent path traversal
-                String safeFilename = "payment_" + java.util.UUID.randomUUID() + ext;
-                File uploadRoot = new File("./uploads/payments").getCanonicalFile();
-                uploadRoot.mkdirs();
-                File dest = new File(uploadRoot, safeFilename).getCanonicalFile();
-                // Verify resolved path stays within upload root (path traversal guard)
-                if (!dest.getPath().startsWith(uploadRoot.getPath())) {
-                    throw new RuntimeException("Invalid upload path");
-                }
-                screenshot.transferTo(dest);
-                screenshotPath = dest.getPath();
-            } catch (RuntimeException e) {
-                return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
-            } catch (Exception e) {
-                return ResponseEntity.badRequest().body(Map.of("message", "Failed to save screenshot"));
-            }
+        String screenshotPath;
+        try {
+            screenshotPath = FileStorageUtil.saveDocument(screenshot, "payments", "payment");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Failed to save screenshot"));
         }
 
         Payment payment = Payment.builder()
                 .application(app)
                 .customer(user)
+                .amount(app.getPremiumAmount())
                 .paymentType("PREMIUM")
+                .paymentMethod(paymentMethod)
                 .screenshotPath(screenshotPath)
                 .notes(notes)
                 .status(PaymentStatus.PENDING)
                 .build();
-        Payment saved = paymentRepo.save(payment);
-        // Return a safe map — never return JPA entity directly (risks recursive serialization)
-        return ResponseEntity.ok(Map.of(
-                "id", saved.getId(),
-                "status", saved.getStatus().name(),
-                "paymentType", saved.getPaymentType(),
-                "createdAt", saved.getCreatedAt()
-        ));
+        return ResponseEntity.ok(PaymentResponse.from(paymentRepo.save(payment)));
     }
 
     // ── Active Policies (APPROVED applications) ─────────────────────
@@ -337,12 +333,6 @@ public class CustomerController {
     }
 
     // ── Helper methods ───────────────────────────────────────────────
-    private String serializeToJson(Object obj) {
-        if (obj instanceof String) return (String) obj; // already a JSON string
-        try { return new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(obj); }
-        catch (Exception e) { return obj.toString(); }
-    }
-
     private String calculateRisk(String type, String commonInfoJson, String extraInfoJson) {
         int score = 0;
         try {

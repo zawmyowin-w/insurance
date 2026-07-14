@@ -17,6 +17,7 @@ public interface ClaimRepository extends JpaRepository<Claim, Long> {
     List<Claim> findAllByStatus(ClaimStatus status);
     long countByCustomerAndStatus(User customer, ClaimStatus status);
     long countByStatus(ClaimStatus status);
+    boolean existsByApplication_Id(Long applicationId);
 
     void deleteAllByCustomer(User customer);
 

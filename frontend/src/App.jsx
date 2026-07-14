@@ -43,6 +43,7 @@ import ManagePackagesPage from './pages/admin/ManagePackagesPage'
 import ManageUsersPage from './pages/admin/ManageUsersPage'
 import AdminApplicationsPage from './pages/admin/AdminApplicationsPage'
 import AdminClaimsPage from './pages/admin/AdminClaimsPage'
+import AdminPaymentsPage from './pages/admin/AdminPaymentsPage'
 import AdminNotificationsPage from './pages/admin/AdminNotificationsPage'
 import AdminFormBuilderPage from './pages/admin/AdminFormBuilderPage'
 import AdminReportsPage from './pages/admin/AdminReportsPage'
@@ -97,6 +98,7 @@ export default function App() {
               <Route path="users" element={<ManageUsersPage />} />
               <Route path="applications" element={<AdminApplicationsPage />} />
               <Route path="claims" element={<AdminClaimsPage />} />
+              <Route path="payments" element={<AdminPaymentsPage />} />
               <Route path="forms" element={<AdminFormBuilderPage />} />
               <Route path="notifications" element={<AdminNotificationsPage />} />
               <Route path="reports" element={<AdminReportsPage />} />

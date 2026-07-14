@@ -10,15 +10,24 @@ export default function SubmitClaimPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [activePolicies, setActivePolicies] = useState([])
+  const [claimedIds, setClaimedIds] = useState(new Set())
   const [form, setForm] = useState({ applicationId: '', claimType: '', amount: '', description: '', incidentDate: '' })
   const [docs, setDocs] = useState([])
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    api.get('/customer/applications?status=APPROVED')
-      .then(res => setActivePolicies(Array.isArray(res.data) ? res.data : []))
-      .catch(() => setActivePolicies([]))
+    Promise.all([
+      api.get('/customer/applications?status=APPROVED').catch(() => ({ data: [] })),
+      api.get('/customer/claims').catch(() => ({ data: [] })),
+    ]).then(([appsRes, claimsRes]) => {
+      setActivePolicies(Array.isArray(appsRes.data) ? appsRes.data : [])
+      const claims = Array.isArray(claimsRes.data) ? claimsRes.data : []
+      setClaimedIds(new Set(claims.map(c => c.applicationId)))
+    })
   }, [])
+
+  // A policy may only have one claim submitted against it, ever (regardless of that claim's status)
+  const availablePolicies = activePolicies.filter(p => !claimedIds.has(p.id))
 
   const handleChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }))
 
@@ -56,7 +65,7 @@ export default function SubmitClaimPage() {
                   <label className="form-label-custom">Select Policy *</label>
                   <select name="applicationId" required className="form-select-custom w-100" value={form.applicationId} onChange={handleChange}>
                     <option value="">Choose an active policy...</option>
-                    {activePolicies.map(p => (
+                    {availablePolicies.map(p => (
                       <option key={p.id} value={p.id}>
                         {p.packageName || p.package?.name} — {Number(p.coverageAmount).toLocaleString()} MMK
                       </option>
@@ -65,6 +74,16 @@ export default function SubmitClaimPage() {
                   {activePolicies.length === 0 && (
                     <small style={{ color: 'var(--danger)', fontSize: '0.8rem' }}>
                       No approved policies found. Apply for a policy first.
+                    </small>
+                  )}
+                  {activePolicies.length > 0 && availablePolicies.length === 0 && (
+                    <small style={{ color: 'var(--danger)', fontSize: '0.8rem' }}>
+                      All of your approved policies already have a claim submitted. Only one claim is allowed per policy.
+                    </small>
+                  )}
+                  {activePolicies.length > availablePolicies.length && availablePolicies.length > 0 && (
+                    <small style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>
+                      Note: policies that already have a claim are hidden — only one claim is allowed per policy.
                     </small>
                   )}
                 </div>

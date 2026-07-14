@@ -39,6 +39,10 @@ public class Payment {
     @Column(name = "payment_type")
     private String paymentType; // PREMIUM, RENEWAL
 
+    /** Mobile payment method used: KBZ_PAY, WAVE_PAY, AYA_PAY */
+    @Column(name = "payment_method")
+    private String paymentMethod;
+
     @Column(name = "screenshot_path")
     private String screenshotPath;
 

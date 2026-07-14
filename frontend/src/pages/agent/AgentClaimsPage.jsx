@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
+import DocumentViewerModal from '../../components/DocumentViewerModal'
 
 export default function AgentClaimsPage() {
   const [claims, setClaims] = useState([])
@@ -10,6 +11,7 @@ export default function AgentClaimsPage() {
   const [rejectId, setRejectId] = useState(null)
   const [rejectNote, setRejectNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [viewClaim, setViewClaim] = useState(null)
 
   const fetchClaims = () => {
     api.get('/agent/claims').then(res => setClaims(Array.isArray(res.data) ? res.data : [])).catch(() => setClaims([])).finally(() => setLoading(false))
@@ -76,6 +78,9 @@ export default function AgentClaimsPage() {
                   ))}
                 </div>
                 {claim.description && <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1rem' }}>{claim.description}</p>}
+                <button className="btn-outline-custom mb-3" style={{ fontSize: '0.82rem', padding: '0.35rem 0.85rem' }} onClick={() => setViewClaim(claim)}>
+                  <i className="bi bi-eye me-1"></i>View Full Details {claim.documentCount > 0 && `(${claim.documentCount} doc${claim.documentCount > 1 ? 's' : ''})`}
+                </button>
                 {claim.status === 'PENDING' && (
                   selected === claim.id ? (
                     <div>
@@ -107,6 +112,62 @@ export default function AgentClaimsPage() {
           ))}
         </div>
       )}
+
+      {viewClaim && (
+        <div className="modal show d-block modal-custom" tabIndex="-1" style={{ background: 'rgba(0,0,0,0.6)' }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title" style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Claim Details</h5>
+                <button className="icon-btn" onClick={() => setViewClaim(null)}><i className="bi bi-x-lg"></i></button>
+              </div>
+              <div className="modal-body">
+                {[
+                  ['Customer', viewClaim.customerName], ['Policy', viewClaim.policyName],
+                  ['Claim Type', viewClaim.claimType], ['Amount', `${Number(viewClaim.amount).toLocaleString()} MMK`],
+                  ['Incident Date', viewClaim.incidentDate ? new Date(viewClaim.incidentDate).toLocaleDateString() : '—'],
+                  ['Submitted', viewClaim.createdAt ? new Date(viewClaim.createdAt).toLocaleDateString() : '—'],
+                ].map(([label, value]) => (
+                  <div key={label} className="d-flex gap-2 mb-1" style={{ fontSize: '0.86rem' }}>
+                    <span style={{ color: 'var(--text-muted)', minWidth: 130, flexShrink: 0 }}>{label}</span>
+                    <span style={{ fontWeight: 500 }}>{value || '—'}</span>
+                  </div>
+                ))}
+                {viewClaim.description && (
+                  <div className="mt-2" style={{ borderTop: '1px solid var(--border)', paddingTop: '0.75rem' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.35rem' }}>Description</div>
+                    <p style={{ fontSize: '0.86rem', margin: 0 }}>{viewClaim.description}</p>
+                  </div>
+                )}
+                <div className="mt-3" style={{ borderTop: '1px solid var(--border)', paddingTop: '0.75rem' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Evidence Documents</div>
+                  {viewClaim.documentCount > 0 ? (
+                    <DocumentsInline claimId={viewClaim.id} count={viewClaim.documentCount} />
+                  ) : <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>No documents uploaded.</span>}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+  )
+}
+
+function DocumentsInline({ claimId, count }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <button className="btn-outline-custom" onClick={() => setOpen(true)}>
+        <i className="bi bi-folder2-open me-2"></i>View {count} Document{count > 1 ? 's' : ''}
+      </button>
+      {open && (
+        <DocumentViewerModal
+          title="Claim Evidence"
+          urls={Array.from({ length: count }, (_, i) => `/agent/claims/${claimId}/documents/${i}`)}
+          onClose={() => setOpen(false)}
+        />
+      )}
+    </>
   )
 }

@@ -82,6 +82,10 @@ public class PolicyApplication {
     @Column(name = "premium_amount", precision = 20, scale = 2)
     private BigDecimal premiumAmount;
 
+    /** JSON array of server-stored paths for uploaded supporting documents (ID photo, proof docs, etc.) */
+    @Column(name = "documents_path", columnDefinition = "TEXT")
+    private String documentsPath;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

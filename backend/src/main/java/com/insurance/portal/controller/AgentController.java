@@ -4,13 +4,17 @@ import com.insurance.portal.dto.*;
 import com.insurance.portal.model.*;
 import com.insurance.portal.model.enums.*;
 import com.insurance.portal.repository.*;
+import com.insurance.portal.util.FileStorageUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.File;
 import java.util.*;
 
 @RestController
@@ -155,6 +159,45 @@ public class AgentController {
                 .type(NotificationType.REJECTION)
                 .build());
         return ResponseEntity.ok(ClaimResponse.from(claim));
+    }
+
+    // ── Document viewing (application supporting docs & claim evidence) ─
+    @GetMapping("/applications/{id}/documents/{index}")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getApplicationDocument(@PathVariable Long id, @PathVariable int index,
+                                                    @AuthenticationPrincipal UserDetails principal) {
+        User agent = getAgent(principal);
+        PolicyApplication app = appRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Application not found"));
+        if (app.getAgent() == null || !app.getAgent().getId().equals(agent.getId())) {
+            return ResponseEntity.status(403).body(Map.of("message", "You are not assigned to this application"));
+        }
+        List<String> docs = FileStorageUtil.fromJsonArray(app.getDocumentsPath());
+        if (index < 0 || index >= docs.size()) return ResponseEntity.notFound().build();
+        return streamFile(docs.get(index));
+    }
+
+    @GetMapping("/claims/{id}/documents/{index}")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getClaimDocument(@PathVariable Long id, @PathVariable int index,
+                                              @AuthenticationPrincipal UserDetails principal) {
+        User agent = getAgent(principal);
+        Claim claim = claimRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Claim not found"));
+        if (claim.getAgent() == null || !claim.getAgent().getId().equals(agent.getId())) {
+            return ResponseEntity.status(403).body(Map.of("message", "You are not assigned to this claim"));
+        }
+        List<String> docs = FileStorageUtil.fromJsonArray(claim.getDocumentsPath());
+        if (index < 0 || index >= docs.size()) return ResponseEntity.notFound().build();
+        return streamFile(docs.get(index));
+    }
+
+    private ResponseEntity<?> streamFile(String path) {
+        File file = new File(path);
+        if (!file.exists()) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(FileStorageUtil.contentTypeFor(path)))
+                .body(new FileSystemResource(file));
     }
 
     @GetMapping("/notifications")

@@ -1,6 +1,7 @@
 package com.insurance.portal.dto;
 
 import com.insurance.portal.model.Claim;
+import com.insurance.portal.util.FileStorageUtil;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -22,6 +23,7 @@ public class ClaimResponse {
     private String status;
     private String agentNote;
     private String adminNote;
+    private int documentCount;
     private LocalDateTime createdAt;
 
     public static ClaimResponse from(Claim claim) {
@@ -47,6 +49,7 @@ public class ClaimResponse {
         dto.setStatus(claim.getStatus().name());
         dto.setAgentNote(claim.getAgentNote());
         dto.setAdminNote(claim.getAdminNote());
+        dto.setDocumentCount(FileStorageUtil.fromJsonArray(claim.getDocumentsPath()).size());
         dto.setCreatedAt(claim.getCreatedAt());
         return dto;
     }

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
+import PaymentMethodIcon, { PAYMENT_METHODS } from '../../components/PaymentMethodIcon'
 
 export default function MyPaymentsPage() {
   const { t } = useTranslation()
@@ -9,7 +10,7 @@ export default function MyPaymentsPage() {
   const [pendingPolicies, setPendingPolicies] = useState([])
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
-  const [payForm, setPayForm] = useState({ applicationId: '', screenshot: null, notes: '' })
+  const [payForm, setPayForm] = useState({ applicationId: '', paymentMethod: '', screenshot: null, notes: '' })
   const [submitting, setSubmitting] = useState(false)
 
   const fetchData = () => {
@@ -27,17 +28,19 @@ export default function MyPaymentsPage() {
   const handleSubmitPayment = async e => {
     e.preventDefault()
     if (!payForm.applicationId) { toast.error('Select a policy'); return }
-    if (!payForm.screenshot) { toast.error('Upload payment screenshot'); return }
+    if (!payForm.paymentMethod) { toast.error('Select a payment method'); return }
+    if (!payForm.screenshot) { toast.error('Upload payment proof screenshot'); return }
     setSubmitting(true)
     try {
       const fd = new FormData()
       fd.append('applicationId', payForm.applicationId)
+      fd.append('paymentMethod', payForm.paymentMethod)
       fd.append('screenshot', payForm.screenshot)
       fd.append('notes', payForm.notes)
       await api.post('/customer/payments', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
       toast.success('Payment submitted! Awaiting admin verification.')
       setShowModal(false)
-      setPayForm({ applicationId: '', screenshot: null, notes: '' })
+      setPayForm({ applicationId: '', paymentMethod: '', screenshot: null, notes: '' })
       fetchData()
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to submit payment')
@@ -85,7 +88,7 @@ export default function MyPaymentsPage() {
             <table className="w-100">
               <thead>
                 <tr>
-                  {['#', 'Policy', 'Amount (MMK)', 'Type', 'Status', 'Submitted', 'Verified By'].map(h => <th key={h}>{h}</th>)}
+                  {['#', 'Policy', 'Amount (MMK)', 'Method', 'Status', 'Submitted', 'Verified By'].map(h => <th key={h}>{h}</th>)}
                 </tr>
               </thead>
               <tbody>
@@ -93,8 +96,15 @@ export default function MyPaymentsPage() {
                   <tr key={p.id}>
                     <td style={{ color: 'var(--text-muted)', fontWeight: 500 }}>#{p.id}</td>
                     <td style={{ fontWeight: 500 }}>{p.policyName || p.application?.packageName}</td>
-                    <td>{Number(p.amount).toLocaleString()}</td>
-                    <td><span style={{ fontSize: '0.78rem', color: 'var(--primary)', fontWeight: 600 }}>{p.paymentType}</span></td>
+                    <td>{p.amount != null ? Number(p.amount).toLocaleString() : '—'}</td>
+                    <td>
+                      {p.paymentMethod ? (
+                        <div className="d-flex align-items-center gap-2">
+                          <PaymentMethodIcon method={p.paymentMethod} size={22} />
+                          <span style={{ fontSize: '0.8rem' }}>{PAYMENT_METHODS.find(m => m.id === p.paymentMethod)?.label || p.paymentMethod}</span>
+                        </div>
+                      ) : <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{p.paymentType}</span>}
+                    </td>
                     <td><span className={`badge-status badge-${p.status?.toLowerCase()}`}>{p.status}</span></td>
                     <td>{p.createdAt ? new Date(p.createdAt).toLocaleDateString() : '—'}</td>
                     <td style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{p.verifiedBy || '—'}</td>
@@ -129,10 +139,28 @@ export default function MyPaymentsPage() {
                     </select>
                   </div>
                   <div className="mb-3">
-                    <label className="form-label-custom">Payment Screenshot *</label>
+                    <label className="form-label-custom">Payment Method *</label>
+                    <div className="d-flex gap-2 flex-wrap">
+                      {PAYMENT_METHODS.map(m => (
+                        <button type="button" key={m.id}
+                          onClick={() => setPayForm(f => ({ ...f, paymentMethod: m.id }))}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 8, padding: '0.5rem 0.85rem',
+                            borderRadius: 10, cursor: 'pointer', flex: '1 1 30%', minWidth: 110,
+                            border: `2px solid ${payForm.paymentMethod === m.id ? m.color : 'var(--border)'}`,
+                            background: payForm.paymentMethod === m.id ? `${m.color}14` : 'var(--bg-secondary)',
+                          }}>
+                          <PaymentMethodIcon method={m.id} size={28} />
+                          <span style={{ fontSize: '0.82rem', fontWeight: 600, color: payForm.paymentMethod === m.id ? m.color : 'var(--text-primary)' }}>{m.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label-custom">Payment Proof Screenshot *</label>
                     <input type="file" accept="image/*" required className="form-control-custom w-100"
                       onChange={e => setPayForm(f => ({ ...f, screenshot: e.target.files[0] }))} />
-                    <small style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>Upload your bank transfer or mobile payment screenshot</small>
+                    <small style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>Upload the screenshot of your {payForm.paymentMethod ? PAYMENT_METHODS.find(m => m.id === payForm.paymentMethod)?.label : 'mobile payment'} transaction</small>
                   </div>
                   <div className="mb-3">
                     <label className="form-label-custom">Notes</label>

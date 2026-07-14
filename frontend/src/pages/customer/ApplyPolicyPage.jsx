@@ -53,6 +53,7 @@ export default function ApplyPolicyPage() {
   const [extra, setExtra] = useState(initExtra)
   const [coverage, setCoverage] = useState('')
   const [duration, setDuration] = useState(1)
+  const [docs, setDocs] = useState([])
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
@@ -79,14 +80,15 @@ export default function ApplyPolicyPage() {
   const submit = async () => {
     setSubmitting(true)
     try {
-      await api.post('/customer/applications', {
-        packageId: selectedPlan.id,
-        coverageAmount: Number(coverage),
-        duration,
-        commonInfo: JSON.stringify(common),
-        extraInfo: JSON.stringify(extra),
-        notes: `Risk: ${risk} | Est. Premium: ${premium?.toLocaleString()} MMK`,
-      })
+      const fd = new FormData()
+      fd.append('packageId', selectedPlan.id)
+      fd.append('coverageAmount', Number(coverage))
+      fd.append('duration', duration)
+      fd.append('commonInfo', JSON.stringify(common))
+      fd.append('extraInfo', JSON.stringify(extra))
+      fd.append('notes', `Risk: ${risk} | Est. Premium: ${premium?.toLocaleString()} MMK`)
+      docs.forEach(d => fd.append('documents', d))
+      await api.post('/customer/applications', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
       toast.success('Application submitted successfully!')
       navigate('/customer/applications')
     } catch (err) {
@@ -345,6 +347,16 @@ export default function ApplyPolicyPage() {
               <Field label="Phone" value={common.phone} />
               <Field label="Occupation" value={common.occupation} />
               <Field label="Monthly Income" value={common.monthlyIncome ? `${Number(common.monthlyIncome).toLocaleString()} MMK` : ''} />
+            </div>
+            <div className="mb-4" style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
+              <div style={{ fontWeight: 600, fontSize: '0.78rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.5rem' }}>Supporting Documents</div>
+              <label className="form-label-custom">Upload ID Card Photo / Proof Documents</label>
+              <input type="file" multiple accept=".pdf,.jpg,.jpeg,.png,.webp"
+                className="form-control-custom w-100"
+                onChange={e => setDocs(Array.from(e.target.files))} />
+              <small style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>
+                Your assigned agent will review these documents. (PDF, JPG, PNG, WEBP){docs.length > 0 ? ` — ${docs.length} file(s) selected` : ''}
+              </small>
             </div>
             <div className="p-3 mb-4" style={{ background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: 10, fontSize: '0.85rem', color: '#92400e' }}>
               <i className="bi bi-info-circle me-2"></i>

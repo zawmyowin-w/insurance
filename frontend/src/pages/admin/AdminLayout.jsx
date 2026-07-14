@@ -9,6 +9,7 @@ const sidebarLinks = [
   { to: '/admin/forms',         icon: 'bi-ui-checks',           label: 'Form Templates'     },
   { to: '/admin/applications',  icon: 'bi-file-earmark-text',   label: 'Applications'       },
   { to: '/admin/claims',        icon: 'bi-file-earmark-medical',label: 'Claims'             },
+  { to: '/admin/payments',      icon: 'bi-credit-card',         label: 'Payments'           },
   { to: '/admin/notifications', icon: 'bi-bell',                label: 'Notifications'      },
   { to: '/admin/reports',       icon: 'bi-bar-chart-line',      label: 'Reports'            },
 ]

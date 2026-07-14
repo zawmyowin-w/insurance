@@ -1,3 +1,5 @@
 - [Security decisions](security-decisions.md) — Key auth/security patterns; JWT, CORS, admin bootstrap, IDOR, file upload rules
 - [Self-managed background service (MySQL)](local-service-in-workflow.md) — start it inside the workflow's script, not via ShellExec nohup/disown, or it dies between tool calls
 - [One-shot effects under React.StrictMode](react-strictmode-oneshot-effects.md) — a token-consuming useEffect can silently show a false "failed" state on its StrictMode double-invoke; guard with a ref
+- [Protected file serving via blob fetch](protected-file-serving.md) — JWT-protected file endpoints; frontend must use axios blob fetch + object URLs, never plain <img src>
+- [JSON array in TEXT column for multi-file paths](json-array-in-text-column.md) — FileStorageUtil toJsonArray/fromJsonArray; documentCount derived at DTO level from list size
