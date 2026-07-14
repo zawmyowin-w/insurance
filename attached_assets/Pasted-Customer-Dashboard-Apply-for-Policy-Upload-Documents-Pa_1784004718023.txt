@@ -1,0 +1,53 @@
+Customer
+
+Dashboard
+Apply for Policy
+Upload Documents
+Pay Premium
+View Policies
+Renew Policies
+Submit Claims
+Claim Status
+Download Insurance Policy Certificate
+Notifications
+
+
+Insurance Agent
+
+Dashboard
+Assist Applications
+Verify Customer Information
+Submit Applications
+Track Customer Policies
+
+Admin
+
+Dashboard
+Manage Plans
+CRUD Insurance Types
+Manages Insurannce Packages
+Manage Application Policies
+Manage Customers
+Manage Agents
+Manage Application form format( Including Text, imgs, files and personal information)
+Manage Claims Policy form format( Including Text, imgs, files and evidences) 
+Verify Documents
+Review Applications
+Calculate Premium
+Approve/Reject Applications
+Manage Claims
+Generate Reports
+Send messages to specific customers and agents
+Admin ဘက်မှ့ dynamic application form တွေတည်ဆောက်ရာတွင်သက်ဆိုင်ရာ Insurance အလိုက် တည်ဆောက်ရာတွင် ကိုယ်ရေးရာဇဝင်နှင့် တကွ text box တွေ label တွေ အမှန်ခြစ်ရွေးချယ်စရာတွေ Image upload လုပ်ဖို့တွေ file upload လုပ်ဖို့တွေ လိုအပ်တာတွေကို စိတ်တိုင်းကျ့ create လုပ်လို့ရခြင်း
+Admin ဘက်မှ့ Claims policy form formatကို insurance အလိုက် မိ့မိ့တောင်းခံလိုသည့်အချက်အလက်များ ကို label, text box, အမှန်ခြစ်ရွေးချယ်စရာတွေ, image upload, file upload များဖြင့် စိတ်တိုင်းကျ့ create လုပ်နိုင်ခြင်း
+
+Admin ဘက်မှ customer များ application form ဖြည့်ရာတွင်လိုအပ်အချက်အလက်များကို rules များဖြင့်ဖော်ပြကာ admin ဘက်မှ customer များဆီမှတောင်းခံမည်ဖြစ်ပါသည်။ ထို rules များကို admin ဘက်မှ insurances types အလိုက် manage လုပ်လို့ရနိုင်ပါတယ်။ 
+Admin ဘက်မှ customers များ claims policy လျှောက်ထားရာတွင်မည့်သည့်အခြေအနေမျိုး၌တောင်းခံနိုင်သည်ကို customer များ၏လျှောက်ထားသော application form တွင် တောင်းခံနိုင်သည့်အခြအနေများနှင့် လက်မခံနိုင်သည့်အခြေအနေများကို admin များဘက်မှသတ်မှတ်ကာ customer များ၏ application policy တွင်တစ်ခါတည်းထည့်သွင်းပေးခြင်း။
+
+Customer ကြည့်နိုင်မယ့် Plans
+Life Insurance
+Health Insurance
+Travel Insurance
+Education Insurance
+Motor Insurance
+Can view multiple Insurance Types that are added from Admin5.
