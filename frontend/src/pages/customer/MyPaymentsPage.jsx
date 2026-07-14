@@ -172,6 +172,15 @@ export default function MyPaymentsPage() {
                               Send payment to this {meta.label} number
                             </span>
                           </div>
+                          <div className="d-flex align-items-center gap-2 mb-1">
+                            <input type="text" readOnly value="Swe Swe Than Nyunt"
+                              style={{
+                                flex: 1, border: `1.5px solid ${meta.color}35`, borderRadius: 8,
+                                padding: '0.4rem 0.7rem', fontWeight: 600, fontSize: '0.85rem',
+                                color: 'var(--text-secondary)', background: 'var(--bg-primary)',
+                                outline: 'none',
+                              }} />
+                          </div>
                           <div className="d-flex align-items-center gap-2">
                             <input type="text" readOnly value="09458596558"
                               style={{
