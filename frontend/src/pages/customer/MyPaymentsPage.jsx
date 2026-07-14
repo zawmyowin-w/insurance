@@ -154,12 +154,53 @@ export default function MyPaymentsPage() {
                             <PaymentMethodIcon method={m.id} size={28} />
                             <span style={{ fontSize: '0.82rem', fontWeight: 600, color: payForm.paymentMethod === m.id ? m.color : 'var(--text-primary)' }}>{m.label}</span>
                           </div>
-                          {payForm.paymentMethod === m.id && (
-                            <span style={{ fontSize: '0.74rem', color: m.color, marginLeft: 36, fontWeight: 600 }}>No=09458596558</span>
-                          )}
                         </button>
                       ))}
                     </div>
+
+                    {payForm.paymentMethod && (() => {
+                      const meta = PAYMENT_METHODS.find(m => m.id === payForm.paymentMethod)
+                      return (
+                        <div key={payForm.paymentMethod} className="fade-in mt-2" style={{
+                          borderRadius: 12, padding: '0.7rem 0.9rem',
+                          background: `linear-gradient(135deg, ${meta.color}1a, ${meta.color}05)`,
+                          border: `1px solid ${meta.color}40`,
+                        }}>
+                          <div className="d-flex align-items-center gap-2 mb-2">
+                            <PaymentMethodIcon method={meta.id} size={20} />
+                            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: meta.color, letterSpacing: '0.02em' }}>
+                              Send payment to this {meta.label} number
+                            </span>
+                          </div>
+                          <div className="d-flex align-items-center gap-2">
+                            <input type="text" readOnly value="09458596558"
+                              style={{
+                                flex: 1, border: `1.5px solid ${meta.color}55`, borderRadius: 8,
+                                padding: '0.45rem 0.7rem', fontWeight: 700, fontSize: '0.95rem',
+                                letterSpacing: '0.04em', color: meta.color, background: 'var(--bg-primary)',
+                                outline: 'none',
+                              }} />
+                            <button type="button"
+                              onClick={() => {
+                                navigator.clipboard?.writeText('09458596558')
+                                toast.success('Number copied!')
+                              }}
+                              title="Copy number"
+                              style={{
+                                border: 'none', borderRadius: 8, width: 36, height: 36,
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                background: meta.color, color: '#fff', cursor: 'pointer',
+                                transition: 'transform 0.15s ease',
+                              }}
+                              onMouseDown={e => e.currentTarget.style.transform = 'scale(0.9)'}
+                              onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
+                            >
+                              <i className="bi bi-clipboard-check" style={{ fontSize: '0.95rem' }}></i>
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })()}
                   </div>
                   <div className="mb-3">
                     <label className="form-label-custom">Payment Proof Screenshot *</label>
