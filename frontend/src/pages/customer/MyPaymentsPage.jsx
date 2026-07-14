@@ -145,13 +145,16 @@ export default function MyPaymentsPage() {
                         <button type="button" key={m.id}
                           onClick={() => setPayForm(f => ({ ...f, paymentMethod: m.id }))}
                           style={{
-                            display: 'flex', alignItems: 'center', gap: 8, padding: '0.5rem 0.85rem',
+                            display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, padding: '0.5rem 0.85rem',
                             borderRadius: 10, cursor: 'pointer', flex: '1 1 30%', minWidth: 110,
                             border: `2px solid ${payForm.paymentMethod === m.id ? m.color : 'var(--border)'}`,
                             background: payForm.paymentMethod === m.id ? `${m.color}14` : 'var(--bg-secondary)',
                           }}>
-                          <PaymentMethodIcon method={m.id} size={28} />
-                          <span style={{ fontSize: '0.82rem', fontWeight: 600, color: payForm.paymentMethod === m.id ? m.color : 'var(--text-primary)' }}>{m.label}</span>
+                          <div className="d-flex align-items-center gap-2">
+                            <PaymentMethodIcon method={m.id} size={28} />
+                            <span style={{ fontSize: '0.82rem', fontWeight: 600, color: payForm.paymentMethod === m.id ? m.color : 'var(--text-primary)' }}>{m.label}</span>
+                          </div>
+                          <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginLeft: 36 }}>No=09458596558</span>
                         </button>
                       ))}
                     </div>
