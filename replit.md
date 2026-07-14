@@ -1,65 +1,46 @@
 # Digital Insurance Claim and Premiums Portal
 
-A full-stack digital insurance portal for Myanmar with three user roles: Customer, Agent, and Admin.
+A full-stack digital insurance portal for Myanmar, with role-based access for Admins, Agents, and Customers.
 
-## Tech Stack
+## Stack
 
-- **Frontend**: React 18 + Vite + Bootstrap 5 + react-i18next
-- **Backend**: Spring Boot 3.2 + Spring Security + JWT + Spring Data JPA
-- **Database**: MySQL 8 (self-managed local instance, data under `.mysql/`)
-- **Port**: Frontend `5000` (webview workflow), Backend `8080` (console workflow)
+- **Frontend**: React 18, Vite, Bootstrap 5.3, React Router 6, Axios, i18next (EN/Myanmar)
+- **Backend**: Java 17, Spring Boot 3.2.3, Spring Security (JWT), Spring Data JPA, Hibernate
+- **Database**: MySQL 8 (self-managed, data persisted in `.mysql/`)
 
-## Running on Replit
+## How to Run
 
-Both services run as Replit workflows and start automatically:
+Two workflows run in parallel:
 
-- **Start application** — `cd frontend && npm run dev` (Vite on port 5000, shown in the preview pane)
-- **Backend** — `cd backend && bash start-backend.sh` (initializes/starts a local MySQL 8 server under `.mysql/data`, creates the `insurance_portal` database, loads `database/schema.sql`, then runs the Spring Boot app on port 8080 with context path `/api`)
+| Workflow | Command | Port |
+|---|---|---|
+| **Start application** (frontend) | `cd frontend && npm run dev` | 5000 |
+| **Backend** | `cd backend && bash start-backend.sh` | 8080 |
 
-Note: Replit's managed database is PostgreSQL, not MySQL, so MySQL 8 was installed as a system dependency (`mysql80`) and is run as a self-managed local server whose data lives in the project's `.mysql/` directory (gitignored). If you'd rather use Replit's managed Postgres, the backend's JPA/Hibernate layer would need a Postgres driver + dialect swap and `database/schema.sql` would need Postgres-flavored DDL.
+The backend script starts a local MySQL instance, initializes the `insurance_portal` database, and then launches Spring Boot. The frontend proxies `/api` requests to the backend on port 8080.
 
-The **frontend is wired to the real backend** for authentication (login, register, session restore via `/auth/me`). The Vite dev server proxies all `/api` requests to the Spring Boot backend on port 8080. `frontend/src/services/mockAuth.js` is no longer imported anywhere and can be deleted once password-reset and email-verification backend endpoints are added (see follow-up tasks).
+## Default Admin Credentials
 
-### Manual backend run (outside the workflow)
+- **Email**: `admin@dicp.com.mm`
+- **Password**: `Admin@123`
 
-```bash
-cd backend && bash start-backend.sh
-```
+## Environment Variables
 
-## Default Admin Account
+| Key | Where | Purpose |
+|---|---|---|
+| `CORS_ALLOWED_ORIGINS` | shared env | Comma-separated allowed origins for Spring CORS |
+| `VITE_GOOGLE_CLIENT_ID` | shared env | Google OAuth client ID |
+| `VITE_EMAILJS_SERVICE_ID` | frontend `.env` | EmailJS service ID |
+| `VITE_EMAILJS_TEMPLATE_ID` | frontend `.env` | EmailJS template ID |
+| `VITE_EMAILJS_PUBLIC_KEY` | frontend `.env` | EmailJS public key |
+| `JWT_SECRET` | secret | JWT signing key (has a secure default) |
+| `DB_PASSWORD` | secret | MySQL root password (default: empty) |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | secret | Override default admin credentials |
 
-- **Email**: admin@dicp.com.mm
-- **Password**: Admin@123
+## File Uploads
 
-## Key Files
-
-- `frontend/src/App.jsx` — React Router routes
-- `frontend/src/pages/` — All page components
-- `frontend/src/locales/en.json` + `my.json` — Myanmar/English i18n
-- `backend/src/main/java/com/insurance/portal/` — Spring Boot application
-- `database/schema.sql` — Complete MySQL schema with seed data
-
-## Features
-
-- 🌐 Bilingual: Myanmar + English
-- 🌙 Dark / Light mode
-- 📱 Fully responsive (mobile, tablet, desktop)
-- 3 Roles: Customer, Agent, Admin
-- Policy applications with multi-step approval workflow
-- Claims management
-- Payment tracking with screenshot upload
-- In-app notifications
-- Premium calculator
-
-## Color Theme
-
-- Primary: `#1a3a5c` (Dark Blue)
-- Secondary: `#16a34a` (Green)
-- Accent: `#f59e0b` (Orange)
+Uploaded documents are stored in `./uploads` relative to the backend working directory.
 
 ## User Preferences
 
-- Use MySQL for production database
-- Frontend runs on localhost:5173, backend on localhost:8080
-- Support both Myanmar and English languages
-- Keep existing project structure
+- Keep the existing frontend/backend monorepo structure.
