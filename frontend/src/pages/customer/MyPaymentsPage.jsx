@@ -154,7 +154,9 @@ export default function MyPaymentsPage() {
                             <PaymentMethodIcon method={m.id} size={28} />
                             <span style={{ fontSize: '0.82rem', fontWeight: 600, color: payForm.paymentMethod === m.id ? m.color : 'var(--text-primary)' }}>{m.label}</span>
                           </div>
-                          <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginLeft: 36 }}>No=09458596558</span>
+                          {payForm.paymentMethod === m.id && (
+                            <span style={{ fontSize: '0.74rem', color: m.color, marginLeft: 36, fontWeight: 600 }}>No=09458596558</span>
+                          )}
                         </button>
                       ))}
                     </div>
