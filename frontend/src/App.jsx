@@ -25,6 +25,7 @@ import MyApplicationsPage from './pages/customer/MyApplicationsPage'
 import MyClaimsPage from './pages/customer/MyClaimsPage'
 import MyPaymentsPage from './pages/customer/MyPaymentsPage'
 import CustomerNotificationsPage from './pages/customer/CustomerNotificationsPage'
+import CustomerPoliciesPage from './pages/customer/CustomerPoliciesPage'
 import ApplyPolicyPage from './pages/customer/ApplyPolicyPage'
 import SubmitClaimPage from './pages/customer/SubmitClaimPage'
 
@@ -44,6 +45,7 @@ import AdminApplicationsPage from './pages/admin/AdminApplicationsPage'
 import AdminClaimsPage from './pages/admin/AdminClaimsPage'
 import AdminNotificationsPage from './pages/admin/AdminNotificationsPage'
 import AdminFormBuilderPage from './pages/admin/AdminFormBuilderPage'
+import AdminReportsPage from './pages/admin/AdminReportsPage'
 
 export default function App() {
   return (
@@ -69,6 +71,7 @@ export default function App() {
             <Route path="/customer" element={<ProtectedRoute role="CUSTOMER"><CustomerLayout /></ProtectedRoute>}>
               <Route index element={<Navigate to="dashboard" replace />} />
               <Route path="dashboard" element={<CustomerDashboard />} />
+              <Route path="policies" element={<CustomerPoliciesPage />} />
               <Route path="applications" element={<MyApplicationsPage />} />
               <Route path="apply" element={<ApplyPolicyPage />} />
               <Route path="claims" element={<MyClaimsPage />} />
@@ -96,6 +99,7 @@ export default function App() {
               <Route path="claims" element={<AdminClaimsPage />} />
               <Route path="forms" element={<AdminFormBuilderPage />} />
               <Route path="notifications" element={<AdminNotificationsPage />} />
+              <Route path="reports" element={<AdminReportsPage />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/" replace />} />

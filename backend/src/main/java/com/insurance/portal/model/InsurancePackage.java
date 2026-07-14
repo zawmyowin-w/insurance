@@ -45,6 +45,15 @@ public class InsurancePackage {
     @Column(name = "benefits", columnDefinition = "TEXT")
     private String benefitsJson; // JSON array
 
+    @Column(name = "exclusions", columnDefinition = "TEXT")
+    private String exclusions; // what is not covered
+
+    @Column(columnDefinition = "TEXT")
+    private String eligibility; // eligibility requirements
+
+    @Column(name = "policy_term")
+    private Integer policyTerm; // maximum policy term in years
+
     @Builder.Default
     private boolean active = true;
 

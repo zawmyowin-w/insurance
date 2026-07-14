@@ -3,13 +3,14 @@ import { Outlet, NavLink } from 'react-router-dom'
 import Navbar from '../../components/Navbar'
 
 const sidebarLinks = [
-  { to: '/admin/dashboard', icon: 'bi-speedometer2', label: 'Dashboard' },
-  { to: '/admin/packages', icon: 'bi-box-seam', label: 'Insurance Packages' },
-  { to: '/admin/users', icon: 'bi-people', label: 'Manage Users' },
-  { to: '/admin/forms', icon: 'bi-ui-checks', label: 'Form Templates' },
-  { to: '/admin/applications', icon: 'bi-file-earmark-text', label: 'Applications' },
-  { to: '/admin/claims', icon: 'bi-file-earmark-medical', label: 'Claims' },
-  { to: '/admin/notifications', icon: 'bi-bell', label: 'Notifications' },
+  { to: '/admin/dashboard',     icon: 'bi-speedometer2',        label: 'Dashboard'          },
+  { to: '/admin/packages',      icon: 'bi-box-seam',            label: 'Insurance Packages' },
+  { to: '/admin/users',         icon: 'bi-people',              label: 'Manage Users'       },
+  { to: '/admin/forms',         icon: 'bi-ui-checks',           label: 'Form Templates'     },
+  { to: '/admin/applications',  icon: 'bi-file-earmark-text',   label: 'Applications'       },
+  { to: '/admin/claims',        icon: 'bi-file-earmark-medical',label: 'Claims'             },
+  { to: '/admin/notifications', icon: 'bi-bell',                label: 'Notifications'      },
+  { to: '/admin/reports',       icon: 'bi-bar-chart-line',      label: 'Reports'            },
 ]
 
 export default function AdminLayout() {

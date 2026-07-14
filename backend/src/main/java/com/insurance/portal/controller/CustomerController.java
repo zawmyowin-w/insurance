@@ -73,6 +73,20 @@ public class CustomerController {
                 .orElseThrow(() -> new RuntimeException("Package not found"));
         if (!pkg.isActive()) return ResponseEntity.badRequest().body(Map.of("message", "This package is no longer available"));
 
+        BigDecimal coverageAmount = new BigDecimal(req.get("coverageAmount").toString());
+        int duration = Integer.parseInt(req.get("duration").toString());
+
+        // commonInfo / extraInfo arrive as JSON strings from the frontend
+        String commonInfoJson = req.containsKey("commonInfo") && req.get("commonInfo") != null
+                ? serializeToJson(req.get("commonInfo")) : null;
+        String extraInfoJson = req.containsKey("extraInfo") && req.get("extraInfo") != null
+                ? serializeToJson(req.get("extraInfo")) : null;
+
+        // Calculate risk and premium
+        String riskLevel = calculateRisk(pkg.getType(), commonInfoJson, extraInfoJson);
+        BigDecimal premiumAmount = calculatePremium(coverageAmount, pkg.getPremiumRate(), duration, riskLevel);
+        String policyNumber = generatePolicyNumber(pkg.getType());
+
         // Assign first available agent matching insurance type
         List<User> agents = userRepo.findAllByRoleAndActive(Role.AGENT, true);
         User agent = agents.stream()
@@ -85,9 +99,14 @@ public class CustomerController {
                 .customer(user)
                 .insurancePackage(pkg)
                 .agent(agent)
-                .coverageAmount(new BigDecimal(req.get("coverageAmount").toString()))
-                .duration(Integer.parseInt(req.get("duration").toString()))
+                .coverageAmount(coverageAmount)
+                .duration(duration)
                 .notes(req.containsKey("notes") ? req.get("notes").toString() : null)
+                .commonInfo(commonInfoJson)
+                .extraInfo(extraInfoJson)
+                .riskLevel(riskLevel)
+                .premiumAmount(premiumAmount)
+                .policyNumber(policyNumber)
                 .status(ApplicationStatus.PENDING)
                 .build();
         return ResponseEntity.ok(ApplicationResponse.from(appRepo.save(app)));
@@ -245,6 +264,61 @@ public class CustomerController {
         ));
     }
 
+    // ── Active Policies (APPROVED applications) ─────────────────────
+    @GetMapping("/policies")
+    @Transactional(readOnly = true)
+    public List<?> getActivePolicies(@AuthenticationPrincipal UserDetails principal) {
+        User user = getUser(principal);
+        return appRepo.findAllByCustomerAndStatus(user, ApplicationStatus.APPROVED).stream()
+                .sorted(Comparator.comparing(PolicyApplication::getCreatedAt).reversed())
+                .map(app -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("id", app.getId());
+                    m.put("policyNumber", app.getPolicyNumber());
+                    m.put("packageName", app.getInsurancePackage() != null ? app.getInsurancePackage().getName() : null);
+                    m.put("packageType", app.getInsurancePackage() != null ? app.getInsurancePackage().getType() : null);
+                    m.put("coverageAmount", app.getCoverageAmount());
+                    m.put("premiumAmount", app.getPremiumAmount());
+                    m.put("duration", app.getDuration());
+                    m.put("riskLevel", app.getRiskLevel());
+                    m.put("status", app.getStatus().name());
+                    m.put("createdAt", app.getCreatedAt());
+                    m.put("agentName", app.getAgent() != null ? app.getAgent().getName() : null);
+                    return m;
+                }).toList();
+    }
+
+    // Renew an existing active policy
+    @PostMapping("/applications/{id}/renew")
+    @Transactional
+    public ResponseEntity<?> renewPolicy(@PathVariable Long id,
+                                         @AuthenticationPrincipal UserDetails principal) {
+        User user = getUser(principal);
+        PolicyApplication original = appRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Policy not found"));
+        if (!original.getCustomer().getId().equals(user.getId()))
+            return ResponseEntity.status(403).body(Map.of("message", "Forbidden"));
+        if (original.getStatus() != ApplicationStatus.APPROVED)
+            return ResponseEntity.badRequest().body(Map.of("message", "Only active policies can be renewed"));
+        String newPolicyNumber = original.getInsurancePackage() != null
+                ? generatePolicyNumber(original.getInsurancePackage().getType()) : generatePolicyNumber("POL");
+        PolicyApplication renewal = PolicyApplication.builder()
+                .customer(user)
+                .insurancePackage(original.getInsurancePackage())
+                .agent(original.getAgent())
+                .coverageAmount(original.getCoverageAmount())
+                .duration(original.getDuration())
+                .notes("Renewal of policy " + original.getPolicyNumber())
+                .commonInfo(original.getCommonInfo())
+                .extraInfo(original.getExtraInfo())
+                .riskLevel(original.getRiskLevel())
+                .premiumAmount(original.getPremiumAmount())
+                .policyNumber(newPolicyNumber)
+                .status(ApplicationStatus.PENDING)
+                .build();
+        return ResponseEntity.ok(ApplicationResponse.from(appRepo.save(renewal)));
+    }
+
     // ── Notifications ────────────────────────────────────────────────
     @GetMapping("/notifications")
     @Transactional(readOnly = true)
@@ -260,5 +334,57 @@ public class CustomerController {
             m.put("createdAt", n.getCreatedAt());
             return m;
         }).toList();
+    }
+
+    // ── Helper methods ───────────────────────────────────────────────
+    private String serializeToJson(Object obj) {
+        if (obj instanceof String) return (String) obj; // already a JSON string
+        try { return new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(obj); }
+        catch (Exception e) { return obj.toString(); }
+    }
+
+    private String calculateRisk(String type, String commonInfoJson, String extraInfoJson) {
+        int score = 0;
+        try {
+            if (commonInfoJson != null) {
+                java.util.regex.Matcher m = java.util.regex.Pattern.compile("\"dob\"\\s*:\\s*\"(\\d{4})-").matcher(commonInfoJson);
+                if (m.find()) {
+                    int age = java.time.Year.now().getValue() - Integer.parseInt(m.group(1));
+                    if (age > 55) score += 3;
+                    else if (age > 40) score += 1;
+                }
+            }
+            if (extraInfoJson != null) {
+                if ("LIFE".equals(type)) {
+                    if (extraInfoJson.contains("\"smoking\":true")) score += 2;
+                    if (extraInfoJson.contains("\"hasDisease\":true")) score += 2;
+                }
+                if ("HEALTH".equals(type) && extraInfoJson.contains("\"existingDiseases\"")
+                        && !extraInfoJson.contains("\"existingDiseases\":\"\"")
+                        && !extraInfoJson.contains("\"existingDiseases\":null")) score += 2;
+                if ("MOTOR".equals(type) || "VEHICLE".equals(type)) {
+                    java.util.regex.Matcher m = java.util.regex.Pattern.compile("\"vehicleYear\"\\s*:\\s*\"?(\\d{4})").matcher(extraInfoJson);
+                    if (m.find()) {
+                        int vehicleAge = java.time.Year.now().getValue() - Integer.parseInt(m.group(1));
+                        if (vehicleAge > 10) score += 3;
+                        else if (vehicleAge > 5) score += 1;
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+        return score <= 1 ? "LOW" : score <= 3 ? "MEDIUM" : "HIGH";
+    }
+
+    private BigDecimal calculatePremium(BigDecimal coverage, BigDecimal rate, int duration, String risk) {
+        double multiplier = "HIGH".equals(risk) ? 1.5 : "MEDIUM".equals(risk) ? 1.2 : 1.0;
+        if (rate == null) return BigDecimal.ZERO;
+        return coverage.multiply(rate).multiply(BigDecimal.valueOf(duration)).multiply(BigDecimal.valueOf(multiplier)).setScale(2, java.math.RoundingMode.HALF_UP);
+    }
+
+    private String generatePolicyNumber(String type) {
+        String prefix = (type != null && type.length() >= 3) ? type.substring(0, 3).toUpperCase() : "INS";
+        int year = java.time.Year.now().getValue();
+        int rand = (int) (Math.random() * 900000) + 100000;
+        return String.format("POL-%s-%d-%06d", prefix, year, rand);
     }
 }

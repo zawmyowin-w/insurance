@@ -1,328 +1,280 @@
-import React, { useState, useEffect } from 'react'
-import { useTranslation } from 'react-i18next'
+import React, { useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import Navbar from '../components/Navbar'
-import Footer from '../components/Footer'
 import api from '../services/api'
 
-const FALLBACK_PLANS = [
-  {
-    id: 1, name: 'Basic Life Protection', type: 'LIFE',
-    description: 'Essential life coverage for individuals and families.',
-    coverageMin: 5000000, coverageMax: 50000000, premiumRate: 0.02,
-    benefits: ['Death benefit payout', 'Accidental death coverage', '24/7 support', 'Digital policy documents'],
-    durations: [1, 2, 3, 5],
-  },
-  {
-    id: 2, name: 'Comprehensive Health Plan', type: 'HEALTH',
-    description: 'Full medical coverage including hospitalization and outpatient care.',
-    coverageMin: 2000000, coverageMax: 30000000, premiumRate: 0.025,
-    benefits: ['Hospitalization', 'Outpatient treatment', 'Surgery coverage', 'Emergency evacuation'],
-    durations: [1, 2, 3],
-  },
-  {
-    id: 3, name: 'Vehicle Protect Plus', type: 'VEHICLE',
-    description: 'Comprehensive vehicle insurance for cars, motorcycles and commercial vehicles.',
-    coverageMin: 3000000, coverageMax: 80000000, premiumRate: 0.03,
-    benefits: ['Accident repair', 'Theft protection', 'Third-party liability', 'Roadside assistance'],
-    durations: [1, 2, 3],
-  },
-  {
-    id: 4, name: 'Home & Property Shield', type: 'PROPERTY',
-    description: 'Protect your home and valuables against damage, theft and natural disasters.',
-    coverageMin: 10000000, coverageMax: 500000000, premiumRate: 0.015,
-    benefits: ['Fire & disaster coverage', 'Theft protection', 'Contents coverage', 'Temporary accommodation'],
-    durations: [1, 2, 3, 5],
-  },
-]
+const ALL_TYPES = ['LIFE', 'HEALTH', 'TRAVEL', 'MOTOR', 'EDUCATION', 'VEHICLE', 'PROPERTY']
 
-const typeColors = {
-  LIFE: { icon: '❤️', bg: '#fff0f0', color: '#dc2626' },
-  HEALTH: { icon: '🏥', bg: '#f0fdf4', color: '#16a34a' },
-  VEHICLE: { icon: '🚗', bg: '#eff6ff', color: '#1d4ed8' },
-  PROPERTY: { icon: '🏠', bg: '#fefce8', color: '#ca8a04' },
+const TYPE_META = {
+  LIFE:      { color: '#dc2626', bg: '#fef2f2',  icon: 'bi-heart-pulse',   label: 'Life Insurance',      desc: 'Financial protection for your family' },
+  HEALTH:    { color: '#16a34a', bg: '#f0fdf4',  icon: 'bi-hospital',      label: 'Health Insurance',    desc: 'Medical coverage & hospitalization' },
+  TRAVEL:    { color: '#0891b2', bg: '#ecfeff',  icon: 'bi-airplane',      label: 'Travel Insurance',    desc: 'International & domestic travel protection' },
+  MOTOR:     { color: '#d97706', bg: '#fffbeb',  icon: 'bi-car-front',     label: 'Motor Insurance',     desc: 'Vehicle accident & theft coverage' },
+  EDUCATION: { color: '#7c3aed', bg: '#f5f3ff',  icon: 'bi-mortarboard',   label: 'Education Insurance', desc: 'Secure your children\'s educational future' },
+  VEHICLE:   { color: '#2563eb', bg: '#eff6ff',  icon: 'bi-truck',         label: 'Vehicle Insurance',   desc: 'Comprehensive vehicle protection' },
+  PROPERTY:  { color: '#ca8a04', bg: '#fefce8',  icon: 'bi-house-check',   label: 'Property Insurance',  desc: 'Home & commercial property coverage' },
+}
+
+const OCCUPATIONS = ['Employee', 'Business Owner', 'Driver', 'Student', 'Teacher', 'Engineer', 'Doctor', 'Freelancer', 'Other']
+
+function recommendPlans(age, occupation, income) {
+  const a = parseInt(age) || 0, inc = parseInt(income) || 0
+  const occ = (occupation || '').toLowerCase()
+  const rec = []
+  if (a >= 18) rec.push({ type: 'LIFE', reason: 'Essential family financial protection' })
+  if (a >= 16) rec.push({ type: 'HEALTH', reason: 'Medical coverage at any age' })
+  if (occ.includes('driver') || occ.includes('car') || occ.includes('vehicle')) rec.push({ type: 'MOTOR', reason: 'Protect your vehicle from accidents' })
+  if (occ.includes('student')) rec.push({ type: 'EDUCATION', reason: 'Secure your educational goals' })
+  if (inc > 500000) rec.push({ type: 'PROPERTY', reason: 'Protect your valuable assets' })
+  rec.push({ type: 'TRAVEL', reason: 'Coverage for international travel' })
+  const seen = new Set()
+  return rec.filter(r => { if (seen.has(r.type)) return false; seen.add(r.type); return true }).slice(0, 3)
 }
 
 export default function PlansPage() {
-  const { t } = useTranslation()
-  const [plans, setPlans] = useState(FALLBACK_PLANS)
-  const [selectedPlan, setSelectedPlan] = useState(null)
-  const [coverage, setCoverage] = useState(10000000)
-  const [duration, setDuration] = useState(1)
-  const [result, setResult] = useState(null)
-  const [filterType, setFilterType] = useState('ALL')
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const [plans, setPlans] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [typeFilter, setTypeFilter] = useState('ALL')
+  const [expandedId, setExpandedId] = useState(null)
+  // Recommendation
+  const [recAge, setRecAge] = useState('')
+  const [recOcc, setRecOcc] = useState('')
+  const [recIncome, setRecIncome] = useState('')
+  const [recommendations, setRecommendations] = useState([])
+  const [showRec, setShowRec] = useState(false)
 
   useEffect(() => {
-    api.get('/packages/public')
-      .then(res => { if (res.data?.length) setPlans(res.data) })
-      .catch(() => {})
+    api.get('/packages/public').then(res => setPlans(Array.isArray(res.data) ? res.data : [])).catch(() => {}).finally(() => setLoading(false))
   }, [])
 
-  const filteredPlans = filterType === 'ALL' ? plans : plans.filter(p => p.type === filterType)
+  const filtered = plans.filter(p => {
+    const typeOk = typeFilter === 'ALL' || p.type === typeFilter
+    const recOk = recommendations.length === 0 || !showRec || recommendations.some(r => r.type === p.type)
+    return typeOk && recOk
+  })
 
-  const calculate = () => {
-    if (!selectedPlan) return
-    const annual = coverage * selectedPlan.premiumRate
-    const total = annual * duration
-    const monthly = annual / 12
-    setResult({ annual, total, monthly })
+  const handleRecommend = () => {
+    const recs = recommendPlans(recAge, recOcc, recIncome)
+    setRecommendations(recs)
+    setShowRec(true)
+    setTypeFilter('ALL')
   }
 
-  const handlePlanSelect = (plan) => {
-    setSelectedPlan(plan)
-    setCoverage(plan.coverageMin)
-    setResult(null)
+  const handleApply = (plan) => {
+    if (!user) { navigate('/login'); return }
+    navigate('/customer/apply', { state: { planId: plan.id } })
   }
-
-  const formatMMK = (n) => new Intl.NumberFormat('en-MM').format(Math.round(n))
 
   return (
     <div>
       <Navbar />
-
-      {/* Header */}
-      <section style={{ background: 'var(--bg)', padding: '3.5rem 0 2rem', borderBottom: '1px solid var(--border)' }}>
-        <div className="container text-center">
-          <h1 className="section-title">{t('plans.title')}</h1>
-          <p className="section-subtitle mx-auto">{t('plans.subtitle')}</p>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '2rem 1rem' }}>
+        {/* Header */}
+        <div className="text-center mb-5">
+          <h2 style={{ fontWeight: 800, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Insurance Plans</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '1.05rem' }}>Choose the right coverage for you and your family</p>
         </div>
-      </section>
 
-      {/* Plans & Calculator */}
-      <section style={{ background: 'var(--bg-secondary)', padding: '3rem 0' }}>
-        <div className="container">
-          <div className="row g-4">
-
-            {/* ── Left: Calculator ── */}
-            <div className="col-12 col-lg-4">
-              <div className="card-calculator">
-                <div className="card-calculator-header">
-                  <div className="d-flex align-items-center gap-2 mb-1">
-                    <i className="bi bi-calculator" style={{ color: 'var(--primary)', fontSize: '1.2rem' }}></i>
-                    <h5 style={{ margin: 0, fontWeight: 700, color: 'var(--text-primary)' }}>
-                      {t('plans.calcTitle')}
-                    </h5>
-                  </div>
-                  <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                    {t('plans.calcSubtitle')}
-                  </p>
+        {/* Plan Recommendation Widget */}
+        <div className="card-custom mb-5" style={{ background: 'linear-gradient(135deg, #1d4ed8 0%, #4338ca 100%)', border: 'none' }}>
+          <div className="row align-items-center g-3">
+            <div className="col-12 col-md-3">
+              <div style={{ color: '#fff' }}>
+                <div style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', opacity: 0.8, marginBottom: 4 }}>Plan Recommender</div>
+                <div style={{ fontWeight: 700, fontSize: '1.1rem', lineHeight: 1.3 }}>Find the right plan for you</div>
+                <div style={{ fontSize: '0.82rem', opacity: 0.8, marginTop: 4 }}>Based on your profile</div>
+              </div>
+            </div>
+            <div className="col-12 col-md-7">
+              <div className="row g-2">
+                <div className="col-4">
+                  <input type="number" className="form-control-custom w-100" style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff' }}
+                    placeholder="Age" value={recAge} onChange={e => setRecAge(e.target.value)} min={0} max={100} />
                 </div>
-
-                <div style={{ padding: '1.5rem' }}>
-                  <div className="mb-3">
-                    <label className="form-label-custom">{t('plans.selectPlan')}</label>
-                    <select
-                      className="form-select-custom w-100"
-                      value={selectedPlan?.id || ''}
-                      onChange={e => {
-                        const p = plans.find(pl => pl.id === Number(e.target.value))
-                        if (p) handlePlanSelect(p)
-                        else { setSelectedPlan(null); setResult(null) }
-                      }}
-                    >
-                      <option value="">{t('plans.choosePlan')}</option>
-                      {plans.map(p => (
-                        <option key={p.id} value={p.id}>{p.name}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="mb-3">
-                    <label className="form-label-custom">{t('plans.coverageLabel')}</label>
-                    <input
-                      type="number"
-                      className="form-control-custom w-100"
-                      value={coverage}
-                      min={selectedPlan?.coverageMin || 1000000}
-                      max={selectedPlan?.coverageMax || 500000000}
-                      step={1000000}
-                      onChange={e => { setCoverage(Number(e.target.value)); setResult(null) }}
-                    />
-                    {selectedPlan && (
-                      <small style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>
-                        {formatMMK(selectedPlan.coverageMin)} – {formatMMK(selectedPlan.coverageMax)} MMK
-                      </small>
-                    )}
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="form-label-custom">{t('plans.durationLabel')}</label>
-                    <select
-                      className="form-select-custom w-100"
-                      value={duration}
-                      onChange={e => { setDuration(Number(e.target.value)); setResult(null) }}
-                    >
-                      {(selectedPlan?.durations || [1, 2, 3, 5]).map(d => (
-                        <option key={d} value={d}>
-                          {d} {d === 1 ? t('plans.year') : t('plans.years')}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <button
-                    onClick={calculate}
-                    disabled={!selectedPlan}
-                    style={{
-                      width: '100%', padding: '0.65rem', borderRadius: 8, border: 'none',
-                      background: selectedPlan ? '#4f79d4' : '#c0c9e0',
-                      color: '#fff', fontWeight: 600, fontSize: '0.95rem', cursor: selectedPlan ? 'pointer' : 'not-allowed',
-                      transition: 'background 0.15s'
-                    }}
-                  >
-                    {t('plans.calcBtn')}
-                  </button>
-
-                  {result && (
-                    <div className="premium-result mt-3 fade-in">
-                      <div className="premium-result-label">{t('plans.annualPremium')}</div>
-                      <div className="premium-result-amount">{formatMMK(result.annual)} <span style={{ fontSize: '1rem' }}>MMK</span></div>
-                      <div className="divider" style={{ borderColor: 'rgba(255,255,255,0.2)', margin: '0.75rem 0' }}></div>
-                      <div className="d-flex justify-content-between" style={{ fontSize: '0.85rem', opacity: 0.85 }}>
-                        <span>{t('plans.monthly')}: <strong>{formatMMK(result.monthly)} MMK</strong></span>
-                        <span>{t('plans.total')}: <strong>{formatMMK(result.total)} MMK</strong></span>
-                      </div>
-                    </div>
-                  )}
+                <div className="col-4">
+                  <select className="form-select-custom w-100" style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff' }}
+                    value={recOcc} onChange={e => setRecOcc(e.target.value)}>
+                    <option value="">Occupation</option>
+                    {OCCUPATIONS.map(o => <option key={o} value={o.toLowerCase()}>{o}</option>)}
+                  </select>
+                </div>
+                <div className="col-4">
+                  <input type="number" className="form-control-custom w-100" style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff' }}
+                    placeholder="Monthly Income (MMK)" value={recIncome} onChange={e => setRecIncome(e.target.value)} />
                 </div>
               </div>
             </div>
-
-            {/* ── Right: Plan details ── */}
-            <div className="col-12 col-lg-8">
-              {/* Filter */}
-              <div className="d-flex gap-2 mb-4 flex-wrap">
-                {['ALL', 'LIFE', 'HEALTH', 'VEHICLE', 'PROPERTY'].map(f => (
-                  <button key={f} onClick={() => setFilterType(f)} style={{
-                    padding: '0.4rem 1rem', borderRadius: 20, border: '1px solid',
-                    borderColor: filterType === f ? 'var(--primary)' : 'var(--border)',
-                    background: filterType === f ? 'var(--primary)' : 'var(--bg-card)',
-                    color: filterType === f ? '#fff' : 'var(--text-secondary)',
-                    fontSize: '0.85rem', fontWeight: 500, cursor: 'pointer',
-                    transition: 'all 0.15s'
-                  }}>
-                    {f === 'ALL' ? t('plans.all') : f}
+            <div className="col-12 col-md-2">
+              <button onClick={handleRecommend} className="btn-primary-custom w-100" style={{ justifyContent: 'center', background: '#fff', color: '#1d4ed8', border: 'none' }}>
+                <i className="bi bi-magic me-2"></i>Recommend
+              </button>
+            </div>
+          </div>
+          {showRec && recommendations.length > 0 && (
+            <div className="mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.2)' }}>
+              <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.82rem', marginBottom: '0.5rem' }}>Recommended for you:</div>
+              <div className="d-flex gap-2 flex-wrap">
+                {recommendations.map(rec => (
+                  <button key={rec.type} onClick={() => setTypeFilter(rec.type)} style={{ padding: '0.35rem 0.85rem', borderRadius: 99, border: '1.5px solid rgba(255,255,255,0.5)', background: typeFilter === rec.type ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.15)', color: typeFilter === rec.type ? '#1d4ed8' : '#fff', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem', transition: 'all 0.15s' }}>
+                    <i className={`bi ${TYPE_META[rec.type]?.icon} me-1`}></i>{TYPE_META[rec.type]?.label}
+                    <span style={{ opacity: 0.7, fontSize: '0.72rem', marginLeft: 4 }}>— {rec.reason}</span>
                   </button>
                 ))}
+                <button onClick={() => { setShowRec(false); setRecommendations([]); setTypeFilter('ALL') }} style={{ padding: '0.35rem 0.75rem', borderRadius: 99, border: '1.5px solid rgba(255,255,255,0.3)', background: 'transparent', color: 'rgba(255,255,255,0.6)', cursor: 'pointer', fontSize: '0.78rem' }}>
+                  Clear
+                </button>
               </div>
-
-              {!selectedPlan ? (
-                <div className="plan-detail-panel">
-                  <i className="bi bi-calculator" style={{ fontSize: '3rem', color: 'var(--border)', marginBottom: '1rem' }}></i>
-                  <h5 style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{t('plans.selectToView')}</h5>
-                  <p style={{ color: 'var(--text-secondary)', textAlign: 'center', fontSize: '0.9rem', maxWidth: 320 }}>
-                    {t('plans.selectToViewDesc')}
-                  </p>
-                </div>
-              ) : (
-                <div className="plan-detail-panel" style={{ alignItems: 'stretch', justifyContent: 'flex-start' }}>
-                  <div className="plan-detail-content fade-in">
-                    <div className="d-flex align-items-start gap-3 mb-3">
-                      <div className="insurance-icon-box" style={{
-                        background: typeColors[selectedPlan.type]?.bg,
-                        color: typeColors[selectedPlan.type]?.color,
-                        marginBottom: 0
-                      }}>
-                        {typeColors[selectedPlan.type]?.icon}
-                      </div>
-                      <div>
-                        <h4 style={{ fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>{selectedPlan.name}</h4>
-                        <span style={{
-                          background: 'var(--bg-secondary)', padding: '0.2rem 0.6rem',
-                          borderRadius: 20, fontSize: '0.78rem', fontWeight: 600, color: 'var(--primary)'
-                        }}>{selectedPlan.type}</span>
-                      </div>
-                    </div>
-                    <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>{selectedPlan.description}</p>
-
-                    <div className="row g-3 mb-3">
-                      <div className="col-6">
-                        <div style={{ background: 'var(--bg-secondary)', borderRadius: 8, padding: '0.85rem' }}>
-                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Min Coverage</div>
-                          <div style={{ fontWeight: 700, color: 'var(--primary)' }}>{formatMMK(selectedPlan.coverageMin)} MMK</div>
-                        </div>
-                      </div>
-                      <div className="col-6">
-                        <div style={{ background: 'var(--bg-secondary)', borderRadius: 8, padding: '0.85rem' }}>
-                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Max Coverage</div>
-                          <div style={{ fontWeight: 700, color: 'var(--primary)' }}>{formatMMK(selectedPlan.coverageMax)} MMK</div>
-                        </div>
-                      </div>
-                      <div className="col-6">
-                        <div style={{ background: 'var(--bg-secondary)', borderRadius: 8, padding: '0.85rem' }}>
-                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Premium Rate</div>
-                          <div style={{ fontWeight: 700, color: 'var(--accent)' }}>{(selectedPlan.premiumRate * 100).toFixed(1)}% / year</div>
-                        </div>
-                      </div>
-                      <div className="col-6">
-                        <div style={{ background: 'var(--bg-secondary)', borderRadius: 8, padding: '0.85rem' }}>
-                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Duration Options</div>
-                          <div style={{ fontWeight: 700, color: 'var(--primary)' }}>
-                            {selectedPlan.durations?.join(', ')} yrs
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <h6 style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.75rem' }}>Key Benefits</h6>
-                    <div className="row g-2">
-                      {selectedPlan.benefits?.map(b => (
-                        <div key={b} className="col-12 col-sm-6">
-                          <div className="d-flex align-items-center gap-2">
-                            <i className="bi bi-check-circle-fill" style={{ color: 'var(--secondary)', fontSize: '0.9rem', flexShrink: 0 }}></i>
-                            <span style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>{b}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
-          </div>
-
-          {/* Plan Cards Grid */}
-          <div className="mt-5">
-            <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1.5rem' }}>
-              {t('plans.allPlans')}
-            </h4>
-            <div className="row g-4">
-              {filteredPlans.map(plan => {
-                const tc = typeColors[plan.type] || typeColors.LIFE
-                return (
-                  <div key={plan.id} className="col-12 col-sm-6 col-lg-4">
-                    <div
-                      className={`card-custom h-100 ${selectedPlan?.id === plan.id ? 'border-primary' : ''}`}
-                      style={{ cursor: 'pointer', borderColor: selectedPlan?.id === plan.id ? 'var(--primary)' : 'var(--border)' }}
-                      onClick={() => handlePlanSelect(plan)}
-                    >
-                      <div className="d-flex align-items-center gap-2 mb-2">
-                        <div style={{ fontSize: '1.3rem' }}>{tc.icon}</div>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 600, color: tc.color, background: tc.bg, padding: '0.15rem 0.5rem', borderRadius: 20 }}>
-                          {plan.type}
-                        </span>
-                      </div>
-                      <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.4rem' }}>{plan.name}</h6>
-                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.83rem', marginBottom: '1rem' }}>{plan.description}</p>
-                      <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                        Rate: <strong style={{ color: 'var(--accent)' }}>{(plan.premiumRate * 100).toFixed(1)}%/yr</strong>
-                      </div>
-                      {selectedPlan?.id === plan.id && (
-                        <div className="mt-2">
-                          <span style={{ fontSize: '0.78rem', color: 'var(--primary)', fontWeight: 600 }}>
-                            <i className="bi bi-check-circle-fill me-1"></i>Selected
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
+          )}
         </div>
-      </section>
 
-      <Footer />
+        {/* Type Filter Tabs */}
+        <div className="d-flex gap-2 mb-4" style={{ flexWrap: 'wrap' }}>
+          {['ALL', ...ALL_TYPES].map(t => {
+            const meta = TYPE_META[t]
+            return (
+              <button key={t} onClick={() => setTypeFilter(t)} style={{
+                padding: '0.4rem 1rem', borderRadius: 99, border: `2px solid ${typeFilter === t ? (meta?.color || 'var(--primary)') : 'var(--border)'}`,
+                cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem', transition: 'all 0.15s',
+                background: typeFilter === t ? (meta?.bg || 'var(--bg-secondary)') : 'transparent',
+                color: typeFilter === t ? (meta?.color || 'var(--primary)') : 'var(--text-secondary)',
+              }}>
+                {meta && <i className={`bi ${meta.icon} me-1`}></i>}{t === 'ALL' ? 'All Plans' : meta?.label || t}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Plan Cards */}
+        {loading ? (
+          <div className="text-center py-5"><div className="spinner-border" style={{ color: 'var(--primary)' }}></div></div>
+        ) : filtered.length === 0 ? (
+          <div className="card-custom text-center py-5">
+            <i className="bi bi-search" style={{ fontSize: '2.5rem', color: 'var(--border)' }}></i>
+            <p style={{ color: 'var(--text-muted)', marginTop: '0.75rem' }}>No plans found for this type</p>
+          </div>
+        ) : (
+          <div className="row g-4">
+            {filtered.map(plan => {
+              const meta = TYPE_META[plan.type] || { color: '#6b7280', bg: '#f3f4f6', icon: 'bi-shield', label: plan.type }
+              const expanded = expandedId === plan.id
+              return (
+                <div key={plan.id} className="col-12 col-md-6 col-xl-4">
+                  <div className="card-custom h-100" style={{ display: 'flex', flexDirection: 'column', border: `2px solid ${expanded ? meta.color : 'var(--border)'}`, transition: 'border-color 0.2s' }}>
+                    {/* Header */}
+                    <div className="d-flex align-items-start gap-3 mb-3">
+                      <div style={{ width: 48, height: 48, borderRadius: 12, background: meta.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <i className={`bi ${meta.icon}`} style={{ color: meta.color, fontSize: '1.4rem' }}></i>
+                      </div>
+                      <div className="flex-grow-1">
+                        <div style={{ fontSize: '0.72rem', fontWeight: 700, color: meta.color, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{meta.label}</div>
+                        <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '1rem', lineHeight: 1.3 }}>{plan.name}</div>
+                      </div>
+                    </div>
+
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1rem', flexGrow: 0 }}>{plan.description}</p>
+
+                    {/* Key stats */}
+                    <div className="row g-2 mb-3">
+                      <div className="col-6">
+                        <div style={{ background: 'var(--bg-secondary)', borderRadius: 8, padding: '0.5rem 0.65rem' }}>
+                          <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Premium Rate</div>
+                          <div style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '0.95rem' }}>{(plan.premiumRate * 100).toFixed(1)}% / yr</div>
+                        </div>
+                      </div>
+                      <div className="col-6">
+                        <div style={{ background: 'var(--bg-secondary)', borderRadius: 8, padding: '0.5rem 0.65rem' }}>
+                          <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Policy Term</div>
+                          <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.88rem' }}>{plan.policyTerm ? `Up to ${plan.policyTerm} yrs` : 'Flexible'}</div>
+                        </div>
+                      </div>
+                      <div className="col-12">
+                        <div style={{ background: 'var(--bg-secondary)', borderRadius: 8, padding: '0.5rem 0.65rem' }}>
+                          <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Coverage Range (MMK)</div>
+                          <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.88rem' }}>
+                            {Number(plan.coverageMin).toLocaleString()} – {Number(plan.coverageMax).toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Benefits preview */}
+                    {(plan.benefits || []).length > 0 && (
+                      <div className="mb-2">
+                        {(plan.benefits || []).slice(0, expanded ? 20 : 3).map((b, i) => (
+                          <div key={i} style={{ display: 'flex', gap: 6, fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: 4 }}>
+                            <i className="bi bi-check-circle-fill" style={{ color: '#16a34a', flexShrink: 0, marginTop: 2 }}></i>{b}
+                          </div>
+                        ))}
+                        {!expanded && (plan.benefits || []).length > 3 && (
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>+{(plan.benefits || []).length - 3} more benefits</div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Expanded details */}
+                    {expanded && (
+                      <div className="fade-in">
+                        {plan.eligibility && (
+                          <div className="mb-3 mt-2">
+                            <div style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--text-primary)', marginBottom: '0.4rem' }}>
+                              <i className="bi bi-person-check me-1" style={{ color: '#1d4ed8' }}></i>Eligibility
+                            </div>
+                            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0 }}>{plan.eligibility}</p>
+                          </div>
+                        )}
+                        {plan.exclusions && (
+                          <div className="mb-3">
+                            <div style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--text-primary)', marginBottom: '0.4rem' }}>
+                              <i className="bi bi-x-circle me-1" style={{ color: '#dc2626' }}></i>Exclusions
+                            </div>
+                            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', margin: 0 }}>{plan.exclusions}</p>
+                          </div>
+                        )}
+                        {(plan.durations || []).length > 0 && (
+                          <div className="mb-2">
+                            <div style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--text-primary)', marginBottom: '0.4rem' }}>Available Durations</div>
+                            <div className="d-flex gap-1 flex-wrap">
+                              {(plan.durations || []).map(d => (
+                                <span key={d} style={{ padding: '0.2rem 0.55rem', borderRadius: 6, background: meta.bg, color: meta.color, fontSize: '0.78rem', fontWeight: 700 }}>{d} yr</span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="mt-auto pt-3 d-flex gap-2">
+                      <button onClick={() => setExpandedId(expanded ? null : plan.id)} style={{ padding: '0.5rem 0.85rem', borderRadius: 8, border: `1.5px solid ${meta.color}`, background: 'transparent', color: meta.color, cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem', transition: 'all 0.15s' }}>
+                        <i className={`bi bi-chevron-${expanded ? 'up' : 'down'} me-1`}></i>{expanded ? 'Less' : 'Details'}
+                      </button>
+                      <button onClick={() => handleApply(plan)} className="btn-primary-custom flex-grow-1" style={{ justifyContent: 'center', background: meta.color, borderColor: meta.color }}>
+                        <i className="bi bi-check-circle me-2"></i>Apply Now
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Not logged in hint */}
+        {!user && (
+          <div className="card-custom text-center mt-5 py-4">
+            <i className="bi bi-person-lock" style={{ fontSize: '2rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}></i>
+            <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Ready to apply?</div>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1rem' }}>Create an account or log in to apply for any plan</p>
+            <div className="d-flex gap-2 justify-content-center">
+              <Link to="/register" className="btn-primary-custom">Create Account</Link>
+              <Link to="/login" className="btn-outline-custom">Log In</Link>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

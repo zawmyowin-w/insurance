@@ -51,6 +51,55 @@ public class AdminController {
                 .toList();
     }
 
+    // ── Reports ───────────────────────────────────────────────────────
+    @GetMapping("/reports")
+    @Transactional(readOnly = true)
+    public Map<String, Object> getReports() {
+        Map<String, Object> r = new LinkedHashMap<>();
+        var allApps    = appRepo.findAll();
+        var allClaims  = claimRepo.findAll();
+        var allPayments = paymentRepo.findAll();
+
+        r.put("totalCustomers",       userRepo.findAllByRole(Role.CUSTOMER).size());
+        r.put("totalAgents",          userRepo.findAllByRole(Role.AGENT).size());
+        r.put("totalApplications",    allApps.size());
+        r.put("activePolicies",       allApps.stream().filter(a -> a.getStatus() == ApplicationStatus.APPROVED).count());
+        r.put("pendingApplications",  allApps.stream().filter(a -> a.getStatus() == ApplicationStatus.PENDING || a.getStatus() == ApplicationStatus.VERIFIED).count());
+        r.put("rejectedApplications", allApps.stream().filter(a -> a.getStatus() == ApplicationStatus.REJECTED).count());
+        r.put("totalClaims",          allClaims.size());
+        r.put("approvedClaims",       allClaims.stream().filter(c -> c.getStatus() == ClaimStatus.APPROVED).count());
+        r.put("pendingClaims",        allClaims.stream().filter(c -> c.getStatus() == ClaimStatus.PENDING || c.getStatus() == ClaimStatus.VERIFIED).count());
+        r.put("rejectedClaims",       allClaims.stream().filter(c -> c.getStatus() == ClaimStatus.REJECTED).count());
+
+        java.math.BigDecimal revenue = allPayments.stream()
+                .filter(p -> p.getStatus() == PaymentStatus.VERIFIED && p.getAmount() != null)
+                .map(Payment::getAmount)
+                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+        r.put("totalRevenue", revenue);
+
+        // Active policies by insurance type
+        Map<String, Long> byType = allApps.stream()
+                .filter(a -> a.getStatus() == ApplicationStatus.APPROVED && a.getInsurancePackage() != null)
+                .collect(java.util.stream.Collectors.groupingBy(
+                        a -> a.getInsurancePackage().getType(),
+                        java.util.stream.Collectors.counting()));
+        r.put("policiesByType", byType);
+
+        // Applications submitted per month (last 6 months)
+        Map<String, Long> byMonth = allApps.stream()
+                .filter(a -> a.getCreatedAt() != null
+                        && a.getCreatedAt().isAfter(java.time.LocalDateTime.now().minusMonths(6)))
+                .collect(java.util.stream.Collectors.groupingBy(
+                        a -> a.getCreatedAt().getMonth().getDisplayName(
+                                java.time.format.TextStyle.SHORT, java.util.Locale.ENGLISH)
+                                + " " + a.getCreatedAt().getYear(),
+                        java.util.LinkedHashMap::new,
+                        java.util.stream.Collectors.counting()));
+        r.put("applicationsByMonth", byMonth);
+
+        return r;
+    }
+
     // ── Users ─────────────────────────────────────────────────────────
     @GetMapping("/users")
     @Transactional(readOnly = true)

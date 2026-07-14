@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 
-const EMPTY = { name: '', type: 'LIFE', description: '', coverageMin: '', coverageMax: '', premiumRate: '', durations: '1,2,3,5', benefits: '', active: true }
+const INSURANCE_TYPES = ['LIFE', 'HEALTH', 'TRAVEL', 'MOTOR', 'EDUCATION', 'VEHICLE', 'PROPERTY']
+const EMPTY = { name: '', type: 'LIFE', description: '', coverageMin: '', coverageMax: '', premiumRate: '', durations: '1,2,3,5', benefits: '', eligibility: '', exclusions: '', policyTerm: '', active: true }
 
 export default function ManagePackagesPage() {
   const [packages, setPackages] = useState([])
@@ -31,8 +32,11 @@ export default function ManagePackagesPage() {
         coverageMin: Number(form.coverageMin),
         coverageMax: Number(form.coverageMax),
         premiumRate: Number(form.premiumRate),
+        policyTerm: form.policyTerm ? Number(form.policyTerm) : null,
         durations: form.durations.split(',').map(d => Number(d.trim())).filter(Boolean),
         benefits: form.benefits.split('\n').map(b => b.trim()).filter(Boolean),
+        eligibility: form.eligibility || null,
+        exclusions: form.exclusions || null,
       }
       if (editing) {
         await api.put(`/admin/packages/${editing}`, payload)
@@ -47,7 +51,7 @@ export default function ManagePackagesPage() {
 
   const handleEdit = (pkg) => {
     setEditing(pkg.id)
-    setForm({ ...pkg, durations: (pkg.durations || []).join(', '), benefits: (pkg.benefits || []).join('\n') })
+    setForm({ ...pkg, durations: (pkg.durations || []).join(', '), benefits: (pkg.benefits || []).join('\n'), eligibility: pkg.eligibility || '', exclusions: pkg.exclusions || '', policyTerm: pkg.policyTerm || '' })
     setShowForm(true)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -65,7 +69,7 @@ export default function ManagePackagesPage() {
     try { await api.delete(`/admin/packages/${id}`); toast.success('Deleted'); fetchPackages() } catch { toast.error('Failed to delete') }
   }
 
-  const typeColors = { LIFE: '#dc2626', HEALTH: '#16a34a', VEHICLE: '#1d4ed8', PROPERTY: '#ca8a04' }
+  const typeColors = { LIFE: '#dc2626', HEALTH: '#16a34a', TRAVEL: '#0891b2', MOTOR: '#d97706', EDUCATION: '#7c3aed', VEHICLE: '#1d4ed8', PROPERTY: '#ca8a04' }
 
   return (
     <div className="fade-in">
@@ -92,7 +96,7 @@ export default function ManagePackagesPage() {
               <div className="col-12 col-md-3">
                 <label className="form-label-custom">Type *</label>
                 <select name="type" required className="form-select-custom w-100" value={form.type} onChange={handleChange}>
-                  {['LIFE', 'HEALTH', 'VEHICLE', 'PROPERTY'].map(t => <option key={t} value={t}>{t}</option>)}
+                  {INSURANCE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                 </select>
               </div>
               <div className="col-12 col-md-3">
@@ -108,11 +112,15 @@ export default function ManagePackagesPage() {
                 <label className="form-label-custom">Max Coverage (MMK) *</label>
                 <input name="coverageMax" type="number" required className="form-control-custom w-100" value={form.coverageMax} onChange={handleChange} />
               </div>
-              <div className="col-12 col-md-6">
+              <div className="col-12 col-md-4">
                 <label className="form-label-custom">Duration Options (comma-separated years)</label>
                 <input name="durations" className="form-control-custom w-100" placeholder="1, 2, 3, 5" value={form.durations} onChange={handleChange} />
               </div>
-              <div className="col-12 col-md-6">
+              <div className="col-12 col-md-4">
+                <label className="form-label-custom">Max Policy Term (years)</label>
+                <input name="policyTerm" type="number" className="form-control-custom w-100" placeholder="e.g. 30" value={form.policyTerm} onChange={handleChange} min={1} />
+              </div>
+              <div className="col-12 col-md-4">
                 <label className="form-label-custom">Active</label>
                 <div className="d-flex align-items-center gap-2 mt-1">
                   <input type="checkbox" name="active" checked={form.active} onChange={handleChange} id="pkgActive" />
@@ -125,8 +133,18 @@ export default function ManagePackagesPage() {
               </div>
               <div className="col-12">
                 <label className="form-label-custom">Benefits (one per line)</label>
-                <textarea name="benefits" rows={4} className="form-control-custom w-100" style={{ resize: 'vertical' }}
+                <textarea name="benefits" rows={3} className="form-control-custom w-100" style={{ resize: 'vertical' }}
                   placeholder="Death benefit payout&#10;Accidental coverage&#10;24/7 support" value={form.benefits} onChange={handleChange} />
+              </div>
+              <div className="col-12 col-md-6">
+                <label className="form-label-custom">Eligibility Requirements</label>
+                <textarea name="eligibility" rows={3} className="form-control-custom w-100" style={{ resize: 'vertical' }}
+                  placeholder="e.g. Age 18–65, Myanmar citizen, no critical illness history" value={form.eligibility} onChange={handleChange} />
+              </div>
+              <div className="col-12 col-md-6">
+                <label className="form-label-custom">Exclusions (what is not covered)</label>
+                <textarea name="exclusions" rows={3} className="form-control-custom w-100" style={{ resize: 'vertical' }}
+                  placeholder="e.g. Pre-existing conditions, war/terrorism, self-harm" value={form.exclusions} onChange={handleChange} />
               </div>
             </div>
             <div className="d-flex gap-2 mt-3">

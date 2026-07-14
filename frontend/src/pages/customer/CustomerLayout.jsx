@@ -4,13 +4,14 @@ import { useTranslation } from 'react-i18next'
 import Navbar from '../../components/Navbar'
 
 const sidebarLinks = [
-  { to: '/customer/dashboard', icon: 'bi-speedometer2', labelKey: 'sidebar.dashboard' },
-  { to: '/customer/applications', icon: 'bi-file-earmark-text', labelKey: 'sidebar.applications' },
-  { to: '/customer/apply', icon: 'bi-plus-circle', labelKey: 'sidebar.apply' },
-  { to: '/customer/claims', icon: 'bi-file-earmark-medical', labelKey: 'sidebar.claims' },
-  { to: '/customer/submit-claim', icon: 'bi-plus-circle-dotted', labelKey: 'sidebar.submitClaim' },
-  { to: '/customer/payments', icon: 'bi-credit-card', labelKey: 'sidebar.payments' },
-  { to: '/customer/notifications', icon: 'bi-bell', labelKey: 'sidebar.notifications' },
+  { to: '/customer/dashboard',     icon: 'bi-speedometer2',        labelKey: 'sidebar.dashboard'   },
+  { to: '/customer/policies',      icon: 'bi-shield-check',         label: 'My Policies'            },
+  { to: '/customer/applications',  icon: 'bi-file-earmark-text',    labelKey: 'sidebar.applications' },
+  { to: '/customer/apply',         icon: 'bi-plus-circle',          labelKey: 'sidebar.apply'       },
+  { to: '/customer/claims',        icon: 'bi-file-earmark-medical', labelKey: 'sidebar.claims'      },
+  { to: '/customer/submit-claim',  icon: 'bi-plus-circle-dotted',   labelKey: 'sidebar.submitClaim' },
+  { to: '/customer/payments',      icon: 'bi-credit-card',          labelKey: 'sidebar.payments'    },
+  { to: '/customer/notifications', icon: 'bi-bell',                 labelKey: 'sidebar.notifications' },
 ]
 
 export default function CustomerLayout() {
@@ -29,7 +30,7 @@ export default function CustomerLayout() {
           {sidebarLinks.map(link => (
             <NavLink key={link.to} to={link.to} className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
               <i className={`bi ${link.icon}`}></i>
-              <span>{t(link.labelKey)}</span>
+              <span>{link.label || t(link.labelKey)}</span>
             </NavLink>
           ))}
         </div>

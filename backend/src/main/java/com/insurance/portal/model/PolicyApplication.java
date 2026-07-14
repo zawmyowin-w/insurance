@@ -62,6 +62,26 @@ public class PolicyApplication {
     @Column(name = "revision_deadline")
     private LocalDateTime revisionDeadline;
 
+    /** Risk level calculated at submission: LOW / MEDIUM / HIGH */
+    @Column(name = "risk_level", length = 10)
+    private String riskLevel;
+
+    /** Auto-generated policy reference number, e.g. POL-LIF-2026-123456 */
+    @Column(name = "policy_number", length = 50)
+    private String policyNumber;
+
+    /** JSON: customer personal details (name, NRC, DOB, etc.) */
+    @Column(name = "common_info", columnDefinition = "TEXT")
+    private String commonInfo;
+
+    /** JSON: plan-specific fields (beneficiary, vehicle info, etc.) */
+    @Column(name = "extra_info", columnDefinition = "TEXT")
+    private String extraInfo;
+
+    /** Calculated total premium amount */
+    @Column(name = "premium_amount", precision = 20, scale = 2)
+    private BigDecimal premiumAmount;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
