@@ -8,15 +8,11 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 import './i18n.js'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import { GoogleOAuthProvider } from '@react-oauth/google'
-
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || ''
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-      <App />
-      <ToastContainer
+    <App />
+    <ToastContainer
       position="top-right"
       autoClose={3500}
       hideProgressBar={false}
@@ -27,6 +23,5 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       pauseOnHover
       theme="colored"
     />
-    </GoogleOAuthProvider>
   </React.StrictMode>,
 )

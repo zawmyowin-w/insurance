@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { toast } from 'react-toastify'
 import { issueOtp } from '../services/otpService'
-import GoogleButton from '../components/GoogleButton'
 
 const rules = [
   { key: 'len',     test: p => p.length >= 8,          label: { en: 'At least 8 characters',          my: 'အနည်းဆုံး ၈ လုံး' } },
@@ -25,7 +24,7 @@ function strengthLevel(pwd) {
 
 export default function RegisterPage() {
   const { t, i18n } = useTranslation()
-  const { register, googleLogin } = useAuth()
+  const { register } = useAuth()
   const navigate = useNavigate()
   const [form, setForm] = useState({
     name: '', email: '', address: '', password: '', confirmPassword: ''
@@ -217,27 +216,6 @@ export default function RegisterPage() {
               : t('auth.register')}
           </button>
         </form>
-
-        {/* Divider */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', margin: '1.25rem 0' }}>
-          <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-          <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>or</span>
-          <div style={{ flex: 1, height: 1, background: 'var(--border)' }} />
-        </div>
-
-        <GoogleButton
-          label="Sign up with Google"
-          onSuccess={async (data) => {
-            const user = await googleLogin(data)
-            toast.success('Account created with Google!')
-            navigate(
-              user.role === 'ADMIN' ? '/admin/dashboard' :
-              user.role === 'AGENT' ? '/agent/dashboard' :
-              '/customer/dashboard',
-              { replace: true }
-            )
-          }}
-        />
 
         <div className="text-center mt-4">
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>

@@ -29,7 +29,6 @@ The backend script starts a local MySQL instance, initializes the `insurance_por
 | Key | Where | Purpose |
 |---|---|---|
 | `CORS_ALLOWED_ORIGINS` | shared env | Comma-separated allowed origins for Spring CORS |
-| `VITE_GOOGLE_CLIENT_ID` | shared env | Google OAuth client ID |
 | `VITE_EMAILJS_SERVICE_ID` | frontend `.env` | EmailJS service ID |
 | `VITE_EMAILJS_TEMPLATE_ID` | frontend `.env` | EmailJS template ID |
 | `VITE_EMAILJS_PUBLIC_KEY` | frontend `.env` | EmailJS public key |
