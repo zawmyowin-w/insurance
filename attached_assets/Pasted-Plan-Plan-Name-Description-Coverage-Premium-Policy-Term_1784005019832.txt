@@ -1,0 +1,307 @@
+Plan တစ်ခုချင်းစီမှာ
+
+Plan Name
+Description
+Coverage
+Premium
+Policy Term
+Eligibility
+Benefits
+Exclusions
+
+
+Plan Recommendation
+
+Customer ရဲ့
+Age
+Occupation
+Income
+အပေါ်မူတည်ပြီး
+System က သင့်တော်တဲ့ Plan ကို Recommend လုပ်ပေးမယ်။
+
+ဥပမာ
+အသက် ၂၅ နှစ် → Life + Health
+ကျောင်းသား → Education
+ကားရှိ → Motor
+နိုင်ငံခြားသွားမယ် → Travel
+
+Eligibility Checking
+System က
+အသက်
+နိုင်ငံသား
+Document
+Income
+Existing Policy
+စစ်မယ်။မကိုက်ညီရင်Not Eligibleပြမယ်။
+
+---
+
+Apply For Insurance
+
+CustomerApplyနှိပ်ရင်Common Informationဖြည့်မယ်။
+
+Common Information
+
+Profile Image
+Full Name
+Father Name
+NRC
+DOB
+Phone
+Email
+Address
+Occupation
+marriage or not?
+Monthly Income
+NRC Img Front View and Bsck View
+
+ပြီးရင်Plan အလိုက်Extra Informationထပ်ဖြည့်မယ်။
+
+
+
+---
+
+Life Insurance
+
+Beneficiary
+Health Declaration
+Medical Report
+
+---
+
+Health Insurance
+Blood Type
+Existing Diseases
+Allergies
+Preferred Hospital
+
+---
+
+Travel Insurance
+
+Passport
+Destination
+Travel Date
+Return Date
+
+
+
+---
+
+Education Insurance
+
+Student Information
+Parent Information
+School
+Education Goal
+
+
+
+---
+
+Motor Insurance
+Vehicle Registration
+Engine Number
+Chassis Number
+Vehicle Value
+Driving License
+
+
+
+---
+
+Module 6 - Document Upload
+
+System က
+
+Plan အလိုက်
+
+Document တောင်းမယ်။
+
+ဥပမာ
+
+Life
+
+NRC
+Medical Report
+
+
+Motor
+
+Car License
+Driving License
+
+
+Travel
+
+Passport
+
+
+
+---
+
+Risk Assessment
+
+System က
+Risk တွက်မယ်။
+
+Life
+
+အသက်
+Smoking
+Disease
+
+
+---
+
+Health
+
+Medical History
+
+
+---
+
+Travel
+
+Destination Country
+
+
+---
+
+Motor
+
+Vehicle Age
+
+Vehicle Value
+
+
+---
+
+ပြီးရင်
+
+Low
+Medium
+High
+Risk ထုတ်ပေးမယ်။
+
+
+---
+
+Premium Calculator
+
+System က
+Coverage
+Risk
+Policy Term
+Age
+အလိုက်
+Premium ကို
+Auto Calculate
+လုပ်ပေးမယ်။
+
+
+---
+
+Admin Review
+
+Admin က
+Application
+Documents
+Risk
+Premium
+စစ်ပြီး
+Approve
+Reject
+Request More Documentsလုပ်နိုင်မယ်။
+
+
+---
+
+Payment
+
+Customer
+
+ScreenShortနဲ့
+Premium ပေးမယ်။
+
+
+---
+
+Policy Generation
+
+Payment Success
+ဖြစ်ရင်
+Policy Number
+Auto Generate
+လုပ်မယ်။
+Status
+Active
+ဖြစ်မယ်။
+
+
+---
+
+Policy Management
+
+Customer
+
+View Policy
+Download PDF
+Renew
+Cancelလုပ်နိုင်မယ်။
+
+
+---
+
+Claim Management
+
+Life → Death Claim
+Health → Medical Claim
+Travel → Trip Cancellation / Lost Baggage Claim
+Motor → Accident Claim
+Education → Policy Benefit Claim
+
+Customer
+
+Claim Form ဖြည့်
+Document Upload လုပ်
+
+Admin Review
+
+Approve
+Payment
+
+
+---
+
+Notification
+
+System Notification
+ပို့မယ်။
+
+ဥပမာ
+
+Payment Received
+Premium Due
+Policy Expiring
+Claim Approved
+
+---
+
+Reports
+
+Admin Dashboard
+Total Customers
+Total Policies
+Active Policies
+Expired Policies
+Revenue
+Claims
+Monthly Premium Collection
+Top Selling Insurance Plan
+
+
+
+---
+
+Customer တစ်ယောက်က Plan အများကြီး ဝယ်နိုင်တယ် (ဥပမာ Life + Health + Motor)။
