@@ -6,6 +6,7 @@ import com.insurance.portal.model.*;
 import com.insurance.portal.model.enums.*;
 import com.insurance.portal.repository.*;
 import com.insurance.portal.util.FileStorageUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.MediaType;
@@ -15,6 +16,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import java.io.File;
 import java.math.BigDecimal;
@@ -86,9 +88,8 @@ public class CustomerController {
             @RequestParam(required = false) String commonInfo,
             @RequestParam(required = false) String extraInfo,
             @RequestParam(required = false) String formData,
-            @RequestParam Map<String, String> allParams,
-            @RequestPart(required = false) Map<String, MultipartFile> allFiles,
-            @RequestParam(required = false) List<MultipartFile> documents) {
+            @RequestParam(required = false) List<MultipartFile> documents,
+            HttpServletRequest request) {
 
         User user = getUser(principal);
         Long pkgId = Long.valueOf(packageId);
@@ -113,8 +114,11 @@ public class CustomerController {
 
         // Process dynamic form file uploads: fields named "file_<fieldId>"
         String processedFormData = formData;
-        if (allFiles != null && !allFiles.isEmpty() && formData != null) {
-            processedFormData = processFormFileUploads(formData, allFiles, "applications", "app_field");
+        if (formData != null && request instanceof MultipartHttpServletRequest mpr) {
+            Map<String, MultipartFile> fileMap = mpr.getFileMap();
+            if (!fileMap.isEmpty()) {
+                processedFormData = processFormFileUploads(formData, fileMap, "applications", "app_field");
+            }
         }
 
         String documentsJson;
@@ -188,8 +192,8 @@ public class CustomerController {
             @RequestParam String description,
             @RequestParam String incidentDate,
             @RequestParam(required = false) String formData,
-            @RequestPart(required = false) Map<String, MultipartFile> allFiles,
-            @RequestParam(required = false) List<MultipartFile> documents) {
+            @RequestParam(required = false) List<MultipartFile> documents,
+            HttpServletRequest request) {
 
         User user = getUser(principal);
         PolicyApplication app = appRepo.findById(Long.valueOf(applicationId))
@@ -203,8 +207,11 @@ public class CustomerController {
 
         // Process dynamic form file uploads
         String processedFormData = formData;
-        if (allFiles != null && !allFiles.isEmpty() && formData != null) {
-            processedFormData = processFormFileUploads(formData, allFiles, "claims", "claim_field");
+        if (formData != null && request instanceof MultipartHttpServletRequest mpr) {
+            Map<String, MultipartFile> fileMap = mpr.getFileMap();
+            if (!fileMap.isEmpty()) {
+                processedFormData = processFormFileUploads(formData, fileMap, "claims", "claim_field");
+            }
         }
 
         String documentsJson;
