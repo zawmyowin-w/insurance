@@ -11,6 +11,7 @@ const OTP_BOX_COUNT = 6
 export default function CustomerProfilePage() {
   const { user, setUser } = useAuth()
   const [address, setAddress] = useState(user?.address || '')
+  const [phone, setPhone] = useState(user?.phone || '')
   const [pwd, setPwd] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
   const [savingProfile, setSavingProfile] = useState(false)
   const [savingPwd, setSavingPwd] = useState(false)
@@ -125,7 +126,7 @@ export default function CustomerProfilePage() {
     e.preventDefault()
     setSavingProfile(true)
     try {
-      const { data } = await api.put('/auth/profile', { address })
+      const { data } = await api.put('/auth/profile', { address, phone })
       setUser(data)
       toast.success('Profile updated')
     } catch (err) {
@@ -180,10 +181,10 @@ export default function CustomerProfilePage() {
                 <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Click the camera icon to change your photo</div>
               </div>
             </div>
-            <h6 style={{ fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Profile Information</h6>
+            <h6 style={{ fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Profile Bio</h6>
             <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '1.25rem' }}>
               <i className="bi bi-lock-fill me-1"></i>
-              Name, phone, and email are your core account details — contact an admin if these need to change.
+              Name and email are your core account details — contact an admin if these need to change.
             </p>
             <form onSubmit={handleProfileSubmit}>
               <div className="row g-3">
@@ -197,7 +198,8 @@ export default function CustomerProfilePage() {
                 </div>
                 <div className="col-12 col-md-6">
                   <label className="form-label-custom">Phone</label>
-                  <input disabled className="form-control-custom w-100" value={user?.phone || ''} style={{ opacity: 0.6, cursor: 'not-allowed' }} />
+                  <input className="form-control-custom w-100" value={phone}
+                    onChange={e => setPhone(e.target.value)} placeholder="Your phone number" />
                 </div>
                 <div className="col-12 col-md-6">
                   <label className="form-label-custom">Address</label>

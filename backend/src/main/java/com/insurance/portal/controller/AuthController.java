@@ -116,8 +116,8 @@ public class AuthController {
     /**
      * Self-service profile update.
      * - ADMIN: may edit name, email, phone, address, and password.
-     * - CUSTOMER: name/phone/email are locked (core identity fields) — only
-     *   address and password may be changed here.
+     * - CUSTOMER: name/email are locked (core identity fields) — phone,
+     *   address, and password may be changed here.
      * - AGENT: not allowed to self-edit; only an admin can update an agent's
      *   profile (see AdminController#updateUser).
      */
@@ -145,7 +145,9 @@ public class AuthController {
             if (req.getPhone() != null) user.setPhone(req.getPhone());
             if (req.getAddress() != null) user.setAddress(req.getAddress());
         } else {
-            // CUSTOMER — name, phone, email are locked; only address (and password below) may change.
+            // CUSTOMER — name and email are locked (core identity); phone, address
+            // (and password below) may change.
+            if (req.getPhone() != null) user.setPhone(req.getPhone());
             if (req.getAddress() != null) user.setAddress(req.getAddress());
         }
 
