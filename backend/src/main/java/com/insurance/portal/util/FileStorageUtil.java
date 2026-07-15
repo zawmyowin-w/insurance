@@ -48,6 +48,31 @@ public final class FileStorageUtil {
         return dest.getPath();
     }
 
+    /** Saves a single image file (profile pictures) under uploads/{subDir} — rejects PDFs and any non-image type. */
+    public static String saveImage(MultipartFile file, String subDir, String prefix) throws IOException {
+        if (file == null || file.isEmpty()) return null;
+        String contentType = file.getContentType();
+        if (contentType == null || !IMAGE_EXT.containsKey(contentType.toLowerCase())) {
+            throw new RuntimeException("Only JPEG, PNG, WEBP, and GIF images are allowed.");
+        }
+        String ext = IMAGE_EXT.get(contentType.toLowerCase());
+        String safeFilename = prefix + "_" + UUID.randomUUID() + ext;
+        File uploadRoot = new File("./uploads/" + subDir).getCanonicalFile();
+        uploadRoot.mkdirs();
+        File dest = new File(uploadRoot, safeFilename).getCanonicalFile();
+        if (!dest.getPath().startsWith(uploadRoot.getPath())) {
+            throw new RuntimeException("Invalid upload path");
+        }
+        file.transferTo(dest);
+        return dest.getPath();
+    }
+
+    /** Best-effort delete of a previously stored file (e.g. when replacing a profile picture). */
+    public static void deleteFileQuietly(String path) {
+        if (path == null || path.isBlank()) return;
+        try { new File(path).delete(); } catch (Exception ignored) {}
+    }
+
     public static List<String> saveDocuments(List<MultipartFile> files, String subDir, String prefix) throws IOException {
         List<String> paths = new ArrayList<>();
         if (files == null) return paths;

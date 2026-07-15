@@ -1,5 +1,6 @@
 import React from 'react'
 import { useAuth } from '../../context/AuthContext'
+import ProfileAvatar from '../../components/ProfileAvatar'
 
 const Field = ({ label, value }) => (
   <div className="col-12 col-md-6">
@@ -23,6 +24,18 @@ export default function AgentProfilePage() {
       <div className="row g-4">
         <div className="col-12 col-lg-8">
           <div className="card-custom">
+            <div className="d-flex align-items-center gap-3 mb-4">
+              <ProfileAvatar
+                fetchUrl="/auth/profile/picture"
+                hasPicture={user?.hasProfilePicture}
+                name={user?.name}
+                size={80}
+              />
+              <div>
+                <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{user?.name}</div>
+                <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Only an admin can change your photo</div>
+              </div>
+            </div>
             <div className="d-flex align-items-start gap-2 mb-3" style={{
               background: 'var(--bg-hover, rgba(29,78,216,0.06))', border: '1px solid var(--border)',
               borderRadius: 10, padding: '0.75rem 1rem'

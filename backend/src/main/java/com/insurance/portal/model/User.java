@@ -40,6 +40,9 @@ public class User {
     @Column(name = "insurance_type")
     private String insuranceType; // For agents: LIFE, HEALTH, VEHICLE, PROPERTY, ALL
 
+    @Column(name = "profile_picture")
+    private String profilePicture; // Absolute path under ./uploads/profile-pictures
+
     @Builder.Default
     private boolean active = true;
 

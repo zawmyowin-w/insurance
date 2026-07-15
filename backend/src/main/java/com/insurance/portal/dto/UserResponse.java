@@ -16,6 +16,7 @@ public class UserResponse {
     private String insuranceType;
     private boolean active;
     private LocalDateTime createdAt;
+    private boolean hasProfilePicture;
 
     public static UserResponse from(User user) {
         UserResponse dto = new UserResponse();
@@ -28,6 +29,7 @@ public class UserResponse {
         dto.setInsuranceType(user.getInsuranceType());
         dto.setActive(user.isActive());
         dto.setCreatedAt(user.getCreatedAt());
+        dto.setHasProfilePicture(user.getProfilePicture() != null && !user.getProfilePicture().isBlank());
         return dto;
     }
 }

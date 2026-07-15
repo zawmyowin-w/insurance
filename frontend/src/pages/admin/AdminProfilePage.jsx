@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import { useAuth } from '../../context/AuthContext'
+import ProfileAvatar from '../../components/ProfileAvatar'
 
 const EMAIL_PATTERN = /^[a-z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 const EMAIL_ERROR = 'Email must start with a lowercase letter — it cannot begin with a capital letter or a number'
@@ -64,6 +65,21 @@ export default function AdminProfilePage() {
       <div className="row g-4">
         <div className="col-12 col-lg-7">
           <div className="card-custom">
+            <div className="d-flex align-items-center gap-3 mb-4">
+              <ProfileAvatar
+                fetchUrl="/auth/profile/picture"
+                uploadUrl="/auth/profile/picture"
+                hasPicture={user?.hasProfilePicture}
+                name={user?.name}
+                size={80}
+                editable
+                onUploaded={setUser}
+              />
+              <div>
+                <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{user?.name}</div>
+                <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Click the camera icon to change your photo</div>
+              </div>
+            </div>
             <h6 style={{ fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Profile Information</h6>
             <form onSubmit={handleProfileSubmit}>
               <div className="row g-3">

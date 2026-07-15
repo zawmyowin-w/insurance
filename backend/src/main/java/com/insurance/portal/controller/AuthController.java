@@ -13,9 +13,16 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 
+import com.insurance.portal.util.FileStorageUtil;
+
+import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
@@ -154,6 +161,48 @@ public class AuthController {
 
         userRepository.save(user);
         return ResponseEntity.ok(UserResponse.from(user));
+    }
+
+    /**
+     * Upload/replace the current user's own profile picture.
+     * ADMIN and CUSTOMER only — agents cannot self-edit (see updateProfile above).
+     */
+    @PostMapping(value = "/profile/picture", consumes = "multipart/form-data")
+    public ResponseEntity<?> uploadOwnPicture(@AuthenticationPrincipal UserDetails principal,
+                                               @RequestParam("file") MultipartFile file) {
+        User user = userRepository.findByEmail(principal.getUsername()).orElseThrow();
+        if (user.getRole() == Role.AGENT) {
+            return ResponseEntity.status(403).body(new ErrorResponse(
+                    "Agent profiles can only be updated by an admin. Please contact your administrator."));
+        }
+        try {
+            String oldPath = user.getProfilePicture();
+            String newPath = FileStorageUtil.saveImage(file, "profile-pictures", "user_" + user.getId());
+            if (newPath == null) {
+                return ResponseEntity.badRequest().body(new ErrorResponse("No file provided"));
+            }
+            user.setProfilePicture(newPath);
+            userRepository.save(user);
+            FileStorageUtil.deleteFileQuietly(oldPath);
+            return ResponseEntity.ok(UserResponse.from(user));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage()));
+        }
+    }
+
+    /** Stream the current user's own profile picture. */
+    @GetMapping("/profile/picture")
+    public ResponseEntity<?> getOwnPicture(@AuthenticationPrincipal UserDetails principal) throws IOException {
+        User user = userRepository.findByEmail(principal.getUsername()).orElseThrow();
+        String path = user.getProfilePicture();
+        if (path == null || path.isBlank()) {
+            return ResponseEntity.notFound().build();
+        }
+        File file = new File(path);
+        if (!file.exists()) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(FileStorageUtil.contentTypeFor(path)))
+                .body(new FileSystemResource(file));
     }
 
     record ErrorResponse(String message) {}

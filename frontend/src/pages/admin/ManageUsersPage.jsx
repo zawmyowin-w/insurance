@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
+import ProfileAvatar from '../../components/ProfileAvatar'
 
 const EMPTY_AGENT = { name: '', email: '', phone: '', address: '', password: '', insuranceType: 'LIFE' }
 const EMPTY_EDIT = { name: '', email: '', phone: '', address: '', insuranceType: 'LIFE', newPassword: '' }
@@ -230,6 +231,18 @@ export default function ManageUsersPage() {
             <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
               Only an admin can update an agent's profile. Leave the password blank to keep it unchanged.
             </p>
+            <div className="d-flex align-items-center gap-3 mb-3">
+              <ProfileAvatar
+                fetchUrl={`/admin/users/${editingUser.id}/picture`}
+                uploadUrl={`/admin/users/${editingUser.id}/picture`}
+                hasPicture={editingUser.hasProfilePicture}
+                name={editingUser.name}
+                size={72}
+                editable
+                onUploaded={(updated) => { setEditingUser(updated); fetchUsers() }}
+              />
+              <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Click the camera icon to set this agent's photo</div>
+            </div>
             <form onSubmit={handleEditSubmit}>
               <div className="row g-3">
                 <div className="col-12 col-md-6">

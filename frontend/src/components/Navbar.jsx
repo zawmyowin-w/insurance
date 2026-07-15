@@ -3,6 +3,7 @@ import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
+import ProfileAvatar from './ProfileAvatar'
 
 export default function Navbar() {
   const { t, i18n } = useTranslation()
@@ -99,14 +100,12 @@ export default function Navbar() {
             ) : (
               <div className="dropdown">
                 <button className="icon-btn d-flex align-items-center gap-1" data-bs-toggle="dropdown">
-                  <div style={{
-                    width: 32, height: 32, borderRadius: '50%',
-                    background: 'var(--primary)', color: '#fff',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '0.85rem', fontWeight: 700
-                  }}>
-                    {user.name?.charAt(0).toUpperCase()}
-                  </div>
+                  <ProfileAvatar
+                    fetchUrl="/auth/profile/picture"
+                    hasPicture={user.hasProfilePicture}
+                    name={user.name}
+                    size={32}
+                  />
                 </button>
                 <ul className="dropdown-menu dropdown-menu-end" style={{
                   background: 'var(--bg-card)', border: '1px solid var(--border)',

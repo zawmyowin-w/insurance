@@ -14,6 +14,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.time.LocalDateTime;
@@ -166,6 +167,40 @@ public class AdminController {
             user.setPassword(passwordEncoder.encode(req.getNewPassword()));
         }
         return ResponseEntity.ok(UserResponse.from(userRepo.save(user)));
+    }
+
+    /** Admin uploads/replaces any user's profile picture — the only way an agent's picture can be set. */
+    @PostMapping(value = "/users/{id}/picture", consumes = "multipart/form-data")
+    @Transactional
+    public ResponseEntity<?> uploadUserPicture(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
+        User user = userRepo.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        try {
+            String oldPath = user.getProfilePicture();
+            String newPath = FileStorageUtil.saveImage(file, "profile-pictures", "user_" + user.getId());
+            if (newPath == null) {
+                return ResponseEntity.badRequest().body(Map.of("message", "No file provided"));
+            }
+            user.setProfilePicture(newPath);
+            userRepo.save(user);
+            FileStorageUtil.deleteFileQuietly(oldPath);
+            return ResponseEntity.ok(UserResponse.from(user));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    /** Stream any user's profile picture (admin view — e.g. in Manage Users). */
+    @GetMapping("/users/{id}/picture")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getUserPicture(@PathVariable Long id) throws java.io.IOException {
+        User user = userRepo.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        String path = user.getProfilePicture();
+        if (path == null || path.isBlank()) return ResponseEntity.notFound().build();
+        File file = new File(path);
+        if (!file.exists()) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(FileStorageUtil.contentTypeFor(path)))
+                .body(new FileSystemResource(file));
     }
 
     @PutMapping("/users/{id}/toggle")
