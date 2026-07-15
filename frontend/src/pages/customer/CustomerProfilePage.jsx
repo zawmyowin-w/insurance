@@ -12,6 +12,7 @@ const PHONE_ERROR = 'Phone must be 7–10 digits, optionally starting with +95'
 
 export default function CustomerProfilePage() {
   const { user, setUser } = useAuth()
+  const [editMode, setEditMode] = useState(false)
   const [address, setAddress] = useState(user?.address || '')
   const [phone, setPhone] = useState(user?.phone || '')
   const [pwd, setPwd] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
@@ -132,9 +133,16 @@ export default function CustomerProfilePage() {
       const { data } = await api.put('/auth/profile', { address, phone })
       setUser(data)
       toast.success('Profile updated')
+      setEditMode(false)
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to update profile')
     } finally { setSavingProfile(false) }
+  }
+
+  const handleCancelEdit = () => {
+    setAddress(user?.address || '')
+    setPhone(user?.phone || '')
+    setEditMode(false)
   }
 
   const handlePasswordSubmit = async e => {
@@ -176,15 +184,19 @@ export default function CustomerProfilePage() {
                 hasPicture={user?.hasProfilePicture}
                 name={user?.name}
                 size={80}
-                editable
+                editable={editMode}
                 onUploaded={setUser}
               />
               <div>
                 <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{user?.name}</div>
-                <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Click the camera icon to change your photo</div>
+                <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                  {editMode ? 'Click the camera icon to change your photo' : 'Your account photo'}
+                </div>
               </div>
             </div>
-            <h6 style={{ fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Edit Bio</h6>
+            <h6 style={{ fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
+              {editMode ? 'Edit Bio' : 'Bio'}
+            </h6>
             <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '1.25rem' }}>
               <i className="bi bi-lock-fill me-1"></i>
               Name and email are your core account details — contact an admin if these need to change.
@@ -201,26 +213,43 @@ export default function CustomerProfilePage() {
                 </div>
                 <div className="col-12 col-md-6">
                   <label className="form-label-custom">Phone</label>
-                  <input className="form-control-custom w-100" value={phone}
+                  <input disabled={!editMode} className="form-control-custom w-100" value={phone}
                     onChange={e => setPhone(e.target.value)} placeholder="+95 9xxxxxxxx"
-                    style={phone && !PHONE_PATTERN.test(phone) ? { borderColor: '#ef4444' } : undefined} />
-                  {phone && !PHONE_PATTERN.test(phone) && (
+                    style={{
+                      ...(phone && !PHONE_PATTERN.test(phone) ? { borderColor: '#ef4444' } : undefined),
+                      ...(!editMode ? { opacity: 0.6, cursor: 'not-allowed' } : undefined),
+                    }} />
+                  {editMode && phone && !PHONE_PATTERN.test(phone) && (
                     <p style={{ fontSize: '0.76rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{PHONE_ERROR}</p>
                   )}
                 </div>
                 <div className="col-12 col-md-6">
                   <label className="form-label-custom">Address</label>
-                  <input className="form-control-custom w-100" value={address}
-                    onChange={e => setAddress(e.target.value)} placeholder="Your address" />
+                  <input disabled={!editMode} className="form-control-custom w-100" value={address}
+                    onChange={e => setAddress(e.target.value)} placeholder="Your address"
+                    style={!editMode ? { opacity: 0.6, cursor: 'not-allowed' } : undefined} />
                 </div>
               </div>
               <div className="mt-3 d-flex gap-2">
-                <button type="submit" disabled={savingProfile} className="btn-primary-custom" style={{ justifyContent: 'center' }}>
-                  {savingProfile ? <><span className="spinner-border spinner-border-sm me-2"></span>Saving...</> : 'Save Changes'}
-                </button>
-                <button type="button" onClick={() => setShowPwdModal(true)} className="btn-outline-custom" style={{ justifyContent: 'center' }}>
-                  <i className="bi bi-key me-2"></i>Change Password
-                </button>
+                {editMode ? (
+                  <>
+                    <button type="submit" disabled={savingProfile} className="btn-primary-custom" style={{ justifyContent: 'center' }}>
+                      {savingProfile ? <><span className="spinner-border spinner-border-sm me-2"></span>Saving...</> : 'Save Changes'}
+                    </button>
+                    <button type="button" onClick={handleCancelEdit} className="btn-outline-custom" style={{ justifyContent: 'center' }}>
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button type="button" onClick={() => setEditMode(true)} className="btn-primary-custom" style={{ justifyContent: 'center' }}>
+                      <i className="bi bi-pencil me-2"></i>Update
+                    </button>
+                    <button type="button" onClick={() => setShowPwdModal(true)} className="btn-outline-custom" style={{ justifyContent: 'center' }}>
+                      <i className="bi bi-key me-2"></i>Change Password
+                    </button>
+                  </>
+                )}
               </div>
             </form>
           </div>
