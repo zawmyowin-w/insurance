@@ -7,7 +7,10 @@ import { toast } from 'react-toastify'
  * image endpoints are JWT-protected) with initials as a fallback. Optionally
  * editable — shows a camera button that uploads a new picture.
  */
-export default function ProfileAvatar({ fetchUrl, uploadUrl, hasPicture, name, size = 96, editable = false, onUploaded }) {
+export default function ProfileAvatar({
+  fetchUrl, uploadUrl, hasPicture, name, size = 96, editable = false, onUploaded,
+  deferUpload = false, onFileSelected, previewOverrideUrl,
+}) {
   const [objectUrl, setObjectUrl] = useState(null)
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef(null)
@@ -32,6 +35,14 @@ export default function ProfileAvatar({ fetchUrl, uploadUrl, hasPicture, name, s
     if (!file) return
     if (!file.type.startsWith('image/')) { toast.error('Please choose an image file'); return }
     if (file.size > 5 * 1024 * 1024) { toast.error('Image must be under 5MB'); return }
+
+    if (deferUpload) {
+      // Just hand the file back to the parent — it decides when (e.g. on "Save Changes") to actually upload it.
+      onFileSelected?.(file)
+      if (fileInputRef.current) fileInputRef.current.value = ''
+      return
+    }
+
     const formData = new FormData()
     formData.append('file', file)
     setUploading(true)
@@ -48,6 +59,7 @@ export default function ProfileAvatar({ fetchUrl, uploadUrl, hasPicture, name, s
   }
 
   const initials = name?.charAt(0)?.toUpperCase() || '?'
+  const displaySrc = previewOverrideUrl || objectUrl
 
   return (
     <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
@@ -57,8 +69,8 @@ export default function ProfileAvatar({ fetchUrl, uploadUrl, hasPicture, name, s
         alignItems: 'center', justifyContent: 'center', fontWeight: 700,
         fontSize: size * 0.4, border: '2px solid var(--border)',
       }}>
-        {objectUrl ? (
-          <img src={objectUrl} alt={name || 'Profile'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        {displaySrc ? (
+          <img src={displaySrc} alt={name || 'Profile'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
         ) : initials}
       </div>
       {editable && (

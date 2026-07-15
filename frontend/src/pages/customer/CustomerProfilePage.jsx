@@ -15,6 +15,8 @@ export default function CustomerProfilePage() {
   const [editMode, setEditMode] = useState(false)
   const [address, setAddress] = useState(user?.address || '')
   const [phone, setPhone] = useState(user?.phone || '')
+  const [pendingPhotoFile, setPendingPhotoFile] = useState(null)
+  const [pendingPhotoPreview, setPendingPhotoPreview] = useState(null)
   const [pwd, setPwd] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
   const [savingProfile, setSavingProfile] = useState(false)
   const [savingPwd, setSavingPwd] = useState(false)
@@ -125,13 +127,35 @@ export default function CustomerProfilePage() {
   const otpMM = String(Math.floor(otpSeconds / 60)).padStart(2, '0')
   const otpSS = String(otpSeconds % 60).padStart(2, '0')
 
+  const handlePhotoSelected = file => {
+    setPendingPhotoFile(file)
+    setPendingPhotoPreview(prev => {
+      if (prev) URL.revokeObjectURL(prev)
+      return URL.createObjectURL(file)
+    })
+  }
+
+  const clearPendingPhoto = () => {
+    setPendingPhotoPreview(prev => {
+      if (prev) URL.revokeObjectURL(prev)
+      return null
+    })
+    setPendingPhotoFile(null)
+  }
+
   const handleProfileSubmit = async e => {
     e.preventDefault()
     if (phone && !PHONE_PATTERN.test(phone)) { toast.error(PHONE_ERROR); return }
     setSavingProfile(true)
     try {
+      if (pendingPhotoFile) {
+        const formData = new FormData()
+        formData.append('file', pendingPhotoFile)
+        await api.post('/auth/profile/picture', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+      }
       const { data } = await api.put('/auth/profile', { address, phone })
       setUser(data)
+      clearPendingPhoto()
       toast.success('Profile updated')
       setEditMode(false)
     } catch (err) {
@@ -142,6 +166,7 @@ export default function CustomerProfilePage() {
   const handleCancelEdit = () => {
     setAddress(user?.address || '')
     setPhone(user?.phone || '')
+    clearPendingPhoto()
     setEditMode(false)
   }
 
@@ -180,12 +205,13 @@ export default function CustomerProfilePage() {
             <div className="d-flex align-items-center gap-3 mb-4">
               <ProfileAvatar
                 fetchUrl="/auth/profile/picture"
-                uploadUrl="/auth/profile/picture"
                 hasPicture={user?.hasProfilePicture}
                 name={user?.name}
                 size={80}
                 editable={editMode}
-                onUploaded={setUser}
+                deferUpload
+                onFileSelected={handlePhotoSelected}
+                previewOverrideUrl={pendingPhotoPreview}
               />
               <div>
                 <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{user?.name}</div>
