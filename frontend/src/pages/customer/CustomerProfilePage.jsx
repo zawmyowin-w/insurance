@@ -7,8 +7,8 @@ import { issueOtp, verifyOtp, otpSecondsLeft } from '../../services/otpService'
 
 const OTP_TYPE = 'profile-change'
 const OTP_BOX_COUNT = 6
-const PHONE_PATTERN = /^(\+95[\s-]?)?\d{7,10}$/
-const PHONE_ERROR = 'Phone must be 7–10 digits, optionally starting with +95'
+const PHONE_PATTERN = /^\+95\d{7,10}$/
+const PHONE_ERROR = 'Phone must start with +95 followed by 7–10 digits (e.g. +959xxxxxxx)'
 
 export default function CustomerProfilePage() {
   const { user, setUser } = useAuth()

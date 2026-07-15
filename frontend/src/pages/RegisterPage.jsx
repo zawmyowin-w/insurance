@@ -15,8 +15,8 @@ const rules = [
 
 const EMAIL_PATTERN = /^[a-z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 const EMAIL_ERROR = {
-  en: 'Email must start with a lowercase letter — it cannot begin with a capital letter or a number',
-  my: 'အီးမေးလ်၏ အရှေ့ဆုံးစာလုံးသည် သေးစာလုံး ဖြစ်ရမည် — အကြီးစာလုံး (သို့) ဂဏန်းဖြင့် မစနိုင်ပါ',
+  en: 'Email must start with a lowercase letter — it cannot begin with a capital letter, number, or special character',
+  my: 'အီးမေးလ်၏ အရှေ့ဆုံးစာလုံးသည် သေးစာလုံး ဖြစ်ရမည် — အကြီးစာလုံး၊ ဂဏန်း (သို့) အထူးအက္ခရာဖြင့် မစနိုင်ပါ',
 }
 
 function strengthLevel(pwd) {
