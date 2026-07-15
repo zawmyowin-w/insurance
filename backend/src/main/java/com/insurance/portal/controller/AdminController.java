@@ -129,6 +129,7 @@ public class AdminController {
                 .password(passwordEncoder.encode(req.get("password").toString()))
                 .role(Role.AGENT)
                 .phone(req.containsKey("phone") ? req.get("phone").toString() : null)
+                .address(req.containsKey("address") ? req.get("address").toString() : null)
                 .insuranceType(req.containsKey("insuranceType") ? req.get("insuranceType").toString() : "ALL")
                 .active(true)
                 .build();

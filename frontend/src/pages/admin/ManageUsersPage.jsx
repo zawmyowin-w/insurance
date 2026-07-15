@@ -134,6 +134,11 @@ export default function ManageUsersPage() {
                 <input type="password" required minLength={8} className="form-control-custom w-100" value={agentForm.password}
                   onChange={e => setAgentForm(f => ({ ...f, password: e.target.value }))} />
               </div>
+              <div className="col-12">
+                <label className="form-label-custom">Address</label>
+                <input className="form-control-custom w-100" value={agentForm.address}
+                  onChange={e => setAgentForm(f => ({ ...f, address: e.target.value }))} />
+              </div>
             </div>
             <div className="d-flex gap-2 mt-3">
               <button type="submit" disabled={saving} className="btn-primary-custom" style={{ justifyContent: 'center' }}>
@@ -172,11 +177,11 @@ export default function ManageUsersPage() {
           <div className="table-custom">
             <table className="w-100">
               <thead>
-                <tr>{['Name', 'Email', 'Phone', 'Role', 'Status', 'Joined', 'Actions'].map(h => <th key={h}>{h}</th>)}</tr>
+                <tr>{['Name', 'Email', 'Phone', 'Address', 'Role', 'Status', 'Joined', 'Actions'].map(h => <th key={h}>{h}</th>)}</tr>
               </thead>
               <tbody>
                 {filteredUsers.length === 0 ? (
-                  <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>No users found</td></tr>
+                  <tr><td colSpan={8} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>No users found</td></tr>
                 ) : filteredUsers.map(u => (
                   <tr key={u.id}>
                     <td>
@@ -189,6 +194,7 @@ export default function ManageUsersPage() {
                     </td>
                     <td style={{ color: 'var(--text-secondary)', fontSize: '0.88rem' }}>{u.email}</td>
                     <td style={{ color: 'var(--text-secondary)', fontSize: '0.88rem' }}>{u.phone || '—'}</td>
+                    <td style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', maxWidth: 180, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={u.address || ''}>{u.address || '—'}</td>
                     <td><span style={{ fontSize: '0.75rem', fontWeight: 700, color: roleColor(u.role), background: roleBg(u.role), padding: '0.2rem 0.6rem', borderRadius: 20 }}>{u.role}</span></td>
                     <td><span className={`badge-status ${u.active ? 'badge-active' : 'badge-cancelled'}`}>{u.active ? 'Active' : 'Inactive'}</span></td>
                     <td style={{ fontSize: '0.85rem' }}>{u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}</td>
