@@ -7,6 +7,8 @@ import { issueOtp, verifyOtp, otpSecondsLeft } from '../../services/otpService'
 
 const OTP_TYPE = 'profile-change'
 const OTP_BOX_COUNT = 6
+const PHONE_PATTERN = /^(\+95[\s-]?)?\d{7,10}$/
+const PHONE_ERROR = 'Phone must be 7–10 digits, optionally starting with +95'
 
 export default function CustomerProfilePage() {
   const { user, setUser } = useAuth()
@@ -124,6 +126,7 @@ export default function CustomerProfilePage() {
 
   const handleProfileSubmit = async e => {
     e.preventDefault()
+    if (phone && !PHONE_PATTERN.test(phone)) { toast.error(PHONE_ERROR); return }
     setSavingProfile(true)
     try {
       const { data } = await api.put('/auth/profile', { address, phone })
@@ -199,7 +202,11 @@ export default function CustomerProfilePage() {
                 <div className="col-12 col-md-6">
                   <label className="form-label-custom">Phone</label>
                   <input className="form-control-custom w-100" value={phone}
-                    onChange={e => setPhone(e.target.value)} placeholder="Your phone number" />
+                    onChange={e => setPhone(e.target.value)} placeholder="+95 9xxxxxxxx"
+                    style={phone && !PHONE_PATTERN.test(phone) ? { borderColor: '#ef4444' } : undefined} />
+                  {phone && !PHONE_PATTERN.test(phone) && (
+                    <p style={{ fontSize: '0.76rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{PHONE_ERROR}</p>
+                  )}
                 </div>
                 <div className="col-12 col-md-6">
                   <label className="form-label-custom">Address</label>

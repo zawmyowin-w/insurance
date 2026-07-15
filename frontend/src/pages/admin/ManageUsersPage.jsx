@@ -7,6 +7,8 @@ const EMPTY_AGENT = { name: '', email: '', phone: '', address: '', password: '',
 const EMPTY_EDIT = { name: '', email: '', phone: '', address: '', insuranceType: 'LIFE', newPassword: '' }
 const EMAIL_PATTERN = /^[a-z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 const EMAIL_ERROR = 'Email must start with a lowercase letter — it cannot begin with a capital letter or a number'
+const PHONE_PATTERN = /^(\+95[\s-]?)?\d{7,10}$/
+const PHONE_ERROR = 'Phone must be 7–10 digits, optionally starting with +95'
 
 export default function ManageUsersPage() {
   const [users, setUsers] = useState([])
@@ -34,6 +36,7 @@ export default function ManageUsersPage() {
   const handleCreateAgent = async e => {
     e.preventDefault()
     if (!EMAIL_PATTERN.test(agentForm.email)) { toast.error(EMAIL_ERROR); return }
+    if (agentForm.phone && !PHONE_PATTERN.test(agentForm.phone)) { toast.error(PHONE_ERROR); return }
     setSaving(true)
     try {
       await api.post('/admin/users/agents', { ...agentForm, role: 'AGENT' })
@@ -68,6 +71,7 @@ export default function ManageUsersPage() {
   const handleEditSubmit = async e => {
     e.preventDefault()
     if (!EMAIL_PATTERN.test(editForm.email)) { toast.error(EMAIL_ERROR); return }
+    if (editForm.phone && !PHONE_PATTERN.test(editForm.phone)) { toast.error(PHONE_ERROR); return }
     setEditSaving(true)
     try {
       const payload = { name: editForm.name, email: editForm.email, phone: editForm.phone, address: editForm.address }
@@ -120,7 +124,12 @@ export default function ManageUsersPage() {
               <div className="col-12 col-md-4">
                 <label className="form-label-custom">Phone</label>
                 <input className="form-control-custom w-100" value={agentForm.phone}
-                  onChange={e => setAgentForm(f => ({ ...f, phone: e.target.value }))} />
+                  onChange={e => setAgentForm(f => ({ ...f, phone: e.target.value }))}
+                  placeholder="+95 9xxxxxxxx"
+                  style={agentForm.phone && !PHONE_PATTERN.test(agentForm.phone) ? { borderColor: '#ef4444' } : undefined} />
+                {agentForm.phone && !PHONE_PATTERN.test(agentForm.phone) && (
+                  <p style={{ fontSize: '0.76rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{PHONE_ERROR}</p>
+                )}
               </div>
               <div className="col-12 col-md-4">
                 <label className="form-label-custom">Insurance Type</label>
@@ -268,7 +277,12 @@ export default function ManageUsersPage() {
                 <div className="col-12 col-md-6">
                   <label className="form-label-custom">Phone</label>
                   <input className="form-control-custom w-100" value={editForm.phone}
-                    onChange={e => setEditForm(f => ({ ...f, phone: e.target.value }))} />
+                    onChange={e => setEditForm(f => ({ ...f, phone: e.target.value }))}
+                    placeholder="+95 9xxxxxxxx"
+                    style={editForm.phone && !PHONE_PATTERN.test(editForm.phone) ? { borderColor: '#ef4444' } : undefined} />
+                  {editForm.phone && !PHONE_PATTERN.test(editForm.phone) && (
+                    <p style={{ fontSize: '0.76rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{PHONE_ERROR}</p>
+                  )}
                 </div>
                 <div className="col-12 col-md-6">
                   <label className="form-label-custom">Insurance Type</label>
