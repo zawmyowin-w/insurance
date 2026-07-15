@@ -236,7 +236,7 @@ export default function CustomerProfilePage() {
                 <div className="col-12 col-md-6">
                   <label className="form-label-custom">Phone</label>
                   <input disabled={!editMode} className="form-control-custom w-100" value={phone}
-                    onChange={e => setPhone(e.target.value)} placeholder="+95"
+                    onChange={e => setPhone(e.target.value)} placeholder="+95xxxxxxxx"
                     onKeyDown={e => { if (e.key === 'Enter') e.preventDefault() }}
                     style={{
                       ...(phone && !PHONE_PATTERN.test(phone) ? { borderColor: '#ef4444' } : undefined),
