@@ -103,6 +103,57 @@ public class AgentController {
         return ResponseEntity.ok(ApplicationResponse.from(app));
     }
 
+    @PutMapping("/applications/{id}/request-revision")
+    @Transactional
+    public ResponseEntity<?> requestApplicationRevision(@PathVariable Long id,
+                                                        @RequestBody Map<String, String> req,
+                                                        @AuthenticationPrincipal UserDetails principal) {
+        User agent = getAgent(principal);
+        PolicyApplication app = appRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Application not found"));
+        if (app.getAgent() == null || !app.getAgent().getId().equals(agent.getId()))
+            return ResponseEntity.status(403).body(Map.of("message", "You are not assigned to this application"));
+        if (app.getStatus() != ApplicationStatus.REVISION_REQUESTED)
+            return ResponseEntity.badRequest().body(Map.of("message", "Application is not in revision state"));
+        String note = req.get("note");
+        app.setAgentNote(note);
+        appRepo.save(app);
+        notifRepo.save(Notification.builder()
+                .recipient(app.getCustomer())
+                .title("Action Required: Update Your Application")
+                .message("Your application for " + app.getInsurancePackage().getName()
+                        + " needs to be updated. "
+                        + (note != null && !note.isBlank() ? "Agent note: " + note : "Please review and resubmit your form."))
+                .type(NotificationType.INFO)
+                .build());
+        return ResponseEntity.ok(ApplicationResponse.from(app));
+    }
+
+    @PutMapping("/claims/{id}/request-revision")
+    @Transactional
+    public ResponseEntity<?> requestClaimRevision(@PathVariable Long id,
+                                                   @RequestBody Map<String, String> req,
+                                                   @AuthenticationPrincipal UserDetails principal) {
+        User agent = getAgent(principal);
+        Claim claim = claimRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Claim not found"));
+        if (claim.getAgent() == null || !claim.getAgent().getId().equals(agent.getId()))
+            return ResponseEntity.status(403).body(Map.of("message", "You are not assigned to this claim"));
+        if (claim.getStatus() != ClaimStatus.REVISION_REQUESTED)
+            return ResponseEntity.badRequest().body(Map.of("message", "Claim is not in revision state"));
+        String note = req.get("note");
+        claim.setAgentNote(note);
+        claimRepo.save(claim);
+        notifRepo.save(Notification.builder()
+                .recipient(claim.getCustomer())
+                .title("Action Required: Update Your Claim")
+                .message("Your claim requires additional information. "
+                        + (note != null && !note.isBlank() ? "Agent note: " + note : "Please review and resubmit your form."))
+                .type(NotificationType.INFO)
+                .build());
+        return ResponseEntity.ok(ClaimResponse.from(claim));
+    }
+
     @GetMapping("/claims")
     @Transactional(readOnly = true)
     public List<ClaimResponse> getClaims(@AuthenticationPrincipal UserDetails principal) {

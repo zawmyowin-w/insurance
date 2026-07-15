@@ -10,6 +10,8 @@ export default function AgentClaimsPage() {
   const [note, setNote] = useState('')
   const [rejectId, setRejectId] = useState(null)
   const [rejectNote, setRejectNote] = useState('')
+  const [forwardId, setForwardId] = useState(null)
+  const [forwardNote, setForwardNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [viewItem, setViewItem] = useState(null)
 
@@ -21,12 +23,18 @@ export default function AgentClaimsPage() {
   }
   useEffect(() => { fetchClaims() }, [])
 
+  const clearActions = () => {
+    setSelected(null); setNote('')
+    setRejectId(null); setRejectNote('')
+    setForwardId(null); setForwardNote('')
+  }
+
   const handleVerify = async (id) => {
     setSubmitting(true)
     try {
       await api.put(`/agent/claims/${id}/verify`, { note })
       toast.success('Claim verified and sent to admin')
-      setSelected(null); setNote(''); fetchClaims()
+      clearActions(); fetchClaims()
     } catch (err) { toast.error(err.response?.data?.message || 'Failed') } finally { setSubmitting(false) }
   }
 
@@ -36,7 +44,16 @@ export default function AgentClaimsPage() {
     try {
       await api.put(`/agent/claims/${id}/reject`, { note: rejectNote })
       toast.success('Claim rejected')
-      setRejectId(null); setRejectNote(''); fetchClaims()
+      clearActions(); fetchClaims()
+    } catch (err) { toast.error(err.response?.data?.message || 'Failed') } finally { setSubmitting(false) }
+  }
+
+  const handleForward = async (id) => {
+    setSubmitting(true)
+    try {
+      await api.put(`/agent/claims/${id}/request-revision`, { note: forwardNote })
+      toast.success('Customer notified to update their claim')
+      clearActions(); fetchClaims()
     } catch (err) { toast.error(err.response?.data?.message || 'Failed') } finally { setSubmitting(false) }
   }
 
@@ -46,6 +63,7 @@ export default function AgentClaimsPage() {
         <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Review Claims</h4>
         <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>Verify customer claims before forwarding to admin</p>
       </div>
+
       {loading ? (
         <div className="text-center py-5"><div className="spinner-border" style={{ color: 'var(--primary)' }}></div></div>
       ) : claims.length === 0 ? (
@@ -55,71 +73,138 @@ export default function AgentClaimsPage() {
         </div>
       ) : (
         <div className="row g-4">
-          {claims.map(claim => (
-            <div key={claim.id} className="col-12 col-lg-6">
-              <div className="card-custom h-100">
-                <div className="d-flex justify-content-between align-items-start mb-3">
-                  <div>
-                    <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{claim.customerName || claim.customer?.name}</h6>
-                    <small style={{ color: 'var(--text-muted)' }}>{claim.claimType}</small>
+          {claims.map(claim => {
+            const isRevision = claim.status === 'REVISION_REQUESTED'
+            const isPending = claim.status === 'PENDING'
+            const activeAction = selected === claim.id ? 'verify'
+              : rejectId === claim.id ? 'reject'
+              : forwardId === claim.id ? 'forward'
+              : null
+
+            return (
+              <div key={claim.id} className="col-12 col-lg-6">
+                <div className="card-custom h-100">
+                  <div className="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                      <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{claim.customerName || claim.customer?.name}</h6>
+                      <small style={{ color: 'var(--text-muted)' }}>{claim.claimType}</small>
+                    </div>
+                    <span className={`badge-status badge-${claim.status?.toLowerCase()}`}>{claim.status}</span>
                   </div>
-                  <span className={`badge-status badge-${claim.status?.toLowerCase()}`}>{claim.status}</span>
-                </div>
-                <div className="row g-2 mb-3">
-                  {[
-                    { label: 'Policy', value: claim.policyName || claim.policy?.packageName },
-                    { label: 'Amount', value: `${Number(claim.amount).toLocaleString()} MMK` },
-                    { label: 'Incident Date', value: claim.incidentDate ? new Date(claim.incidentDate).toLocaleDateString() : '—' },
-                    { label: 'Submitted', value: claim.createdAt ? new Date(claim.createdAt).toLocaleDateString() : '—' },
-                  ].map(item => (
-                    <div key={item.label} className="col-6">
-                      <div style={{ background: 'var(--bg-secondary)', borderRadius: 6, padding: '0.5rem 0.75rem' }}>
-                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{item.label}</div>
-                        <div style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--text-primary)' }}>{item.value}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
 
-                {/* View Form Details button */}
-                <button onClick={() => setViewItem(claim)} style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '0.4rem 0.9rem', borderRadius: 8, border: '1.5px solid var(--border)',
-                  background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer',
-                  fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.75rem', width: '100%', justifyContent: 'center'
-                }}>
-                  <i className="bi bi-eye"></i> View Full Form Details
-                </button>
+                  {/* Admin note for revision items */}
+                  {isRevision && claim.adminNote && (
+                    <div style={{
+                      padding: '0.6rem 0.875rem', borderRadius: 8, marginBottom: '0.75rem',
+                      background: '#fefce8', border: '1px solid #fcd34d', fontSize: '0.82rem'
+                    }}>
+                      <div style={{ fontWeight: 700, color: '#92400e', marginBottom: 2 }}>
+                        <i className="bi bi-exclamation-triangle me-1"></i>Admin requested revision:
+                      </div>
+                      <div style={{ color: '#78350f' }}>{claim.adminNote}</div>
+                    </div>
+                  )}
+                  {isRevision && claim.agentNote && (
+                    <div style={{
+                      padding: '0.6rem 0.875rem', borderRadius: 8, marginBottom: '0.75rem',
+                      background: '#eff6ff', border: '1px solid #bfdbfe', fontSize: '0.82rem'
+                    }}>
+                      <div style={{ fontWeight: 700, color: '#1e40af', marginBottom: 2 }}>
+                        <i className="bi bi-person me-1"></i>Your note to customer:
+                      </div>
+                      <div style={{ color: '#1d4ed8' }}>{claim.agentNote}</div>
+                    </div>
+                  )}
 
-                {claim.status === 'PENDING' && (
-                  selected === claim.id ? (
-                    <div>
-                      <textarea rows={2} className="form-control-custom w-100 mb-2" style={{ resize: 'vertical' }} placeholder="Verification notes..." value={note} onChange={e => setNote(e.target.value)} />
-                      <div className="d-flex gap-2">
-                        <button className="btn-success-sm flex-grow-1" onClick={() => handleVerify(claim.id)} disabled={submitting}>
-                          {submitting ? <span className="spinner-border spinner-border-sm"></span> : 'Mark Verified'}
-                        </button>
-                        <button className="btn-outline-custom" style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem' }} onClick={() => setSelected(null)}>Cancel</button>
+                  <div className="row g-2 mb-3">
+                    {[
+                      { label: 'Policy', value: claim.policyName || claim.policy?.packageName },
+                      { label: 'Amount', value: `${Number(claim.amount).toLocaleString()} MMK` },
+                      { label: 'Incident Date', value: claim.incidentDate ? new Date(claim.incidentDate).toLocaleDateString() : '—' },
+                      { label: 'Submitted', value: claim.createdAt ? new Date(claim.createdAt).toLocaleDateString() : '—' },
+                    ].map(item => (
+                      <div key={item.label} className="col-6">
+                        <div style={{ background: 'var(--bg-secondary)', borderRadius: 6, padding: '0.5rem 0.75rem' }}>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{item.label}</div>
+                          <div style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--text-primary)' }}>{item.value}</div>
+                        </div>
                       </div>
-                    </div>
-                  ) : rejectId === claim.id ? (
-                    <div>
-                      <textarea rows={2} className="form-control-custom w-100 mb-2" style={{ resize: 'vertical' }} placeholder="Reason *" value={rejectNote} onChange={e => setRejectNote(e.target.value)} />
-                      <div className="d-flex gap-2">
-                        <button className="btn-danger-sm flex-grow-1" onClick={() => handleReject(claim.id)} disabled={submitting}>Reject</button>
-                        <button className="btn-outline-custom" style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem' }} onClick={() => setRejectId(null)}>Cancel</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="d-flex gap-2">
-                      <button className="btn-success-sm flex-grow-1" onClick={() => setSelected(claim.id)}><i className="bi bi-check-circle me-1"></i>Verify</button>
-                      <button className="btn-danger-sm" onClick={() => setRejectId(claim.id)}><i className="bi bi-x-circle me-1"></i>Reject</button>
-                    </div>
-                  )
-                )}
+                    ))}
+                  </div>
+
+                  <button onClick={() => setViewItem(claim)} style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '0.4rem 0.9rem', borderRadius: 8, border: '1.5px solid var(--border)',
+                    background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer',
+                    fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.75rem', width: '100%', justifyContent: 'center'
+                  }}>
+                    <i className="bi bi-eye"></i> View Full Form Details
+                  </button>
+
+                  {(isPending || isRevision) && (
+                    <>
+                      {activeAction === 'verify' && (
+                        <div>
+                          <textarea rows={2} className="form-control-custom w-100 mb-2" style={{ resize: 'vertical' }}
+                            placeholder="Verification notes..." value={note} onChange={e => setNote(e.target.value)} />
+                          <div className="d-flex gap-2">
+                            <button className="btn-success-sm flex-grow-1" onClick={() => handleVerify(claim.id)} disabled={submitting}>
+                              {submitting ? <span className="spinner-border spinner-border-sm"></span> : 'Mark Verified'}
+                            </button>
+                            <button className="btn-outline-custom" style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem' }} onClick={clearActions}>Cancel</button>
+                          </div>
+                        </div>
+                      )}
+                      {activeAction === 'reject' && (
+                        <div>
+                          <textarea rows={2} className="form-control-custom w-100 mb-2" style={{ resize: 'vertical' }}
+                            placeholder="Reason *" value={rejectNote} onChange={e => setRejectNote(e.target.value)} />
+                          <div className="d-flex gap-2">
+                            <button className="btn-danger-sm flex-grow-1" onClick={() => handleReject(claim.id)} disabled={submitting}>Reject</button>
+                            <button className="btn-outline-custom" style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem' }} onClick={clearActions}>Cancel</button>
+                          </div>
+                        </div>
+                      )}
+                      {activeAction === 'forward' && (
+                        <div>
+                          <textarea rows={2} className="form-control-custom w-100 mb-2" style={{ resize: 'vertical' }}
+                            placeholder="Note to customer — what needs to be updated..." value={forwardNote} onChange={e => setForwardNote(e.target.value)} />
+                          <div className="d-flex gap-2">
+                            <button style={{
+                              flex: 1, padding: '0.45rem 0.75rem', borderRadius: 8, border: 'none',
+                              background: '#d97706', color: '#fff', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer'
+                            }} onClick={() => handleForward(claim.id)} disabled={submitting}>
+                              {submitting ? <span className="spinner-border spinner-border-sm"></span> : <><i className="bi bi-send me-1"></i>Notify Customer</>}
+                            </button>
+                            <button className="btn-outline-custom" style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem' }} onClick={clearActions}>Cancel</button>
+                          </div>
+                        </div>
+                      )}
+                      {activeAction === null && (
+                        <div className="d-flex gap-2 flex-wrap">
+                          {isRevision && (
+                            <button style={{
+                              flex: 1, minWidth: 120, padding: '0.45rem 0.75rem', borderRadius: 8, border: 'none',
+                              background: '#d97706', color: '#fff', fontWeight: 600, fontSize: '0.83rem', cursor: 'pointer',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4
+                            }} onClick={() => setForwardId(claim.id)}>
+                              <i className="bi bi-send"></i> Forward to Customer
+                            </button>
+                          )}
+                          <button className="btn-success-sm flex-grow-1" onClick={() => setSelected(claim.id)}>
+                            <i className="bi bi-check-circle me-1"></i>Verify
+                          </button>
+                          <button className="btn-danger-sm" onClick={() => setRejectId(claim.id)}>
+                            <i className="bi bi-x-circle me-1"></i>Reject
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 

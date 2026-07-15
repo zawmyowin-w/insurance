@@ -165,6 +165,93 @@ public class CustomerController {
         return ResponseEntity.ok(Map.of("message", "Application cancelled"));
     }
 
+    /**
+     * Customer revises a REVISION_REQUESTED application.
+     * Merges new form values over existing ones; new file uploads replace old ones.
+     * Resets status back to PENDING for agent re-verification.
+     */
+    @PutMapping(value = "/applications/{id}/revise", consumes = {"multipart/form-data"})
+    @Transactional
+    public ResponseEntity<?> reviseApplication(@PathVariable Long id,
+                                               @AuthenticationPrincipal UserDetails principal,
+                                               @RequestParam(required = false) String formData,
+                                               HttpServletRequest request) {
+        User user = getUser(principal);
+        PolicyApplication app = appRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Application not found"));
+        if (!app.getCustomer().getId().equals(user.getId()))
+            return ResponseEntity.status(403).body(Map.of("message", "Forbidden"));
+        if (app.getStatus() != ApplicationStatus.REVISION_REQUESTED)
+            return ResponseEntity.badRequest().body(Map.of("message", "Only REVISION_REQUESTED applications can be revised"));
+
+        if (formData != null) {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                @SuppressWarnings("unchecked")
+                Map<String, Object> existingData = app.getFormData() != null
+                        ? mapper.readValue(app.getFormData(), Map.class) : new HashMap<>();
+                @SuppressWarnings("unchecked")
+                Map<String, Object> newData = mapper.readValue(formData, Map.class);
+                existingData.putAll(newData);
+                String merged = mapper.writeValueAsString(existingData);
+                if (request instanceof MultipartHttpServletRequest mpr) {
+                    Map<String, MultipartFile> fileMap = mpr.getFileMap();
+                    if (!fileMap.isEmpty()) {
+                        merged = processFormFileUploads(merged, fileMap, "applications", "app_field");
+                    }
+                }
+                app.setFormData(merged);
+            } catch (Exception e) {
+                app.setFormData(formData);
+            }
+        }
+        app.setStatus(ApplicationStatus.PENDING);
+        return ResponseEntity.ok(ApplicationResponse.from(appRepo.save(app)));
+    }
+
+    /**
+     * Customer revises a REVISION_REQUESTED claim.
+     * Merges new form values over existing ones; resets status to PENDING.
+     */
+    @PutMapping(value = "/claims/{id}/revise", consumes = {"multipart/form-data"})
+    @Transactional
+    public ResponseEntity<?> reviseClaim(@PathVariable Long id,
+                                         @AuthenticationPrincipal UserDetails principal,
+                                         @RequestParam(required = false) String formData,
+                                         HttpServletRequest request) {
+        User user = getUser(principal);
+        Claim claim = claimRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Claim not found"));
+        if (!claim.getCustomer().getId().equals(user.getId()))
+            return ResponseEntity.status(403).body(Map.of("message", "Forbidden"));
+        if (claim.getStatus() != ClaimStatus.REVISION_REQUESTED)
+            return ResponseEntity.badRequest().body(Map.of("message", "Only REVISION_REQUESTED claims can be revised"));
+
+        if (formData != null) {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                @SuppressWarnings("unchecked")
+                Map<String, Object> existingData = claim.getFormData() != null
+                        ? mapper.readValue(claim.getFormData(), Map.class) : new HashMap<>();
+                @SuppressWarnings("unchecked")
+                Map<String, Object> newData = mapper.readValue(formData, Map.class);
+                existingData.putAll(newData);
+                String merged = mapper.writeValueAsString(existingData);
+                if (request instanceof MultipartHttpServletRequest mpr) {
+                    Map<String, MultipartFile> fileMap = mpr.getFileMap();
+                    if (!fileMap.isEmpty()) {
+                        merged = processFormFileUploads(merged, fileMap, "claims", "claim_field");
+                    }
+                }
+                claim.setFormData(merged);
+            } catch (Exception e) {
+                claim.setFormData(formData);
+            }
+        }
+        claim.setStatus(ClaimStatus.PENDING);
+        return ResponseEntity.ok(ClaimResponse.from(claimRepo.save(claim)));
+    }
+
     // ── Claims ───────────────────────────────────────────────────────
     @GetMapping("/claims")
     @Transactional(readOnly = true)
