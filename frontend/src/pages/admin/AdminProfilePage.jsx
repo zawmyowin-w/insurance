@@ -18,6 +18,7 @@ export default function AdminProfilePage() {
   const [pwd, setPwd] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
   const [savingProfile, setSavingProfile] = useState(false)
   const [savingPwd, setSavingPwd] = useState(false)
+  const [showPwdModal, setShowPwdModal] = useState(false)
 
   const handleProfileSubmit = async e => {
     e.preventDefault()
@@ -48,9 +49,15 @@ export default function AdminProfilePage() {
       setUser(data)
       setPwd({ currentPassword: '', newPassword: '', confirmPassword: '' })
       toast.success('Password changed successfully')
+      setShowPwdModal(false)
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to change password')
     } finally { setSavingPwd(false) }
+  }
+
+  const closePwdModal = () => {
+    setShowPwdModal(false)
+    setPwd({ currentPassword: '', newPassword: '', confirmPassword: '' })
   }
 
   return (
@@ -63,7 +70,7 @@ export default function AdminProfilePage() {
       </div>
 
       <div className="row g-4">
-        <div className="col-12 col-lg-7">
+        <div className="col-12 col-lg-8">
           <div className="card-custom">
             <div className="d-flex align-items-center gap-3 mb-4">
               <ProfileAvatar
@@ -108,18 +115,30 @@ export default function AdminProfilePage() {
                     onChange={e => setForm(f => ({ ...f, address: e.target.value }))} />
                 </div>
               </div>
-              <div className="mt-3">
+              <div className="d-flex gap-2 mt-3">
                 <button type="submit" disabled={savingProfile} className="btn-primary-custom" style={{ justifyContent: 'center' }}>
                   {savingProfile ? <><span className="spinner-border spinner-border-sm me-2"></span>Saving...</> : 'Save Changes'}
+                </button>
+                <button type="button" className="btn-outline-custom" onClick={() => setShowPwdModal(true)}>
+                  Change Password
                 </button>
               </div>
             </form>
           </div>
         </div>
+      </div>
 
-        <div className="col-12 col-lg-5">
-          <div className="card-custom">
-            <h6 style={{ fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Change Password</h6>
+      {/* Change Password Modal */}
+      {showPwdModal && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1050,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem'
+        }} onClick={closePwdModal}>
+          <div className="card-custom fade-in" style={{ maxWidth: 420, width: '100%', margin: 0 }} onClick={e => e.stopPropagation()}>
+            <div className="d-flex align-items-center justify-content-between mb-3">
+              <h6 style={{ fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>Change Password</h6>
+              <button className="icon-btn" onClick={closePwdModal}><i className="bi bi-x-lg"></i></button>
+            </div>
             <form onSubmit={handlePasswordSubmit}>
               <div className="mb-3">
                 <label className="form-label-custom">Current Password</label>
@@ -136,13 +155,16 @@ export default function AdminProfilePage() {
                 <input type="password" required minLength={8} className="form-control-custom w-100" value={pwd.confirmPassword}
                   onChange={e => setPwd(p => ({ ...p, confirmPassword: e.target.value }))} />
               </div>
-              <button type="submit" disabled={savingPwd} className="btn-primary-custom" style={{ justifyContent: 'center' }}>
-                {savingPwd ? <><span className="spinner-border spinner-border-sm me-2"></span>Updating...</> : 'Change Password'}
-              </button>
+              <div className="d-flex gap-2">
+                <button type="submit" disabled={savingPwd} className="btn-primary-custom" style={{ justifyContent: 'center' }}>
+                  {savingPwd ? <><span className="spinner-border spinner-border-sm me-2"></span>Updating...</> : 'Update Password'}
+                </button>
+                <button type="button" className="btn-outline-custom" onClick={closePwdModal}>Cancel</button>
+              </div>
             </form>
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
