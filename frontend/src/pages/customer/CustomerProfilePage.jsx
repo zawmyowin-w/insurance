@@ -156,7 +156,7 @@ export default function CustomerProfilePage() {
       const { data } = await api.put('/auth/profile', { address, phone })
       setUser(data)
       clearPendingPhoto()
-      toast.success('Profile updated')
+      toast.success('Update successful')
       setEditMode(false)
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to update profile')
