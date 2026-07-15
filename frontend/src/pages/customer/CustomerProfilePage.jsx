@@ -184,7 +184,7 @@ export default function CustomerProfilePage() {
                 <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Click the camera icon to change your photo</div>
               </div>
             </div>
-            <h6 style={{ fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Profile Bio</h6>
+            <h6 style={{ fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Edit Bio</h6>
             <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '1.25rem' }}>
               <i className="bi bi-lock-fill me-1"></i>
               Name and email are your core account details — contact an admin if these need to change.
