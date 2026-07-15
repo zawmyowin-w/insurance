@@ -7,8 +7,8 @@ const EMPTY_AGENT = { name: '', email: '', phone: '', address: '', password: '',
 const EMPTY_EDIT = { name: '', email: '', phone: '', address: '', insuranceType: 'LIFE', newPassword: '' }
 const EMAIL_PATTERN = /^[a-z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 const EMAIL_ERROR = 'Email must start with a lowercase letter — it cannot begin with a capital letter or a number'
-const PHONE_PATTERN = /^(\+95[\s-]?)?\d{7,10}$/
-const PHONE_ERROR = 'Phone must be 7–10 digits, optionally starting with +95'
+const PHONE_PATTERN = /^(\+95[\s-]?)?\d{7,11}$/
+const PHONE_ERROR = 'Phone must be 7–11 digits, optionally starting with +95'
 
 export default function ManageUsersPage() {
   const [users, setUsers] = useState([])
