@@ -221,7 +221,7 @@ export default function CustomerProfilePage() {
               </div>
             </div>
             <h6 style={{ fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
-              {editMode ? 'Edit Bio' : 'Bio'}
+              {editMode ? 'Edit Profile Information' : 'Profile Information'}
             </h6>
             <form onSubmit={handleProfileSubmit}>
               <div className="row g-3">
