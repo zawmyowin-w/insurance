@@ -15,6 +15,9 @@ export default function CustomerProfilePage() {
   const [savingProfile, setSavingProfile] = useState(false)
   const [savingPwd, setSavingPwd] = useState(false)
 
+  // ── Change Password modal ──
+  const [showPwdModal, setShowPwdModal] = useState(false)
+
   // ── "Forgot password" style change — verify via emailed code instead of current password ──
   const [useOtpMode, setUseOtpMode] = useState(false)
   const [otpSent, setOtpSent] = useState(false)
@@ -36,6 +39,12 @@ export default function CustomerProfilePage() {
     setOtpSent(false)
     setOtpDigits(Array(OTP_BOX_COUNT).fill(''))
     setOtpPwd({ newPassword: '', confirmPassword: '' })
+  }
+
+  const closePwdModal = () => {
+    setShowPwdModal(false)
+    setPwd({ currentPassword: '', newPassword: '', confirmPassword: '' })
+    resetOtpFlow()
   }
 
   const handleSendOtp = async () => {
@@ -87,6 +96,7 @@ export default function CustomerProfilePage() {
       setUser(data)
       toast.success('Password changed successfully')
       resetOtpFlow()
+      setShowPwdModal(false)
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to change password')
     } finally { setSavingOtpPwd(false) }
@@ -137,6 +147,7 @@ export default function CustomerProfilePage() {
       setUser(data)
       setPwd({ currentPassword: '', newPassword: '', confirmPassword: '' })
       toast.success('Password changed successfully')
+      setShowPwdModal(false)
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to change password')
     } finally { setSavingPwd(false) }
@@ -152,7 +163,7 @@ export default function CustomerProfilePage() {
       </div>
 
       <div className="row g-4">
-        <div className="col-12 col-lg-7">
+        <div className="col-12 col-lg-8">
           <div className="card-custom">
             <div className="d-flex align-items-center gap-3 mb-4">
               <ProfileAvatar
@@ -194,19 +205,32 @@ export default function CustomerProfilePage() {
                     onChange={e => setAddress(e.target.value)} placeholder="Your address" />
                 </div>
               </div>
-              <div className="mt-3">
+              <div className="mt-3 d-flex gap-2">
                 <button type="submit" disabled={savingProfile} className="btn-primary-custom" style={{ justifyContent: 'center' }}>
                   {savingProfile ? <><span className="spinner-border spinner-border-sm me-2"></span>Saving...</> : 'Save Changes'}
+                </button>
+                <button type="button" onClick={() => setShowPwdModal(true)} className="btn-outline-custom" style={{ justifyContent: 'center' }}>
+                  <i className="bi bi-key me-2"></i>Change Password
                 </button>
               </div>
             </form>
           </div>
         </div>
+      </div>
 
-        <div className="col-12 col-lg-5">
-          <div className="card-custom">
+      {/* Change Password Modal */}
+      {showPwdModal && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1050,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem'
+        }} onClick={closePwdModal}>
+          <div className="card-custom fade-in" style={{ maxWidth: 440, width: '100%', margin: 0 }} onClick={e => e.stopPropagation()}>
             <div className="d-flex align-items-center justify-content-between mb-1">
               <h6 style={{ fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>Change Password</h6>
+              <button className="icon-btn" onClick={closePwdModal}><i className="bi bi-x-lg"></i></button>
+            </div>
+
+            <div className="mb-3">
               {!useOtpMode ? (
                 <button type="button" onClick={() => setUseOtpMode(true)} style={{
                   background: 'none', border: 'none', color: 'var(--primary)', fontWeight: 600,
@@ -225,7 +249,7 @@ export default function CustomerProfilePage() {
             </div>
 
             {!useOtpMode ? (
-              <form onSubmit={handlePasswordSubmit} className="mt-3">
+              <form onSubmit={handlePasswordSubmit}>
                 <div className="mb-3">
                   <label className="form-label-custom">Current Password</label>
                   <input type="password" required className="form-control-custom w-100" value={pwd.currentPassword}
@@ -241,12 +265,12 @@ export default function CustomerProfilePage() {
                   <input type="password" required minLength={8} className="form-control-custom w-100" value={pwd.confirmPassword}
                     onChange={e => setPwd(p => ({ ...p, confirmPassword: e.target.value }))} />
                 </div>
-                <button type="submit" disabled={savingPwd} className="btn-primary-custom" style={{ justifyContent: 'center' }}>
+                <button type="submit" disabled={savingPwd} className="btn-primary-custom w-100" style={{ justifyContent: 'center' }}>
                   {savingPwd ? <><span className="spinner-border spinner-border-sm me-2"></span>Updating...</> : 'Change Password'}
                 </button>
               </form>
             ) : (
-              <div className="mt-3">
+              <div>
                 <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
                   We'll email a 6-digit verification code to <strong style={{ color: 'var(--text-primary)' }}>{user?.email}</strong> — enter it below to set a new password without your old one.
                 </p>
@@ -306,7 +330,7 @@ export default function CustomerProfilePage() {
                       <input type="password" required minLength={8} className="form-control-custom w-100" value={otpPwd.confirmPassword}
                         onChange={e => setOtpPwd(p => ({ ...p, confirmPassword: e.target.value }))} />
                     </div>
-                    <button type="submit" disabled={savingOtpPwd} className="btn-primary-custom" style={{ justifyContent: 'center' }}>
+                    <button type="submit" disabled={savingOtpPwd} className="btn-primary-custom w-100" style={{ justifyContent: 'center' }}>
                       {savingOtpPwd ? <><span className="spinner-border spinner-border-sm me-2"></span>Updating...</> : 'Change Password'}
                     </button>
                   </form>
@@ -315,7 +339,7 @@ export default function CustomerProfilePage() {
             )}
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
