@@ -124,6 +124,11 @@ export default function Navbar() {
                       <i className="bi bi-speedometer2 me-2"></i>{t('nav.dashboard')}
                     </Link>
                   </li>
+                  <li>
+                    <Link className="dropdown-item" to={dashboardPath.replace('/dashboard', '/profile')} style={{ color: 'var(--text-primary)', fontSize: '0.88rem' }}>
+                      <i className="bi bi-person-circle me-2"></i>My Profile
+                    </Link>
+                  </li>
                   {user.role === 'CUSTOMER' && (
                     <li>
                       <Link className="dropdown-item" to="/customer/notifications" style={{ color: 'var(--text-primary)', fontSize: '0.88rem' }}>

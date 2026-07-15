@@ -28,6 +28,7 @@ import CustomerNotificationsPage from './pages/customer/CustomerNotificationsPag
 import CustomerPoliciesPage from './pages/customer/CustomerPoliciesPage'
 import ApplyPolicyPage from './pages/customer/ApplyPolicyPage'
 import SubmitClaimPage from './pages/customer/SubmitClaimPage'
+import CustomerProfilePage from './pages/customer/CustomerProfilePage'
 
 // Agent pages
 import AgentLayout from './pages/agent/AgentLayout'
@@ -35,6 +36,7 @@ import AgentDashboard from './pages/agent/AgentDashboard'
 import AgentApplicationsPage from './pages/agent/AgentApplicationsPage'
 import AgentClaimsPage from './pages/agent/AgentClaimsPage'
 import AgentNotificationsPage from './pages/agent/AgentNotificationsPage'
+import AgentProfilePage from './pages/agent/AgentProfilePage'
 
 // Admin pages
 import AdminLayout from './pages/admin/AdminLayout'
@@ -47,6 +49,7 @@ import AdminPaymentsPage from './pages/admin/AdminPaymentsPage'
 import AdminNotificationsPage from './pages/admin/AdminNotificationsPage'
 import AdminFormBuilderPage from './pages/admin/AdminFormBuilderPage'
 import AdminReportsPage from './pages/admin/AdminReportsPage'
+import AdminProfilePage from './pages/admin/AdminProfilePage'
 
 export default function App() {
   return (
@@ -79,6 +82,7 @@ export default function App() {
               <Route path="submit-claim" element={<SubmitClaimPage />} />
               <Route path="payments" element={<MyPaymentsPage />} />
               <Route path="notifications" element={<CustomerNotificationsPage />} />
+              <Route path="profile" element={<CustomerProfilePage />} />
             </Route>
 
             {/* Agent */}
@@ -88,6 +92,7 @@ export default function App() {
               <Route path="applications" element={<AgentApplicationsPage />} />
               <Route path="claims" element={<AgentClaimsPage />} />
               <Route path="notifications" element={<AgentNotificationsPage />} />
+              <Route path="profile" element={<AgentProfilePage />} />
             </Route>
 
             {/* Admin */}
@@ -102,6 +107,7 @@ export default function App() {
               <Route path="forms" element={<AdminFormBuilderPage />} />
               <Route path="notifications" element={<AdminNotificationsPage />} />
               <Route path="reports" element={<AdminReportsPage />} />
+              <Route path="profile" element={<AdminProfilePage />} />
             </Route>
 
             <Route path="*" element={<Navigate to="/" replace />} />

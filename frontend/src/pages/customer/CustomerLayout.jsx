@@ -12,6 +12,7 @@ const sidebarLinks = [
   { to: '/customer/submit-claim',  icon: 'bi-plus-circle-dotted',   labelKey: 'sidebar.submitClaim' },
   { to: '/customer/payments',      icon: 'bi-credit-card',          labelKey: 'sidebar.payments'    },
   { to: '/customer/notifications', icon: 'bi-bell',                 labelKey: 'sidebar.notifications' },
+  { to: '/customer/profile',       icon: 'bi-person-circle',        label: 'My Profile'             },
 ]
 
 export default function CustomerLayout() {

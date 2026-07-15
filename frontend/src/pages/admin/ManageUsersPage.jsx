@@ -3,6 +3,7 @@ import api from '../../services/api'
 import { toast } from 'react-toastify'
 
 const EMPTY_AGENT = { name: '', email: '', phone: '', address: '', password: '', insuranceType: 'LIFE' }
+const EMPTY_EDIT = { name: '', email: '', phone: '', address: '', insuranceType: 'LIFE', newPassword: '' }
 
 export default function ManageUsersPage() {
   const [users, setUsers] = useState([])
@@ -12,6 +13,9 @@ export default function ManageUsersPage() {
   const [agentForm, setAgentForm] = useState(EMPTY_AGENT)
   const [saving, setSaving] = useState(false)
   const [search, setSearch] = useState('')
+  const [editingUser, setEditingUser] = useState(null)
+  const [editForm, setEditForm] = useState(EMPTY_EDIT)
+  const [editSaving, setEditSaving] = useState(false)
 
   const fetchUsers = () => {
     api.get('/admin/users').then(res => setUsers(Array.isArray(res.data) ? res.data : [])).catch(() => setUsers([])).finally(() => setLoading(false))
@@ -45,6 +49,31 @@ export default function ManageUsersPage() {
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this user?')) return
     try { await api.delete(`/admin/users/${id}`); toast.success('User deleted'); fetchUsers() } catch { toast.error('Failed to delete') }
+  }
+
+  const openEdit = (u) => {
+    setEditingUser(u)
+    setEditForm({
+      name: u.name || '', email: u.email || '', phone: u.phone || '',
+      address: u.address || '', insuranceType: u.insuranceType || 'LIFE', newPassword: '',
+    })
+  }
+
+  const closeEdit = () => { setEditingUser(null); setEditForm(EMPTY_EDIT) }
+
+  const handleEditSubmit = async e => {
+    e.preventDefault()
+    setEditSaving(true)
+    try {
+      const payload = { name: editForm.name, email: editForm.email, phone: editForm.phone, address: editForm.address }
+      if (editingUser.role === 'AGENT') payload.insuranceType = editForm.insuranceType
+      if (editForm.newPassword) payload.newPassword = editForm.newPassword
+      await api.put(`/admin/users/${editingUser.id}`, payload)
+      toast.success('Profile updated')
+      closeEdit(); fetchUsers()
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update profile')
+    } finally { setEditSaving(false) }
   }
 
   const roleColor = (role) => ({ ADMIN: '#9333ea', AGENT: '#1d4ed8', CUSTOMER: '#16a34a' }[role] || '#6b7280')
@@ -156,6 +185,11 @@ export default function ManageUsersPage() {
                     <td style={{ fontSize: '0.85rem' }}>{u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}</td>
                     <td>
                       <div className="d-flex gap-1">
+                        {u.role === 'AGENT' && (
+                          <button className="btn-outline-custom" style={{ padding: '0.3rem 0.6rem', fontSize: '0.78rem' }} onClick={() => openEdit(u)}>
+                            <i className="bi bi-pencil"></i>
+                          </button>
+                        )}
                         {u.role !== 'ADMIN' && (
                           <>
                             <button className="btn-outline-custom" style={{ padding: '0.3rem 0.6rem', fontSize: '0.78rem' }} onClick={() => handleToggle(u.id, u.active)}>
@@ -170,6 +204,67 @@ export default function ManageUsersPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Agent Profile Modal */}
+      {editingUser && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1050,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem'
+        }} onClick={closeEdit}>
+          <div className="card-custom fade-in" style={{ maxWidth: 480, width: '100%', margin: 0 }} onClick={e => e.stopPropagation()}>
+            <div className="d-flex align-items-center justify-content-between mb-3">
+              <h6 style={{ fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>Edit Agent Profile</h6>
+              <button className="icon-btn" onClick={closeEdit}><i className="bi bi-x-lg"></i></button>
+            </div>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+              Only an admin can update an agent's profile. Leave the password blank to keep it unchanged.
+            </p>
+            <form onSubmit={handleEditSubmit}>
+              <div className="row g-3">
+                <div className="col-12 col-md-6">
+                  <label className="form-label-custom">Full Name *</label>
+                  <input required className="form-control-custom w-100" value={editForm.name}
+                    onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} />
+                </div>
+                <div className="col-12 col-md-6">
+                  <label className="form-label-custom">Email *</label>
+                  <input type="email" required className="form-control-custom w-100" value={editForm.email}
+                    onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} />
+                </div>
+                <div className="col-12 col-md-6">
+                  <label className="form-label-custom">Phone</label>
+                  <input className="form-control-custom w-100" value={editForm.phone}
+                    onChange={e => setEditForm(f => ({ ...f, phone: e.target.value }))} />
+                </div>
+                <div className="col-12 col-md-6">
+                  <label className="form-label-custom">Insurance Type</label>
+                  <select className="form-select-custom w-100" value={editForm.insuranceType}
+                    onChange={e => setEditForm(f => ({ ...f, insuranceType: e.target.value }))}>
+                    {['LIFE', 'HEALTH', 'VEHICLE', 'PROPERTY', 'ALL'].map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div className="col-12">
+                  <label className="form-label-custom">Address</label>
+                  <input className="form-control-custom w-100" value={editForm.address}
+                    onChange={e => setEditForm(f => ({ ...f, address: e.target.value }))} />
+                </div>
+                <div className="col-12">
+                  <label className="form-label-custom">Reset Password (optional)</label>
+                  <input type="password" minLength={8} className="form-control-custom w-100" value={editForm.newPassword}
+                    placeholder="Leave blank to keep current password"
+                    onChange={e => setEditForm(f => ({ ...f, newPassword: e.target.value }))} />
+                </div>
+              </div>
+              <div className="d-flex gap-2 mt-3">
+                <button type="submit" disabled={editSaving} className="btn-primary-custom" style={{ justifyContent: 'center' }}>
+                  {editSaving ? <><span className="spinner-border spinner-border-sm me-2"></span>Saving...</> : 'Save Changes'}
+                </button>
+                <button type="button" className="btn-outline-custom" onClick={closeEdit}>Cancel</button>
+              </div>
+            </form>
           </div>
         </div>
       )}

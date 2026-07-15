@@ -106,5 +106,52 @@ public class AuthController {
         return ResponseEntity.ok(UserResponse.from(user));
     }
 
+    /**
+     * Self-service profile update.
+     * - ADMIN: may edit name, email, phone, address, and password.
+     * - CUSTOMER: name/phone/email are locked (core identity fields) — only
+     *   address and password may be changed here.
+     * - AGENT: not allowed to self-edit; only an admin can update an agent's
+     *   profile (see AdminController#updateUser).
+     */
+    @PutMapping("/profile")
+    public ResponseEntity<?> updateProfile(@AuthenticationPrincipal UserDetails principal,
+                                            @RequestBody UpdateProfileRequest req) {
+        User user = userRepository.findByEmail(principal.getUsername()).orElseThrow();
+
+        if (user.getRole() == Role.AGENT) {
+            return ResponseEntity.status(403).body(new ErrorResponse(
+                    "Agent profiles can only be updated by an admin. Please contact your administrator."));
+        }
+
+        if (user.getRole() == Role.ADMIN) {
+            if (req.getName() != null && !req.getName().isBlank()) user.setName(req.getName());
+            if (req.getEmail() != null && !req.getEmail().isBlank() && !req.getEmail().equalsIgnoreCase(user.getEmail())) {
+                if (userRepository.existsByEmail(req.getEmail())) {
+                    return ResponseEntity.badRequest().body(new ErrorResponse("Email already in use"));
+                }
+                user.setEmail(req.getEmail());
+            }
+            if (req.getPhone() != null) user.setPhone(req.getPhone());
+            if (req.getAddress() != null) user.setAddress(req.getAddress());
+        } else {
+            // CUSTOMER — name, phone, email are locked; only address (and password below) may change.
+            if (req.getAddress() != null) user.setAddress(req.getAddress());
+        }
+
+        if (req.getNewPassword() != null && !req.getNewPassword().isBlank()) {
+            if (req.getCurrentPassword() == null || !passwordEncoder.matches(req.getCurrentPassword(), user.getPassword())) {
+                return ResponseEntity.badRequest().body(new ErrorResponse("Current password is incorrect"));
+            }
+            if (req.getNewPassword().length() < 8) {
+                return ResponseEntity.badRequest().body(new ErrorResponse("New password must be at least 8 characters"));
+            }
+            user.setPassword(passwordEncoder.encode(req.getNewPassword()));
+        }
+
+        userRepository.save(user);
+        return ResponseEntity.ok(UserResponse.from(user));
+    }
+
     record ErrorResponse(String message) {}
 }

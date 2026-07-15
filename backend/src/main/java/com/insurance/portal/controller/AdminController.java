@@ -131,6 +131,37 @@ public class AdminController {
         return ResponseEntity.ok(UserResponse.from(userRepo.save(agent)));
     }
 
+    /**
+     * Admin-driven profile edit for any user — this is the only way an
+     * agent's profile can be changed (agents cannot self-edit; see
+     * AuthController#updateProfile). Also usable for editing customers/admins.
+     */
+    @PutMapping("/users/{id}")
+    @Transactional
+    public ResponseEntity<?> updateUser(@PathVariable Long id, @RequestBody UpdateProfileRequest req) {
+        User user = userRepo.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (req.getName() != null && !req.getName().isBlank()) user.setName(req.getName());
+        if (req.getEmail() != null && !req.getEmail().isBlank() && !req.getEmail().equalsIgnoreCase(user.getEmail())) {
+            if (userRepo.existsByEmail(req.getEmail())) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Email already in use"));
+            }
+            user.setEmail(req.getEmail());
+        }
+        if (req.getPhone() != null) user.setPhone(req.getPhone());
+        if (req.getAddress() != null) user.setAddress(req.getAddress());
+        if (user.getRole() == Role.AGENT && req.getInsuranceType() != null && !req.getInsuranceType().isBlank()) {
+            user.setInsuranceType(req.getInsuranceType());
+        }
+        if (req.getNewPassword() != null && !req.getNewPassword().isBlank()) {
+            if (req.getNewPassword().length() < 8) {
+                return ResponseEntity.badRequest().body(Map.of("message", "New password must be at least 8 characters"));
+            }
+            user.setPassword(passwordEncoder.encode(req.getNewPassword()));
+        }
+        return ResponseEntity.ok(UserResponse.from(userRepo.save(user)));
+    }
+
     @PutMapping("/users/{id}/toggle")
     @Transactional
     public ResponseEntity<?> toggleUser(@PathVariable Long id, @RequestBody Map<String, Object> req) {

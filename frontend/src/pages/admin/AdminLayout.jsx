@@ -12,6 +12,7 @@ const sidebarLinks = [
   { to: '/admin/payments',      icon: 'bi-credit-card',         label: 'Payments'           },
   { to: '/admin/notifications', icon: 'bi-bell',                label: 'Notifications'      },
   { to: '/admin/reports',       icon: 'bi-bar-chart-line',      label: 'Reports'            },
+  { to: '/admin/profile',       icon: 'bi-person-circle',       label: 'My Profile'         },
 ]
 
 export default function AdminLayout() {

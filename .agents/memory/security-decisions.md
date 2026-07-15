@@ -40,3 +40,7 @@ description: Durable auth/security patterns decided during build — JWT, CORS, 
 ## Auth/me endpoint
 - `/auth/login` and `/auth/register` are `permitAll`; `/auth/me` is explicitly marked `authenticated()`
 - **Why:** Blanket `permitAll` on `/auth/**` would bypass JWT validation on `/auth/me`, causing confusing server errors instead of clean 401s
+
+## Role-scoped profile editing
+- Self-service `PUT /auth/profile` enforces per-role field rules in the controller (not just the frontend): ADMIN can edit any of its own fields; CUSTOMER can only change non-identity fields (e.g. address) — name/phone/email are ignored even if sent; AGENT gets a 403 and must go through admin (`PUT /admin/users/{id}`)
+- **Why:** A user profile endpoint that trusts client-supplied fields lets any role escalate or bypass business rules (e.g. a customer renaming themselves, or an agent self-approving profile changes meant to be admin-controlled) — restrictions must be enforced server-side per role, not just hidden in the UI
