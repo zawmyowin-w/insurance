@@ -35,7 +35,7 @@ export default function AdminNotificationsPage() {
       <div className="row g-4">
         <div className="col-12 col-lg-5">
           <div className="card-custom">
-            <h6 style={{ fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Compose Notification</h6>
+            <h6 style={{ fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Compose notifications</h6>
             <form onSubmit={handleSend}>
               <div className="mb-3">
                 <label className="form-label-custom">Send To</label>
@@ -77,7 +77,7 @@ export default function AdminNotificationsPage() {
                   value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} />
               </div>
               <button type="submit" disabled={sending} className="btn-primary-custom w-100" style={{ justifyContent: 'center' }}>
-                {sending ? <><span className="spinner-border spinner-border-sm me-2"></span>Sending...</> : <><i className="bi bi-send me-2"></i>Send Notification</>}
+                {sending ? <><span className="spinner-border spinner-border-sm me-2"></span>Sending...</> : <><i className="bi bi-send me-2"></i>Send Message</>}
               </button>
             </form>
           </div>
@@ -85,7 +85,7 @@ export default function AdminNotificationsPage() {
         <div className="col-12 col-lg-7">
           <div className="card-custom p-0">
             <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border)' }}>
-              <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Sent Notifications</h6>
+              <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>History</h6>
             </div>
             {sent.length === 0 ? (
               <div className="text-center py-5"><p style={{ color: 'var(--text-muted)', margin: 0 }}>No notifications sent yet</p></div>
