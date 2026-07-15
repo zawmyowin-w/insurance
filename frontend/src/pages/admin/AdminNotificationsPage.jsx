@@ -35,7 +35,7 @@ export default function AdminNotificationsPage() {
       <div className="row g-4">
         <div className="col-12 col-lg-5">
           <div className="card-custom">
-            <h6 style={{ fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Compose notifications</h6>
+            <h6 style={{ fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Notifications</h6>
             <form onSubmit={handleSend}>
               <div className="mb-3">
                 <label className="form-label-custom">Send To</label>
