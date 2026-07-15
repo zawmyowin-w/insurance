@@ -30,7 +30,7 @@ public class InsurancePortalApplication {
             // (set app.admin.email / app.admin.password in profile-specific properties or env vars)
             if (!userRepository.existsByEmail(adminEmail)) {
                 User admin = User.builder()
-                        .name("System Admin")
+                        .name("Admin")
                         .email(adminEmail)
                         .password(passwordEncoder.encode(adminPassword))
                         .role(Role.ADMIN)
