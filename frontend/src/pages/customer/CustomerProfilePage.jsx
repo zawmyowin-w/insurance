@@ -260,23 +260,23 @@ export default function CustomerProfilePage() {
               </div>
               <div className="mt-3 d-flex gap-2">
                 {editMode ? (
-                  <>
+                  <React.Fragment key="edit-actions">
                     <button type="submit" disabled={savingProfile} className="btn-primary-custom" style={{ justifyContent: 'center' }}>
                       {savingProfile ? <><span className="spinner-border spinner-border-sm me-2"></span>Saving...</> : 'Save Changes'}
                     </button>
                     <button type="button" onClick={handleCancelEdit} className="btn-outline-custom" style={{ justifyContent: 'center' }}>
                       Cancel
                     </button>
-                  </>
+                  </React.Fragment>
                 ) : (
-                  <>
+                  <React.Fragment key="view-actions">
                     <button type="button" onClick={() => setEditMode(true)} className="btn-primary-custom" style={{ justifyContent: 'center' }}>
                       <i className="bi bi-pencil me-2"></i>Update
                     </button>
                     <button type="button" onClick={() => setShowPwdModal(true)} className="btn-outline-custom" style={{ justifyContent: 'center' }}>
                       <i className="bi bi-key me-2"></i>Change Password
                     </button>
-                  </>
+                  </React.Fragment>
                 )}
               </div>
             </form>
