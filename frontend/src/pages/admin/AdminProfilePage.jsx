@@ -11,16 +11,35 @@ const PHONE_ERROR = 'Phone must be 7–10 digits, optionally starting with +95'
 
 export default function AdminProfilePage() {
   const { user, setUser } = useAuth()
+  const [editMode, setEditMode] = useState(false)
   const [form, setForm] = useState({
     name: user?.name || '',
     email: user?.email || '',
     phone: user?.phone || '',
     address: user?.address || '',
   })
+  const [pendingPhotoFile, setPendingPhotoFile] = useState(null)
+  const [pendingPhotoPreview, setPendingPhotoPreview] = useState(null)
   const [pwd, setPwd] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
   const [savingProfile, setSavingProfile] = useState(false)
   const [savingPwd, setSavingPwd] = useState(false)
   const [showPwdModal, setShowPwdModal] = useState(false)
+
+  const handlePhotoSelected = file => {
+    setPendingPhotoFile(file)
+    setPendingPhotoPreview(prev => {
+      if (prev) URL.revokeObjectURL(prev)
+      return URL.createObjectURL(file)
+    })
+  }
+
+  const clearPendingPhoto = () => {
+    setPendingPhotoPreview(prev => {
+      if (prev) URL.revokeObjectURL(prev)
+      return null
+    })
+    setPendingPhotoFile(null)
+  }
 
   const handleProfileSubmit = async e => {
     e.preventDefault()
@@ -28,14 +47,32 @@ export default function AdminProfilePage() {
     if (form.phone && !PHONE_PATTERN.test(form.phone)) { toast.error(PHONE_ERROR); return }
     setSavingProfile(true)
     try {
+      if (pendingPhotoFile) {
+        const formData = new FormData()
+        formData.append('file', pendingPhotoFile)
+        await api.post('/auth/profile/picture', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+      }
       const { data } = await api.put('/auth/profile', {
         name: form.name, email: form.email, phone: form.phone, address: form.address,
       })
       setUser(data)
+      clearPendingPhoto()
       toast.success('Profile updated')
+      setEditMode(false)
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to update profile')
     } finally { setSavingProfile(false) }
+  }
+
+  const handleCancelEdit = () => {
+    setForm({
+      name: user?.name || '',
+      email: user?.email || '',
+      phone: user?.phone || '',
+      address: user?.address || '',
+    })
+    clearPendingPhoto()
+    setEditMode(false)
   }
 
   const handlePasswordSubmit = async e => {
@@ -75,58 +112,109 @@ export default function AdminProfilePage() {
             <div className="d-flex align-items-center gap-3 mb-4">
               <ProfileAvatar
                 fetchUrl="/auth/profile/picture"
-                uploadUrl="/auth/profile/picture"
                 hasPicture={user?.hasProfilePicture}
                 name={user?.name}
                 size={80}
-                editable
-                onUploaded={setUser}
+                editable={editMode}
+                deferUpload
+                onFileSelected={handlePhotoSelected}
+                previewOverrideUrl={pendingPhotoPreview}
               />
               <div>
                 <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{user?.name}</div>
-                <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Click the camera icon to change your photo</div>
+                <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                  {editMode ? 'Click the camera icon to change your photo' : 'Your account photo'}
+                </div>
               </div>
             </div>
-            <h6 style={{ fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>Profile Information</h6>
+
+            <h6 style={{ fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
+              {editMode ? 'Edit Profile Information' : 'Profile Information'}
+            </h6>
+
             <form onSubmit={handleProfileSubmit}>
               <div className="row g-3">
                 <div className="col-12 col-md-6">
                   <label className="form-label-custom">Full Name</label>
-                  <input className="form-control-custom w-100" value={form.name}
-                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+                  <input
+                    disabled={!editMode}
+                    className="form-control-custom w-100"
+                    value={form.name}
+                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                    onKeyDown={e => { if (e.key === 'Enter') e.preventDefault() }}
+                    style={!editMode ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
+                  />
                 </div>
                 <div className="col-12 col-md-6">
                   <label className="form-label-custom">Email</label>
-                  <input type="email" className="form-control-custom w-100" value={form.email}
+                  <input
+                    type="email"
+                    disabled={!editMode}
+                    className="form-control-custom w-100"
+                    value={form.email}
                     onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                    style={form.email && !EMAIL_PATTERN.test(form.email) ? { borderColor: '#ef4444' } : undefined} />
-                  {form.email && !EMAIL_PATTERN.test(form.email) && (
+                    onKeyDown={e => { if (e.key === 'Enter') e.preventDefault() }}
+                    style={{
+                      ...(editMode && form.email && !EMAIL_PATTERN.test(form.email) ? { borderColor: '#ef4444' } : undefined),
+                      ...(!editMode ? { opacity: 0.6, cursor: 'not-allowed' } : undefined),
+                    }}
+                  />
+                  {editMode && form.email && !EMAIL_PATTERN.test(form.email) && (
                     <p style={{ fontSize: '0.76rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{EMAIL_ERROR}</p>
                   )}
                 </div>
                 <div className="col-12 col-md-6">
                   <label className="form-label-custom">Phone</label>
-                  <input className="form-control-custom w-100" value={form.phone}
+                  <input
+                    disabled={!editMode}
+                    className="form-control-custom w-100"
+                    value={form.phone}
                     onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
-                    placeholder="+95"
-                    style={form.phone && !PHONE_PATTERN.test(form.phone) ? { borderColor: '#ef4444' } : undefined} />
-                  {form.phone && !PHONE_PATTERN.test(form.phone) && (
+                    placeholder="+95xxxxxxxx"
+                    onKeyDown={e => { if (e.key === 'Enter') e.preventDefault() }}
+                    style={{
+                      ...(editMode && form.phone && !PHONE_PATTERN.test(form.phone) ? { borderColor: '#ef4444' } : undefined),
+                      ...(!editMode ? { opacity: 0.6, cursor: 'not-allowed' } : undefined),
+                    }}
+                  />
+                  {editMode && form.phone && !PHONE_PATTERN.test(form.phone) && (
                     <p style={{ fontSize: '0.76rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{PHONE_ERROR}</p>
                   )}
                 </div>
                 <div className="col-12 col-md-6">
                   <label className="form-label-custom">Address</label>
-                  <input className="form-control-custom w-100" value={form.address}
-                    onChange={e => setForm(f => ({ ...f, address: e.target.value }))} />
+                  <input
+                    disabled={!editMode}
+                    className="form-control-custom w-100"
+                    value={form.address}
+                    onChange={e => setForm(f => ({ ...f, address: e.target.value }))}
+                    placeholder="Your address"
+                    onKeyDown={e => { if (e.key === 'Enter') e.preventDefault() }}
+                    style={!editMode ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
+                  />
                 </div>
               </div>
-              <div className="d-flex gap-2 mt-3">
-                <button type="submit" disabled={savingProfile} className="btn-primary-custom" style={{ justifyContent: 'center' }}>
-                  {savingProfile ? <><span className="spinner-border spinner-border-sm me-2"></span>Saving...</> : 'Save Changes'}
-                </button>
-                <button type="button" className="btn-outline-custom" onClick={() => setShowPwdModal(true)}>
-                  Change Password
-                </button>
+
+              <div className="mt-3 d-flex gap-2">
+                {editMode ? (
+                  <React.Fragment key="edit-actions">
+                    <button type="submit" disabled={savingProfile} className="btn-primary-custom" style={{ justifyContent: 'center' }}>
+                      {savingProfile ? <><span className="spinner-border spinner-border-sm me-2"></span>Saving...</> : 'Save Changes'}
+                    </button>
+                    <button type="button" onClick={handleCancelEdit} className="btn-outline-custom" style={{ justifyContent: 'center' }}>
+                      Cancel
+                    </button>
+                  </React.Fragment>
+                ) : (
+                  <React.Fragment key="view-actions">
+                    <button type="button" onClick={() => setEditMode(true)} className="btn-primary-custom" style={{ justifyContent: 'center' }}>
+                      <i className="bi bi-pencil me-2"></i>Update
+                    </button>
+                    <button type="button" onClick={() => setShowPwdModal(true)} className="btn-outline-custom" style={{ justifyContent: 'center' }}>
+                      <i className="bi bi-key me-2"></i>Change Password
+                    </button>
+                  </React.Fragment>
+                )}
               </div>
             </form>
           </div>
