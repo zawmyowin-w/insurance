@@ -164,6 +164,31 @@ public class AuthController {
     }
 
     /**
+     * Change the current user's password via the "forgot password" email-OTP
+     * flow instead of re-entering the current password. The OTP itself is
+     * generated/verified client-side (same trust model as the public
+     * forgot-password flow) — this endpoint only requires the caller to
+     * already be authenticated as the account holder, and applies the same
+     * role rule as {@link #updateProfile}: agents cannot self-edit.
+     */
+    @PutMapping("/profile/password-otp")
+    public ResponseEntity<?> changePasswordViaOtp(@AuthenticationPrincipal UserDetails principal,
+                                                    @RequestBody Map<String, String> body) {
+        User user = userRepository.findByEmail(principal.getUsername()).orElseThrow();
+        if (user.getRole() == Role.AGENT) {
+            return ResponseEntity.status(403).body(new ErrorResponse(
+                    "Agent profiles can only be updated by an admin. Please contact your administrator."));
+        }
+        String newPassword = body.get("newPassword");
+        if (newPassword == null || newPassword.length() < 8) {
+            return ResponseEntity.badRequest().body(new ErrorResponse("New password must be at least 8 characters"));
+        }
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+        return ResponseEntity.ok(UserResponse.from(user));
+    }
+
+    /**
      * Upload/replace the current user's own profile picture.
      * ADMIN and CUSTOMER only — agents cannot self-edit (see updateProfile above).
      */
