@@ -223,10 +223,6 @@ export default function CustomerProfilePage() {
             <h6 style={{ fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
               {editMode ? 'Edit Bio' : 'Bio'}
             </h6>
-            <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '1.25rem' }}>
-              <i className="bi bi-lock-fill me-1"></i>
-              Name and email are your core account details — contact an admin if these need to change.
-            </p>
             <form onSubmit={handleProfileSubmit}>
               <div className="row g-3">
                 <div className="col-12 col-md-6">
