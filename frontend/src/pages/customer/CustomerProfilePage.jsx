@@ -241,6 +241,7 @@ export default function CustomerProfilePage() {
                   <label className="form-label-custom">Phone</label>
                   <input disabled={!editMode} className="form-control-custom w-100" value={phone}
                     onChange={e => setPhone(e.target.value)} placeholder="+95 9xxxxxxxx"
+                    onKeyDown={e => { if (e.key === 'Enter') e.preventDefault() }}
                     style={{
                       ...(phone && !PHONE_PATTERN.test(phone) ? { borderColor: '#ef4444' } : undefined),
                       ...(!editMode ? { opacity: 0.6, cursor: 'not-allowed' } : undefined),
@@ -253,6 +254,7 @@ export default function CustomerProfilePage() {
                   <label className="form-label-custom">Address</label>
                   <input disabled={!editMode} className="form-control-custom w-100" value={address}
                     onChange={e => setAddress(e.target.value)} placeholder="Your address"
+                    onKeyDown={e => { if (e.key === 'Enter') e.preventDefault() }}
                     style={!editMode ? { opacity: 0.6, cursor: 'not-allowed' } : undefined} />
                 </div>
               </div>
