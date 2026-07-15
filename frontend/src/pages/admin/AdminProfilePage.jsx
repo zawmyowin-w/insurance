@@ -6,8 +6,8 @@ import ProfileAvatar from '../../components/ProfileAvatar'
 
 const EMAIL_PATTERN = /^[a-z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 const EMAIL_ERROR = 'Email must start with a lowercase letter — it cannot begin with a capital letter or a number'
-const PHONE_PATTERN = /^(\+95[\s-]?)?\d{7,11}$/
-const PHONE_ERROR = 'Phone must be 7–11 digits, optionally starting with +95'
+const PHONE_PATTERN = /^(\+95[\s-]?)?\d{7,10}$/
+const PHONE_ERROR = 'Phone must be 7–10 digits, optionally starting with +95'
 
 export default function AdminProfilePage() {
   const { user, setUser } = useAuth()
@@ -108,7 +108,7 @@ export default function AdminProfilePage() {
                   <label className="form-label-custom">Phone</label>
                   <input className="form-control-custom w-100" value={form.phone}
                     onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
-                    placeholder="+95 9xxxxxxxx"
+                    placeholder="+95"
                     style={form.phone && !PHONE_PATTERN.test(form.phone) ? { borderColor: '#ef4444' } : undefined} />
                   {form.phone && !PHONE_PATTERN.test(form.phone) && (
                     <p style={{ fontSize: '0.76rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{PHONE_ERROR}</p>

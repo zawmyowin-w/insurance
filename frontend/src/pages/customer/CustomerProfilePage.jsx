@@ -7,8 +7,8 @@ import { issueOtp, verifyOtp, otpSecondsLeft } from '../../services/otpService'
 
 const OTP_TYPE = 'profile-change'
 const OTP_BOX_COUNT = 6
-const PHONE_PATTERN = /^(\+95[\s-]?)?\d{7,11}$/
-const PHONE_ERROR = 'Phone must be 7–11 digits, optionally starting with +95'
+const PHONE_PATTERN = /^(\+95[\s-]?)?\d{7,10}$/
+const PHONE_ERROR = 'Phone must be 7–10 digits, optionally starting with +95'
 
 export default function CustomerProfilePage() {
   const { user, setUser } = useAuth()
@@ -240,7 +240,7 @@ export default function CustomerProfilePage() {
                 <div className="col-12 col-md-6">
                   <label className="form-label-custom">Phone</label>
                   <input disabled={!editMode} className="form-control-custom w-100" value={phone}
-                    onChange={e => setPhone(e.target.value)} placeholder="+95 9xxxxxxxx"
+                    onChange={e => setPhone(e.target.value)} placeholder="+95"
                     onKeyDown={e => { if (e.key === 'Enter') e.preventDefault() }}
                     style={{
                       ...(phone && !PHONE_PATTERN.test(phone) ? { borderColor: '#ef4444' } : undefined),
