@@ -180,7 +180,7 @@ export default function ManageUsersPage() {
               </div>
               <div className={activeTab === 'AGENT' ? 'col-12 col-md-4' : 'col-12 col-md-6'}>
                 <label className="form-label-custom">Phone</label>
-                <input className="form-control-custom w-100" placeholder="+95" value={createForm.phone}
+                <input className="form-control-custom w-100" placeholder="+95xxxxxxxx" value={createForm.phone}
                   onChange={e => setCreateForm(f => ({ ...f, phone: e.target.value }))}
                   style={createForm.phone && !PHONE_PATTERN.test(createForm.phone) ? { borderColor: '#ef4444' } : undefined} />
                 {createForm.phone && !PHONE_PATTERN.test(createForm.phone) && (
@@ -377,7 +377,7 @@ export default function ManageUsersPage() {
                 </div>
                 <div className="col-12 col-md-6">
                   <label className="form-label-custom">Phone</label>
-                  <input className="form-control-custom w-100" placeholder="+95" value={editForm.phone}
+                  <input className="form-control-custom w-100" placeholder="+95xxxxxxxx" value={editForm.phone}
                     onChange={e => setEditForm(f => ({ ...f, phone: e.target.value }))}
                     style={editForm.phone && !PHONE_PATTERN.test(editForm.phone) ? { borderColor: '#ef4444' } : undefined} />
                   {editForm.phone && !PHONE_PATTERN.test(editForm.phone) && (
