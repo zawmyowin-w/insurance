@@ -43,6 +43,46 @@ public class AgentController {
         return stats;
     }
 
+    /** Returns all admins + customers assigned to this agent — for the message compose UI */
+    @GetMapping("/contacts")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getContacts(@AuthenticationPrincipal UserDetails principal) {
+        User agent = getAgent(principal);
+        List<User> admins = userRepo.findAll().stream()
+                .filter(u -> u.getRole() == com.insurance.portal.model.enums.Role.ADMIN)
+                .toList();
+        Set<Long> customerIds = new java.util.HashSet<>();
+        appRepo.findAllByAgent(agent).forEach(a -> { if (a.getCustomer() != null) customerIds.add(a.getCustomer().getId()); });
+        claimRepo.findAllByAgent(agent).forEach(c -> { if (c.getCustomer() != null) customerIds.add(c.getCustomer().getId()); });
+        List<User> customers = userRepo.findAll().stream()
+                .filter(u -> u.getRole() == com.insurance.portal.model.enums.Role.CUSTOMER && customerIds.contains(u.getId()))
+                .toList();
+        return ResponseEntity.ok(Map.of(
+                "admins", admins.stream().map(com.insurance.portal.dto.UserResponse::from).toList(),
+                "customers", customers.stream().map(com.insurance.portal.dto.UserResponse::from).toList()
+        ));
+    }
+
+    /** Agent sends a direct message delivered as an in-app notification */
+    @PostMapping("/messages")
+    @Transactional
+    public ResponseEntity<?> sendMessage(@RequestBody Map<String, String> req,
+                                          @AuthenticationPrincipal UserDetails principal) {
+        User agent = getAgent(principal);
+        Long recipientId = Long.parseLong(req.get("recipientId"));
+        String subject = req.getOrDefault("subject", "(no subject)");
+        String body = req.getOrDefault("body", "");
+        User recipient = userRepo.findById(recipientId)
+                .orElseThrow(() -> new RuntimeException("Recipient not found"));
+        notifRepo.save(Notification.builder()
+                .recipient(recipient)
+                .title("Message from Agent " + agent.getName() + ": " + subject)
+                .message(body)
+                .type(NotificationType.INFO)
+                .build());
+        return ResponseEntity.ok(Map.of("success", true));
+    }
+
     @GetMapping("/applications")
     @Transactional(readOnly = true)
     public List<ApplicationResponse> getApplications(@AuthenticationPrincipal UserDetails principal,

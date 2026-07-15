@@ -25,10 +25,12 @@ export default function Navbar() {
     : user?.role === 'AGENT' ? '/agent/dashboard'
     : '/customer/dashboard'
 
+  // Contact link is only shown to unauthenticated users and customers
+  const showContact = !user || user.role === 'CUSTOMER'
   const publicLinks = [
     { to: '/plans', label: t('nav.plans') },
     { to: '/how-it-works', label: t('nav.howItWorks') },
-    { to: '/contact', label: t('nav.contact') },
+    ...(showContact ? [{ to: '/contact', label: t('nav.contact') }] : []),
   ]
 
   const authLinks = user ? [

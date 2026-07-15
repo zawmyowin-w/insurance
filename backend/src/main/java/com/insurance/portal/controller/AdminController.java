@@ -136,6 +136,28 @@ public class AdminController {
         return ResponseEntity.ok(UserResponse.from(userRepo.save(agent)));
     }
 
+    @PostMapping("/users/admins")
+    @Transactional
+    public ResponseEntity<?> createAdmin(@RequestBody Map<String, Object> req) {
+        String email = req.get("email").toString();
+        if (!com.insurance.portal.util.EmailValidationUtil.isValid(email)) {
+            return ResponseEntity.badRequest().body(Map.of("message", com.insurance.portal.util.EmailValidationUtil.ERROR_MESSAGE));
+        }
+        if (userRepo.existsByEmail(email)) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Email already in use"));
+        }
+        User admin = User.builder()
+                .name(req.get("name").toString())
+                .email(email)
+                .password(passwordEncoder.encode(req.get("password").toString()))
+                .role(Role.ADMIN)
+                .phone(req.containsKey("phone") ? req.get("phone").toString() : null)
+                .address(req.containsKey("address") ? req.get("address").toString() : null)
+                .active(true)
+                .build();
+        return ResponseEntity.ok(UserResponse.from(userRepo.save(admin)));
+    }
+
     /**
      * Admin-driven profile edit for any user — this is the only way an
      * agent's profile can be changed (agents cannot self-edit; see

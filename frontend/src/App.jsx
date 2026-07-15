@@ -37,6 +37,7 @@ import AgentApplicationsPage from './pages/agent/AgentApplicationsPage'
 import AgentClaimsPage from './pages/agent/AgentClaimsPage'
 import AgentNotificationsPage from './pages/agent/AgentNotificationsPage'
 import AgentProfilePage from './pages/agent/AgentProfilePage'
+import AgentMessagesPage from './pages/agent/AgentMessagesPage'
 
 // Admin pages
 import AdminLayout from './pages/admin/AdminLayout'
@@ -91,6 +92,7 @@ export default function App() {
               <Route path="dashboard" element={<AgentDashboard />} />
               <Route path="applications" element={<AgentApplicationsPage />} />
               <Route path="claims" element={<AgentClaimsPage />} />
+              <Route path="messages" element={<AgentMessagesPage />} />
               <Route path="notifications" element={<AgentNotificationsPage />} />
               <Route path="profile" element={<AgentProfilePage />} />
             </Route>

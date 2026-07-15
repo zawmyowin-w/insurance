@@ -186,22 +186,32 @@ export default function AgentApplicationsPage() {
                         </div>
                       )}
                       {activeAction === null && (
-                        <div className="d-flex gap-2 flex-wrap">
+                        <div className="d-flex flex-column gap-2">
                           {isRevision && (
-                            <button style={{
-                              flex: 1, minWidth: 120, padding: '0.45rem 0.75rem', borderRadius: 8, border: 'none',
-                              background: '#d97706', color: '#fff', fontWeight: 600, fontSize: '0.83rem', cursor: 'pointer',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4
-                            }} onClick={() => setForwardId(app.id)}>
-                              <i className="bi bi-send"></i> Forward to Customer
+                            <button onClick={() => setForwardId(app.id)} style={{
+                              width: '100%', padding: '0.5rem', borderRadius: 8, border: 'none',
+                              background: '#d97706', color: '#fff', fontWeight: 700, fontSize: '0.85rem',
+                              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
+                            }}>
+                              <i className="bi bi-send"></i>Forward to Customer
                             </button>
                           )}
-                          <button className="btn-success-sm flex-grow-1" onClick={() => setSelected(app.id)}>
-                            <i className="bi bi-check-circle me-1"></i>Verify
-                          </button>
-                          <button className="btn-danger-sm" onClick={() => setRejectId(app.id)}>
-                            <i className="bi bi-x-circle me-1"></i>Reject
-                          </button>
+                          <div className="d-flex gap-2">
+                            <button onClick={() => setSelected(app.id)} style={{
+                              flex: 1, padding: '0.5rem', borderRadius: 8, border: 'none',
+                              background: '#16a34a', color: '#fff', fontWeight: 700, fontSize: '0.85rem',
+                              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
+                            }}>
+                              <i className="bi bi-check-circle"></i>Verify
+                            </button>
+                            <button onClick={() => setRejectId(app.id)} style={{
+                              flex: 1, padding: '0.5rem', borderRadius: 8, border: 'none',
+                              background: '#dc2626', color: '#fff', fontWeight: 700, fontSize: '0.85rem',
+                              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
+                            }}>
+                              <i className="bi bi-x-circle"></i>Reject
+                            </button>
+                          </div>
                         </div>
                       )}
                     </>
