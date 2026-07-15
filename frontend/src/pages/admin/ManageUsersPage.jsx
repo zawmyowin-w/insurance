@@ -4,6 +4,8 @@ import { toast } from 'react-toastify'
 
 const EMPTY_AGENT = { name: '', email: '', phone: '', address: '', password: '', insuranceType: 'LIFE' }
 const EMPTY_EDIT = { name: '', email: '', phone: '', address: '', insuranceType: 'LIFE', newPassword: '' }
+const EMAIL_PATTERN = /^[a-z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+const EMAIL_ERROR = 'Email must start with a lowercase letter — it cannot begin with a capital letter or a number'
 
 export default function ManageUsersPage() {
   const [users, setUsers] = useState([])
@@ -30,6 +32,7 @@ export default function ManageUsersPage() {
 
   const handleCreateAgent = async e => {
     e.preventDefault()
+    if (!EMAIL_PATTERN.test(agentForm.email)) { toast.error(EMAIL_ERROR); return }
     setSaving(true)
     try {
       await api.post('/admin/users/agents', { ...agentForm, role: 'AGENT' })
@@ -63,6 +66,7 @@ export default function ManageUsersPage() {
 
   const handleEditSubmit = async e => {
     e.preventDefault()
+    if (!EMAIL_PATTERN.test(editForm.email)) { toast.error(EMAIL_ERROR); return }
     setEditSaving(true)
     try {
       const payload = { name: editForm.name, email: editForm.email, phone: editForm.phone, address: editForm.address }
@@ -106,7 +110,11 @@ export default function ManageUsersPage() {
               <div className="col-12 col-md-6">
                 <label className="form-label-custom">Email *</label>
                 <input type="email" required className="form-control-custom w-100" value={agentForm.email}
-                  onChange={e => setAgentForm(f => ({ ...f, email: e.target.value }))} />
+                  onChange={e => setAgentForm(f => ({ ...f, email: e.target.value }))}
+                  style={agentForm.email && !EMAIL_PATTERN.test(agentForm.email) ? { borderColor: '#ef4444' } : undefined} />
+                {agentForm.email && !EMAIL_PATTERN.test(agentForm.email) && (
+                  <p style={{ fontSize: '0.76rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{EMAIL_ERROR}</p>
+                )}
               </div>
               <div className="col-12 col-md-4">
                 <label className="form-label-custom">Phone</label>
@@ -232,7 +240,11 @@ export default function ManageUsersPage() {
                 <div className="col-12 col-md-6">
                   <label className="form-label-custom">Email *</label>
                   <input type="email" required className="form-control-custom w-100" value={editForm.email}
-                    onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} />
+                    onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))}
+                    style={editForm.email && !EMAIL_PATTERN.test(editForm.email) ? { borderColor: '#ef4444' } : undefined} />
+                  {editForm.email && !EMAIL_PATTERN.test(editForm.email) && (
+                    <p style={{ fontSize: '0.76rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{EMAIL_ERROR}</p>
+                  )}
                 </div>
                 <div className="col-12 col-md-6">
                   <label className="form-label-custom">Phone</label>

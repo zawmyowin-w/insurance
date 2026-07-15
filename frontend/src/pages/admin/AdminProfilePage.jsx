@@ -3,6 +3,9 @@ import api from '../../services/api'
 import { toast } from 'react-toastify'
 import { useAuth } from '../../context/AuthContext'
 
+const EMAIL_PATTERN = /^[a-z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+const EMAIL_ERROR = 'Email must start with a lowercase letter — it cannot begin with a capital letter or a number'
+
 export default function AdminProfilePage() {
   const { user, setUser } = useAuth()
   const [form, setForm] = useState({
@@ -17,6 +20,7 @@ export default function AdminProfilePage() {
 
   const handleProfileSubmit = async e => {
     e.preventDefault()
+    if (!EMAIL_PATTERN.test(form.email)) { toast.error(EMAIL_ERROR); return }
     setSavingProfile(true)
     try {
       const { data } = await api.put('/auth/profile', {
@@ -71,7 +75,11 @@ export default function AdminProfilePage() {
                 <div className="col-12 col-md-6">
                   <label className="form-label-custom">Email</label>
                   <input type="email" required className="form-control-custom w-100" value={form.email}
-                    onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+                    onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                    style={form.email && !EMAIL_PATTERN.test(form.email) ? { borderColor: '#ef4444' } : undefined} />
+                  {form.email && !EMAIL_PATTERN.test(form.email) && (
+                    <p style={{ fontSize: '0.76rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{EMAIL_ERROR}</p>
+                  )}
                 </div>
                 <div className="col-12 col-md-6">
                   <label className="form-label-custom">Phone</label>

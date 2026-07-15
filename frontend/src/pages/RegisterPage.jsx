@@ -13,6 +13,12 @@ const rules = [
   { key: 'special', test: p => /[^A-Za-z0-9]/.test(p), label: { en: 'One special character (!@#$…)',  my: 'အထူးအက္ခရာ (!@#$…) တစ်လုံး' } },
 ]
 
+const EMAIL_PATTERN = /^[a-z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+const EMAIL_ERROR = {
+  en: 'Email must start with a lowercase letter — it cannot begin with a capital letter or a number',
+  my: 'အီးမေးလ်၏ အရှေ့ဆုံးစာလုံးသည် သေးစာလုံး ဖြစ်ရမည် — အကြီးစာလုံး (သို့) ဂဏန်းဖြင့် မစနိုင်ပါ',
+}
+
 function strengthLevel(pwd) {
   const passed = rules.filter(r => r.test(pwd)).length
   if (passed <= 1) return { level: 0, label: '' }
@@ -37,11 +43,13 @@ export default function RegisterPage() {
   const lang = i18n.language?.startsWith('my') ? 'my' : 'en'
   const handleChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }))
 
+  const emailValid = form.email.length === 0 || EMAIL_PATTERN.test(form.email)
   const allRulesPassed = rules.every(r => r.test(form.password))
   const { level, label: strengthLabel, color: strengthColor } = strengthLevel(form.password)
 
   const handleSubmit = async e => {
     e.preventDefault()
+    if (!EMAIL_PATTERN.test(form.email)) { toast.error(EMAIL_ERROR[lang]); return }
     if (!allRulesPassed) { toast.error(t('auth.pwdWeak')); return }
     if (form.password !== form.confirmPassword) { toast.error(t('auth.passwordMismatch')); return }
     if (!agree) { toast.error(t('auth.mustAgree')); return }
@@ -98,7 +106,13 @@ export default function RegisterPage() {
             <div className="col-12 col-sm-6">
               <label className="form-label-custom">{t('auth.email')} *</label>
               <input name="email" type="email" required className="form-control-custom w-100"
-                placeholder="you@example.com" value={form.email} onChange={handleChange} />
+                placeholder="you@example.com" value={form.email} onChange={handleChange}
+                style={!emailValid ? { borderColor: '#ef4444' } : undefined} />
+              {!emailValid && (
+                <p style={{ fontSize: '0.78rem', color: '#ef4444', margin: '0.3rem 0 0' }}>
+                  {EMAIL_ERROR[lang]}
+                </p>
+              )}
             </div>
             <div className="col-12">
               <label className="form-label-custom">{t('auth.address')}</label>

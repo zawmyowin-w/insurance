@@ -116,6 +116,9 @@ public class AdminController {
     @Transactional
     public ResponseEntity<?> createAgent(@RequestBody Map<String, Object> req) {
         String email = req.get("email").toString();
+        if (!com.insurance.portal.util.EmailValidationUtil.isValid(email)) {
+            return ResponseEntity.badRequest().body(Map.of("message", com.insurance.portal.util.EmailValidationUtil.ERROR_MESSAGE));
+        }
         if (userRepo.existsByEmail(email)) {
             return ResponseEntity.badRequest().body(Map.of("message", "Email already in use"));
         }
@@ -143,6 +146,9 @@ public class AdminController {
 
         if (req.getName() != null && !req.getName().isBlank()) user.setName(req.getName());
         if (req.getEmail() != null && !req.getEmail().isBlank() && !req.getEmail().equalsIgnoreCase(user.getEmail())) {
+            if (!com.insurance.portal.util.EmailValidationUtil.isValid(req.getEmail())) {
+                return ResponseEntity.badRequest().body(Map.of("message", com.insurance.portal.util.EmailValidationUtil.ERROR_MESSAGE));
+            }
             if (userRepo.existsByEmail(req.getEmail())) {
                 return ResponseEntity.badRequest().body(Map.of("message", "Email already in use"));
             }
