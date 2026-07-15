@@ -89,12 +89,12 @@ export default function AdminProfilePage() {
               <div className="row g-3">
                 <div className="col-12 col-md-6">
                   <label className="form-label-custom">Full Name</label>
-                  <input required className="form-control-custom w-100" value={form.name}
+                  <input className="form-control-custom w-100" value={form.name}
                     onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
                 </div>
                 <div className="col-12 col-md-6">
                   <label className="form-label-custom">Email</label>
-                  <input type="email" required className="form-control-custom w-100" value={form.email}
+                  <input type="email" className="form-control-custom w-100" value={form.email}
                     onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                     style={form.email && !EMAIL_PATTERN.test(form.email) ? { borderColor: '#ef4444' } : undefined} />
                   {form.email && !EMAIL_PATTERN.test(form.email) && (
@@ -140,17 +140,17 @@ export default function AdminProfilePage() {
             <form onSubmit={handlePasswordSubmit}>
               <div className="mb-3">
                 <label className="form-label-custom">Current Password</label>
-                <input type="password" required className="form-control-custom w-100" value={pwd.currentPassword}
+                <input type="password" className="form-control-custom w-100" value={pwd.currentPassword}
                   onChange={e => setPwd(p => ({ ...p, currentPassword: e.target.value }))} />
               </div>
               <div className="mb-3">
                 <label className="form-label-custom">New Password</label>
-                <input type="password" required minLength={8} className="form-control-custom w-100" value={pwd.newPassword}
+                <input type="password" minLength={8} className="form-control-custom w-100" value={pwd.newPassword}
                   onChange={e => setPwd(p => ({ ...p, newPassword: e.target.value }))} />
               </div>
               <div className="mb-3">
                 <label className="form-label-custom">Confirm New Password</label>
-                <input type="password" required minLength={8} className="form-control-custom w-100" value={pwd.confirmPassword}
+                <input type="password" minLength={8} className="form-control-custom w-100" value={pwd.confirmPassword}
                   onChange={e => setPwd(p => ({ ...p, confirmPassword: e.target.value }))} />
               </div>
               <div className="d-flex gap-2">

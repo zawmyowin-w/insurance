@@ -254,17 +254,17 @@ export default function CustomerProfilePage() {
               <form onSubmit={handlePasswordSubmit}>
                 <div className="mb-3">
                   <label className="form-label-custom">Current Password</label>
-                  <input type="password" required className="form-control-custom w-100" value={pwd.currentPassword}
+                  <input type="password" className="form-control-custom w-100" value={pwd.currentPassword}
                     onChange={e => setPwd(p => ({ ...p, currentPassword: e.target.value }))} />
                 </div>
                 <div className="mb-3">
                   <label className="form-label-custom">New Password</label>
-                  <input type="password" required minLength={8} className="form-control-custom w-100" value={pwd.newPassword}
+                  <input type="password" minLength={8} className="form-control-custom w-100" value={pwd.newPassword}
                     onChange={e => setPwd(p => ({ ...p, newPassword: e.target.value }))} />
                 </div>
                 <div className="mb-3">
                   <label className="form-label-custom">Confirm New Password</label>
-                  <input type="password" required minLength={8} className="form-control-custom w-100" value={pwd.confirmPassword}
+                  <input type="password" minLength={8} className="form-control-custom w-100" value={pwd.confirmPassword}
                     onChange={e => setPwd(p => ({ ...p, confirmPassword: e.target.value }))} />
                 </div>
                 <button type="submit" disabled={savingPwd} className="btn-primary-custom w-100" style={{ justifyContent: 'center' }}>
@@ -324,12 +324,12 @@ export default function CustomerProfilePage() {
 
                     <div className="mb-3">
                       <label className="form-label-custom">New Password</label>
-                      <input type="password" required minLength={8} className="form-control-custom w-100" value={otpPwd.newPassword}
+                      <input type="password" minLength={8} className="form-control-custom w-100" value={otpPwd.newPassword}
                         onChange={e => setOtpPwd(p => ({ ...p, newPassword: e.target.value }))} />
                     </div>
                     <div className="mb-3">
                       <label className="form-label-custom">Confirm New Password</label>
-                      <input type="password" required minLength={8} className="form-control-custom w-100" value={otpPwd.confirmPassword}
+                      <input type="password" minLength={8} className="form-control-custom w-100" value={otpPwd.confirmPassword}
                         onChange={e => setOtpPwd(p => ({ ...p, confirmPassword: e.target.value }))} />
                     </div>
                     <button type="submit" disabled={savingOtpPwd} className="btn-primary-custom w-100" style={{ justifyContent: 'center' }}>
