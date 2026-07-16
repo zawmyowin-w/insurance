@@ -39,6 +39,7 @@ export default function RegisterPage() {
   const [showPwd, setShowPwd] = useState(false)
   const [agree, setAgree] = useState(false)
   const [pwdFocused, setPwdFocused] = useState(false)
+  const [emailTouched, setEmailTouched] = useState(false)
 
   const lang = i18n.language?.startsWith('my') ? 'my' : 'en'
   const handleChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }))
@@ -49,7 +50,8 @@ export default function RegisterPage() {
 
   const handleSubmit = async e => {
     e.preventDefault()
-    if (!EMAIL_PATTERN.test(form.email)) { toast.error(EMAIL_ERROR[lang]); return }
+    setEmailTouched(true)
+    if (!EMAIL_PATTERN.test(form.email)) { return }
     if (!allRulesPassed) { toast.error(t('auth.pwdWeak')); return }
     if (form.password !== form.confirmPassword) { toast.error(t('auth.passwordMismatch')); return }
     if (!agree) { toast.error(t('auth.mustAgree')); return }
@@ -107,8 +109,9 @@ export default function RegisterPage() {
               <label className="form-label-custom">{t('auth.email')} *</label>
               <input name="email" type="email" required className="form-control-custom w-100"
                 placeholder="you@example.com" value={form.email} onChange={handleChange}
-                style={!emailValid ? { borderColor: '#ef4444' } : undefined} />
-              {!emailValid && (
+                onBlur={() => setEmailTouched(true)}
+                style={emailTouched && !emailValid ? { borderColor: '#ef4444' } : undefined} />
+              {emailTouched && !emailValid && (
                 <div style={{
                   display: 'flex', alignItems: 'flex-start', gap: '0.5rem',
                   marginTop: '0.45rem', padding: '0.6rem 0.85rem',
