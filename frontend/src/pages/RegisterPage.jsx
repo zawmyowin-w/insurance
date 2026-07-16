@@ -112,15 +112,9 @@ export default function RegisterPage() {
                 onBlur={() => setEmailTouched(true)}
                 style={emailTouched && !emailValid ? { borderColor: '#ef4444' } : undefined} />
               {emailTouched && !emailValid && (
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: '0.35rem',
-                  marginTop: '0.3rem', padding: '0.3rem 0.6rem',
-                  background: '#fef2f2', border: '1px solid #fca5a5',
-                  borderRadius: 6, fontSize: '0.75rem', color: '#b91c1c'
-                }}>
-                  <i className="bi bi-exclamation-circle-fill" style={{ flexShrink: 0, fontSize: '0.75rem' }}></i>
-                  <span>{EMAIL_ERROR[lang]}</span>
-                </div>
+                <p style={{ fontSize: '0.76rem', color: '#ef4444', margin: '0.25rem 0 0' }}>
+                  {EMAIL_ERROR[lang]}
+                </p>
               )}
             </div>
             <div className="col-12">
