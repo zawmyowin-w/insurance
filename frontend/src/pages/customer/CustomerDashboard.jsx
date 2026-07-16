@@ -22,10 +22,10 @@ export default function CustomerDashboard() {
   }, [])
 
   const statCards = [
-    { label: t('dash.totalApplications'), value: stats.applications, icon: 'bi-file-earmark-text', color: '#1d4ed8', bg: '#eff6ff' },
-    { label: t('dash.activePolicies'), value: stats.activePolicies, icon: 'bi-shield-check', color: '#16a34a', bg: '#f0fdf4' },
-    { label: t('dash.pendingClaims'), value: stats.pendingClaims, icon: 'bi-file-earmark-medical', color: '#f59e0b', bg: '#fefce8' },
-    { label: t('dash.notifications'), value: stats.notifications, icon: 'bi-bell', color: '#dc2626', bg: '#fff0f0' },
+    { label: t('dash.totalApplications'), value: stats.applications, icon: 'bi-file-earmark-text', color: '#1d4ed8', bg: '#eff6ff', link: '/customer/applications' },
+    { label: t('dash.activePolicies'), value: stats.activePolicies, icon: 'bi-shield-check', color: '#16a34a', bg: '#f0fdf4', link: '/customer/policies' },
+    { label: t('dash.pendingClaims'), value: stats.pendingClaims, icon: 'bi-file-earmark-medical', color: '#f59e0b', bg: '#fefce8', link: '/customer/claims' },
+    { label: t('dash.notifications'), value: stats.notifications, icon: 'bi-bell', color: '#dc2626', bg: '#fff0f0', link: '/customer/notifications' },
   ]
 
   return (
@@ -43,17 +43,22 @@ export default function CustomerDashboard() {
       <div className="row g-3 mb-4">
         {statCards.map(card => (
           <div key={card.label} className="col-6 col-lg-3">
-            <div className="card-custom">
-              <div className="d-flex align-items-center justify-content-between mb-2">
-                <div style={{ width: 40, height: 40, borderRadius: 10, background: card.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <i className={`bi ${card.icon}`} style={{ color: card.color, fontSize: '1.1rem' }}></i>
+            <Link to={card.link} style={{ textDecoration: 'none' }}>
+              <div className="card-custom h-100" style={{ cursor: 'pointer', transition: 'box-shadow 0.15s' }}
+                onMouseEnter={e => e.currentTarget.style.boxShadow = 'var(--shadow-lg)'}
+                onMouseLeave={e => e.currentTarget.style.boxShadow = ''}>
+                <div className="d-flex align-items-center justify-content-between mb-2">
+                  <div style={{ width: 40, height: 40, borderRadius: 10, background: card.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <i className={`bi ${card.icon}`} style={{ color: card.color, fontSize: '1.1rem' }}></i>
+                  </div>
+                  <i className="bi bi-arrow-right-short" style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}></i>
                 </div>
+                <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                  {loading ? '—' : card.value}
+                </div>
+                <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>{card.label}</div>
               </div>
-              <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.2 }}>
-                {loading ? '—' : card.value}
-              </div>
-              <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>{card.label}</div>
-            </div>
+            </Link>
           </div>
         ))}
       </div>
@@ -67,6 +72,9 @@ export default function CustomerDashboard() {
           </Link>
           <Link to="/customer/submit-claim" className="btn-primary-sm" style={{ fontSize: '0.88rem', padding: '0.45rem 1rem' }}>
             <i className="bi bi-file-earmark-plus me-2"></i>{t('dash.submitClaim')}
+          </Link>
+          <Link to="/customer/payments" className="btn-primary-sm" style={{ fontSize: '0.88rem', padding: '0.45rem 1rem', background: '#0891b2' }}>
+            <i className="bi bi-credit-card me-2"></i>Payments
           </Link>
           <Link to="/plans" style={{ padding: '0.45rem 1rem', borderRadius: 6, border: '1px solid var(--border)', color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <i className="bi bi-search"></i>{t('dash.browsePlans')}
