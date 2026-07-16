@@ -41,9 +41,9 @@ for i in $(seq 1 30); do
   sleep 1
 done
 
-echo "[start-backend] Ensuring database + schema exist..."
+echo "[start-backend] Ensuring database exists..."
 mysql --socket="$MYSQL_SOCK" -uroot -e "CREATE DATABASE IF NOT EXISTS insurance_portal CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-mysql --socket="$MYSQL_SOCK" -uroot insurance_portal < "$ROOT_DIR/database/schema.sql"
+# Schema and seed data are managed by Hibernate (ddl-auto=update) and DataInitializer on startup.
 
 echo "[start-backend] Starting Spring Boot application..."
 cd "$ROOT_DIR/backend"

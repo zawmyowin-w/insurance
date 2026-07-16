@@ -17,20 +17,21 @@
 mysql -u root -p < database/local_mysql.sql
 ```
 
-This creates the `insurance_portal` database, all tables, the default admin account, and 6 sample insurance packages.
+This creates the `insurance_portal` database, all tables, and the default admin account.  
+You only need to do this once. After that, Hibernate keeps the schema up to date automatically.
 
 ---
 
-## Step 2 — Configure the Backend (optional)
-
-Only needed if your MySQL root account has a password:
+## Step 2 — Configure the Backend (only if MySQL has a password)
 
 ```bash
 cp backend/.env.example backend/.env
 ```
 
-Edit `backend/.env` and set `DB_PASSWORD=your_password`.  
-Everything else (JWT secret, admin credentials) already has safe defaults.
+Open `backend/.env` and set `DB_PASSWORD=your_mysql_root_password`.  
+Everything else already has safe defaults — you don't need to change anything else.
+
+> **Note:** If your MySQL root account has no password, skip this step entirely.
 
 ---
 
@@ -38,16 +39,17 @@ Everything else (JWT secret, admin credentials) already has safe defaults.
 
 ```bash
 cd backend
-mvn spring-boot:run -Dspring-boot.run.profiles=local
+bash run-local.sh
 ```
 
+`run-local.sh` automatically loads `backend/.env` and starts Spring Boot with the local profile.  
 API will be available at **http://localhost:8080/api**
 
 ---
 
 ## Step 4 — Start the Frontend
 
-Open a new terminal:
+Open a **new terminal**:
 
 ```bash
 cd frontend
@@ -70,13 +72,16 @@ App will be available at **http://localhost:5000**
 ## Troubleshooting
 
 **`Access denied for user 'root'@'localhost'`**
-→ Set `DB_PASSWORD=your_password` in `backend/.env`
+→ Your MySQL root account has a password. Create `backend/.env` from `.env.example` and set `DB_PASSWORD=your_password`.
 
 **`Unknown database 'insurance_portal'`**
-→ Run Step 1 first
+→ Run Step 1 first: `mysql -u root -p < database/local_mysql.sql`
 
 **Port 8080 already in use**
-→ Stop the other service or change `server.port` in `backend/src/main/resources/application.properties`
+→ Stop the other process, or add `server.port=9090` to `backend/src/main/resources/application-local.properties`.
 
-**Frontend shows blank or can't reach API**
-→ Make sure the backend is running on port 8080
+**Frontend shows blank page or "Network Error"**
+→ Make sure the backend is running on port 8080 before starting the frontend.
+
+**`NoSuchMethodError` for Lombok methods (isActive, builder, etc.)**
+→ Run `mvn clean` inside the `backend` folder, then re-run `bash run-local.sh`.
