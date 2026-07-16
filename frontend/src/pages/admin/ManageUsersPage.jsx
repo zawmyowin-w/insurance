@@ -3,14 +3,21 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import ProfileAvatar from '../../components/ProfileAvatar'
+import PasswordStrengthWidget from '../../components/PasswordStrengthWidget'
+import {
+  EMAIL_MAX_LENGTH, EMAIL_ERROR, isEmailValid,
+  PHONE_PATTERN, PHONE_ERROR, isStrongPassword,
+} from '../../utils/validation'
 
-const EMAIL_PATTERN = /^[a-z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
-const EMAIL_ERROR = 'Email must start with a lowercase letter'
-const PHONE_PATTERN = /^\+95\d{7,10}$/
-const PHONE_ERROR = 'Phone must start with +95 followed by 7–10 digits'
 const EMPTY_FORM = { name: '', email: '', phone: '', address: '', password: '', insuranceType: 'LIFE' }
 const EMPTY_EDIT = { name: '', email: '', phone: '', address: '', insuranceType: 'LIFE', newPassword: '' }
 const PAGE_SIZE = 10
+
+function handlePhoneChange(val, setter) {
+  if (!val) { setter(''); return }
+  if (!val.startsWith('+95')) { setter('+95'); return }
+  setter(val)
+}
 
 export default function ManageUsersPage() {
   const navigate = useNavigate()
@@ -26,9 +33,11 @@ export default function ManageUsersPage() {
   const [page, setPage] = useState(1)
   const [showCreatePanel, setShowCreatePanel] = useState(fromDashboard)
   const [createForm, setCreateForm] = useState(EMPTY_FORM)
+  const [createPwdFocused, setCreatePwdFocused] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editingUser, setEditingUser] = useState(null)
   const [editForm, setEditForm] = useState(EMPTY_EDIT)
+  const [editPwdFocused, setEditPwdFocused] = useState(false)
   const [editSaving, setEditSaving] = useState(false)
 
   const fetchUsers = () => {
@@ -40,7 +49,6 @@ export default function ManageUsersPage() {
   }
   useEffect(() => { fetchUsers() }, [])
 
-  // Reset page and create panel when tab changes
   const switchTab = (tab) => {
     setActiveTab(tab); setPage(1); setSearch(''); setShowCreatePanel(false)
   }
@@ -54,7 +62,6 @@ export default function ManageUsersPage() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
-  // Reset to page 1 on search
   const handleSearch = (v) => { setSearch(v); setPage(1) }
 
   const counts = {
@@ -65,12 +72,17 @@ export default function ManageUsersPage() {
 
   const handleCreate = async e => {
     e.preventDefault()
-    if (!EMAIL_PATTERN.test(createForm.email)) { toast.error(EMAIL_ERROR); return }
-    if (createForm.phone && !PHONE_PATTERN.test(createForm.phone)) { toast.error(PHONE_ERROR); return }
+    if (!isEmailValid(createForm.email)) { toast.error(EMAIL_ERROR.en); return }
+    const phoneVal = createForm.phone === '+95' ? '' : createForm.phone
+    if (phoneVal && !PHONE_PATTERN.test(phoneVal)) { toast.error(PHONE_ERROR); return }
+    if (!isStrongPassword(createForm.password)) {
+      toast.error('Password must be at least 8 characters with uppercase, lowercase, number and special character')
+      return
+    }
     setSaving(true)
     try {
       const endpoint = activeTab === 'AGENT' ? '/admin/users/agents' : '/admin/users/admins'
-      await api.post(endpoint, createForm)
+      await api.post(endpoint, { ...createForm, phone: phoneVal })
       toast.success(`${activeTab === 'AGENT' ? 'Agent' : 'Admin'} account created`)
       setShowCreatePanel(false); setCreateForm(EMPTY_FORM); fetchUsers()
     } catch (err) { toast.error(err.response?.data?.message || 'Failed to create') }
@@ -95,15 +107,20 @@ export default function ManageUsersPage() {
     setEditingUser(u)
     setEditForm({ name: u.name || '', email: u.email || '', phone: u.phone || '', address: u.address || '', insuranceType: u.insuranceType || 'LIFE', newPassword: '' })
   }
-  const closeEdit = () => { setEditingUser(null); setEditForm(EMPTY_EDIT) }
+  const closeEdit = () => { setEditingUser(null); setEditForm(EMPTY_EDIT); setEditPwdFocused(false) }
 
   const handleEditSubmit = async e => {
     e.preventDefault()
-    if (!EMAIL_PATTERN.test(editForm.email)) { toast.error(EMAIL_ERROR); return }
-    if (editForm.phone && !PHONE_PATTERN.test(editForm.phone)) { toast.error(PHONE_ERROR); return }
+    if (!isEmailValid(editForm.email)) { toast.error(EMAIL_ERROR.en); return }
+    const phoneVal = editForm.phone === '+95' ? '' : editForm.phone
+    if (phoneVal && !PHONE_PATTERN.test(phoneVal)) { toast.error(PHONE_ERROR); return }
+    if (editForm.newPassword && !isStrongPassword(editForm.newPassword)) {
+      toast.error('Password must be at least 8 characters with uppercase, lowercase, number and special character')
+      return
+    }
     setEditSaving(true)
     try {
-      const payload = { name: editForm.name, email: editForm.email, phone: editForm.phone, address: editForm.address }
+      const payload = { name: editForm.name, email: editForm.email, phone: phoneVal, address: editForm.address }
       if (editingUser.role === 'AGENT') payload.insuranceType = editForm.insuranceType
       if (editForm.newPassword) payload.newPassword = editForm.newPassword
       await api.put(`/admin/users/${editingUser.id}`, payload)
@@ -165,9 +182,7 @@ export default function ManageUsersPage() {
 
       {/* Create panel — only for AGENT and ADMIN tabs */}
       {showCreatePanel && (activeTab === 'AGENT' || activeTab === 'ADMIN') && (
-        <div className="card-custom mb-4 fade-in" style={{
-          borderLeft: `3px solid ${tabMeta[activeTab].color}`
-        }}>
+        <div className="card-custom mb-4 fade-in" style={{ borderLeft: `3px solid ${tabMeta[activeTab].color}` }}>
           <h6 style={{ fontWeight: 700, marginBottom: '1.25rem', color: tabMeta[activeTab].color }}>
             <i className={`bi ${tabMeta[activeTab].icon} me-2`}></i>
             Create {activeTab === 'AGENT' ? 'Agent' : 'Admin'} Account
@@ -182,18 +197,21 @@ export default function ManageUsersPage() {
               <div className="col-12 col-md-6">
                 <label className="form-label-custom">Email *</label>
                 <input type="email" required className="form-control-custom w-100" value={createForm.email}
+                  maxLength={EMAIL_MAX_LENGTH}
                   onChange={e => setCreateForm(f => ({ ...f, email: e.target.value }))}
-                  style={createForm.email && !EMAIL_PATTERN.test(createForm.email) ? { borderColor: '#ef4444' } : undefined} />
-                {createForm.email && !EMAIL_PATTERN.test(createForm.email) && (
-                  <p style={{ fontSize: '0.76rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{EMAIL_ERROR}</p>
+                  style={createForm.email && !isEmailValid(createForm.email) ? { borderColor: '#ef4444' } : undefined} />
+                {createForm.email && !isEmailValid(createForm.email) && (
+                  <p style={{ fontSize: '0.76rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{EMAIL_ERROR.en}</p>
                 )}
               </div>
               <div className={activeTab === 'AGENT' ? 'col-12 col-md-4' : 'col-12 col-md-6'}>
                 <label className="form-label-custom">Phone</label>
-                <input className="form-control-custom w-100" placeholder="+95xxxxxxxx" value={createForm.phone}
-                  onChange={e => setCreateForm(f => ({ ...f, phone: e.target.value }))}
-                  style={createForm.phone && !PHONE_PATTERN.test(createForm.phone) ? { borderColor: '#ef4444' } : undefined} />
-                {createForm.phone && !PHONE_PATTERN.test(createForm.phone) && (
+                <input className="form-control-custom w-100" placeholder="+959xxxxxxxx" value={createForm.phone}
+                  onChange={e => handlePhoneChange(e.target.value, v => setCreateForm(f => ({ ...f, phone: v })))}
+                  onFocus={() => { if (!createForm.phone) setCreateForm(f => ({ ...f, phone: '+95' })) }}
+                  onBlur={() => { if (createForm.phone === '+95') setCreateForm(f => ({ ...f, phone: '' })) }}
+                  style={createForm.phone && createForm.phone !== '+95' && !PHONE_PATTERN.test(createForm.phone) ? { borderColor: '#ef4444' } : undefined} />
+                {createForm.phone && createForm.phone !== '+95' && !PHONE_PATTERN.test(createForm.phone) && (
                   <p style={{ fontSize: '0.76rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{PHONE_ERROR}</p>
                 )}
               </div>
@@ -208,8 +226,12 @@ export default function ManageUsersPage() {
               )}
               <div className={activeTab === 'AGENT' ? 'col-12 col-md-4' : 'col-12 col-md-6'}>
                 <label className="form-label-custom">Temporary Password *</label>
-                <input type="password" required minLength={8} className="form-control-custom w-100" value={createForm.password}
-                  onChange={e => setCreateForm(f => ({ ...f, password: e.target.value }))} />
+                <input type="password" required className="form-control-custom w-100" value={createForm.password}
+                  onChange={e => setCreateForm(f => ({ ...f, password: e.target.value }))}
+                  onFocus={() => setCreatePwdFocused(true)} onBlur={() => setCreatePwdFocused(false)} />
+                {(createPwdFocused || createForm.password.length > 0) && (
+                  <PasswordStrengthWidget password={createForm.password} compact />
+                )}
               </div>
               <div className="col-12">
                 <label className="form-label-custom">Address</label>
@@ -379,18 +401,21 @@ export default function ManageUsersPage() {
                 <div className="col-12 col-md-6">
                   <label className="form-label-custom">Email *</label>
                   <input type="email" required className="form-control-custom w-100" value={editForm.email}
+                    maxLength={EMAIL_MAX_LENGTH}
                     onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))}
-                    style={editForm.email && !EMAIL_PATTERN.test(editForm.email) ? { borderColor: '#ef4444' } : undefined} />
-                  {editForm.email && !EMAIL_PATTERN.test(editForm.email) && (
-                    <p style={{ fontSize: '0.76rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{EMAIL_ERROR}</p>
+                    style={editForm.email && !isEmailValid(editForm.email) ? { borderColor: '#ef4444' } : undefined} />
+                  {editForm.email && !isEmailValid(editForm.email) && (
+                    <p style={{ fontSize: '0.76rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{EMAIL_ERROR.en}</p>
                   )}
                 </div>
                 <div className="col-12 col-md-6">
                   <label className="form-label-custom">Phone</label>
-                  <input className="form-control-custom w-100" placeholder="+95xxxxxxxx" value={editForm.phone}
-                    onChange={e => setEditForm(f => ({ ...f, phone: e.target.value }))}
-                    style={editForm.phone && !PHONE_PATTERN.test(editForm.phone) ? { borderColor: '#ef4444' } : undefined} />
-                  {editForm.phone && !PHONE_PATTERN.test(editForm.phone) && (
+                  <input className="form-control-custom w-100" placeholder="+959xxxxxxxx" value={editForm.phone}
+                    onChange={e => handlePhoneChange(e.target.value, v => setEditForm(f => ({ ...f, phone: v })))}
+                    onFocus={() => { if (!editForm.phone) setEditForm(f => ({ ...f, phone: '+95' })) }}
+                    onBlur={() => { if (editForm.phone === '+95') setEditForm(f => ({ ...f, phone: '' })) }}
+                    style={editForm.phone && editForm.phone !== '+95' && !PHONE_PATTERN.test(editForm.phone) ? { borderColor: '#ef4444' } : undefined} />
+                  {editForm.phone && editForm.phone !== '+95' && !PHONE_PATTERN.test(editForm.phone) && (
                     <p style={{ fontSize: '0.76rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{PHONE_ERROR}</p>
                   )}
                 </div>
@@ -409,10 +434,16 @@ export default function ManageUsersPage() {
                     onChange={e => setEditForm(f => ({ ...f, address: e.target.value }))} />
                 </div>
                 <div className="col-12">
-                  <label className="form-label-custom">Reset Password <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(leave blank to keep)</span></label>
-                  <input type="password" minLength={8} className="form-control-custom w-100"
+                  <label className="form-label-custom">
+                    Reset Password <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(leave blank to keep)</span>
+                  </label>
+                  <input type="password" className="form-control-custom w-100"
                     placeholder="New password…" value={editForm.newPassword}
-                    onChange={e => setEditForm(f => ({ ...f, newPassword: e.target.value }))} />
+                    onChange={e => setEditForm(f => ({ ...f, newPassword: e.target.value }))}
+                    onFocus={() => setEditPwdFocused(true)} onBlur={() => setEditPwdFocused(false)} />
+                  {(editPwdFocused || editForm.newPassword.length > 0) && (
+                    <PasswordStrengthWidget password={editForm.newPassword} compact />
+                  )}
                 </div>
               </div>
               <div className="d-flex gap-2 mt-3">

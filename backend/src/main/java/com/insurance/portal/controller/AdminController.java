@@ -123,10 +123,14 @@ public class AdminController {
         if (userRepo.existsByEmail(email)) {
             return ResponseEntity.badRequest().body(Map.of("message", "Email already in use"));
         }
+        String agentPassword = req.get("password").toString();
+        if (!com.insurance.portal.util.PasswordValidationUtil.isStrong(agentPassword)) {
+            return ResponseEntity.badRequest().body(Map.of("message", com.insurance.portal.util.PasswordValidationUtil.ERROR_MESSAGE));
+        }
         User agent = User.builder()
                 .name(req.get("name").toString())
                 .email(email)
-                .password(passwordEncoder.encode(req.get("password").toString()))
+                .password(passwordEncoder.encode(agentPassword))
                 .role(Role.AGENT)
                 .phone(req.containsKey("phone") ? req.get("phone").toString() : null)
                 .address(req.containsKey("address") ? req.get("address").toString() : null)
@@ -146,10 +150,14 @@ public class AdminController {
         if (userRepo.existsByEmail(email)) {
             return ResponseEntity.badRequest().body(Map.of("message", "Email already in use"));
         }
+        String adminPassword = req.get("password").toString();
+        if (!com.insurance.portal.util.PasswordValidationUtil.isStrong(adminPassword)) {
+            return ResponseEntity.badRequest().body(Map.of("message", com.insurance.portal.util.PasswordValidationUtil.ERROR_MESSAGE));
+        }
         User admin = User.builder()
                 .name(req.get("name").toString())
                 .email(email)
-                .password(passwordEncoder.encode(req.get("password").toString()))
+                .password(passwordEncoder.encode(adminPassword))
                 .role(Role.ADMIN)
                 .phone(req.containsKey("phone") ? req.get("phone").toString() : null)
                 .address(req.containsKey("address") ? req.get("address").toString() : null)
@@ -184,8 +192,8 @@ public class AdminController {
             user.setInsuranceType(req.getInsuranceType());
         }
         if (req.getNewPassword() != null && !req.getNewPassword().isBlank()) {
-            if (req.getNewPassword().length() < 8) {
-                return ResponseEntity.badRequest().body(Map.of("message", "New password must be at least 8 characters"));
+            if (!com.insurance.portal.util.PasswordValidationUtil.isStrong(req.getNewPassword())) {
+                return ResponseEntity.badRequest().body(Map.of("message", com.insurance.portal.util.PasswordValidationUtil.ERROR_MESSAGE));
             }
             user.setPassword(passwordEncoder.encode(req.getNewPassword()));
         }

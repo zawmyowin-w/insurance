@@ -4,29 +4,10 @@ import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { toast } from 'react-toastify'
 import { issueOtp } from '../services/otpService'
-
-const rules = [
-  { key: 'len',     test: p => p.length >= 8,          label: { en: 'At least 8 characters',          my: 'အနည်းဆုံး ၈ လုံး' } },
-  { key: 'upper',   test: p => /[A-Z]/.test(p),        label: { en: 'One uppercase letter (A–Z)',      my: 'အကြီးစာလုံး (A–Z) တစ်လုံး' } },
-  { key: 'lower',   test: p => /[a-z]/.test(p),        label: { en: 'One lowercase letter (a–z)',      my: 'အသေးစာလုံး (a–z) တစ်လုံး' } },
-  { key: 'num',     test: p => /[0-9]/.test(p),        label: { en: 'One number (0–9)',                my: 'ဂဏန်း (0–9) တစ်လုံး' } },
-  { key: 'special', test: p => /[^A-Za-z0-9]/.test(p), label: { en: 'One special character (!@#$…)',  my: 'အထူးအက္ခရာ (!@#$…) တစ်လုံး' } },
-]
-
-const EMAIL_PATTERN = /^[a-z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
-const EMAIL_ERROR = {
-  en: 'Email must start with a lowercase letter — it cannot begin with a capital letter, number, or special character',
-  my: 'အီးမေးလ်၏ အရှေ့ဆုံးစာလုံးသည် သေးစာလုံး ဖြစ်ရမည် — အကြီးစာလုံး၊ ဂဏန်း (သို့) အထူးအက္ခရာဖြင့် မစနိုင်ပါ',
-}
-
-function strengthLevel(pwd) {
-  const passed = rules.filter(r => r.test(pwd)).length
-  if (passed <= 1) return { level: 0, label: '' }
-  if (passed === 2) return { level: 1, label: 'Weak',   color: '#ef4444' }
-  if (passed === 3) return { level: 2, label: 'Fair',   color: '#f59e0b' }
-  if (passed === 4) return { level: 3, label: 'Good',   color: '#3b82f6' }
-  return              { level: 4, label: 'Strong', color: '#16a34a' }
-}
+import {
+  EMAIL_PATTERN, EMAIL_MAX_LENGTH, EMAIL_ERROR,
+  isEmailValid, PWD_RULES, passwordStrengthLevel, isStrongPassword,
+} from '../utils/validation'
 
 export default function RegisterPage() {
   const { t, i18n } = useTranslation()
@@ -44,20 +25,20 @@ export default function RegisterPage() {
   const lang = i18n.language?.startsWith('my') ? 'my' : 'en'
   const handleChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }))
 
-  const emailValid = form.email.length === 0 || EMAIL_PATTERN.test(form.email)
-  const allRulesPassed = rules.every(r => r.test(form.password))
-  const { level, label: strengthLabel, color: strengthColor } = strengthLevel(form.password)
+  const emailValid = form.email.length === 0 || isEmailValid(form.email)
+  const allRulesPassed = isStrongPassword(form.password)
+  const { level, label: strengthLabel, color: strengthColor } = passwordStrengthLevel(form.password)
 
   const handleSubmit = async e => {
     e.preventDefault()
     setEmailTouched(true)
-    if (!EMAIL_PATTERN.test(form.email)) { return }
+    if (!isEmailValid(form.email)) { return }
     if (!allRulesPassed) { toast.error(t('auth.pwdWeak')); return }
     if (form.password !== form.confirmPassword) { toast.error(t('auth.passwordMismatch')); return }
     if (!agree) { toast.error(t('auth.mustAgree')); return }
     setLoading(true)
     const { confirmPassword, ...payload } = form
-    // Step 1: create account (phone omitted — not required)
+    // Step 1: create account (phone omitted — not required at registration)
     try {
       await register(payload)
     } catch (err) {
@@ -109,6 +90,7 @@ export default function RegisterPage() {
               <label className="form-label-custom">{t('auth.email')} *</label>
               <input name="email" type="email" required className="form-control-custom w-100"
                 placeholder="you@example.com" value={form.email} onChange={handleChange}
+                maxLength={EMAIL_MAX_LENGTH}
                 onBlur={() => setEmailTouched(true)}
                 style={emailTouched && !emailValid ? { borderColor: '#ef4444' } : undefined} />
               {emailTouched && !emailValid && (
@@ -123,7 +105,7 @@ export default function RegisterPage() {
                 placeholder="Yangon, Myanmar" value={form.address} onChange={handleChange} />
             </div>
 
-            {/* Password with Google-style live requirements */}
+            {/* Password with live requirements */}
             <div className="col-12">
               <label className="form-label-custom">{t('auth.password')} *</label>
               <div style={{ position: 'relative' }}>
@@ -170,7 +152,7 @@ export default function RegisterPage() {
                   background: 'var(--bg-secondary, #f8fafc)',
                   border: '1px solid var(--border)', borderRadius: 10,
                 }}>
-                  {rules.map(r => {
+                  {PWD_RULES.map(r => {
                     const passed = r.test(form.password)
                     return (
                       <div key={r.key} style={{

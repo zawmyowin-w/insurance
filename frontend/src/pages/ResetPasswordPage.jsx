@@ -3,19 +3,10 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'react-toastify'
 import { verifyOtp, issueOtp, otpSecondsLeft } from '../services/otpService'
-// NOTE: mockUpdatePassword removed. A backend /auth/reset-password endpoint
-// (TODO) is needed to persist the new password. Currently the OTP is verified
-// client-side but the password update is a no-op until that endpoint exists.
+import { PWD_RULES, isStrongPassword } from '../utils/validation'
+import PasswordStrengthWidget from '../components/PasswordStrengthWidget'
 
 const BOX_COUNT = 6
-
-const pwdRules = [
-  { test: p => p.length >= 8,            label: { en: 'At least 8 characters',         my: 'အနည်းဆုံး ၈ လုံး' } },
-  { test: p => /[A-Z]/.test(p),          label: { en: 'One uppercase letter (A–Z)',     my: 'အကြီးစာလုံး (A–Z)' } },
-  { test: p => /[a-z]/.test(p),          label: { en: 'One lowercase letter (a–z)',     my: 'အသေးစာလုံး (a–z)' } },
-  { test: p => /[0-9]/.test(p),          label: { en: 'One number (0–9)',               my: 'ဂဏန်း (0–9)' } },
-  { test: p => /[^A-Za-z0-9]/.test(p),   label: { en: 'One special character (!@#$…)', my: 'အထူးအက္ခရာ (!@#$…)' } },
-]
 
 export default function ResetPasswordPage() {
   const { t, i18n } = useTranslation()
@@ -64,7 +55,7 @@ export default function ResetPasswordPage() {
     focus(Math.min(text.length, BOX_COUNT - 1))
   }
 
-  const allPwdPassed = pwdRules.every(r => r.test(password))
+  const allPwdPassed = isStrongPassword(password)
   const mm = String(Math.floor(seconds / 60)).padStart(2, '0')
   const ss = String(seconds % 60).padStart(2, '0')
 
@@ -189,34 +180,7 @@ export default function ResetPasswordPage() {
             </div>
 
             {(pwdFocused || password.length > 0) && (
-              <div style={{
-                marginTop: '0.5rem', padding: '0.6rem 0.85rem',
-                background: 'var(--bg-secondary, #f8fafc)',
-                border: '1px solid var(--border)', borderRadius: 9,
-              }}>
-                {pwdRules.map((r, idx) => {
-                  const ok = r.test(password)
-                  return (
-                    <div key={idx} style={{
-                      display: 'flex', alignItems: 'center', gap: '0.45rem',
-                      marginBottom: idx < pwdRules.length - 1 ? '0.25rem' : 0,
-                      fontSize: '0.8rem', color: ok ? '#16a34a' : 'var(--text-muted)',
-                      transition: 'color 0.2s',
-                    }}>
-                      <div style={{
-                        width: 15, height: 15, borderRadius: '50%', flexShrink: 0,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        background: ok ? '#16a34a' : 'transparent',
-                        border: `1.5px solid ${ok ? '#16a34a' : 'var(--text-muted)'}`,
-                        transition: 'all 0.2s',
-                      }}>
-                        {ok && <i className="bi bi-check" style={{ color: '#fff', fontSize: '0.55rem', lineHeight: 1 }}></i>}
-                      </div>
-                      {r.label[lang]}
-                    </div>
-                  )
-                })}
-              </div>
+              <PasswordStrengthWidget password={password} lang={lang} compact />
             )}
           </div>
 

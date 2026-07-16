@@ -3,11 +3,17 @@ import api from '../../services/api'
 import { toast } from 'react-toastify'
 import { useAuth } from '../../context/AuthContext'
 import ProfileAvatar from '../../components/ProfileAvatar'
+import PasswordStrengthWidget from '../../components/PasswordStrengthWidget'
+import {
+  EMAIL_MAX_LENGTH, EMAIL_ERROR, isEmailValid,
+  PHONE_PATTERN, PHONE_ERROR, isStrongPassword,
+} from '../../utils/validation'
 
-const EMAIL_PATTERN = /^[a-z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
-const EMAIL_ERROR = 'Email must start with a lowercase letter — it cannot begin with a capital letter or a number'
-const PHONE_PATTERN = /^\+95\d{7,10}$/
-const PHONE_ERROR = 'Phone must start with +95 followed by 7–10 digits (e.g. +959xxxxxxx)'
+function handlePhoneChange(val, setter) {
+  if (!val) { setter(''); return }
+  if (!val.startsWith('+95')) { setter('+95'); return }
+  setter(val)
+}
 
 export default function AdminProfilePage() {
   const { user, setUser } = useAuth()
@@ -21,9 +27,11 @@ export default function AdminProfilePage() {
   const [pendingPhotoFile, setPendingPhotoFile] = useState(null)
   const [pendingPhotoPreview, setPendingPhotoPreview] = useState(null)
   const [pwd, setPwd] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
+  const [pwdFocused, setPwdFocused] = useState(false)
   const [savingProfile, setSavingProfile] = useState(false)
   const [savingPwd, setSavingPwd] = useState(false)
   const [showPwdModal, setShowPwdModal] = useState(false)
+  const [emailTouched, setEmailTouched] = useState(false)
 
   const handlePhotoSelected = file => {
     setPendingPhotoFile(file)
@@ -43,8 +51,10 @@ export default function AdminProfilePage() {
 
   const handleProfileSubmit = async e => {
     e.preventDefault()
-    if (!EMAIL_PATTERN.test(form.email)) { toast.error(EMAIL_ERROR); return }
-    if (form.phone && !PHONE_PATTERN.test(form.phone)) { toast.error(PHONE_ERROR); return }
+    setEmailTouched(true)
+    if (!isEmailValid(form.email)) { toast.error(EMAIL_ERROR.en); return }
+    const phoneVal = form.phone === '+95' ? '' : form.phone
+    if (phoneVal && !PHONE_PATTERN.test(phoneVal)) { toast.error(PHONE_ERROR); return }
     setSavingProfile(true)
     try {
       if (pendingPhotoFile) {
@@ -53,7 +63,7 @@ export default function AdminProfilePage() {
         await api.post('/auth/profile/picture', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
       }
       const { data } = await api.put('/auth/profile', {
-        name: form.name, email: form.email, phone: form.phone, address: form.address,
+        name: form.name, email: form.email, phone: phoneVal, address: form.address,
       })
       setUser(data)
       clearPendingPhoto()
@@ -71,13 +81,17 @@ export default function AdminProfilePage() {
       phone: user?.phone || '',
       address: user?.address || '',
     })
+    setEmailTouched(false)
     clearPendingPhoto()
     setEditMode(false)
   }
 
   const handlePasswordSubmit = async e => {
     e.preventDefault()
-    if (pwd.newPassword.length < 8) { toast.error('New password must be at least 8 characters'); return }
+    if (!isStrongPassword(pwd.newPassword)) {
+      toast.error('Password must be at least 8 characters with uppercase, lowercase, number and special character')
+      return
+    }
     if (pwd.newPassword !== pwd.confirmPassword) { toast.error('New passwords do not match'); return }
     setSavingPwd(true)
     try {
@@ -95,7 +109,11 @@ export default function AdminProfilePage() {
   const closePwdModal = () => {
     setShowPwdModal(false)
     setPwd({ currentPassword: '', newPassword: '', confirmPassword: '' })
+    setPwdFocused(false)
   }
+
+  const emailInvalid = emailTouched && form.email && !isEmailValid(form.email)
+  const phoneInvalid = form.phone && form.phone !== '+95' && !PHONE_PATTERN.test(form.phone)
 
   return (
     <div className="fade-in">
@@ -152,15 +170,17 @@ export default function AdminProfilePage() {
                     disabled={!editMode}
                     className="form-control-custom w-100"
                     value={form.email}
+                    maxLength={EMAIL_MAX_LENGTH}
                     onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                    onBlur={() => setEmailTouched(true)}
                     onKeyDown={e => { if (e.key === 'Enter') e.preventDefault() }}
                     style={{
-                      ...(editMode && form.email && !EMAIL_PATTERN.test(form.email) ? { borderColor: '#ef4444' } : undefined),
+                      ...(emailInvalid ? { borderColor: '#ef4444' } : undefined),
                       ...(!editMode ? { opacity: 0.6, cursor: 'not-allowed' } : undefined),
                     }}
                   />
-                  {editMode && form.email && !EMAIL_PATTERN.test(form.email) && (
-                    <p style={{ fontSize: '0.76rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{EMAIL_ERROR}</p>
+                  {emailInvalid && (
+                    <p style={{ fontSize: '0.76rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{EMAIL_ERROR.en}</p>
                   )}
                 </div>
                 <div className="col-12 col-md-6">
@@ -169,16 +189,23 @@ export default function AdminProfilePage() {
                     disabled={!editMode}
                     className="form-control-custom w-100"
                     value={form.phone}
-                    onChange={e => setForm(f => ({ ...f, phone: e.target.value }))}
-                    placeholder="+95xxxxxxxx"
+                    onChange={e => handlePhoneChange(e.target.value, v => setForm(f => ({ ...f, phone: v })))}
+                    onFocus={() => { if (!form.phone) setForm(f => ({ ...f, phone: '+95' })) }}
+                    onBlur={() => { if (form.phone === '+95') setForm(f => ({ ...f, phone: '' })) }}
+                    placeholder="+959xxxxxxxx"
                     onKeyDown={e => { if (e.key === 'Enter') e.preventDefault() }}
                     style={{
-                      ...(editMode && form.phone && !PHONE_PATTERN.test(form.phone) ? { borderColor: '#ef4444' } : undefined),
+                      ...(editMode && phoneInvalid ? { borderColor: '#ef4444' } : undefined),
                       ...(!editMode ? { opacity: 0.6, cursor: 'not-allowed' } : undefined),
                     }}
                   />
-                  {editMode && form.phone && !PHONE_PATTERN.test(form.phone) && (
+                  {editMode && phoneInvalid && (
                     <p style={{ fontSize: '0.76rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{PHONE_ERROR}</p>
+                  )}
+                  {editMode && (
+                    <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '0.2rem 0 0' }}>
+                      e.g. +9591234567 (8–10 digits after +95, starting with 9)
+                    </p>
                   )}
                 </div>
                 <div className="col-12 col-md-6">
@@ -227,7 +254,7 @@ export default function AdminProfilePage() {
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1050,
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem'
         }} onClick={closePwdModal}>
-          <div className="card-custom fade-in" style={{ maxWidth: 420, width: '100%', margin: 0 }} onClick={e => e.stopPropagation()}>
+          <div className="card-custom fade-in" style={{ maxWidth: 420, width: '100%', margin: 0, maxHeight: '92vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
             <div className="d-flex align-items-center justify-content-between mb-3">
               <h6 style={{ fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>Change Password</h6>
               <button className="icon-btn" onClick={closePwdModal}><i className="bi bi-x-lg"></i></button>
@@ -239,15 +266,30 @@ export default function AdminProfilePage() {
                 <input type="password" className="form-control-custom w-100" value={pwd.currentPassword}
                   onChange={e => setPwd(p => ({ ...p, currentPassword: e.target.value }))} />
               </div>
-              <div className="mb-3">
+              <div className="mb-2">
                 <label className="form-label-custom">New Password</label>
-                <input type="password" minLength={8} className="form-control-custom w-100" value={pwd.newPassword}
-                  onChange={e => setPwd(p => ({ ...p, newPassword: e.target.value }))} />
+                <input type="password" className="form-control-custom w-100" value={pwd.newPassword}
+                  onChange={e => setPwd(p => ({ ...p, newPassword: e.target.value }))}
+                  onFocus={() => setPwdFocused(true)} onBlur={() => setPwdFocused(false)} />
+                {(pwdFocused || pwd.newPassword.length > 0) && (
+                  <PasswordStrengthWidget password={pwd.newPassword} compact />
+                )}
               </div>
               <div className="mb-3">
                 <label className="form-label-custom">Confirm New Password</label>
-                <input type="password" minLength={8} className="form-control-custom w-100" value={pwd.confirmPassword}
-                  onChange={e => setPwd(p => ({ ...p, confirmPassword: e.target.value }))} />
+                <div style={{ position: 'relative' }}>
+                  <input type="password" className="form-control-custom w-100" value={pwd.confirmPassword}
+                    style={{ paddingRight: '2.5rem' }}
+                    onChange={e => setPwd(p => ({ ...p, confirmPassword: e.target.value }))} />
+                  {pwd.confirmPassword.length > 0 && (
+                    <span style={{
+                      position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)',
+                      color: pwd.confirmPassword === pwd.newPassword ? '#16a34a' : '#ef4444',
+                    }}>
+                      <i className={`bi bi-${pwd.confirmPassword === pwd.newPassword ? 'check-circle-fill' : 'x-circle-fill'}`}></i>
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="d-flex gap-2">
                 <button type="submit" disabled={savingPwd} className="btn-primary-custom" style={{ justifyContent: 'center' }}>

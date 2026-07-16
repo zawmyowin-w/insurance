@@ -3,12 +3,18 @@ import api from '../../services/api'
 import { toast } from 'react-toastify'
 import { useAuth } from '../../context/AuthContext'
 import ProfileAvatar from '../../components/ProfileAvatar'
+import PasswordStrengthWidget from '../../components/PasswordStrengthWidget'
 import { issueOtp, verifyOtp, otpSecondsLeft } from '../../services/otpService'
+import { PHONE_PATTERN, PHONE_ERROR, isStrongPassword } from '../../utils/validation'
 
 const OTP_TYPE = 'profile-change'
 const OTP_BOX_COUNT = 6
-const PHONE_PATTERN = /^\+95\d{7,10}$/
-const PHONE_ERROR = 'Phone must start with +95 followed by 7–10 digits (e.g. +959xxxxxxx)'
+
+function handlePhoneChange(val, setter) {
+  if (!val) { setter(''); return }
+  if (!val.startsWith('+95')) { setter('+95'); return }
+  setter(val)
+}
 
 export default function CustomerProfilePage() {
   const { user, setUser } = useAuth()
@@ -18,6 +24,7 @@ export default function CustomerProfilePage() {
   const [pendingPhotoFile, setPendingPhotoFile] = useState(null)
   const [pendingPhotoPreview, setPendingPhotoPreview] = useState(null)
   const [pwd, setPwd] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
+  const [pwdFocused, setPwdFocused] = useState(false)
   const [savingProfile, setSavingProfile] = useState(false)
   const [savingPwd, setSavingPwd] = useState(false)
 
@@ -30,6 +37,7 @@ export default function CustomerProfilePage() {
   const [sendingOtp, setSendingOtp] = useState(false)
   const [otpDigits, setOtpDigits] = useState(Array(OTP_BOX_COUNT).fill(''))
   const [otpPwd, setOtpPwd] = useState({ newPassword: '', confirmPassword: '' })
+  const [otpPwdFocused, setOtpPwdFocused] = useState(false)
   const [savingOtpPwd, setSavingOtpPwd] = useState(false)
   const [otpSeconds, setOtpSeconds] = useState(0)
   const otpInputs = useRef([])
@@ -50,6 +58,7 @@ export default function CustomerProfilePage() {
   const closePwdModal = () => {
     setShowPwdModal(false)
     setPwd({ currentPassword: '', newPassword: '', confirmPassword: '' })
+    setPwdFocused(false)
     resetOtpFlow()
   }
 
@@ -85,7 +94,10 @@ export default function CustomerProfilePage() {
     e.preventDefault()
     const code = otpDigits.join('')
     if (code.length < OTP_BOX_COUNT) { toast.error('Enter the full 6-digit code'); return }
-    if (otpPwd.newPassword.length < 8) { toast.error('New password must be at least 8 characters'); return }
+    if (!isStrongPassword(otpPwd.newPassword)) {
+      toast.error('Password must be at least 8 characters with uppercase, lowercase, number and special character')
+      return
+    }
     if (otpPwd.newPassword !== otpPwd.confirmPassword) { toast.error('New passwords do not match'); return }
 
     const result = verifyOtp(user.email, OTP_TYPE, code)
@@ -145,7 +157,9 @@ export default function CustomerProfilePage() {
 
   const handleProfileSubmit = async e => {
     e.preventDefault()
-    if (phone && !PHONE_PATTERN.test(phone)) { toast.error(PHONE_ERROR); return }
+    // Treat "+95" alone (no digits after) as empty phone
+    const phoneVal = phone === '+95' ? '' : phone
+    if (phoneVal && !PHONE_PATTERN.test(phoneVal)) { toast.error(PHONE_ERROR); return }
     setSavingProfile(true)
     try {
       if (pendingPhotoFile) {
@@ -153,7 +167,7 @@ export default function CustomerProfilePage() {
         formData.append('file', pendingPhotoFile)
         await api.post('/auth/profile/picture', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
       }
-      const { data } = await api.put('/auth/profile', { address, phone })
+      const { data } = await api.put('/auth/profile', { address, phone: phoneVal })
       setUser(data)
       clearPendingPhoto()
       toast.success('Update successful')
@@ -172,6 +186,10 @@ export default function CustomerProfilePage() {
 
   const handlePasswordSubmit = async e => {
     e.preventDefault()
+    if (!isStrongPassword(pwd.newPassword)) {
+      toast.error('Password must be at least 8 characters with uppercase, lowercase, number and special character')
+      return
+    }
     if (pwd.newPassword !== pwd.confirmPassword) {
       toast.error('New passwords do not match')
       return
@@ -189,6 +207,8 @@ export default function CustomerProfilePage() {
       toast.error(err.response?.data?.message || 'Failed to change password')
     } finally { setSavingPwd(false) }
   }
+
+  const phoneInvalid = phone && phone !== '+95' && !PHONE_PATTERN.test(phone)
 
   return (
     <div className="fade-in">
@@ -235,15 +255,27 @@ export default function CustomerProfilePage() {
                 </div>
                 <div className="col-12 col-md-6">
                   <label className="form-label-custom">Phone</label>
-                  <input disabled={!editMode} className="form-control-custom w-100" value={phone}
-                    onChange={e => setPhone(e.target.value)} placeholder="+95xxxxxxxx"
+                  <input
+                    disabled={!editMode}
+                    className="form-control-custom w-100"
+                    value={phone}
+                    placeholder="+959xxxxxxxx"
+                    onChange={e => handlePhoneChange(e.target.value, setPhone)}
+                    onFocus={() => { if (!phone) setPhone('+95') }}
+                    onBlur={() => { if (phone === '+95') setPhone('') }}
                     onKeyDown={e => { if (e.key === 'Enter') e.preventDefault() }}
                     style={{
-                      ...(phone && !PHONE_PATTERN.test(phone) ? { borderColor: '#ef4444' } : undefined),
+                      ...(phoneInvalid ? { borderColor: '#ef4444' } : undefined),
                       ...(!editMode ? { opacity: 0.6, cursor: 'not-allowed' } : undefined),
-                    }} />
-                  {editMode && phone && !PHONE_PATTERN.test(phone) && (
+                    }}
+                  />
+                  {editMode && phoneInvalid && (
                     <p style={{ fontSize: '0.76rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{PHONE_ERROR}</p>
+                  )}
+                  {editMode && (
+                    <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '0.2rem 0 0' }}>
+                      e.g. +9591234567 (8–10 digits after +95, starting with 9)
+                    </p>
                   )}
                 </div>
                 <div className="col-12 col-md-6">
@@ -286,7 +318,7 @@ export default function CustomerProfilePage() {
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1050,
           display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem'
         }} onClick={closePwdModal}>
-          <div className="card-custom fade-in" style={{ maxWidth: 440, width: '100%', margin: 0 }} onClick={e => e.stopPropagation()}>
+          <div className="card-custom fade-in" style={{ maxWidth: 440, width: '100%', margin: 0, maxHeight: '92vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
             <div className="d-flex align-items-center justify-content-between mb-1">
               <h6 style={{ fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>Change Password</h6>
               <button className="icon-btn" onClick={closePwdModal}><i className="bi bi-x-lg"></i></button>
@@ -317,15 +349,30 @@ export default function CustomerProfilePage() {
                   <input type="password" className="form-control-custom w-100" value={pwd.currentPassword}
                     onChange={e => setPwd(p => ({ ...p, currentPassword: e.target.value }))} />
                 </div>
-                <div className="mb-3">
+                <div className="mb-2">
                   <label className="form-label-custom">New Password</label>
-                  <input type="password" minLength={8} className="form-control-custom w-100" value={pwd.newPassword}
-                    onChange={e => setPwd(p => ({ ...p, newPassword: e.target.value }))} />
+                  <input type="password" className="form-control-custom w-100" value={pwd.newPassword}
+                    onChange={e => setPwd(p => ({ ...p, newPassword: e.target.value }))}
+                    onFocus={() => setPwdFocused(true)} onBlur={() => setPwdFocused(false)} />
+                  {(pwdFocused || pwd.newPassword.length > 0) && (
+                    <PasswordStrengthWidget password={pwd.newPassword} compact />
+                  )}
                 </div>
                 <div className="mb-3">
                   <label className="form-label-custom">Confirm New Password</label>
-                  <input type="password" minLength={8} className="form-control-custom w-100" value={pwd.confirmPassword}
-                    onChange={e => setPwd(p => ({ ...p, confirmPassword: e.target.value }))} />
+                  <div style={{ position: 'relative' }}>
+                    <input type="password" className="form-control-custom w-100" value={pwd.confirmPassword}
+                      style={{ paddingRight: '2.5rem' }}
+                      onChange={e => setPwd(p => ({ ...p, confirmPassword: e.target.value }))} />
+                    {pwd.confirmPassword.length > 0 && (
+                      <span style={{
+                        position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)',
+                        color: pwd.confirmPassword === pwd.newPassword ? '#16a34a' : '#ef4444',
+                      }}>
+                        <i className={`bi bi-${pwd.confirmPassword === pwd.newPassword ? 'check-circle-fill' : 'x-circle-fill'}`}></i>
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <button type="submit" disabled={savingPwd} className="btn-primary-custom w-100" style={{ justifyContent: 'center' }}>
                   {savingPwd ? <><span className="spinner-border spinner-border-sm me-2"></span>Updating...</> : 'Change Password'}
@@ -382,15 +429,30 @@ export default function CustomerProfilePage() {
                       </div>
                     )}
 
-                    <div className="mb-3">
+                    <div className="mb-2">
                       <label className="form-label-custom">New Password</label>
-                      <input type="password" minLength={8} className="form-control-custom w-100" value={otpPwd.newPassword}
-                        onChange={e => setOtpPwd(p => ({ ...p, newPassword: e.target.value }))} />
+                      <input type="password" className="form-control-custom w-100" value={otpPwd.newPassword}
+                        onChange={e => setOtpPwd(p => ({ ...p, newPassword: e.target.value }))}
+                        onFocus={() => setOtpPwdFocused(true)} onBlur={() => setOtpPwdFocused(false)} />
+                      {(otpPwdFocused || otpPwd.newPassword.length > 0) && (
+                        <PasswordStrengthWidget password={otpPwd.newPassword} compact />
+                      )}
                     </div>
                     <div className="mb-3">
                       <label className="form-label-custom">Confirm New Password</label>
-                      <input type="password" minLength={8} className="form-control-custom w-100" value={otpPwd.confirmPassword}
-                        onChange={e => setOtpPwd(p => ({ ...p, confirmPassword: e.target.value }))} />
+                      <div style={{ position: 'relative' }}>
+                        <input type="password" className="form-control-custom w-100" value={otpPwd.confirmPassword}
+                          style={{ paddingRight: '2.5rem' }}
+                          onChange={e => setOtpPwd(p => ({ ...p, confirmPassword: e.target.value }))} />
+                        {otpPwd.confirmPassword.length > 0 && (
+                          <span style={{
+                            position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)',
+                            color: otpPwd.confirmPassword === otpPwd.newPassword ? '#16a34a' : '#ef4444',
+                          }}>
+                            <i className={`bi bi-${otpPwd.confirmPassword === otpPwd.newPassword ? 'check-circle-fill' : 'x-circle-fill'}`}></i>
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <button type="submit" disabled={savingOtpPwd} className="btn-primary-custom w-100" style={{ justifyContent: 'center' }}>
                       {savingOtpPwd ? <><span className="spinner-border spinner-border-sm me-2"></span>Updating...</> : 'Change Password'}

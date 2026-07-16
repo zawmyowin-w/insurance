@@ -155,8 +155,8 @@ public class AuthController {
             if (req.getCurrentPassword() == null || !passwordEncoder.matches(req.getCurrentPassword(), user.getPassword())) {
                 return ResponseEntity.badRequest().body(new ErrorResponse("Current password is incorrect"));
             }
-            if (req.getNewPassword().length() < 8) {
-                return ResponseEntity.badRequest().body(new ErrorResponse("New password must be at least 8 characters"));
+            if (!com.insurance.portal.util.PasswordValidationUtil.isStrong(req.getNewPassword())) {
+                return ResponseEntity.badRequest().body(new ErrorResponse(com.insurance.portal.util.PasswordValidationUtil.ERROR_MESSAGE));
             }
             user.setPassword(passwordEncoder.encode(req.getNewPassword()));
         }
@@ -182,8 +182,8 @@ public class AuthController {
                     "Agent profiles can only be updated by an admin. Please contact your administrator."));
         }
         String newPassword = body.get("newPassword");
-        if (newPassword == null || newPassword.length() < 8) {
-            return ResponseEntity.badRequest().body(new ErrorResponse("New password must be at least 8 characters"));
+        if (!com.insurance.portal.util.PasswordValidationUtil.isStrong(newPassword)) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(com.insurance.portal.util.PasswordValidationUtil.ERROR_MESSAGE));
         }
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);

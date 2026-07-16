@@ -11,15 +11,25 @@ import java.util.regex.Pattern;
  */
 public final class EmailValidationUtil {
 
+    // Rules:
+    //   - local part: lowercase letter start, then lowercase letters / digits / dots only (no special chars)
+    //   - domain:     lowercase letters, digits, dots, hyphens (standard domain chars)
+    //   - TLD:        lowercase letters only, min 2 chars
+    //   - no uppercase anywhere
+    //   - total length ≤ 30 characters
     private static final Pattern EMAIL_PATTERN =
-            Pattern.compile("^[a-z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+            Pattern.compile("^[a-z][a-z0-9.]*@[a-z0-9.-]+\\.[a-z]{2,}$");
+
+    private static final int EMAIL_MAX_LENGTH = 30;
 
     public static final String ERROR_MESSAGE =
-            "Email must start with a lowercase letter — it cannot begin with a capital letter or a number";
+            "Email must be lowercase only, use letters/digits/dots only (no special characters), max 30 characters";
 
     private EmailValidationUtil() {}
 
     public static boolean isValid(String email) {
-        return email != null && EMAIL_PATTERN.matcher(email).matches();
+        return email != null &&
+               email.length() <= EMAIL_MAX_LENGTH &&
+               EMAIL_PATTERN.matcher(email).matches();
     }
 }
