@@ -109,9 +109,15 @@ export default function RegisterPage() {
                 placeholder="you@example.com" value={form.email} onChange={handleChange}
                 style={!emailValid ? { borderColor: '#ef4444' } : undefined} />
               {!emailValid && (
-                <p style={{ fontSize: '0.78rem', color: '#ef4444', margin: '0.3rem 0 0' }}>
-                  {EMAIL_ERROR[lang]}
-                </p>
+                <div style={{
+                  display: 'flex', alignItems: 'flex-start', gap: '0.5rem',
+                  marginTop: '0.45rem', padding: '0.6rem 0.85rem',
+                  background: '#fef2f2', border: '1px solid #fca5a5',
+                  borderRadius: 8, fontSize: '0.8rem', color: '#b91c1c', lineHeight: 1.45
+                }}>
+                  <i className="bi bi-exclamation-circle-fill" style={{ flexShrink: 0, marginTop: '0.1rem', fontSize: '0.9rem' }}></i>
+                  <span>{EMAIL_ERROR[lang]}</span>
+                </div>
               )}
             </div>
             <div className="col-12">
