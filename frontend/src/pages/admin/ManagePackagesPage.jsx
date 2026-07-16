@@ -107,11 +107,11 @@ export default function ManagePackagesPage() {
           <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>Create and manage insurance plans and their forms</p>
         </div>
         <button className="btn-primary-custom" style={{ fontSize: '0.88rem', padding: '0.45rem 1rem' }} onClick={() => {
-          if (showForm && fromDashboard) { navigate('/admin/dashboard'); return }
-          setShowForm(!showForm); setEditing(null); setForm(EMPTY)
+          if (showForm) { setShowForm(false); setEditing(null); setForm(EMPTY); navigate(-1); return }
+          setShowForm(true)
         }}>
-          <i className={`bi bi-${showForm ? (fromDashboard ? 'arrow-left' : 'x-lg') : 'plus-circle'} me-1`}></i>
-          {showForm ? (fromDashboard ? 'Back' : 'Cancel') : 'New Package'}
+          <i className={`bi bi-${showForm ? 'arrow-left' : 'plus-circle'} me-1`}></i>
+          {showForm ? 'Back' : 'New Package'}
         </button>
       </div>
 
