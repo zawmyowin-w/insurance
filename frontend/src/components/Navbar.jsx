@@ -25,21 +25,17 @@ export default function Navbar() {
     : user?.role === 'AGENT' ? '/agent/dashboard'
     : '/customer/dashboard'
 
-  // Nav links ordered by role:
-  // Guest/non-customer: Plans, How It Works, Contact
-  // Customer: Plans, How It Works, Applications, Claims, Contact
+  // Nav links ordered by role — Contact removed from all roles
   const navLinks = user?.role === 'CUSTOMER'
     ? [
         { to: '/plans', label: t('nav.plans') },
         { to: '/how-it-works', label: t('nav.howItWorks') },
         { to: '/customer/applications', label: t('nav.applications') },
         { to: '/customer/claims', label: t('nav.claims') },
-        { to: '/contact', label: t('nav.contact') },
       ]
     : [
         { to: '/plans', label: t('nav.plans') },
         { to: '/how-it-works', label: t('nav.howItWorks') },
-        ...(!user ? [{ to: '/contact', label: t('nav.contact') }] : []),
       ]
 
   return (

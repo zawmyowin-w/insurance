@@ -29,6 +29,7 @@ import CustomerPoliciesPage from './pages/customer/CustomerPoliciesPage'
 import ApplyPolicyPage from './pages/customer/ApplyPolicyPage'
 import SubmitClaimPage from './pages/customer/SubmitClaimPage'
 import CustomerProfilePage from './pages/customer/CustomerProfilePage'
+import SendFeedbackPage from './pages/customer/SendFeedbackPage'
 
 // Agent pages
 import AgentLayout from './pages/agent/AgentLayout'
@@ -51,6 +52,7 @@ import AdminNotificationsPage from './pages/admin/AdminNotificationsPage'
 import AdminFormBuilderPage from './pages/admin/AdminFormBuilderPage'
 import AdminReportsPage from './pages/admin/AdminReportsPage'
 import AdminProfilePage from './pages/admin/AdminProfilePage'
+import AdminFeedbackPage from './pages/admin/AdminFeedbackPage'
 
 export default function App() {
   return (
@@ -83,6 +85,7 @@ export default function App() {
               <Route path="submit-claim" element={<SubmitClaimPage />} />
               <Route path="payments" element={<MyPaymentsPage />} />
               <Route path="notifications" element={<CustomerNotificationsPage />} />
+              <Route path="feedback" element={<SendFeedbackPage />} />
               <Route path="profile" element={<CustomerProfilePage />} />
             </Route>
 
@@ -108,6 +111,7 @@ export default function App() {
               <Route path="payments" element={<AdminPaymentsPage />} />
               <Route path="forms" element={<AdminFormBuilderPage />} />
               <Route path="notifications" element={<AdminNotificationsPage />} />
+              <Route path="feedback" element={<AdminFeedbackPage />} />
               <Route path="reports" element={<AdminReportsPage />} />
               <Route path="profile" element={<AdminProfilePage />} />
             </Route>
