@@ -1,45 +1,44 @@
 # Digital Insurance Claim and Premiums Portal
 
-A full-stack digital insurance portal for Myanmar, with role-based access for Admins, Agents, and Customers.
+A full-stack insurance portal for Myanmar, supporting policy plans, premium calculations, claims filing, and an admin dashboard.
 
 ## Stack
+- **Frontend**: React 19 + Vite (port 5000), Bootstrap 5.3, React Router 7, i18next (EN / Myanmar)
+- **Backend**: Java 17 + Spring Boot 3.2.3, Spring Security (JWT), Hibernate/JPA (port 8080)
+- **Database**: MySQL 8.0 — self-managed inside the container, data persisted in `.mysql/`
 
-- **Frontend**: React 18, Vite, Bootstrap 5.3, React Router 6, Axios, i18next (EN/Myanmar)
-- **Backend**: Java 17, Spring Boot 3.2.3, Spring Security (JWT), Spring Data JPA, Hibernate
-- **Database**: MySQL 8 (self-managed, data persisted in `.mysql/`)
+## How to run
 
-## How to Run
-
-Two workflows run in parallel:
+Two workflows start in parallel via the **Project** run button:
 
 | Workflow | Command | Port |
 |---|---|---|
-| **Start application** (frontend) | `cd frontend && npm run dev` | 5000 |
-| **Backend** | `cd backend && bash start-backend.sh` | 8080 |
+| Start application | `cd frontend && npm run dev` | 5000 |
+| Backend | `cd backend && bash start-backend.sh` | 8080 |
 
-The backend script starts a local MySQL instance, initializes the `insurance_portal` database, and then launches Spring Boot. The frontend proxies `/api` requests to the backend on port 8080.
+The `start-backend.sh` script initialises and starts MySQL, applies the schema from `database/schema.sql`, then launches Spring Boot via Maven.
 
-## Default Admin Credentials
+The frontend proxies all `/api/*` requests to the backend (`vite.config.js`), so no hardcoded backend URLs are needed in frontend code.
 
-- **Email**: `admin@dicp.com.mm`
-- **Password**: `Admin@123`
+## Default admin credentials
+- Email: `admin@dicp.com.mm`
+- Password: `Admin@123`
 
-## Environment Variables
+## Environment variables (Replit shared env / `.replit` `[userenv.shared]`)
+| Variable | Purpose |
+|---|---|
+| `CORS_ALLOWED_ORIGINS` | Comma-separated list of allowed CORS origins — must include the current Replit dev domain |
+| `VITE_GOOGLE_CLIENT_ID` | Google OAuth client ID for social login |
 
-| Key | Where | Purpose |
-|---|---|---|
-| `CORS_ALLOWED_ORIGINS` | shared env | Comma-separated allowed origins for Spring CORS |
-| `VITE_EMAILJS_SERVICE_ID` | frontend `.env` | EmailJS service ID |
-| `VITE_EMAILJS_TEMPLATE_ID` | frontend `.env` | EmailJS template ID |
-| `VITE_EMAILJS_PUBLIC_KEY` | frontend `.env` | EmailJS public key |
-| `JWT_SECRET` | secret | JWT signing key (has a secure default) |
-| `DB_PASSWORD` | secret | MySQL root password (default: empty) |
-| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | secret | Override default admin credentials |
+## Secrets (set via Replit Secrets)
+| Secret | Purpose |
+|---|---|
+| `JWT_SECRET` | Signs JWT tokens — override the insecure default for production |
+| `DB_PASSWORD` | MySQL root password — currently empty (initialized with `--initialize-insecure`) |
 
-## File Uploads
+## Notes
+- `CORS_ALLOWED_ORIGINS` must be updated if the Replit dev domain changes (visible in `$REPLIT_DEV_DOMAIN`)
+- EmailJS keys (`VITE_EMAILJS_SERVICE_ID`, `VITE_EMAILJS_TEMPLATE_ID`, `VITE_EMAILJS_PUBLIC_KEY`) are optional — needed only if the contact/email features are used
+- The database schema is re-applied on every backend start (idempotent `CREATE TABLE IF NOT EXISTS`)
 
-Uploaded documents are stored in `./uploads` relative to the backend working directory.
-
-## User Preferences
-
-- Keep the existing frontend/backend monorepo structure.
+## User preferences
