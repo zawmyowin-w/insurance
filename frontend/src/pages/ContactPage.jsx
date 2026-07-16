@@ -13,7 +13,8 @@ const validate = (form) => {
   else if (form.name.trim().length < 2) errs.name = 'Name must be at least 2 characters.'
 
   if (!form.email.trim()) errs.email = 'Email address is required.'
-  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) errs.email = 'Enter a valid email address.'
+  else if (!/^[a-z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(form.email))
+    errs.email = 'Email must start with a lowercase letter — it cannot begin with a capital letter, number, or special character.'
 
   if (form.phone.trim() && !/^\+95\d{7,10}$/.test(form.phone.trim()))
     errs.phone = 'Phone must start with +95 followed by 7–10 digits.'
