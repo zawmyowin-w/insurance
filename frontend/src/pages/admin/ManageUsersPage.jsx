@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import ProfileAvatar from '../../components/ProfileAvatar'
@@ -13,7 +13,9 @@ const EMPTY_EDIT = { name: '', email: '', phone: '', address: '', insuranceType:
 const PAGE_SIZE = 10
 
 export default function ManageUsersPage() {
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const fromDashboard = searchParams.get('action') === 'create'
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState(() => {
@@ -22,7 +24,7 @@ export default function ManageUsersPage() {
   })
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
-  const [showCreatePanel, setShowCreatePanel] = useState(false)
+  const [showCreatePanel, setShowCreatePanel] = useState(fromDashboard)
   const [createForm, setCreateForm] = useState(EMPTY_FORM)
   const [saving, setSaving] = useState(false)
   const [editingUser, setEditingUser] = useState(null)
@@ -126,9 +128,12 @@ export default function ManageUsersPage() {
         </div>
         {(activeTab === 'AGENT' || activeTab === 'ADMIN') && (
           <button className="btn-primary-custom" style={{ fontSize: '0.88rem', padding: '0.45rem 1rem' }}
-            onClick={() => setShowCreatePanel(v => !v)}>
-            <i className={`bi bi-${showCreatePanel ? 'x-lg' : 'person-plus'} me-1`}></i>
-            {showCreatePanel ? 'Cancel' : `Create ${activeTab === 'AGENT' ? 'Agent' : 'Admin'}`}
+            onClick={() => {
+              if (showCreatePanel && fromDashboard) { navigate('/admin/dashboard'); return }
+              setShowCreatePanel(v => !v)
+            }}>
+            <i className={`bi bi-${showCreatePanel ? (fromDashboard ? 'arrow-left' : 'x-lg') : 'person-plus'} me-1`}></i>
+            {showCreatePanel ? (fromDashboard ? 'Back' : 'Cancel') : `Create ${activeTab === 'AGENT' ? 'Agent' : 'Admin'}`}
           </button>
         )}
       </div>

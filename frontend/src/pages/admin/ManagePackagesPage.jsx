@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 
@@ -8,9 +8,11 @@ const EMPTY = { name: '', type: 'LIFE', description: '', coverageMin: '', covera
 
 export default function ManagePackagesPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const fromDashboard = searchParams.get('action') === 'new'
   const [packages, setPackages] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
+  const [showForm, setShowForm] = useState(fromDashboard)
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(EMPTY)
   const [saving, setSaving] = useState(false)
@@ -104,8 +106,12 @@ export default function ManagePackagesPage() {
           <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Insurance Packages</h4>
           <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>Create and manage insurance plans and their forms</p>
         </div>
-        <button className="btn-primary-custom" style={{ fontSize: '0.88rem', padding: '0.45rem 1rem' }} onClick={() => { setShowForm(!showForm); setEditing(null); setForm(EMPTY) }}>
-          <i className={`bi bi-${showForm ? 'x-lg' : 'plus-circle'} me-1`}></i>{showForm ? 'Cancel' : 'New Package'}
+        <button className="btn-primary-custom" style={{ fontSize: '0.88rem', padding: '0.45rem 1rem' }} onClick={() => {
+          if (showForm && fromDashboard) { navigate('/admin/dashboard'); return }
+          setShowForm(!showForm); setEditing(null); setForm(EMPTY)
+        }}>
+          <i className={`bi bi-${showForm ? (fromDashboard ? 'arrow-left' : 'x-lg') : 'plus-circle'} me-1`}></i>
+          {showForm ? (fromDashboard ? 'Back' : 'Cancel') : 'New Package'}
         </button>
       </div>
 

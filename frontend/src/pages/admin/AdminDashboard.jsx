@@ -55,17 +55,20 @@ export default function AdminDashboard() {
       <div className="card-custom mb-4">
         <h6 style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '1rem' }}>Quick Actions</h6>
         <div className="d-flex gap-2 flex-wrap">
-          <Link to="/admin/packages" className="btn-primary-custom" style={{ fontSize: '0.85rem', padding: '0.4rem 0.9rem' }}>
+          <Link to="/admin/packages?action=new" className="btn-primary-custom" style={{ fontSize: '0.85rem', padding: '0.4rem 0.9rem' }}>
             <i className="bi bi-plus-circle me-1"></i>Add Package
           </Link>
-          <Link to="/admin/users" className="btn-primary-sm" style={{ fontSize: '0.85rem', padding: '0.4rem 0.9rem' }}>
+          <Link to="/admin/users?tab=AGENT&action=create" className="btn-primary-sm" style={{ fontSize: '0.85rem', padding: '0.4rem 0.9rem' }}>
             <i className="bi bi-person-plus me-1"></i>Add Agent
           </Link>
-          <Link to="/admin/applications" className="btn-primary-sm" style={{ fontSize: '0.85rem', padding: '0.4rem 0.9rem', background: '#f59e0b' }}>
+          <Link to="/admin/applications?filter=ALL" className="btn-primary-sm" style={{ fontSize: '0.85rem', padding: '0.4rem 0.9rem', background: '#f59e0b' }}>
             <i className="bi bi-file-earmark-check me-1"></i>Review Applications
           </Link>
-          <Link to="/admin/claims" className="btn-danger-sm" style={{ fontSize: '0.85rem', padding: '0.4rem 0.9rem' }}>
+          <Link to="/admin/claims?filter=ALL" className="btn-danger-sm" style={{ fontSize: '0.85rem', padding: '0.4rem 0.9rem' }}>
             <i className="bi bi-file-earmark-medical me-1"></i>Review Claims
+          </Link>
+          <Link to="/admin/payments?filter=ALL" className="btn-primary-sm" style={{ fontSize: '0.85rem', padding: '0.4rem 0.9rem', background: '#0891b2' }}>
+            <i className="bi bi-credit-card me-1"></i>Review Payments
           </Link>
         </div>
       </div>

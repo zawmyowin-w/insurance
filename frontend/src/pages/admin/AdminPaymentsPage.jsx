@@ -1,12 +1,17 @@
 import React, { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import PaymentMethodIcon, { PAYMENT_METHODS } from '../../components/PaymentMethodIcon'
 
 export default function AdminPaymentsPage() {
+  const [searchParams] = useSearchParams()
   const [payments, setPayments] = useState([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState('PENDING')
+  const [filter, setFilter] = useState(() => {
+    const f = searchParams.get('filter')
+    return f && ['ALL','PENDING','VERIFIED','APPROVED','REJECTED'].includes(f) ? f : 'PENDING'
+  })
   const [actionId, setActionId] = useState(null)
   const [actionNote, setActionNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
