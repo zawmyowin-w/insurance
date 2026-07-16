@@ -265,7 +265,7 @@ public class AgentController {
         }
         List<String> docs = FileStorageUtil.fromJsonArray(app.getDocumentsPath());
         if (index < 0 || index >= docs.size()) return ResponseEntity.notFound().build();
-        return streamFile(docs.get(index));
+        return FileStorageUtil.streamFile(docs.get(index));
     }
 
     @GetMapping("/claims/{id}/documents/{index}")
@@ -280,7 +280,7 @@ public class AgentController {
         }
         List<String> docs = FileStorageUtil.fromJsonArray(claim.getDocumentsPath());
         if (index < 0 || index >= docs.size()) return ResponseEntity.notFound().build();
-        return streamFile(docs.get(index));
+        return FileStorageUtil.streamFile(docs.get(index));
     }
 
     /** Serve a file uploaded into a dynamic form field for an application */
@@ -292,7 +292,7 @@ public class AgentController {
         PolicyApplication app = appRepo.findById(id).orElseThrow();
         if (app.getAgent() == null || !app.getAgent().getId().equals(agent.getId()))
             return ResponseEntity.status(403).build();
-        return serveFormFile(app.getFormData(), fieldId);
+        return FileStorageUtil.serveFormFile(app.getFormData(), fieldId);
     }
 
     /** Serve a file uploaded into a dynamic form field for a claim */
@@ -304,32 +304,7 @@ public class AgentController {
         Claim claim = claimRepo.findById(id).orElseThrow();
         if (claim.getAgent() == null || !claim.getAgent().getId().equals(agent.getId()))
             return ResponseEntity.status(403).build();
-        return serveFormFile(claim.getFormData(), fieldId);
-    }
-
-    private ResponseEntity<?> streamFile(String path) {
-        File file = new File(path);
-        if (!file.exists()) return ResponseEntity.notFound().build();
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(FileStorageUtil.contentTypeFor(path)))
-                .body(new FileSystemResource(file));
-    }
-
-    @SuppressWarnings("unchecked")
-    private ResponseEntity<?> serveFormFile(String formDataJson, String fieldId) {
-        if (formDataJson == null) return ResponseEntity.notFound().build();
-        try {
-            Map<String, Object> data = new com.fasterxml.jackson.databind.ObjectMapper().readValue(formDataJson, Map.class);
-            Object val = data.get(fieldId);
-            if (val == null) return ResponseEntity.notFound().build();
-            File file = new File(val.toString());
-            if (!file.exists()) return ResponseEntity.notFound().build();
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(FileStorageUtil.contentTypeFor(val.toString())))
-                    .body(new FileSystemResource(file));
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
+        return FileStorageUtil.serveFormFile(claim.getFormData(), fieldId);
     }
 
     @GetMapping("/notifications")

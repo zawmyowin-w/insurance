@@ -461,7 +461,7 @@ public class AdminController {
     @Transactional(readOnly = true)
     public ResponseEntity<?> getApplicationFormFile(@PathVariable Long id, @PathVariable String fieldId) {
         PolicyApplication app = appRepo.findById(id).orElseThrow();
-        return serveFormFile(app.getFormData(), fieldId);
+        return FileStorageUtil.serveFormFile(app.getFormData(), fieldId);
     }
 
     /** Serve a file uploaded into a dynamic form field for a claim */
@@ -469,27 +469,10 @@ public class AdminController {
     @Transactional(readOnly = true)
     public ResponseEntity<?> getClaimFormFile(@PathVariable Long id, @PathVariable String fieldId) {
         Claim claim = claimRepo.findById(id).orElseThrow();
-        return serveFormFile(claim.getFormData(), fieldId);
+        return FileStorageUtil.serveFormFile(claim.getFormData(), fieldId);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────
-    @SuppressWarnings("unchecked")
-    private ResponseEntity<?> serveFormFile(String formDataJson, String fieldId) {
-        if (formDataJson == null) return ResponseEntity.notFound().build();
-        try {
-            Map<String, Object> data = new ObjectMapper().readValue(formDataJson, Map.class);
-            Object val = data.get(fieldId);
-            if (val == null) return ResponseEntity.notFound().build();
-            File file = new File(val.toString());
-            if (!file.exists()) return ResponseEntity.notFound().build();
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(FileStorageUtil.contentTypeFor(val.toString())))
-                    .body(new FileSystemResource(file));
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
-    }
-
     private void sendNotification(User recipient, String title, String message, NotificationType type) {
         notifRepo.save(Notification.builder()
                 .recipient(recipient).title(title).message(message).type(type).build());

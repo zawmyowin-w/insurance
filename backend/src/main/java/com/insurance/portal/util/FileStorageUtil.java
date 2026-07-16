@@ -1,6 +1,9 @@
 package com.insurance.portal.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -105,5 +108,31 @@ public final class FileStorageUtil {
         if (lower.endsWith(".gif")) return "image/gif";
         if (lower.endsWith(".pdf")) return "application/pdf";
         return "application/octet-stream";
+    }
+
+    /** Streams a file from disk as an HTTP response. Returns 404 if the file does not exist. */
+    public static ResponseEntity<?> streamFile(String path) {
+        File file = new File(path);
+        if (!file.exists()) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(contentTypeFor(path)))
+                .body(new FileSystemResource(file));
+    }
+
+    /**
+     * Serves a single file whose path is stored inside a dynamic form-data JSON string.
+     * formDataJson: JSON object where fieldId maps to a file path on disk.
+     */
+    @SuppressWarnings("unchecked")
+    public static ResponseEntity<?> serveFormFile(String formDataJson, String fieldId) {
+        if (formDataJson == null) return ResponseEntity.notFound().build();
+        try {
+            Map<String, Object> data = new ObjectMapper().readValue(formDataJson, Map.class);
+            Object val = data.get(fieldId);
+            if (val == null) return ResponseEntity.notFound().build();
+            return streamFile(val.toString());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 }

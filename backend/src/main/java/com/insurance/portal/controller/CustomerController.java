@@ -439,7 +439,7 @@ public class CustomerController {
         User user = getUser(principal);
         PolicyApplication app = appRepo.findById(id).orElseThrow();
         if (!app.getCustomer().getId().equals(user.getId())) return ResponseEntity.status(403).build();
-        return serveFormFile(app.getFormData(), fieldId);
+        return FileStorageUtil.serveFormFile(app.getFormData(), fieldId);
     }
 
     @GetMapping("/claims/{id}/form-file/{fieldId}")
@@ -449,7 +449,7 @@ public class CustomerController {
         User user = getUser(principal);
         Claim claim = claimRepo.findById(id).orElseThrow();
         if (!claim.getCustomer().getId().equals(user.getId())) return ResponseEntity.status(403).build();
-        return serveFormFile(claim.getFormData(), fieldId);
+        return FileStorageUtil.serveFormFile(claim.getFormData(), fieldId);
     }
 
     // ── Notifications ────────────────────────────────────────────────
@@ -466,22 +466,6 @@ public class CustomerController {
     }
 
     // ── Helper methods ───────────────────────────────────────────────
-    @SuppressWarnings("unchecked")
-    private ResponseEntity<?> serveFormFile(String formDataJson, String fieldId) {
-        if (formDataJson == null) return ResponseEntity.notFound().build();
-        try {
-            Map<String, Object> data = new ObjectMapper().readValue(formDataJson, Map.class);
-            Object val = data.get(fieldId);
-            if (val == null) return ResponseEntity.notFound().build();
-            File file = new File(val.toString());
-            if (!file.exists()) return ResponseEntity.notFound().build();
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(FileStorageUtil.contentTypeFor(val.toString())))
-                    .body(new FileSystemResource(file));
-        } catch (Exception e) {
-            return ResponseEntity.internalServerError().build();
-        }
-    }
 
     /**
      * Replaces placeholder values in formData JSON for file upload fields.
