@@ -113,12 +113,12 @@ export default function RegisterPage() {
                 style={emailTouched && !emailValid ? { borderColor: '#ef4444' } : undefined} />
               {emailTouched && !emailValid && (
                 <div style={{
-                  display: 'flex', alignItems: 'flex-start', gap: '0.5rem',
-                  marginTop: '0.45rem', padding: '0.6rem 0.85rem',
+                  display: 'flex', alignItems: 'center', gap: '0.35rem',
+                  marginTop: '0.3rem', padding: '0.3rem 0.6rem',
                   background: '#fef2f2', border: '1px solid #fca5a5',
-                  borderRadius: 8, fontSize: '0.8rem', color: '#b91c1c', lineHeight: 1.45
+                  borderRadius: 6, fontSize: '0.75rem', color: '#b91c1c'
                 }}>
-                  <i className="bi bi-exclamation-circle-fill" style={{ flexShrink: 0, marginTop: '0.1rem', fontSize: '0.9rem' }}></i>
+                  <i className="bi bi-exclamation-circle-fill" style={{ flexShrink: 0, fontSize: '0.75rem' }}></i>
                   <span>{EMAIL_ERROR[lang]}</span>
                 </div>
               )}
