@@ -25,18 +25,22 @@ export default function Navbar() {
     : user?.role === 'AGENT' ? '/agent/dashboard'
     : '/customer/dashboard'
 
-  // Contact link is only shown to unauthenticated users and customers
-  const showContact = !user || user.role === 'CUSTOMER'
-  const publicLinks = [
-    { to: '/plans', label: t('nav.plans') },
-    { to: '/how-it-works', label: t('nav.howItWorks') },
-    ...(showContact ? [{ to: '/contact', label: t('nav.contact') }] : []),
-  ]
-
-  const authLinks = user ? [
-    { to: `${dashboardPath.replace('/dashboard','/applications')}`, label: t('nav.applications'), roles: ['CUSTOMER'] },
-    { to: `${dashboardPath.replace('/dashboard','/claims')}`, label: t('nav.claims'), roles: ['CUSTOMER'] },
-  ] : []
+  // Nav links ordered by role:
+  // Guest/non-customer: Plans, How It Works, Contact
+  // Customer: Plans, How It Works, Applications, Claims, Contact
+  const navLinks = user?.role === 'CUSTOMER'
+    ? [
+        { to: '/plans', label: t('nav.plans') },
+        { to: '/how-it-works', label: t('nav.howItWorks') },
+        { to: '/customer/applications', label: t('nav.applications') },
+        { to: '/customer/claims', label: t('nav.claims') },
+        { to: '/contact', label: t('nav.contact') },
+      ]
+    : [
+        { to: '/plans', label: t('nav.plans') },
+        { to: '/how-it-works', label: t('nav.howItWorks') },
+        ...(!user ? [{ to: '/contact', label: t('nav.contact') }] : []),
+      ]
 
   return (
     <nav className="navbar-custom">
@@ -55,24 +59,12 @@ export default function Navbar() {
 
           {/* Center nav links – desktop */}
           <div className="d-none d-lg-flex align-items-center gap-1">
-            {publicLinks.map(link => (
+            {navLinks.map(link => (
               <NavLink key={link.to} to={link.to} className={({ isActive }) =>
                 `navbar-nav-link ${isActive ? 'active' : ''}`}>
                 {link.label}
               </NavLink>
             ))}
-            {user && user.role === 'CUSTOMER' && (
-              <>
-                <NavLink to="/customer/applications" className={({ isActive }) =>
-                  `navbar-nav-link ${isActive ? 'active' : ''}`}>
-                  {t('nav.applications')}
-                </NavLink>
-                <NavLink to="/customer/claims" className={({ isActive }) =>
-                  `navbar-nav-link ${isActive ? 'active' : ''}`}>
-                  {t('nav.claims')}
-                </NavLink>
-              </>
-            )}
           </div>
 
           {/* Right controls */}
@@ -158,23 +150,13 @@ export default function Navbar() {
         {menuOpen && (
           <div className="d-lg-none mt-2 pb-2 border-top" style={{ borderColor: 'var(--border)' }}>
             <div className="d-flex flex-column gap-1 pt-2">
-              {publicLinks.map(link => (
+              {navLinks.map(link => (
                 <NavLink key={link.to} to={link.to}
                   className={({ isActive }) => `navbar-nav-link ${isActive ? 'active' : ''}`}
                   onClick={() => setMenuOpen(false)}>
                   {link.label}
                 </NavLink>
               ))}
-              {user && user.role === 'CUSTOMER' && (
-                <>
-                  <NavLink to="/customer/applications" className="navbar-nav-link" onClick={() => setMenuOpen(false)}>
-                    {t('nav.applications')}
-                  </NavLink>
-                  <NavLink to="/customer/claims" className="navbar-nav-link" onClick={() => setMenuOpen(false)}>
-                    {t('nav.claims')}
-                  </NavLink>
-                </>
-              )}
               {!user && (
                 <div className="d-flex gap-2 mt-1">
                   <Link to="/login" className="btn-login" onClick={() => setMenuOpen(false)}>
