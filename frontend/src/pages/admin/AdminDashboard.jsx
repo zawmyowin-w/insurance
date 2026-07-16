@@ -20,10 +20,10 @@ export default function AdminDashboard() {
   }, [])
 
   const statCards = [
-    { label: 'Total Customers', value: stats.totalCustomers, icon: 'bi-people', color: '#1d4ed8', bg: '#eff6ff', link: '/admin/users' },
-    { label: 'Total Agents', value: stats.totalAgents, icon: 'bi-person-badge', color: '#9333ea', bg: '#faf5ff', link: '/admin/users' },
-    { label: 'Pending Applications', value: stats.pendingApplications, icon: 'bi-file-earmark-text', color: '#f59e0b', bg: '#fefce8', link: '/admin/applications' },
-    { label: 'Pending Claims', value: stats.pendingClaims, icon: 'bi-file-earmark-medical', color: '#dc2626', bg: '#fff0f0', link: '/admin/claims' },
+    { label: 'Total Customers', value: stats.totalCustomers, icon: 'bi-people', color: '#1d4ed8', bg: '#eff6ff', link: '/admin/users?tab=CUSTOMER' },
+    { label: 'Total Agents', value: stats.totalAgents, icon: 'bi-person-badge', color: '#9333ea', bg: '#faf5ff', link: '/admin/users?tab=AGENT' },
+    { label: 'Pending Applications', value: stats.pendingApplications, icon: 'bi-file-earmark-text', color: '#f59e0b', bg: '#fefce8', link: '/admin/applications?filter=PENDING' },
+    { label: 'Pending Claims', value: stats.pendingClaims, icon: 'bi-file-earmark-medical', color: '#dc2626', bg: '#fff0f0', link: '/admin/claims?filter=PENDING' },
     { label: 'Insurance Packages', value: stats.totalPackages, icon: 'bi-box-seam', color: '#16a34a', bg: '#f0fdf4', link: '/admin/packages' },
     { label: 'Monthly Revenue (MMK)', value: stats.monthlyRevenue ? Number(stats.monthlyRevenue).toLocaleString() : '0', icon: 'bi-cash-coin', color: '#0891b2', bg: '#ecfeff', link: '#' },
   ]

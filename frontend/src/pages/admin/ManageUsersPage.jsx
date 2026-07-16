@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import ProfileAvatar from '../../components/ProfileAvatar'
@@ -12,9 +13,13 @@ const EMPTY_EDIT = { name: '', email: '', phone: '', address: '', insuranceType:
 const PAGE_SIZE = 10
 
 export default function ManageUsersPage() {
+  const [searchParams] = useSearchParams()
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('CUSTOMER')
+  const [activeTab, setActiveTab] = useState(() => {
+    const t = searchParams.get('tab')
+    return t && ['CUSTOMER', 'AGENT', 'ADMIN'].includes(t) ? t : 'CUSTOMER'
+  })
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [showCreatePanel, setShowCreatePanel] = useState(false)

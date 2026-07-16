@@ -1,12 +1,17 @@
 import React, { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import FormDetailModal from '../../components/FormDetailModal'
 
 export default function AdminClaimsPage() {
+  const [searchParams] = useSearchParams()
   const [claims, setClaims] = useState([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState('VERIFIED')
+  const [filter, setFilter] = useState(() => {
+    const f = searchParams.get('filter')
+    return f && ['ALL','PENDING','VERIFIED','APPROVED','REJECTED'].includes(f) ? f : 'VERIFIED'
+  })
   const [selected, setSelected] = useState(null)
   const [actionNote, setActionNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
