@@ -17,7 +17,7 @@ const validate = (form) => {
     errs.email = 'Email must start with a lowercase letter — it cannot begin with a capital letter, number, or special character.'
 
   if (form.phone.trim() && !/^\+95\d{7,10}$/.test(form.phone.trim()))
-    errs.phone = 'Phone must start with +95 followed by 7–10 digits.'
+    errs.phone = 'Phone number must start with +95 followed by 7 to 10 digits (e.g. +959xxxxxxxx).'
 
   if (!form.subject.trim()) errs.subject = 'Subject is required.'
   else if (form.subject.trim().length < 3) errs.subject = 'Subject must be at least 3 characters.'
