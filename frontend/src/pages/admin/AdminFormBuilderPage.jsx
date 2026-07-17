@@ -5,14 +5,17 @@ import { toast } from 'react-toastify'
 
 const FORM_TYPES = ['APPLICATION', 'CLAIM']
 const FIELD_TYPES = [
-  { value: 'LABEL',        label: 'Section Label',  icon: 'bi-type-h2',             desc: 'Static header text' },
-  { value: 'TEXT',         label: 'Text Box',        icon: 'bi-input-cursor-text',   desc: 'Single-line input' },
-  { value: 'TEXTAREA',     label: 'Text Area',       icon: 'bi-textarea-t',          desc: 'Multi-line input' },
-  { value: 'DATE',         label: 'Date Picker',     icon: 'bi-calendar-date',       desc: 'Date selection' },
-  { value: 'NRC',          label: 'NRC Number',      icon: 'bi-person-vcard',        desc: 'Myanmar NRC format' },
-  { value: 'CHECKBOX',     label: 'Checkbox',        icon: 'bi-check2-square',       desc: 'Checkbox options' },
-  { value: 'IMAGE_UPLOAD', label: 'Image Upload',    icon: 'bi-image',               desc: 'JPG/PNG upload' },
-  { value: 'PDF_UPLOAD',   label: 'File Upload',     icon: 'bi-file-earmark-pdf',    desc: 'PDF/document upload' },
+  { value: 'LABEL',        label: 'Section Label',   icon: 'bi-type-h2',             desc: 'Static header text' },
+  { value: 'NAME',         label: 'Name (Auto)',      icon: 'bi-person-fill',         desc: 'Auto-filled from profile — read-only' },
+  { value: 'EMAIL',        label: 'Email (Auto)',     icon: 'bi-envelope-fill',       desc: 'Auto-filled from profile — read-only' },
+  { value: 'PHONE',        label: 'Phone (Auto)',     icon: 'bi-telephone-fill',      desc: 'Auto-filled from profile — read-only' },
+  { value: 'TEXT',         label: 'Text Box',         icon: 'bi-input-cursor-text',   desc: 'Single-line input' },
+  { value: 'TEXTAREA',     label: 'Text Area',        icon: 'bi-textarea-t',          desc: 'Multi-line input' },
+  { value: 'DATE',         label: 'Date Picker',      icon: 'bi-calendar-date',       desc: 'Date selection' },
+  { value: 'NRC',          label: 'NRC Number',       icon: 'bi-person-vcard',        desc: 'Myanmar NRC format' },
+  { value: 'CHECKBOX',     label: 'Checkbox',         icon: 'bi-check2-square',       desc: 'Checkbox options' },
+  { value: 'IMAGE_UPLOAD', label: 'Image Upload',     icon: 'bi-image',               desc: 'JPG/PNG upload' },
+  { value: 'PDF_UPLOAD',   label: 'File Upload',      icon: 'bi-file-earmark-pdf',    desc: 'PDF/document upload' },
 ]
 
 // System fields always auto-injected — shown as info in the builder

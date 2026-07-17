@@ -64,14 +64,13 @@ export default function ApplyPolicyPage() {
       .then(res => {
         const tmpl = res.data
         setTemplate(tmpl)
-        // Auto-fill name / email fields from user profile
+        // Auto-fill NAME / EMAIL / PHONE fields from user profile
         if (tmpl?.fields && user) {
           const prefill = {}
           tmpl.fields.forEach(f => {
-            if (f.fieldType !== 'TEXT') return
-            const lbl = (f.fieldLabel || '').toLowerCase()
-            if (lbl.includes('name') || lbl.includes('အမည်')) prefill[String(f.id)] = user.name || ''
-            else if (lbl.includes('email') || lbl.includes('အီးမေးလ်')) prefill[String(f.id)] = user.email || ''
+            if (f.fieldType === 'NAME')  prefill[String(f.id)] = user.name  || ''
+            if (f.fieldType === 'EMAIL') prefill[String(f.id)] = user.email || ''
+            if (f.fieldType === 'PHONE') prefill[String(f.id)] = user.phone || ''
           })
           if (Object.keys(prefill).length > 0) setFieldValues(prefill)
         }
@@ -433,15 +432,6 @@ function ReviewRow({ label, value }) {
   )
 }
 
-// Returns { isName, isEmail } for auto-fill detection based on label
-function detectAutoFill(label = '') {
-  const l = label.toLowerCase()
-  return {
-    isName:  l.includes('name')  || l.includes('အမည်'),
-    isEmail: l.includes('email') || l.includes('အီးမေးလ်'),
-  }
-}
-
 function DynamicFormFields({ fields, fieldValues, fieldFiles, onValue, onFile, onCheckboxOption, user }) {
   if (!fields || fields.length === 0) return null
   return (
@@ -472,9 +462,7 @@ function DynamicField({ field, value, file, onValue, onFile, onCheckboxOption, u
     )
   }
 
-  // Auto-fill detection for TEXT fields
-  const { isName, isEmail } = field.fieldType === 'TEXT' ? detectAutoFill(field.fieldLabel) : {}
-  const isAutoFilled = isName || isEmail
+  const isAutoFilled = field.fieldType === 'NAME' || field.fieldType === 'EMAIL' || field.fieldType === 'PHONE'
 
   let options = []
   if (field.fieldType === 'CHECKBOX' && field.fieldOptions) {
@@ -492,12 +480,12 @@ function DynamicField({ field, value, file, onValue, onFile, onCheckboxOption, u
           </span>
         )}
       </label>
-      {field.fieldType === 'TEXT' && isAutoFilled && (
+      {isAutoFilled && (
         <input className="form-control-custom w-100" value={value || ''}
           readOnly
           style={{ background: '#f0fdf4', borderColor: '#86efac', color: 'var(--text-primary)', cursor: 'not-allowed' }} />
       )}
-      {field.fieldType === 'TEXT' && !isAutoFilled && (
+      {field.fieldType === 'TEXT' && (
         <input className="form-control-custom w-100" value={value || ''}
           onChange={e => onValue(e.target.value)} />
       )}
