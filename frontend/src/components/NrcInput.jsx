@@ -127,9 +127,20 @@ export default function NrcInput({ value, onChange, required, readOnly }) {
 
 function parseNrc(str) {
   if (!str) return { state: '', township: '', type: '', digits: '' }
-  // Try to parse "StateNo/Township(Type)Digits"
-  const m = str.match(/^(\d+)\/(.+)\(([NEPT])\)(.*)$/)
-  if (m) return { state: m[1], township: m[2], type: m[3], digits: m[4] }
+
+  // Full: "13/မြို့နယ်(N)123456"  or  "13/မြို့နယ်(N)"
+  // Use [^(]* so greedy match doesn't eat the "(N)" part
+  const full = str.match(/^(\d+)\/([^(]*)\(([NEPT])\)(.*)$/)
+  if (full) return { state: full[1], township: full[2], type: full[3], digits: full[4] }
+
+  // State + township only: "13/မြို့နယ်"  (no type yet)
+  const partial2 = str.match(/^(\d+)\/([^(]+)$/)
+  if (partial2) return { state: partial2[1], township: partial2[2], type: '', digits: '' }
+
+  // State only: "13/"
+  const partial1 = str.match(/^(\d+)\/$/)
+  if (partial1) return { state: partial1[1], township: '', type: '', digits: '' }
+
   return { state: '', township: '', type: '', digits: '' }
 }
 
