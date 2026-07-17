@@ -8,9 +8,19 @@ const FIELD_TYPES = [
   { value: 'LABEL',        label: 'Section Label',  icon: 'bi-type-h2',             desc: 'Static header text' },
   { value: 'TEXT',         label: 'Text Box',        icon: 'bi-input-cursor-text',   desc: 'Single-line input' },
   { value: 'TEXTAREA',     label: 'Text Area',       icon: 'bi-textarea-t',          desc: 'Multi-line input' },
+  { value: 'DATE',         label: 'Date Picker',     icon: 'bi-calendar-date',       desc: 'Date selection' },
+  { value: 'NRC',          label: 'NRC Number',      icon: 'bi-person-vcard',        desc: 'Myanmar NRC format' },
   { value: 'CHECKBOX',     label: 'Checkbox',        icon: 'bi-check2-square',       desc: 'Checkbox options' },
   { value: 'IMAGE_UPLOAD', label: 'Image Upload',    icon: 'bi-image',               desc: 'JPG/PNG upload' },
   { value: 'PDF_UPLOAD',   label: 'File Upload',     icon: 'bi-file-earmark-pdf',    desc: 'PDF/document upload' },
+]
+
+// System fields always auto-injected — shown as info in the builder
+const SYSTEM_FIELDS_INFO = [
+  { icon: 'bi-person-fill',     label: 'အမည် (Full Name)',                note: 'ပရိုဖိုင်မှ အလိုအလျောက် — read-only' },
+  { icon: 'bi-envelope-fill',   label: 'အီးမေးလ် (Email)',               note: 'ပရိုဖိုင်မှ အလိုအလျောက် — read-only' },
+  { icon: 'bi-calendar-heart',  label: 'မွေးသက္ကရာဇ် (Date of Birth)',   note: 'Customer ဖြည့်ရသည် — date picker' },
+  { icon: 'bi-person-vcard',    label: 'မှတ်ပုံတင် (NRC No.)',           note: 'Customer ဖြည့်ရသည် — Myanmar format' },
 ]
 const formTypeMeta = {
   APPLICATION: { bg: '#dbeafe', color: '#1d4ed8', label: 'Application Form' },
@@ -274,6 +284,23 @@ export default function AdminFormBuilderPage() {
                 <button onClick={closePanel} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.1rem' }}>
                   <i className="bi bi-x-lg"></i>
                 </button>
+              </div>
+
+              {/* System fields notice */}
+              <div style={{ marginBottom: '1rem', padding: '0.75rem 1rem', borderRadius: 10, background: '#eff6ff', border: '1px solid #bfdbfe' }}>
+                <div style={{ fontWeight: 700, fontSize: '0.82rem', color: '#1d4ed8', marginBottom: '0.5rem' }}>
+                  <i className="bi bi-shield-lock-fill me-2"></i>
+                  မဖြစ်မနေပါဝင်သော System Fields (အလိုအလျောက်ထည့်သည်)
+                </div>
+                <div className="d-flex flex-column gap-1">
+                  {SYSTEM_FIELDS_INFO.map((f, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.8rem', color: '#1e40af' }}>
+                      <i className={`bi ${f.icon}`} style={{ width: 16, flexShrink: 0 }}></i>
+                      <span style={{ fontWeight: 600 }}>{f.label}</span>
+                      <span style={{ color: '#3b82f6', fontWeight: 400 }}>— {f.note}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <form onSubmit={handleSave}>

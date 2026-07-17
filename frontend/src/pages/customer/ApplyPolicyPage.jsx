@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
+import SystemFormFields from '../../components/SystemFormFields'
+import NrcInput from '../../components/NrcInput'
 
 const ALL_TYPES = ['LIFE', 'HEALTH', 'VEHICLE', 'PROPERTY']
 const TYPE_META = {
@@ -31,6 +33,10 @@ export default function ApplyPolicyPage() {
   const [coverage, setCoverage] = useState('')
   const [duration, setDuration] = useState(1)
   const [notes, setNotes] = useState('')
+
+  // System mandatory fields (always present regardless of template)
+  const [systemValues, setSystemValues] = useState({ __dob: '', __nrc: '' })
+  const handleSystemChange = (key, val) => setSystemValues(v => ({ ...v, [key]: val }))
 
   // Dynamic form state
   const [template, setTemplate] = useState(null)
@@ -91,6 +97,9 @@ export default function ApplyPolicyPage() {
     if (selectedPlan && Number(coverage) > Number(selectedPlan.coverageMax)) {
       toast.error(`Coverage cannot exceed ${Number(selectedPlan.coverageMax).toLocaleString()} MMK`); return false
     }
+    // Validate system mandatory fields
+    if (!systemValues.__dob) { toast.error('မွေးသက္ကရာဇ် (Date of Birth) ဖြည့်ပေးပါ'); return false }
+    if (!systemValues.__nrc || systemValues.__nrc.length < 5) { toast.error('မှတ်ပုံတင်အမှတ် (NRC No.) ဖြည့်ပေးပါ'); return false }
     if (template?.fields) {
       for (const field of template.fields) {
         if (field.fieldType === 'LABEL' || !field.required) continue
@@ -119,12 +128,21 @@ export default function ApplyPolicyPage() {
         formDataObj[k] = Array.isArray(v) ? JSON.stringify(v) : v
       })
 
+      // Merge system fields into formData
+      const mergedFormData = {
+        __name: user?.name || '',
+        __email: user?.email || '',
+        __dob: systemValues.__dob,
+        __nrc: systemValues.__nrc,
+        ...formDataObj,
+      }
+
       const fd = new FormData()
       fd.append('packageId', selectedPlan.id)
       fd.append('coverageAmount', coverage)
       fd.append('duration', duration)
       fd.append('notes', notes)
-      fd.append('formData', JSON.stringify(formDataObj))
+      fd.append('formData', JSON.stringify(mergedFormData))
 
       // Append file fields
       Object.entries(fieldFiles).forEach(([fieldId, file]) => {
@@ -272,6 +290,15 @@ export default function ApplyPolicyPage() {
                 </div>
               </div>
 
+              {/* System mandatory fields — always shown */}
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '0.5rem' }}>
+                <SystemFormFields
+                  user={user}
+                  values={systemValues}
+                  onChange={handleSystemChange}
+                />
+              </div>
+
               {/* Dynamic form fields */}
               {templateLoading && (
                 <div className="text-center py-3">
@@ -371,6 +398,15 @@ export default function ApplyPolicyPage() {
               <ReviewRow label="Duration" value={duration + ' year(s)'} />
               <ReviewRow label="Est. Premium" value={premium ? Number(premium).toLocaleString() + ' MMK' : '—'} />
               {notes && <ReviewRow label="Notes" value={notes} />}
+
+              {/* System fields summary */}
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: '0.75rem', marginTop: '0.75rem' }}>
+                <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Personal Information</div>
+                <ReviewRow label="အမည်" value={user?.name} />
+                <ReviewRow label="အီးမေးလ်" value={user?.email} />
+                <ReviewRow label="မွေးသက္ကရာဇ်" value={systemValues.__dob} />
+                <ReviewRow label="မှတ်ပုံတင်" value={systemValues.__nrc} />
+              </div>
 
               {/* Dynamic form summary */}
               {template?.fields && template.fields.filter(f => f.fieldType !== 'LABEL').length > 0 && (
@@ -498,6 +534,15 @@ function DynamicField({ field, value, file, onValue, onFile, onCheckboxOption })
             </label>
           ))}
         </div>
+      )}
+      {field.fieldType === 'DATE' && (
+        <input type="date" className="form-control-custom w-100"
+          value={value || ''} required={field.required}
+          max={new Date().toISOString().split('T')[0]}
+          onChange={e => onValue(e.target.value)} />
+      )}
+      {field.fieldType === 'NRC' && (
+        <NrcInput value={value || ''} required={field.required} onChange={onValue} />
       )}
       {field.fieldType === 'IMAGE_UPLOAD' && (
         <input type="file" accept=".jpg,.jpeg,.png,.webp" className="form-control-custom w-100"

@@ -108,6 +108,22 @@ export default function FormDetailModal({ show, onClose, type, item, role }) {
           {/* Meta info */}
           <MetaSection type={type} item={item} />
 
+          {/* System fields (always shown if present in formData) */}
+          {(formData.__name || formData.__email || formData.__dob || formData.__nrc) && (
+            <div style={{ marginBottom: '1rem' }}>
+              <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
+                <i className="bi bi-person-fill me-1"></i>Personal Information
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                {formData.__name  && <SystemFieldRow label="အမည် (Full Name)"              value={formData.__name} />}
+                {formData.__email && <SystemFieldRow label="အီးမေးလ် (Email)"              value={formData.__email} />}
+                {formData.__dob   && <SystemFieldRow label="မွေးသက္ကရာဇ် (Date of Birth)"  value={formData.__dob} />}
+                {formData.__nrc   && <SystemFieldRow label="မှတ်ပုံတင် (NRC No.)"          value={formData.__nrc} />}
+              </div>
+              <div style={{ borderTop: '1px solid var(--border)', marginTop: '0.75rem' }}></div>
+            </div>
+          )}
+
           {/* Dynamic form fields */}
           {loading ? (
             <div className="text-center py-4">
@@ -136,6 +152,19 @@ export default function FormDetailModal({ show, onClose, type, item, role }) {
           <NotesSection item={item} type={type} />
         </div>
       </div>
+    </div>
+  )
+}
+
+function SystemFieldRow({ label, value }) {
+  return (
+    <div style={{
+      display: 'grid', gridTemplateColumns: '180px 1fr', gap: '0.5rem',
+      padding: '0.45rem 0.75rem', borderRadius: 8,
+      background: '#f0fdf4', border: '1px solid #86efac', alignItems: 'start'
+    }}>
+      <div style={{ fontSize: '0.78rem', color: '#15803d', fontWeight: 600 }}>{label}</div>
+      <div style={{ fontSize: '0.87rem', color: 'var(--text-primary)' }}>{value || '—'}</div>
     </div>
   )
 }

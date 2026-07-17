@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
+import SystemFormFields from '../../components/SystemFormFields'
+import NrcInput from '../../components/NrcInput'
 
 const CLAIM_TYPES = ['Accident', 'Hospitalization', 'Death Benefit', 'Property Damage', 'Vehicle Damage', 'Critical Illness', 'Other']
 
@@ -15,6 +18,11 @@ export default function SubmitClaimPage() {
   const [fieldValues, setFieldValues] = useState({})  // fieldId -> value
   const [fieldFiles, setFieldFiles] = useState({})     // fieldId -> File
   const [loading, setLoading] = useState(false)
+  const { user } = useAuth()
+
+  // System mandatory fields
+  const [systemValues, setSystemValues] = useState({ __dob: '', __nrc: '' })
+  const handleSystemChange = (key, val) => setSystemValues(v => ({ ...v, [key]: val }))
 
   useEffect(() => {
     Promise.all([
@@ -60,6 +68,10 @@ export default function SubmitClaimPage() {
     e.preventDefault()
     if (!form.applicationId) { toast.error('Please select a policy'); return }
 
+    // Validate system mandatory fields
+    if (!systemValues.__dob) { toast.error('မွေးသက္ကရာဇ် (Date of Birth) ဖြည့်ပေးပါ'); return }
+    if (!systemValues.__nrc || systemValues.__nrc.length < 5) { toast.error('မှတ်ပုံတင်အမှတ် (NRC No.) ဖြည့်ပေးပါ'); return }
+
     // Validate required fields
     if (claimTemplate?.fields) {
       for (const field of claimTemplate.fields) {
@@ -81,7 +93,12 @@ export default function SubmitClaimPage() {
     setLoading(true)
     try {
       // Build formData JSON (non-file values)
-      const formDataObj = {}
+      const formDataObj = {
+        __name: user?.name || '',
+        __email: user?.email || '',
+        __dob: systemValues.__dob,
+        __nrc: systemValues.__nrc,
+      }
       Object.entries(fieldValues).forEach(([k, v]) => {
         formDataObj[k] = Array.isArray(v) ? JSON.stringify(v) : v
       })
@@ -140,6 +157,15 @@ export default function SubmitClaimPage() {
                   <small style={{ color: 'var(--danger)', fontSize: '0.8rem' }}>All policies already have a claim. Only one claim per policy.</small>
                 )}
               </div>
+
+              {/* System mandatory fields — always shown when a policy is selected */}
+              {form.applicationId && (
+                <SystemFormFields
+                  user={user}
+                  values={systemValues}
+                  onChange={handleSystemChange}
+                />
+              )}
 
               {/* Template loading */}
               {templateLoading && (
@@ -295,6 +321,15 @@ function DynamicField({ field, value, file, onValue, onFile, onCheckboxOption })
             </label>
           ))}
         </div>
+      )}
+      {field.fieldType === 'DATE' && (
+        <input type="date" className="form-control-custom w-100"
+          value={value || ''} required={field.required}
+          max={new Date().toISOString().split('T')[0]}
+          onChange={e => onValue(e.target.value)} />
+      )}
+      {field.fieldType === 'NRC' && (
+        <NrcInput value={value || ''} required={field.required} onChange={onValue} />
       )}
       {field.fieldType === 'IMAGE_UPLOAD' && (
         <input type="file" accept=".jpg,.jpeg,.png,.webp" className="form-control-custom w-100"
