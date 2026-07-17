@@ -2,11 +2,11 @@ import React from 'react'
 import NrcInput from './NrcInput'
 
 /**
- * System-mandatory fields always prepended to every application/claim form.
+ * System fields always prepended to every application/claim form.
  * - Name:  auto-filled from user profile, read-only
  * - Email: auto-filled from user profile, read-only
- * - Date of Birth: date picker, customer must fill
- * - NRC No: Myanmar format, customer must fill
+ * - Date of Birth: date picker, optional
+ * - NRC No: Myanmar format, optional
  *
  * Props:
  *   user        {object}   - auth user object { name, email }
@@ -31,14 +31,13 @@ export default function SystemFormFields({ user, values = {}, onChange, readOnly
       }}>
         <i className="bi bi-person-fill me-1" style={{ color: 'var(--primary)' }}></i>
         Personal Information
-        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 400, marginLeft: 4 }}>(မဖြစ်မနေဖြည့်ရမည့် အချက်အလက်များ)</span>
       </div>
 
       <div className="row g-3">
         {/* Name — read-only */}
         <div className="col-12 col-md-6">
           <label style={labelStyle}>
-            အမည် (Full Name) <span style={{ color: '#dc2626' }}>*</span>
+            အမည် (Full Name)
             <span style={{ fontSize: '0.7rem', color: '#16a34a', marginLeft: 6, fontWeight: 400 }}>
               <i className="bi bi-lock-fill me-1"></i>ပရိုဖိုင်မှ အလိုလျှောက်ထည့်သည်
             </span>
@@ -54,7 +53,7 @@ export default function SystemFormFields({ user, values = {}, onChange, readOnly
         {/* Email — read-only */}
         <div className="col-12 col-md-6">
           <label style={labelStyle}>
-            အီးမေးလ် (Email) <span style={{ color: '#dc2626' }}>*</span>
+            အီးမေးလ် (Email)
             <span style={{ fontSize: '0.7rem', color: '#16a34a', marginLeft: 6, fontWeight: 400 }}>
               <i className="bi bi-lock-fill me-1"></i>ပရိုဖိုင်မှ အလိုလျှောက်ထည့်သည်
             </span>
@@ -70,14 +69,13 @@ export default function SystemFormFields({ user, values = {}, onChange, readOnly
         {/* Date of Birth */}
         <div className="col-12 col-md-6">
           <label style={labelStyle}>
-            မွေးသက္ကရာဇ် (Date of Birth) <span style={{ color: '#dc2626' }}>*</span>
+            မွေးသက္ကရာဇ် (Date of Birth)
           </label>
           <input
             type="date"
             className="form-control-custom w-100"
             value={values.__dob || ''}
             readOnly={readOnly}
-            required={!readOnly}
             max={new Date().toISOString().split('T')[0]}
             style={readOnly ? inputStyle : undefined}
             onChange={readOnly ? undefined : e => onChange('__dob', e.target.value)}
@@ -92,7 +90,7 @@ export default function SystemFormFields({ user, values = {}, onChange, readOnly
         {/* NRC No */}
         <div className="col-12 col-md-6">
           <label style={labelStyle}>
-            မှတ်ပုံတင်အမှတ် (NRC No.) <span style={{ color: '#dc2626' }}>*</span>
+            မှတ်ပုံတင်အမှတ် (NRC No.)
           </label>
           {readOnly ? (
             <input
@@ -104,7 +102,6 @@ export default function SystemFormFields({ user, values = {}, onChange, readOnly
           ) : (
             <NrcInput
               value={values.__nrc || ''}
-              required
               onChange={val => onChange('__nrc', val)}
             />
           )}
