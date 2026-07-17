@@ -3,8 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 
-const INSURANCE_TYPES = ['LIFE', 'HEALTH', 'VEHICLE', 'PROPERTY']
-const EMPTY = { name: '', type: 'LIFE', description: '', coverageMin: '', coverageMax: '', premiumRate: '', durations: '1,2,3,5', benefits: '', eligibility: '', exclusions: '', policyTerm: '', active: true }
+const INSURANCE_TYPE_SUGGESTIONS = ['LIFE', 'HEALTH', 'VEHICLE', 'PROPERTY']
+const EMPTY = { name: '', type: '', description: '', coverageMin: '', coverageMax: '', premiumRate: '', durations: '1,2,3,5', benefits: '', eligibility: '', exclusions: '', policyTerm: '', active: true }
 
 export default function ManagePackagesPage() {
   const navigate = useNavigate()
@@ -127,9 +127,17 @@ export default function ManagePackagesPage() {
               </div>
               <div className="col-12 col-md-3">
                 <label className="form-label-custom">Type *</label>
-                <select name="type" required className="form-select-custom w-100" value={form.type} onChange={handleChange}>
-                  {INSURANCE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
+                <input
+                  name="type" required list="insurance-type-suggestions"
+                  className="form-control-custom w-100"
+                  placeholder="e.g. LIFE, HEALTH, VEHICLE…"
+                  value={form.type} onChange={handleChange}
+                  style={{ textTransform: 'uppercase' }}
+                  onBlur={e => setForm(f => ({ ...f, type: e.target.value.trim().toUpperCase() }))}
+                />
+                <datalist id="insurance-type-suggestions">
+                  {INSURANCE_TYPE_SUGGESTIONS.map(t => <option key={t} value={t} />)}
+                </datalist>
               </div>
               <div className="col-12 col-md-3">
                 <label className="form-label-custom">Premium Rate (%) *</label>

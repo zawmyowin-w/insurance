@@ -39,6 +39,17 @@ export default function ManageUsersPage() {
   const [editForm, setEditForm] = useState(EMPTY_EDIT)
   const [editPwdFocused, setEditPwdFocused] = useState(false)
   const [editSaving, setEditSaving] = useState(false)
+  const [insuranceTypes, setInsuranceTypes] = useState(['LIFE', 'HEALTH', 'VEHICLE', 'PROPERTY'])
+
+  const fetchInsuranceTypes = () => {
+    api.get('/admin/packages')
+      .then(res => {
+        const pkgs = Array.isArray(res.data) ? res.data : []
+        const types = [...new Set(pkgs.map(p => p.type).filter(Boolean))].sort()
+        if (types.length > 0) setInsuranceTypes(types)
+      })
+      .catch(() => {})
+  }
 
   const fetchUsers = () => {
     setLoading(true)
@@ -47,7 +58,7 @@ export default function ManageUsersPage() {
       .catch(() => setUsers([]))
       .finally(() => setLoading(false))
   }
-  useEffect(() => { fetchUsers() }, [])
+  useEffect(() => { fetchUsers(); fetchInsuranceTypes() }, [])
 
   const switchTab = (tab) => {
     setActiveTab(tab); setPage(1); setSearch(''); setShowCreatePanel(false)
@@ -220,7 +231,7 @@ export default function ManageUsersPage() {
                   <label className="form-label-custom">Insurance Type</label>
                   <select className="form-select-custom w-100" value={createForm.insuranceType}
                     onChange={e => setCreateForm(f => ({ ...f, insuranceType: e.target.value }))}>
-                    {['LIFE', 'HEALTH', 'VEHICLE', 'PROPERTY', 'ALL'].map(t => <option key={t} value={t}>{t}</option>)}
+                    {[...insuranceTypes, 'ALL'].map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
               )}
@@ -424,7 +435,7 @@ export default function ManageUsersPage() {
                     <label className="form-label-custom">Insurance Type</label>
                     <select className="form-select-custom w-100" value={editForm.insuranceType}
                       onChange={e => setEditForm(f => ({ ...f, insuranceType: e.target.value }))}>
-                      {['LIFE', 'HEALTH', 'VEHICLE', 'PROPERTY', 'ALL'].map(t => <option key={t} value={t}>{t}</option>)}
+                      {[...insuranceTypes, 'ALL'].map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
                   </div>
                 )}
