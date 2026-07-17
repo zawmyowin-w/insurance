@@ -97,24 +97,6 @@ export default function ApplyPolicyPage() {
     if (selectedPlan && Number(coverage) > Number(selectedPlan.coverageMax)) {
       toast.error(`Coverage cannot exceed ${Number(selectedPlan.coverageMax).toLocaleString()} MMK`); return false
     }
-    // Validate system mandatory fields
-    if (!systemValues.__dob) { toast.error('မွေးသက္ကရာဇ် (Date of Birth) ဖြည့်ပေးပါ'); return false }
-    if (!systemValues.__nrc || systemValues.__nrc.length < 5) { toast.error('မှတ်ပုံတင်အမှတ် (NRC No.) ဖြည့်ပေးပါ'); return false }
-    if (template?.fields) {
-      for (const field of template.fields) {
-        if (field.fieldType === 'LABEL' || !field.required) continue
-        const val = fieldValues[String(field.id)]
-        const file = fieldFiles[String(field.id)]
-        if ((field.fieldType === 'IMAGE_UPLOAD' || field.fieldType === 'PDF_UPLOAD') && !file) {
-          toast.error(`"${field.fieldLabel}" is required`); return false
-        }
-        if (field.fieldType !== 'IMAGE_UPLOAD' && field.fieldType !== 'PDF_UPLOAD') {
-          if (val === undefined || val === null || val === '' || (Array.isArray(val) && val.length === 0)) {
-            toast.error(`"${field.fieldLabel}" is required`); return false
-          }
-        }
-      }
-    }
     return true
   }
 
@@ -508,15 +490,15 @@ function DynamicField({ field, value, file, onValue, onFile, onCheckboxOption })
   return (
     <div>
       <label className="form-label-custom">
-        {field.fieldLabel} {field.required && <span style={{ color: '#dc2626' }}>*</span>}
+        {field.fieldLabel}
       </label>
       {field.fieldType === 'TEXT' && (
         <input className="form-control-custom w-100" value={value || ''}
-          required={field.required} onChange={e => onValue(e.target.value)} />
+          onChange={e => onValue(e.target.value)} />
       )}
       {field.fieldType === 'TEXTAREA' && (
         <textarea rows={3} className="form-control-custom w-100" style={{ resize: 'vertical' }}
-          value={value || ''} required={field.required} onChange={e => onValue(e.target.value)} />
+          value={value || ''} onChange={e => onValue(e.target.value)} />
       )}
       {field.fieldType === 'CHECKBOX' && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: 4 }}>
@@ -537,20 +519,20 @@ function DynamicField({ field, value, file, onValue, onFile, onCheckboxOption })
       )}
       {field.fieldType === 'DATE' && (
         <input type="date" className="form-control-custom w-100"
-          value={value || ''} required={field.required}
+          value={value || ''}
           max={new Date().toISOString().split('T')[0]}
           onChange={e => onValue(e.target.value)} />
       )}
       {field.fieldType === 'NRC' && (
-        <NrcInput value={value || ''} required={field.required} onChange={onValue} />
+        <NrcInput value={value || ''} onChange={onValue} />
       )}
       {field.fieldType === 'IMAGE_UPLOAD' && (
         <input type="file" accept=".jpg,.jpeg,.png,.webp" className="form-control-custom w-100"
-          required={field.required} onChange={e => onFile(e.target.files[0] || null)} />
+          onChange={e => onFile(e.target.files[0] || null)} />
       )}
       {field.fieldType === 'PDF_UPLOAD' && (
         <input type="file" accept=".pdf,.jpg,.jpeg,.png" className="form-control-custom w-100"
-          required={field.required} onChange={e => onFile(e.target.files[0] || null)} />
+          onChange={e => onFile(e.target.files[0] || null)} />
       )}
       {file && (
         <small style={{ color: '#16a34a', fontSize: '0.78rem', marginTop: 2, display: 'block' }}>✓ {file.name}</small>

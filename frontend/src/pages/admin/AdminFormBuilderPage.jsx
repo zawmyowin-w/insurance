@@ -286,23 +286,6 @@ export default function AdminFormBuilderPage() {
                 </button>
               </div>
 
-              {/* System fields notice */}
-              <div style={{ marginBottom: '1rem', padding: '0.75rem 1rem', borderRadius: 10, background: '#eff6ff', border: '1px solid #bfdbfe' }}>
-                <div style={{ fontWeight: 700, fontSize: '0.82rem', color: '#1d4ed8', marginBottom: '0.5rem' }}>
-                  <i className="bi bi-shield-lock-fill me-2"></i>
-                  မဖြစ်မနေပါဝင်သော System Fields (အလိုအလျောက်ထည့်သည်)
-                </div>
-                <div className="d-flex flex-column gap-1">
-                  {SYSTEM_FIELDS_INFO.map((f, i) => (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.8rem', color: '#1e40af' }}>
-                      <i className={`bi ${f.icon}`} style={{ width: 16, flexShrink: 0 }}></i>
-                      <span style={{ fontWeight: 600 }}>{f.label}</span>
-                      <span style={{ color: '#3b82f6', fontWeight: 400 }}>— {f.note}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
               <form onSubmit={handleSave}>
                 <div className="row g-3 mb-3">
                   <div className="col-12">
