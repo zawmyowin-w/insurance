@@ -88,15 +88,6 @@ export default function ApplyPolicyPage() {
   }
 
   const validateForm = () => {
-    if (!coverage || isNaN(Number(coverage)) || Number(coverage) <= 0) {
-      toast.error('Please enter a valid coverage amount'); return false
-    }
-    if (selectedPlan && Number(coverage) < Number(selectedPlan.coverageMin)) {
-      toast.error(`Coverage must be at least ${Number(selectedPlan.coverageMin).toLocaleString()} MMK`); return false
-    }
-    if (selectedPlan && Number(coverage) > Number(selectedPlan.coverageMax)) {
-      toast.error(`Coverage cannot exceed ${Number(selectedPlan.coverageMax).toLocaleString()} MMK`); return false
-    }
     return true
   }
 
@@ -253,7 +244,7 @@ export default function ApplyPolicyPage() {
               {/* Coverage & duration */}
               <div className="row g-3 mb-3">
                 <div className="col-12 col-sm-6">
-                  <label className="form-label-custom">Coverage Amount (MMK) *</label>
+                  <label className="form-label-custom">Coverage Amount (MMK)</label>
                   <input type="number" className="form-control-custom w-100"
                     value={coverage}
                     min={selectedPlan.coverageMin} max={selectedPlan.coverageMax}
@@ -263,7 +254,7 @@ export default function ApplyPolicyPage() {
                   </small>
                 </div>
                 <div className="col-12 col-sm-6">
-                  <label className="form-label-custom">Duration (years) *</label>
+                  <label className="form-label-custom">Duration (years)</label>
                   <select className="form-select-custom w-100" value={duration} onChange={e => setDuration(Number(e.target.value))}>
                     {(Array.isArray(durations) ? durations : String(durations).split(',').map(Number)).map(d => (
                       <option key={d} value={d}>{d} year{d > 1 ? 's' : ''}</option>
@@ -272,7 +263,7 @@ export default function ApplyPolicyPage() {
                 </div>
               </div>
 
-              {/* System mandatory fields — always shown */}
+              {/* System fields */}
               <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '0.5rem' }}>
                 <SystemFormFields
                   user={user}
