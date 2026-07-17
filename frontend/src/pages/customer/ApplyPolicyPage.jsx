@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
-import SystemFormFields from '../../components/SystemFormFields'
 import NrcInput from '../../components/NrcInput'
 
 const ALL_TYPES = ['LIFE', 'HEALTH', 'VEHICLE', 'PROPERTY']
@@ -34,9 +33,6 @@ export default function ApplyPolicyPage() {
   const [duration, setDuration] = useState(1)
   const [notes, setNotes] = useState('')
 
-  // System mandatory fields (always present regardless of template)
-  const [systemValues, setSystemValues] = useState({ __dob: '', __nrc: '' })
-  const handleSystemChange = (key, val) => setSystemValues(v => ({ ...v, [key]: val }))
 
   // Dynamic form state
   const [template, setTemplate] = useState(null)
@@ -101,12 +97,9 @@ export default function ApplyPolicyPage() {
         formDataObj[k] = Array.isArray(v) ? JSON.stringify(v) : v
       })
 
-      // Merge system fields into formData
       const mergedFormData = {
         __name: user?.name || '',
         __email: user?.email || '',
-        __dob: systemValues.__dob,
-        __nrc: systemValues.__nrc,
         ...formDataObj,
       }
 
@@ -263,15 +256,6 @@ export default function ApplyPolicyPage() {
                 </div>
               </div>
 
-              {/* System fields */}
-              <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '0.5rem' }}>
-                <SystemFormFields
-                  user={user}
-                  values={systemValues}
-                  onChange={handleSystemChange}
-                />
-              </div>
-
               {/* Dynamic form fields */}
               {templateLoading && (
                 <div className="text-center py-3">
@@ -371,15 +355,6 @@ export default function ApplyPolicyPage() {
               <ReviewRow label="Duration" value={duration + ' year(s)'} />
               <ReviewRow label="Est. Premium" value={premium ? Number(premium).toLocaleString() + ' MMK' : '—'} />
               {notes && <ReviewRow label="Notes" value={notes} />}
-
-              {/* System fields summary */}
-              <div style={{ borderTop: '1px solid var(--border)', paddingTop: '0.75rem', marginTop: '0.75rem' }}>
-                <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>Personal Information</div>
-                <ReviewRow label="အမည်" value={user?.name} />
-                <ReviewRow label="အီးမေးလ်" value={user?.email} />
-                <ReviewRow label="မွေးသက္ကရာဇ်" value={systemValues.__dob} />
-                <ReviewRow label="မှတ်ပုံတင်" value={systemValues.__nrc} />
-              </div>
 
               {/* Dynamic form summary */}
               {template?.fields && template.fields.filter(f => f.fieldType !== 'LABEL').length > 0 && (
