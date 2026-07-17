@@ -70,7 +70,6 @@ export default function ApplyPolicyPage() {
           tmpl.fields.forEach(f => {
             if (f.fieldType === 'NAME')  prefill[String(f.id)] = user.name  || ''
             if (f.fieldType === 'EMAIL') prefill[String(f.id)] = user.email || ''
-            if (f.fieldType === 'PHONE') prefill[String(f.id)] = user.phone || ''
           })
           if (Object.keys(prefill).length > 0) setFieldValues(prefill)
         }
@@ -462,7 +461,7 @@ function DynamicField({ field, value, file, onValue, onFile, onCheckboxOption, u
     )
   }
 
-  const isAutoFilled = field.fieldType === 'NAME' || field.fieldType === 'EMAIL' || field.fieldType === 'PHONE'
+  const isAutoFilled = field.fieldType === 'NAME' || field.fieldType === 'EMAIL'
 
   let options = []
   if (field.fieldType === 'CHECKBOX' && field.fieldOptions) {
@@ -487,6 +486,11 @@ function DynamicField({ field, value, file, onValue, onFile, onCheckboxOption, u
       )}
       {field.fieldType === 'TEXT' && (
         <input className="form-control-custom w-100" value={value || ''}
+          onChange={e => onValue(e.target.value)} />
+      )}
+      {field.fieldType === 'PHONE' && (
+        <input type="tel" className="form-control-custom w-100" value={value || ''}
+          placeholder="+95 9xxxxxxxx"
           onChange={e => onValue(e.target.value)} />
       )}
       {field.fieldType === 'TEXTAREA' && (

@@ -8,7 +8,7 @@ const FIELD_TYPES = [
   { value: 'LABEL',        label: 'Section Label',   icon: 'bi-type-h2',             desc: 'Static header text' },
   { value: 'NAME',         label: 'Name (Auto)',      icon: 'bi-person-fill',         desc: 'Auto-filled from profile — read-only' },
   { value: 'EMAIL',        label: 'Email (Auto)',     icon: 'bi-envelope-fill',       desc: 'Auto-filled from profile — read-only' },
-  { value: 'PHONE',        label: 'Phone (Auto)',     icon: 'bi-telephone-fill',      desc: 'Auto-filled from profile — read-only' },
+  { value: 'PHONE',        label: 'Phone Number',     icon: 'bi-telephone-fill',      desc: 'Phone number input' },
   { value: 'TEXT',         label: 'Text Box',         icon: 'bi-input-cursor-text',   desc: 'Single-line input' },
   { value: 'TEXTAREA',     label: 'Text Area',        icon: 'bi-textarea-t',          desc: 'Multi-line input' },
   { value: 'DATE',         label: 'Date Picker',      icon: 'bi-calendar-date',       desc: 'Date selection' },
