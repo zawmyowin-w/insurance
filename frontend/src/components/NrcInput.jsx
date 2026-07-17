@@ -1,59 +1,48 @@
 import React from 'react'
-
-// Myanmar NRC data: State No → { name, townships[] }
-export const NRC_STATES = {
-  '1':  { name: '၁ ကချင်ပြည်နယ်',     townships: ['ဘားမိုး','မိုးညှင်း','မြစ်ကြီးနား','မိုးကောင်း','ဆွမ်ပြားဘွမ်','ဝိုင်းမော်','ပူတာအို','ချီဖွေ','ကောလင်'] },
-  '2':  { name: '၂ ကယားပြည်နယ်',     townships: ['ဘောလခဲ','ဒေမောဆို','ဖရူဆို','လွိုင်ကော်','မဲဆဲ','ရှားတော'] },
-  '3':  { name: '၃ ကရင်ပြည်နယ်',     townships: ['ကော့ကရိတ်','မြဝတီ','ဖာပွန်','ဘားအံ','လှိုင်းဘွဲ'] },
-  '4':  { name: '၄ ချင်းပြည်နယ်',     townships: ['ဖလမ်း','ဟားခါး','ကန်ပက်လက်','မတူပီ','မင်းတပ်','ပလက်ဝ','တီးတိန်','သန်တလန်','တောင်ဇာ'] },
-  '5':  { name: '၅ မွန်ပြည်နယ်',     townships: ['ဘီးလင်း','ကျောက်တံခါး','ကျောက်မြောက်','ကျောင်းကုန်း','မော်လမြိုင်','မုဒုံ','ပေါင်','သထုံ','ရေး'] },
-  '6':  { name: '၆ ရခိုင်ပြည်နယ်',   townships: ['အမ်း','ကျောက်ဖြူ','ကျောက်တော်','မောင်တော','မြင်ဘူး','မြေပုံ','စစ်တွေ','တောင်ကုတ်','သံတွဲ','တောင်ပြူ'] },
-  '7':  { name: '၇ ရှမ်းပြည်နယ်',    townships: ['ဟိုပုံး','နမ်ဆန်','လဲချား','ကျိုင်းတုံ','လားရှိုး','မိုင်းဆတ်','ငါတပ်','ညောင်ရွှေ','တောင်ကြီး','တာချီလိတ်','မူဆယ်','ကောလင်'] },
-  '8':  { name: '၈ စစ်ကိုင်းတိုင်း', townships: ['ကနီ','ကသာ','ကာလေး','ကလေး','ရေဦး','ဆားလင်းကြီး','စစ်ကိုင်း','ရွှေဘို','တမူး','ဝက်လက်','ရမည်းသင်း','ရွာငံ','မော်လိုက်','မင်းကင်း','ခင်ဦး','ပင်လည်ဘူး'] },
-  '9':  { name: '၉ တနင်္သာရီတိုင်း', townships: ['ဘုတ်ပြင်း','ထားဝယ်','ကျွန်းစု','လောင်းလုံ','မြိတ်','ပုလော','သရက်ချောင်း','ရေဖြူ'] },
-  '10': { name: '၁၀ ပဲခူးတိုင်း',    townships: ['ပဲခူး','တောင်ငူ','ညောင်လေးပင်','ရေတာရှည်','ဝေါ','ဒိုက်ဦး','ကြို့ပင်ကောက်','ကဝ','ပုသိမ်ကြီး','ဖြူး','ပြည်','သဲကုန်း','ရွှေကျင်','မင်းလှ'] },
-  '11': { name: '၁၁ မကွေးတိုင်း',    townships: ['ငပုတော','ချောက်','ဂန့်ဂေါ','မကွေး','မင်းဘူး','မြောင်း','နတ်မောက်','ပခုက္ကူ','ပေါက်','ဆော','ရေနံချောင်း','တောင်တွင်းကြီး','သရက်','ဆိပ်ဖြူ','တိပ်'] },
-  '12': { name: '၁၂ မန္တလေးတိုင်း',  townships: ['အမရပူရ','ချမ်းအေးသာစည်','ချမ်းမြသာစည်','ကျောက်ဆည်','ကျောက်ပန်းတောင်း','မင်းကွန်း','မိတ္ထီလာ','မော်လိုက်','မကွေး','မှော်ဘီ','မြင်းမူ','မောင်း','မန္တလေး','မတ္တရာ',' နွားထိုး','ညောင်ဦး','ပြင်ဦးလွင်','ဆင်ဖြူကျွန်း','တောင်သာ','ရမည်းသင်း'] },
-  '13': { name: '၁၃ ရန်ကုန်တိုင်း',  townships: ['ဗဟန်း','ဗိုလ်တထောင်','ဒဂုံ','ဒလ','ဒေါပုံ','ဟင်္သာတ','ဟလောင်','အင်းစိန်','ကမာရွတ်','ကြည့်မြင်တိုင်','လသာ','လမှိုင်','မင်္ဂလာတောင်ညွန့်','မင်္ဂလာဒုံ','မရမ်းကုန်း','မလ္လရ','မောကွန်း','မြောက်ဒဂုံ','မြောက်အောင်မြေ','ဉာဏ်မြောက်','ပုဇွန်တောင်','သင်္ဃန်းကျွန်း','စမ်းချောင်း','ရွှေပြည်သာ','တောင်ဒဂုံ','တောင်အောင်မြေ','သာကေတ','သင်္ဃန်းကျွန်း','သာမြေ',' သဃ္ဃန်းကျွန်း','တာမွေ','ဆိပ်ကမ်း','သုံးခွ','တွံတေး','လှည်းကူး','ရွာသစ်ကြီး','ရေတာရှည်','ညောင်တုန်း'] },
-  '14': { name: '၁၄ ဧရာဝတီတိုင်း',   townships: ['ဘိုကလေး','ဒနူဘြူး','ဒေးဒရဲ','အိမ်မဲ','ဟင်္သာတ','ဩကလပ်','ကော့မှုး','ကျောင်းကုန်း','ကျောက်ကြိုး','လပွတ္တာ','မအူပင်','မြောင်း','ပုသိမ်','ပြည်ကြီးတောင်','ဆိပ်ဖြူ','သာပေါင်း','ရေနံချောင်','ဝါကမာ','ဇလွန်'] },
-}
-
-export const NRC_CITIZEN_TYPES = [
-  { value: 'N', label: 'N (နိုင်) - နိုင်ငံသား' },
-  { value: 'E', label: 'E (ဧည့်) - ဧည့်နိုင်ငံသား' },
-  { value: 'P', label: 'P (ပြု) - ပြုစုနိုင်ငံသား' },
-  { value: 'T', label: 'T (သ) - သွားလာခွင့်ပြုသူ' },
-]
+import { NRC_DATA, NRC_CITIZEN_TYPES, getTownships, resolveToCode } from '../data/nrcData'
 
 /**
  * Myanmar NRC input component.
- * value: string in format "StateNo/Township(Type)Digits" e.g. "12/မန္တလေး(N)123456"
- * onChange: (nrcString) => void
+ *
+ * Stored format : "10/ခဆန(နိုင်)123456"
+ *                  ──  ────  ────  ──────
+ *                  state code type  digits
+ *
+ * The township field stores the 3-char code (e.g. ခဆန), NOT the full name.
+ * Old records that stored a full name are silently migrated on first render
+ * via resolveToCode().
+ *
+ * Props
+ *   value    : NRC string (controlled)
+ *   onChange : (nrcString) => void
+ *   required : bool
+ *   readOnly : bool
  */
 export default function NrcInput({ value, onChange, required, readOnly }) {
-  // Parse current value
   const parsed = parseNrc(value || '')
 
+  // Migrate legacy full-name township to code on the fly
+  const resolvedCode = parsed.state
+    ? resolveToCode(parsed.state, parsed.township)
+    : parsed.township
+
   const handleChange = (part, val) => {
-    const next = { ...parsed, [part]: val }
-    // reset township when state changes
+    const next = { ...parsed, township: resolvedCode, [part]: val }
     if (part === 'state') next.township = ''
     onChange(formatNrc(next))
   }
 
-  const stateObj = NRC_STATES[parsed.state] || null
-  const townships = stateObj ? stateObj.townships : []
+  const townships = getTownships(parsed.state)
 
-  const inputStyle = {
-    background: readOnly ? 'var(--bg-secondary)' : undefined,
-    cursor: readOnly ? 'not-allowed' : undefined,
-    color: readOnly ? 'var(--text-muted)' : undefined,
-  }
+  const inputStyle = readOnly
+    ? { background: 'var(--bg-secondary)', cursor: 'not-allowed', color: 'var(--text-muted)' }
+    : {}
 
   return (
     <div>
       <div className="d-flex gap-1 align-items-center flex-wrap">
-        {/* State number */}
+
+        {/* ── State number ── */}
         <select
           className="form-select-custom"
           style={{ width: 70, flexShrink: 0, ...inputStyle }}
@@ -63,30 +52,32 @@ export default function NrcInput({ value, onChange, required, readOnly }) {
           onChange={e => handleChange('state', e.target.value)}
         >
           <option value="">နံပါတ်</option>
-          {Object.keys(NRC_STATES).map(k => (
+          {Object.keys(NRC_DATA).map(k => (
             <option key={k} value={k}>{k}/</option>
           ))}
         </select>
 
-        {/* Township */}
+        {/* ── Township code ── */}
         <select
           className="form-select-custom"
-          style={{ flex: '1 1 160px', minWidth: 140, ...inputStyle }}
-          value={parsed.township}
+          style={{ flex: '1 1 190px', minWidth: 160, ...inputStyle }}
+          value={resolvedCode}
           disabled={readOnly || !parsed.state}
           required={required && !readOnly}
           onChange={e => handleChange('township', e.target.value)}
         >
           <option value="">မြို့နယ်ကုဒ်</option>
           {townships.map(t => (
-            <option key={t} value={t}>{t}</option>
+            <option key={t.code} value={t.code}>
+              {t.code} — {t.name}
+            </option>
           ))}
         </select>
 
-        {/* Citizen type */}
+        {/* ── Citizen type ── */}
         <select
           className="form-select-custom"
-          style={{ width: 80, flexShrink: 0, ...inputStyle }}
+          style={{ width: 90, flexShrink: 0, ...inputStyle }}
           value={parsed.type}
           disabled={readOnly}
           required={required && !readOnly}
@@ -98,7 +89,7 @@ export default function NrcInput({ value, onChange, required, readOnly }) {
           ))}
         </select>
 
-        {/* Number */}
+        {/* ── Serial digits ── */}
         <input
           className="form-control-custom"
           style={{ width: 110, flexShrink: 0, ...inputStyle }}
@@ -111,45 +102,71 @@ export default function NrcInput({ value, onChange, required, readOnly }) {
         />
       </div>
 
-      {/* Preview */}
-      {(parsed.state || parsed.township || parsed.type || parsed.digits) && (
+      {/* ── Live preview ── */}
+      {(parsed.state || resolvedCode || parsed.type || parsed.digits) && (
         <div style={{ marginTop: 4, fontSize: '0.78rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
-          NRC: <strong style={{ color: 'var(--text-primary)' }}>{formatNrc(parsed) || '—'}</strong>
+          NRC:{' '}
+          <strong style={{ color: 'var(--text-primary)' }}>
+            {formatNrc({ ...parsed, township: resolvedCode }) || '—'}
+          </strong>
+          {resolvedCode && parsed.state && (() => {
+            const t = getTownships(parsed.state).find(x => x.code === resolvedCode)
+            return t ? (
+              <span style={{ marginLeft: 8, fontFamily: 'inherit' }}>({t.name}မြို့နယ်)</span>
+            ) : null
+          })()}
         </div>
       )}
 
       <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 2 }}>
-        ဥပမာ: ၁၂/မန္တလေး(N)၁၂၃၄၅၆
+        ဥပမာ — ၁၀/ခဆန(နိုင်)၁၂၃၄၅၆ &nbsp;→&nbsp; ချောင်းဆုံမြို့နယ်
       </div>
     </div>
   )
 }
 
+// ─────────────────────────────────────────────
+//  Helpers
+// ─────────────────────────────────────────────
+
+/**
+ * Parse an NRC string into its four parts.
+ * Handles both new code format and legacy full-name format.
+ *
+ * Accepted patterns:
+ *   "10/ခဆန(နိုင်)123456"   ← full
+ *   "10/ခဆန(နိုင်)"         ← no digits
+ *   "10/ခဆန"                ← no type/digits
+ *   "10/"                   ← state only
+ */
 function parseNrc(str) {
   if (!str) return { state: '', township: '', type: '', digits: '' }
 
-  // Full: "13/မြို့နယ်(N)123456"  or  "13/မြို့နယ်(N)"
-  // Use [^(]* so greedy match doesn't eat the "(N)" part
-  const full = str.match(/^(\d+)\/([^(]*)\(([NEPT])\)(.*)$/)
+  // Full: digits captured after closing paren
+  const full = str.match(/^(\d+)\/([^(]*)\(([^)]+)\)(.*)$/)
   if (full) return { state: full[1], township: full[2], type: full[3], digits: full[4] }
 
-  // State + township only: "13/မြို့နယ်"  (no type yet)
+  // State + township, no type
   const partial2 = str.match(/^(\d+)\/([^(]+)$/)
   if (partial2) return { state: partial2[1], township: partial2[2], type: '', digits: '' }
 
-  // State only: "13/"
+  // State only
   const partial1 = str.match(/^(\d+)\/$/)
   if (partial1) return { state: partial1[1], township: '', type: '', digits: '' }
 
   return { state: '', township: '', type: '', digits: '' }
 }
 
+/**
+ * Serialise the four parts back into a canonical NRC string.
+ * Returns '' when all parts are empty.
+ */
 export function formatNrc({ state, township, type, digits }) {
   if (!state && !township && !type && !digits) return ''
-  let parts = ''
-  if (state) parts += state + '/'
-  if (township) parts += township
-  if (type) parts += `(${type})`
-  if (digits) parts += digits
-  return parts
+  let s = ''
+  if (state)    s += state + '/'
+  if (township) s += township
+  if (type)     s += `(${type})`
+  if (digits)   s += digits
+  return s
 }
