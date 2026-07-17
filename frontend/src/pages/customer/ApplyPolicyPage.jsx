@@ -61,7 +61,21 @@ export default function ApplyPolicyPage() {
     setFieldValues({})
     setFieldFiles({})
     api.get(`/forms/public?packageId=${selectedPlan.id}&formType=APPLICATION`)
-      .then(res => setTemplate(res.data))
+      .then(res => {
+        const tmpl = res.data
+        setTemplate(tmpl)
+        // Auto-fill name / email fields from user profile
+        if (tmpl?.fields && user) {
+          const prefill = {}
+          tmpl.fields.forEach(f => {
+            if (f.fieldType !== 'TEXT') return
+            const lbl = (f.fieldLabel || '').toLowerCase()
+            if (lbl.includes('name') || lbl.includes('အမည်')) prefill[String(f.id)] = user.name || ''
+            else if (lbl.includes('email') || lbl.includes('အီးမေးလ်')) prefill[String(f.id)] = user.email || ''
+          })
+          if (Object.keys(prefill).length > 0) setFieldValues(prefill)
+        }
+      })
       .catch(() => setTemplate(null))
       .finally(() => setTemplateLoading(false))
   }, [selectedPlan?.id])
@@ -276,6 +290,7 @@ export default function ApplyPolicyPage() {
                     onValue={handleFieldValue}
                     onFile={handleFieldFile}
                     onCheckboxOption={handleCheckboxOption}
+                    user={user}
                   />
                 </div>
               )}
@@ -418,7 +433,16 @@ function ReviewRow({ label, value }) {
   )
 }
 
-function DynamicFormFields({ fields, fieldValues, fieldFiles, onValue, onFile, onCheckboxOption }) {
+// Returns { isName, isEmail } for auto-fill detection based on label
+function detectAutoFill(label = '') {
+  const l = label.toLowerCase()
+  return {
+    isName:  l.includes('name')  || l.includes('အမည်'),
+    isEmail: l.includes('email') || l.includes('အီးမေးလ်'),
+  }
+}
+
+function DynamicFormFields({ fields, fieldValues, fieldFiles, onValue, onFile, onCheckboxOption, user }) {
   if (!fields || fields.length === 0) return null
   return (
     <div className="d-flex flex-column gap-3">
@@ -428,13 +452,14 @@ function DynamicFormFields({ fields, fieldValues, fieldFiles, onValue, onFile, o
           file={fieldFiles[String(field.id)]}
           onValue={v => onValue(field.id, v)}
           onFile={f => onFile(field.id, f)}
-          onCheckboxOption={(opt, checked) => onCheckboxOption(field.id, opt, checked)} />
+          onCheckboxOption={(opt, checked) => onCheckboxOption(field.id, opt, checked)}
+          user={user} />
       ))}
     </div>
   )
 }
 
-function DynamicField({ field, value, file, onValue, onFile, onCheckboxOption }) {
+function DynamicField({ field, value, file, onValue, onFile, onCheckboxOption, user }) {
   if (field.fieldType === 'LABEL') {
     return (
       <div style={{
@@ -447,6 +472,10 @@ function DynamicField({ field, value, file, onValue, onFile, onCheckboxOption })
     )
   }
 
+  // Auto-fill detection for TEXT fields
+  const { isName, isEmail } = field.fieldType === 'TEXT' ? detectAutoFill(field.fieldLabel) : {}
+  const isAutoFilled = isName || isEmail
+
   let options = []
   if (field.fieldType === 'CHECKBOX' && field.fieldOptions) {
     try { options = JSON.parse(field.fieldOptions) } catch { options = ['Yes', 'No'] }
@@ -457,8 +486,18 @@ function DynamicField({ field, value, file, onValue, onFile, onCheckboxOption })
     <div>
       <label className="form-label-custom">
         {field.fieldLabel}
+        {isAutoFilled && (
+          <span style={{ fontSize: '0.7rem', color: '#16a34a', marginLeft: 6, fontWeight: 400 }}>
+            <i className="bi bi-lock-fill me-1"></i>ပရိုဖိုင်မှ အလိုလျှောက်ထည့်သည်
+          </span>
+        )}
       </label>
-      {field.fieldType === 'TEXT' && (
+      {field.fieldType === 'TEXT' && isAutoFilled && (
+        <input className="form-control-custom w-100" value={value || ''}
+          readOnly
+          style={{ background: '#f0fdf4', borderColor: '#86efac', color: 'var(--text-primary)', cursor: 'not-allowed' }} />
+      )}
+      {field.fieldType === 'TEXT' && !isAutoFilled && (
         <input className="form-control-custom w-100" value={value || ''}
           onChange={e => onValue(e.target.value)} />
       )}
