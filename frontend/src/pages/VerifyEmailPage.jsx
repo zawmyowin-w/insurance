@@ -1,10 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react'
+import { useState } from 'react'
 import { useSearchParams, Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'react-toastify'
-import { verifyOtp, issueOtp, otpSecondsLeft } from '../services/otpService'
-
-const BOX_COUNT = 6
+import { verifyOtp } from '../services/otpService'
+import { useOtpInput } from '../hooks/useOtpInput'
 
 export default function VerifyEmailPage() {
   const { t } = useTranslation()
@@ -12,48 +11,15 @@ export default function VerifyEmailPage() {
   const [params] = useSearchParams()
   const email = params.get('email') || ''
 
-  const [digits, setDigits] = useState(Array(BOX_COUNT).fill(''))
-  const [seconds, setSeconds] = useState(() => otpSecondsLeft(email, 'verify'))
   const [loading, setLoading] = useState(false)
-  const [resending, setResending] = useState(false)
-  const inputs = useRef([])
-
-  useEffect(() => {
-    const id = setInterval(() => setSeconds(otpSecondsLeft(email, 'verify')), 1000)
-    return () => clearInterval(id)
-  }, [email])
-
-  const focus = i => inputs.current[i]?.focus()
-
-  const handleChange = (i, val) => {
-    const ch = val.replace(/\D/g, '').slice(-1)
-    const next = [...digits]; next[i] = ch; setDigits(next)
-    if (ch && i < BOX_COUNT - 1) focus(i + 1)
-  }
-
-  const handleKeyDown = (i, e) => {
-    if (e.key === 'Backspace') {
-      if (digits[i]) { const n = [...digits]; n[i] = ''; setDigits(n) }
-      else if (i > 0) { const n = [...digits]; n[i - 1] = ''; setDigits(n); focus(i - 1) }
-    } else if (e.key === 'ArrowLeft' && i > 0) focus(i - 1)
-    else if (e.key === 'ArrowRight' && i < BOX_COUNT - 1) focus(i + 1)
-  }
-
-  const handlePaste = e => {
-    e.preventDefault()
-    const text = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, BOX_COUNT)
-    const next = Array(BOX_COUNT).fill('')
-    text.split('').forEach((c, i) => { next[i] = c })
-    setDigits(next)
-    focus(Math.min(text.length, BOX_COUNT - 1))
-  }
-
-  const mm = String(Math.floor(seconds / 60)).padStart(2, '0')
-  const ss = String(seconds % 60).padStart(2, '0')
+  const {
+    digits, setDigits, seconds, resending,
+    inputs, mm, ss, code, BOX_COUNT,
+    handleChange, handleKeyDown, handlePaste, handleResend, focus,
+  } = useOtpInput(email, 'verify', t)
 
   const handleSubmit = async e => {
     e.preventDefault()
-    const code = digits.join('')
     if (code.length < BOX_COUNT) { toast.error(t('otp.enterAll')); return }
 
     setLoading(true)
@@ -70,25 +36,6 @@ export default function VerifyEmailPage() {
 
     toast.success(t('emailVerify.confirmSuccessTitle') || 'Email verified! Please log in.')
     navigate('/login')
-  }
-
-  const handleResend = async () => {
-    setResending(true)
-    try {
-      const code = await issueOtp(email, 'verify')
-      setSeconds(300)
-      setDigits(Array(BOX_COUNT).fill(''))
-      focus(0)
-      if (!import.meta.env.VITE_EMAILJS_SERVICE_ID) {
-        toast.info(`Demo OTP: ${code}`, { autoClose: 15000 })
-      } else {
-        toast.success(t('otp.resent'))
-      }
-    } catch {
-      toast.error(t('otp.sendError'))
-    } finally {
-      setResending(false)
-    }
   }
 
   return (

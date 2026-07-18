@@ -1,6 +1,5 @@
 package com.insurance.portal.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.insurance.portal.dto.*;
 import com.insurance.portal.model.*;
 import com.insurance.portal.model.enums.*;

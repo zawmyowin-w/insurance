@@ -1,6 +1,5 @@
 package com.insurance.portal.controller;
 
-import com.insurance.portal.model.PaymentMethodConfig;
 import com.insurance.portal.repository.PaymentMethodConfigRepository;
 import com.insurance.portal.util.FileStorageUtil;
 import lombok.RequiredArgsConstructor;

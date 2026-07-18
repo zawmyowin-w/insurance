@@ -40,7 +40,6 @@ public class InsurancePortalApplication {
                         .active(true)
                         .build();
                 userRepository.save(admin);
-                System.out.println("✅ Default admin account seeded.");
             }
         };
     }
