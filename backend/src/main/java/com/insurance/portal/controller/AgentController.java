@@ -44,23 +44,41 @@ public class AgentController {
         return stats;
     }
 
-    /** Returns all admins + customers assigned to this agent — for the message compose UI */
+    /**
+     * Returns all admins + customers who have applied for the agent's insurance type.
+     * If the agent's insuranceType is null or "ALL", all assigned customers are returned.
+     */
     @GetMapping("/contacts")
     @Transactional(readOnly = true)
     public ResponseEntity<?> getContacts(@AuthenticationPrincipal UserDetails principal) {
         User agent = getAgent(principal);
+        String agentType = agent.getInsuranceType(); // e.g. "LIFE", "HEALTH", "ALL", null
+
         List<User> admins = userRepo.findAll().stream()
                 .filter(u -> u.getRole() == com.insurance.portal.model.enums.Role.ADMIN)
                 .toList();
+
+        // Collect customers who applied for this agent's insurance type
         Set<Long> customerIds = new java.util.HashSet<>();
-        appRepo.findAllByAgent(agent).forEach(a -> { if (a.getCustomer() != null) customerIds.add(a.getCustomer().getId()); });
-        claimRepo.findAllByAgent(agent).forEach(c -> { if (c.getCustomer() != null) customerIds.add(c.getCustomer().getId()); });
+        boolean allTypes = agentType == null || agentType.isBlank() || "ALL".equalsIgnoreCase(agentType);
+
+        appRepo.findAll().forEach(a -> {
+            if (a.getCustomer() == null) return;
+            String pkgType = a.getInsurancePackage() != null ? a.getInsurancePackage().getType() : null;
+            if (allTypes || agentType.equalsIgnoreCase(pkgType)) {
+                customerIds.add(a.getCustomer().getId());
+            }
+        });
+
         List<User> customers = userRepo.findAll().stream()
-                .filter(u -> u.getRole() == com.insurance.portal.model.enums.Role.CUSTOMER && customerIds.contains(u.getId()))
+                .filter(u -> u.getRole() == com.insurance.portal.model.enums.Role.CUSTOMER
+                        && customerIds.contains(u.getId()))
                 .toList();
+
         return ResponseEntity.ok(Map.of(
-                "admins", admins.stream().map(com.insurance.portal.dto.UserResponse::from).toList(),
-                "customers", customers.stream().map(com.insurance.portal.dto.UserResponse::from).toList()
+                "admins",    admins.stream().map(com.insurance.portal.dto.UserResponse::from).toList(),
+                "customers", customers.stream().map(com.insurance.portal.dto.UserResponse::from).toList(),
+                "agentType", agentType != null ? agentType : "ALL"
         ));
     }
 

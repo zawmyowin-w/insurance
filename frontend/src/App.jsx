@@ -56,6 +56,7 @@ import AdminFormBuilderPage from './pages/admin/AdminFormBuilderPage'
 import AdminReportsPage from './pages/admin/AdminReportsPage'
 import AdminProfilePage from './pages/admin/AdminProfilePage'
 import AdminFeedbackPage from './pages/admin/AdminFeedbackPage'
+import AdminPaymentMethodsPage from './pages/admin/AdminPaymentMethodsPage'
 
 export default function App() {
   return (
@@ -118,6 +119,7 @@ export default function App() {
               <Route path="forms" element={<AdminFormBuilderPage />} />
               <Route path="notifications" element={<AdminNotificationsPage />} />
               <Route path="feedback" element={<AdminFeedbackPage />} />
+              <Route path="payment-methods" element={<AdminPaymentMethodsPage />} />
               <Route path="reports" element={<AdminReportsPage />} />
               <Route path="profile" element={<AdminProfilePage />} />
             </Route>

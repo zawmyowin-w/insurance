@@ -34,6 +34,7 @@ public class CustomerController {
     private final ClaimRepository claimRepo;
     private final PaymentRepository paymentRepo;
     private final NotificationRepository notifRepo;
+    private final com.insurance.portal.repository.PaymentMethodConfigRepository paymentMethodConfigRepo;
 
     private User getUser(UserDetails principal) {
         return userRepo.findByEmail(principal.getUsername()).orElseThrow();
@@ -355,15 +356,14 @@ public class CustomerController {
                 .map(PaymentResponse::from).toList();
     }
 
-    private static final Set<String> VALID_PAYMENT_METHODS = Set.of("KBZ_PAY", "WAVE_PAY", "AYA_PAY");
-
     @PostMapping("/payments")
     @Transactional
     public ResponseEntity<?> submitPayment(@AuthenticationPrincipal UserDetails principal,
                                            @RequestParam String applicationId,
                                            @RequestParam(required = false) String paymentMethod,
                                            @RequestParam(required = false) MultipartFile screenshot,
-                                           @RequestParam(required = false) String notes) {
+                                           @RequestParam(required = false) String notes,
+                                           @RequestParam(required = false) String signature) {
         User user = getUser(principal);
         PolicyApplication app = appRepo.findById(Long.valueOf(applicationId))
                 .orElseThrow(() -> new RuntimeException("Application not found"));
@@ -373,8 +373,21 @@ public class CustomerController {
             return ResponseEntity.badRequest().body(Map.of("message", "Payment can only be submitted for APPROVED applications"));
         if (paymentRepo.existsByApplication_IdAndStatus(app.getId(), PaymentStatus.PENDING))
             return ResponseEntity.badRequest().body(Map.of("message", "A pending payment already exists for this application"));
-        if (paymentMethod == null || !VALID_PAYMENT_METHODS.contains(paymentMethod))
-            return ResponseEntity.badRequest().body(Map.of("message", "Please select a valid payment method (KBZPay, Wave Pay, or AYA Pay)"));
+
+        // Validate payment method against DB (fall back to built-in list if no DB entries yet)
+        boolean methodValid;
+        long dbCount = paymentMethodConfigRepo.count();
+        if (dbCount > 0) {
+            methodValid = paymentMethod != null &&
+                    paymentMethodConfigRepo.findByMethodKey(paymentMethod)
+                            .map(com.insurance.portal.model.PaymentMethodConfig::isActive)
+                            .orElse(false);
+        } else {
+            methodValid = paymentMethod != null &&
+                    Set.of("KBZ_PAY", "WAVE_PAY", "AYA_PAY").contains(paymentMethod);
+        }
+        if (!methodValid)
+            return ResponseEntity.badRequest().body(Map.of("message", "Please select a valid payment method"));
         if (screenshot == null || screenshot.isEmpty())
             return ResponseEntity.badRequest().body(Map.of("message", "A payment proof screenshot is required"));
 
