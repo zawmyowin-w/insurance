@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
@@ -7,33 +7,34 @@ import { toast } from 'react-toastify'
 
 const EMPTY = { name: '', email: '', phone: '', subject: '', message: '' }
 
-const validate = (form) => {
-  const errs = {}
-  if (!form.name.trim()) errs.name = 'Full name is required.'
-  else if (form.name.trim().length < 2) errs.name = 'Name must be at least 2 characters.'
-
-  if (!form.email.trim()) errs.email = 'Email address is required.'
-  else if (!/^[a-z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(form.email))
-    errs.email = 'Email must start with a lowercase letter — it cannot begin with a capital letter, number, or special character.'
-
-  if (form.phone.trim() && !/^\+95\d{7,10}$/.test(form.phone.trim()))
-    errs.phone = 'Phone number must start with +95 followed by 7 to 10 digits (e.g. +959xxxxxxxx).'
-
-  if (!form.subject.trim()) errs.subject = 'Subject is required.'
-  else if (form.subject.trim().length < 3) errs.subject = 'Subject must be at least 3 characters.'
-
-  if (!form.message.trim()) errs.message = 'Message is required.'
-  else if (form.message.trim().length < 10) errs.message = 'Message must be at least 10 characters.'
-
-  return errs
-}
-
 export default function ContactPage() {
   const { t } = useTranslation()
   const [form, setForm] = useState(EMPTY)
   const [errors, setErrors] = useState({})
   const [touched, setTouched] = useState({})
   const [loading, setLoading] = useState(false)
+
+  // Returns i18n keys so the component can call t() on them
+  const validate = (f) => {
+    const errs = {}
+    if (!f.name.trim())               errs.name    = 'contact.errNameRequired'
+    else if (f.name.trim().length < 2) errs.name   = 'contact.errNameMin'
+
+    if (!f.email.trim())              errs.email   = 'contact.errEmailRequired'
+    else if (!/^[a-z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(f.email))
+                                      errs.email   = 'contact.errEmailFormat'
+
+    if (f.phone.trim() && !/^\+95\d{7,10}$/.test(f.phone.trim()))
+                                      errs.phone   = 'contact.errPhoneFormat'
+
+    if (!f.subject.trim())            errs.subject = 'contact.errSubjectRequired'
+    else if (f.subject.trim().length < 3) errs.subject = 'contact.errSubjectMin'
+
+    if (!f.message.trim())            errs.message = 'contact.errMessageRequired'
+    else if (f.message.trim().length < 10) errs.message = 'contact.errMessageMin'
+
+    return errs
+  }
 
   const handleChange = e => {
     const { name, value } = e.target
@@ -71,19 +72,26 @@ export default function ContactPage() {
     }
   }
 
-  const fieldStyle = (name) => ({
-    borderColor: errors[name] ? '#dc2626' : touched[name] && !errors[name] ? '#16a34a' : undefined
+  const fieldStyle = name => ({
+    borderColor: errors[name] ? '#dc2626' : touched[name] && !errors[name] ? '#16a34a' : undefined,
   })
 
   const ErrorMsg = ({ name }) => errors[name]
     ? <div style={{ color: '#dc2626', fontSize: '0.78rem', marginTop: '0.25rem' }}>
-        <i className="bi bi-exclamation-circle me-1"></i>{errors[name]}
+        <i className="bi bi-exclamation-circle me-1"></i>{t(errors[name])}
       </div>
     : touched[name] && !errors[name]
     ? <div style={{ color: '#16a34a', fontSize: '0.78rem', marginTop: '0.25rem' }}>
-        <i className="bi bi-check-circle me-1"></i>Looks good!
+        <i className="bi bi-check-circle me-1"></i>{t('contact.looksGood')}
       </div>
     : null
+
+  const contactItems = [
+    { icon: 'bi-geo-alt-fill',  titleKey: 'contact.addressLabel', textKey: 'contact.addressValue' },
+    { icon: 'bi-telephone-fill', titleKey: 'contact.phoneLabel',  textKey: 'contact.phoneValue' },
+    { icon: 'bi-envelope-fill', titleKey: 'contact.emailLabel',   textKey: 'contact.emailValue' },
+    { icon: 'bi-clock-fill',    titleKey: 'contact.hoursLabel',   textKey: 'contact.hoursValue' },
+  ]
 
   return (
     <div>
@@ -99,25 +107,28 @@ export default function ContactPage() {
       <section style={{ background: 'var(--bg-secondary)', padding: '4rem 0' }}>
         <div className="container">
           <div className="row g-5">
+
+            {/* ── Contact Info ── */}
             <div className="col-12 col-lg-5">
-              <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1.5rem' }}>Contact Information</h4>
-              {[
-                { icon: 'bi-geo-alt-fill', title: 'Address', text: 'No. 123, Pyay Road, Hlaing Township, Yangon, Myanmar' },
-                { icon: 'bi-telephone-fill', title: 'Phone', text: '+95 9 123 456 789' },
-                { icon: 'bi-envelope-fill', title: 'Email', text: 'info@dicp.com.mm' },
-                { icon: 'bi-clock-fill', title: 'Business Hours', text: 'Monday – Friday, 9:00 AM – 5:00 PM (MMT)' },
-              ].map(item => (
+              <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1.5rem' }}>
+                {t('contact.info')}
+              </h4>
+              {contactItems.map(item => (
                 <div key={item.icon} className="d-flex gap-3 mb-3">
                   <div style={{
                     width: 44, height: 44, borderRadius: 10, background: 'var(--bg-card)',
                     border: '1px solid var(--border)', display: 'flex', alignItems: 'center',
-                    justifyContent: 'center', flexShrink: 0
+                    justifyContent: 'center', flexShrink: 0,
                   }}>
                     <i className={`bi ${item.icon}`} style={{ color: 'var(--primary)' }}></i>
                   </div>
                   <div>
-                    <div style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--text-primary)' }}>{item.title}</div>
-                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.88rem' }}>{item.text}</div>
+                    <div style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--text-primary)' }}>
+                      {t(item.titleKey)}
+                    </div>
+                    <div style={{ color: 'var(--text-secondary)', fontSize: '0.88rem' }}>
+                      {t(item.textKey)}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -125,14 +136,17 @@ export default function ContactPage() {
               <div className="card-custom mt-4">
                 <h6 style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
                   <i className="bi bi-headset me-2" style={{ color: 'var(--accent)' }}></i>
-                  24/7 Emergency Support
+                  {t('contact.emergency')}
                 </h6>
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', margin: 0 }}>
-                  For urgent claims and emergencies, call our hotline at <strong>+95 9 987 654 321</strong> available round the clock.
+                  {t('contact.emergencyDesc')}{' '}
+                  <strong>{t('contact.emergencyHotline')}</strong>{' '}
+                  {t('contact.emergencyAvail')}
                 </p>
               </div>
             </div>
 
+            {/* ── Contact Form ── */}
             <div className="col-12 col-lg-7">
               <div className="auth-card" style={{ maxWidth: '100%' }}>
                 <h5 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1.5rem' }}>
@@ -141,42 +155,52 @@ export default function ContactPage() {
                 <form onSubmit={handleSubmit} noValidate>
                   <div className="row g-3">
                     <div className="col-12 col-sm-6">
-                      <label className="form-label-custom">Full Name *</label>
+                      <label className="form-label-custom">{t('contact.fullName')} *</label>
                       <input name="name" className="form-control-custom w-100" placeholder="John Doe"
                         value={form.name} onChange={handleChange} onBlur={handleBlur}
                         style={fieldStyle('name')} />
                       <ErrorMsg name="name" />
                     </div>
                     <div className="col-12 col-sm-6">
-                      <label className="form-label-custom">Email Address *</label>
+                      <label className="form-label-custom">{t('contact.emailAddress')} *</label>
                       <input name="email" type="email" className="form-control-custom w-100" placeholder="john@example.com"
                         value={form.email} onChange={handleChange} onBlur={handleBlur}
                         style={fieldStyle('email')} />
                       <ErrorMsg name="email" />
                     </div>
                     <div className="col-12 col-sm-6">
-                      <label className="form-label-custom">Phone Number <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>(optional)</span></label>
+                      <label className="form-label-custom">
+                        {t('contact.phoneNumber')}{' '}
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>{t('contact.phoneOptional')}</span>
+                      </label>
                       <input name="phone" className="form-control-custom w-100" placeholder="+95 9xxxxxxxxx"
                         value={form.phone} onChange={handleChange} onBlur={handleBlur}
                         style={fieldStyle('phone')} />
                       <ErrorMsg name="phone" />
                     </div>
                     <div className="col-12 col-sm-6">
-                      <label className="form-label-custom">Subject *</label>
+                      <label className="form-label-custom">{t('contact.subject')} *</label>
                       <input name="subject" className="form-control-custom w-100" placeholder="Policy inquiry"
                         value={form.subject} onChange={handleChange} onBlur={handleBlur}
                         style={fieldStyle('subject')} />
                       <ErrorMsg name="subject" />
                     </div>
                     <div className="col-12">
-                      <label className="form-label-custom">Message * <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>(min. 10 characters)</span></label>
+                      <label className="form-label-custom">
+                        {t('contact.message')} *{' '}
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>{t('contact.messageMin')}</span>
+                      </label>
                       <textarea name="message" rows={5} className="form-control-custom w-100"
                         placeholder="How can we help you?"
                         value={form.message} onChange={handleChange} onBlur={handleBlur}
                         style={{ resize: 'vertical', ...fieldStyle('message') }} />
                       <div className="d-flex justify-content-between align-items-start">
                         <ErrorMsg name="message" />
-                        <span style={{ fontSize: '0.75rem', color: form.message.length < 10 ? 'var(--text-muted)' : '#16a34a', marginLeft: 'auto', marginTop: '0.25rem' }}>
+                        <span style={{
+                          fontSize: '0.75rem',
+                          color: form.message.length < 10 ? 'var(--text-muted)' : '#16a34a',
+                          marginLeft: 'auto', marginTop: '0.25rem',
+                        }}>
                           {form.message.length} / 10 min
                         </span>
                       </div>
@@ -186,12 +210,13 @@ export default function ContactPage() {
                     className="btn-primary-custom mt-3"
                     style={{ width: '100%', justifyContent: 'center' }}>
                     {loading
-                      ? <><span className="spinner-border spinner-border-sm me-2"></span>Sending...</>
-                      : <><i className="bi bi-send me-2"></i>Send Message</>}
+                      ? <><span className="spinner-border spinner-border-sm me-2"></span>{t('contact.sending')}</>
+                      : <><i className="bi bi-send me-2"></i>{t('contact.send')}</>}
                   </button>
                 </form>
               </div>
             </div>
+
           </div>
         </div>
       </section>
