@@ -27,7 +27,7 @@ export default function ManageUsersPage() {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState(() => {
     const t = searchParams.get('tab')
-    return t && ['CUSTOMER', 'AGENT', 'ADMIN'].includes(t) ? t : 'CUSTOMER'
+    return t && ['CUSTOMER', 'AGENT'].includes(t) ? t : 'CUSTOMER'
   })
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
@@ -78,7 +78,6 @@ export default function ManageUsersPage() {
   const counts = {
     CUSTOMER: users.filter(u => u.role === 'CUSTOMER').length,
     AGENT: users.filter(u => u.role === 'AGENT').length,
-    ADMIN: users.filter(u => u.role === 'ADMIN').length,
   }
 
   const handleCreate = async e => {
@@ -92,9 +91,8 @@ export default function ManageUsersPage() {
     }
     setSaving(true)
     try {
-      const endpoint = activeTab === 'AGENT' ? '/admin/users/agents' : '/admin/users/admins'
-      await api.post(endpoint, { ...createForm, phone: phoneVal })
-      toast.success(`${activeTab === 'AGENT' ? 'Agent' : 'Admin'} account created`)
+      await api.post('/admin/users/agents', { ...createForm, phone: phoneVal })
+      toast.success('Agent account created')
       setShowCreatePanel(false); setCreateForm(EMPTY_FORM); fetchUsers()
     } catch (err) { toast.error(err.response?.data?.message || 'Failed to create') }
     finally { setSaving(false) }
@@ -144,7 +142,6 @@ export default function ManageUsersPage() {
   const tabMeta = {
     CUSTOMER: { label: 'Customers', icon: 'bi-people', color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0' },
     AGENT:    { label: 'Agents',    icon: 'bi-person-badge', color: '#1d4ed8', bg: '#eff6ff', border: '#bfdbfe' },
-    ADMIN:    { label: 'Admins',    icon: 'bi-shield-lock', color: '#9333ea', bg: '#faf5ff', border: '#e9d5ff' },
   }
 
   return (
@@ -152,7 +149,7 @@ export default function ManageUsersPage() {
       <div className="d-flex align-items-center justify-content-between mb-4">
         <div>
           <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Manage Users</h4>
-          <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>Manage customers, agents, and admins</p>
+          <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>Manage customers and agents</p>
         </div>
         {activeTab === 'AGENT' && (
           <button className="btn-primary-custom" style={{ fontSize: '0.88rem', padding: '0.45rem 1rem' }}
@@ -168,7 +165,7 @@ export default function ManageUsersPage() {
 
       {/* Tab navigation */}
       <div className="d-flex gap-2 mb-4" style={{ borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
-        {(['CUSTOMER', 'AGENT', 'ADMIN']).map(tab => {
+        {(['CUSTOMER', 'AGENT']).map(tab => {
           const m = tabMeta[tab]
           const active = activeTab === tab
           return (
@@ -327,18 +324,16 @@ export default function ManageUsersPage() {
                             onClick={() => openEdit(u)}>
                             <i className="bi bi-pencil"></i>
                           </button>
-                          {u.role !== 'ADMIN' && (
-                            <>
-                              <button className="btn-outline-custom" style={{ padding: '0.3rem 0.65rem', fontSize: '0.78rem' }}
-                                onClick={() => handleToggle(u.id, u.active)}>
-                                {u.active ? 'Disable' : 'Enable'}
-                              </button>
-                              <button className="btn-danger-sm" style={{ padding: '0.3rem 0.6rem' }}
-                                onClick={() => handleDelete(u.id)}>
-                                <i className="bi bi-trash"></i>
-                              </button>
-                            </>
-                          )}
+                          <>
+                            <button className="btn-outline-custom" style={{ padding: '0.3rem 0.65rem', fontSize: '0.78rem' }}
+                              onClick={() => handleToggle(u.id, u.active)}>
+                              {u.active ? 'Disable' : 'Enable'}
+                            </button>
+                            <button className="btn-danger-sm" style={{ padding: '0.3rem 0.6rem' }}
+                              onClick={() => handleDelete(u.id)}>
+                              <i className="bi bi-trash"></i>
+                            </button>
+                          </>
                         </div>
                       </td>
                     </tr>
