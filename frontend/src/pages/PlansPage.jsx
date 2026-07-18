@@ -198,6 +198,7 @@ export default function PlansPage() {
                     {/* Benefits preview */}
                     {(plan.benefits || []).length > 0 && (
                       <div className="mb-2">
+                        <div style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--text-primary)', marginBottom: '0.4rem' }}>Benefits</div>
                         {(plan.benefits || []).slice(0, expanded ? 20 : 3).map((b, i) => (
                           <div key={i} style={{ display: 'flex', gap: 6, fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: 4 }}>
                             <i className="bi bi-check-circle-fill" style={{ color: '#16a34a', flexShrink: 0, marginTop: 2 }}></i>{b}
