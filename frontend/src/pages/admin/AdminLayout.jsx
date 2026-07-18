@@ -14,6 +14,7 @@ const links = [
   { to: '/admin/payment-methods',  icon: 'bi-qr-code',              label: 'Payment Methods'    },
   { to: '/admin/feedback',      icon: 'bi-chat-heart',           label: 'Customer Feedback', badge: true },
   { to: '/admin/notifications', icon: 'bi-bell',                 label: 'Notifications'      },
+  { to: '/admin/autocheck',     icon: 'bi-robot',                label: 'Auto-Check'         },
   { to: '/admin/reports',       icon: 'bi-bar-chart-line',       label: 'Reports'            },
   { to: '/admin/profile',       icon: 'bi-person-circle',        label: 'My Profile'         },
 ]

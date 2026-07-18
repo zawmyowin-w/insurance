@@ -58,6 +58,7 @@ import AdminProfilePage from './pages/admin/AdminProfilePage'
 import AdminFeedbackPage from './pages/admin/AdminFeedbackPage'
 import AdminPaymentMethodsPage from './pages/admin/AdminPaymentMethodsPage'
 import AdminPremiumSchedulePage from './pages/admin/AdminPremiumSchedulePage'
+import AdminAutoCheckPage from './pages/admin/AdminAutoCheckPage'
 
 export default function App() {
   return (
@@ -122,6 +123,7 @@ export default function App() {
               <Route path="notifications" element={<AdminNotificationsPage />} />
               <Route path="feedback" element={<AdminFeedbackPage />} />
               <Route path="payment-methods" element={<AdminPaymentMethodsPage />} />
+              <Route path="autocheck" element={<AdminAutoCheckPage />} />
               <Route path="reports" element={<AdminReportsPage />} />
               <Route path="profile" element={<AdminProfilePage />} />
             </Route>
