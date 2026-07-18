@@ -53,76 +53,144 @@ export default function FormDetailModal({ show, onClose, type, item, role }) {
     finally { setPdfLoading(false) }
   }
 
-  const typeColor = type === 'application' ? '#1d4ed8' : '#d97706'
-  const typeLabel = type === 'application' ? 'Application Form' : 'Claim Form'
+  const isApp = type === 'application'
+  const typeColor   = isApp ? '#1d4ed8' : '#d97706'
+  const typeColor2  = isApp ? '#3b82f6' : '#f59e0b'
+  const typeLabel   = isApp ? 'Application Form' : 'Claim Form'
+  const typeIcon    = isApp ? 'bi-file-earmark-text' : 'bi-shield-exclamation'
+  const statusValue = item.status
+
+  const statusBadgeStyle = {
+    display: 'inline-block',
+    padding: '0.2rem 0.7rem',
+    borderRadius: 99,
+    fontSize: '0.72rem',
+    fontWeight: 700,
+    letterSpacing: '0.04em',
+    background: statusValue === 'APPROVED' ? '#dcfce7'
+      : statusValue === 'REJECTED' ? '#fee2e2'
+      : statusValue === 'PENDING'  ? '#fef9c3'
+      : '#e0e7ff',
+    color: statusValue === 'APPROVED' ? '#15803d'
+      : statusValue === 'REJECTED' ? '#b91c1c'
+      : statusValue === 'PENDING'  ? '#854d0e'
+      : '#3730a3',
+  }
 
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 1060,
-      background: 'rgba(0,0,0,0.55)', display: 'flex',
-      alignItems: 'center', justifyContent: 'center', padding: '1rem'
+      background: 'rgba(0,0,0,0.6)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: '1rem',
+      backdropFilter: 'blur(3px)',
     }} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div style={{
-        background: 'var(--bg-primary)', borderRadius: 16,
-        width: '100%', maxWidth: 680, maxHeight: '90vh',
+        background: 'var(--bg-primary)',
+        borderRadius: 20,
+        width: '100%', maxWidth: 700, maxHeight: '92vh',
         display: 'flex', flexDirection: 'column', overflow: 'hidden',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+        boxShadow: '0 32px 80px rgba(0,0,0,0.35)',
       }}>
-        {/* Header */}
+
+        {/* ── Gradient Hero Header ── */}
         <div style={{
-          padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border)',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          flexShrink: 0
+          background: 'linear-gradient(135deg, ' + typeColor + ' 0%, ' + typeColor2 + ' 100%)',
+          padding: '1.5rem 1.75rem 2.25rem',
+          position: 'relative',
+          overflow: 'hidden',
+          flexShrink: 0,
         }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ width: 10, height: 10, borderRadius: '50%', background: typeColor, display: 'inline-block' }}></span>
-              <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>{typeLabel}</span>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>#{item.id}</span>
-            </div>
-            {item.packageName && (
-              <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: 2 }}>
-                {item.policyName || item.packageName}
+          {/* Decorative circles */}
+          <div style={{
+            position: 'absolute', top: -40, right: -40,
+            width: 160, height: 160, borderRadius: '50%',
+            background: 'rgba(255,255,255,0.08)',
+          }} />
+          <div style={{
+            position: 'absolute', bottom: -30, right: 80,
+            width: 100, height: 100, borderRadius: '50%',
+            background: 'rgba(255,255,255,0.05)',
+          }} />
+
+          {/* Top row: icon+title | close button */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', position: 'relative', zIndex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{
+                width: 44, height: 44, borderRadius: 12,
+                background: 'rgba(255,255,255,0.18)',
+                backdropFilter: 'blur(6px)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '1.25rem', color: '#fff',
+              }}>
+                <i className={'bi ' + typeIcon}></i>
               </div>
-            )}
+              <div>
+                <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  {typeLabel}
+                </div>
+                <div style={{ color: '#fff', fontSize: '1.15rem', fontWeight: 800, lineHeight: 1.2 }}>
+                  {item.packageName || item.policyName || '—'}
+                </div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <button onClick={handleDownloadPdf} disabled={pdfLoading} style={{
+                padding: '0.4rem 0.85rem', borderRadius: 9,
+                border: '1.5px solid rgba(255,255,255,0.55)',
+                background: 'rgba(255,255,255,0.15)',
+                backdropFilter: 'blur(4px)',
+                color: '#fff', cursor: 'pointer',
+                fontWeight: 600, fontSize: '0.8rem',
+                display: 'flex', alignItems: 'center', gap: 5,
+              }}>
+                {pdfLoading
+                  ? <><span className="spinner-border spinner-border-sm"></span> Generating...</>
+                  : <><i className="bi bi-file-earmark-pdf"></i> PDF</>}
+              </button>
+              <button onClick={onClose} style={{
+                background: 'rgba(255,255,255,0.15)',
+                backdropFilter: 'blur(4px)',
+                border: '1.5px solid rgba(255,255,255,0.4)',
+                borderRadius: 8,
+                color: '#fff', cursor: 'pointer',
+                fontSize: '1.1rem', lineHeight: 1,
+                padding: '0.35rem 0.6rem',
+              }}>×</button>
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={handleDownloadPdf} disabled={pdfLoading} style={{
-              padding: '0.45rem 0.9rem', borderRadius: 8, border: `1.5px solid ${typeColor}`,
-              background: 'transparent', color: typeColor, cursor: 'pointer',
-              fontWeight: 600, fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: 6
-            }}>
-              {pdfLoading
-                ? <><span className="spinner-border spinner-border-sm"></span> Generating...</>
-                : <><i className="bi bi-file-earmark-pdf"></i> PDF</>}
-            </button>
-            <button onClick={onClose} style={{
-              background: 'none', border: 'none', color: 'var(--text-muted)',
-              cursor: 'pointer', fontSize: '1.2rem', lineHeight: 1, padding: '0.25rem'
-            }}>×</button>
+
+          {/* Status pill row */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: '1rem', position: 'relative', zIndex: 1 }}>
+            <span style={statusBadgeStyle}>{statusValue}</span>
+            <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.78rem' }}>
+              #{item.id}
+              {item.policyNumber ? ' · ' + item.policyNumber : ''}
+              {item.createdAt ? ' · ' + new Date(item.createdAt).toLocaleDateString() : ''}
+            </span>
+          </div>
+
+          {/* Stats strip */}
+          <div style={{
+            display: 'flex', gap: '0.75rem', marginTop: '1.1rem',
+            position: 'relative', zIndex: 1, flexWrap: 'wrap',
+          }}>
+            {isApp ? <>
+              {item.coverageAmount && <StatPill icon="bi-shield-check" label="Coverage" value={Number(item.coverageAmount).toLocaleString() + ' MMK'} />}
+              {item.premiumAmount  && <StatPill icon="bi-cash-coin"    label="Premium"  value={Number(item.premiumAmount).toLocaleString() + ' MMK'} />}
+              {item.duration       && <StatPill icon="bi-calendar3"    label="Duration" value={item.duration + ' yr'} />}
+              {item.riskLevel      && <StatPill icon="bi-activity"     label="Risk"     value={item.riskLevel} />}
+            </> : <>
+              {item.amount       && <StatPill icon="bi-cash-coin"          label="Claim Amount"  value={Number(item.amount).toLocaleString() + ' MMK'} />}
+              {item.incidentDate && <StatPill icon="bi-calendar-event"     label="Incident Date" value={item.incidentDate} />}
+              {item.claimType    && <StatPill icon="bi-tag"                label="Claim Type"    value={item.claimType} />}
+              {item.customerName && <StatPill icon="bi-person"             label="Customer"      value={item.customerName} />}
+            </>}
           </div>
         </div>
 
-        {/* Body */}
-        <div style={{ overflowY: 'auto', padding: '1.5rem', flex: 1 }}>
-          {/* Meta info */}
-          <MetaSection type={type} item={item} />
-
-          {/* System fields (always shown if present in formData) */}
-          {(formData.__name || formData.__email || formData.__dob || formData.__nrc) && (
-            <div style={{ marginBottom: '1rem' }}>
-              <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
-                <i className="bi bi-person-fill me-1"></i>Personal Information
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                {formData.__name  && <SystemFieldRow label="အမည် (Full Name)"              value={formData.__name} />}
-                {formData.__email && <SystemFieldRow label="အီးမေးလ် (Email)"              value={formData.__email} />}
-                {formData.__dob   && <SystemFieldRow label="မွေးသက္ကရာဇ် (Date of Birth)"  value={formData.__dob} />}
-                {formData.__nrc   && <SystemFieldRow label="မှတ်ပုံတင် (NRC No.)"          value={formData.__nrc} />}
-              </div>
-              <div style={{ borderTop: '1px solid var(--border)', marginTop: '0.75rem' }}></div>
-            </div>
-          )}
+        {/* ── Body ── */}
+        <div style={{ overflowY: 'auto', flex: 1, padding: '1.5rem' }}>
 
           {/* Dynamic form fields */}
           {loading ? (
@@ -131,78 +199,60 @@ export default function FormDetailModal({ show, onClose, type, item, role }) {
             </div>
           ) : !template ? (
             <div style={{
-              padding: '1rem', borderRadius: 10,
+              padding: '1.25rem', borderRadius: 12,
               background: 'var(--bg-secondary)', border: '1px dashed var(--border)',
-              textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem'
+              textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem',
             }}>
               <i className="bi bi-info-circle me-2"></i>
               No form template found for this plan.
-              {item.formData && <div style={{ marginTop: 4 }}>Raw data stored.</div>}
             </div>
           ) : (
             <div>
-              <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)', marginBottom: '0.75rem', marginTop: '1rem' }}>
-                {template.name}
-              </div>
+              <SectionHeading icon="bi-ui-checks-grid" label={template.name} color={typeColor} />
               <FormFieldsView fields={template.fields} formData={formData} role={role} type={type} itemId={item.id} />
             </div>
           )}
 
-          {/* Notes */}
-          <NotesSection item={item} type={type} />
+          {/* ── Notes section (always shown) ── */}
+          <NotesSection item={item} type={type} typeColor={typeColor} />
         </div>
       </div>
     </div>
   )
 }
 
-function SystemFieldRow({ label, value }) {
+/* ── Small stat pill inside the hero ── */
+function StatPill({ icon, label, value }) {
   return (
     <div style={{
-      display: 'grid', gridTemplateColumns: '180px 1fr', gap: '0.5rem',
-      padding: '0.45rem 0.75rem', borderRadius: 8,
-      background: '#f0fdf4', border: '1px solid #86efac', alignItems: 'start'
+      display: 'flex', alignItems: 'center', gap: 6,
+      background: 'rgba(255,255,255,0.15)',
+      backdropFilter: 'blur(4px)',
+      border: '1px solid rgba(255,255,255,0.25)',
+      borderRadius: 9, padding: '0.3rem 0.7rem',
     }}>
-      <div style={{ fontSize: '0.78rem', color: '#15803d', fontWeight: 600 }}>{label}</div>
-      <div style={{ fontSize: '0.87rem', color: 'var(--text-primary)' }}>{value || '—'}</div>
+      <i className={'bi ' + icon} style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.8rem' }}></i>
+      <div>
+        <div style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.65)', fontWeight: 600, lineHeight: 1, textTransform: 'uppercase' }}>{label}</div>
+        <div style={{ fontSize: '0.8rem', color: '#fff', fontWeight: 700, lineHeight: 1.3 }}>{value}</div>
+      </div>
     </div>
   )
 }
 
-function MetaSection({ type, item }) {
-  const rows = type === 'application' ? [
-    ['Policy Number', item.policyNumber],
-    ['Customer', item.customerName],
-    ['Coverage Amount', item.coverageAmount ? Number(item.coverageAmount).toLocaleString() + ' MMK' : '—'],
-    ['Duration', item.duration ? item.duration + ' year(s)' : '—'],
-    ['Premium', item.premiumAmount ? Number(item.premiumAmount).toLocaleString() + ' MMK' : '—'],
-    ['Risk Level', item.riskLevel],
-    ['Status', item.status],
-    ['Submitted', item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '—'],
-  ] : [
-    ['Claim Type', item.claimType],
-    ['Customer', item.customerName],
-    ['Claim Amount', item.amount ? Number(item.amount).toLocaleString() + ' MMK' : '—'],
-    ['Incident Date', item.incidentDate || '—'],
-    ['Status', item.status],
-    ['Submitted', item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '—'],
-  ]
+/* ── Section heading ── */
+function SectionHeading({ icon, label, color }) {
   return (
-    <div style={{ marginBottom: '1rem' }}>
-      <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Summary</div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem 1rem' }}>
-        {rows.filter(([, v]) => v).map(([label, value]) => (
-          <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 600 }}>{label}</span>
-            <span style={{ fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: label === 'Status' ? 700 : 400 }}>
-              {label === 'Status'
-                ? <span className={`badge-status badge-${value?.toLowerCase()}`}>{value}</span>
-                : value}
-            </span>
-          </div>
-        ))}
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: '0.75rem' }}>
+      <div style={{
+        width: 28, height: 28, borderRadius: 7,
+        background: color + '18',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: '0.85rem', color: color,
+      }}>
+        <i className={'bi ' + icon}></i>
       </div>
-      <div style={{ borderTop: '1px solid var(--border)', marginTop: '1rem' }}></div>
+      <span style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)' }}>{label}</span>
     </div>
   )
 }
@@ -212,7 +262,7 @@ function FormFieldsView({ fields, formData, role, type, itemId }) {
     <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No fields in this template.</div>
   )
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
       {fields.map(field => (
         <FieldRow key={field.id} field={field} value={formData[String(field.id)]} role={role} type={type} itemId={itemId} />
       ))}
@@ -221,22 +271,13 @@ function FormFieldsView({ fields, formData, role, type, itemId }) {
 }
 
 function FieldRow({ field, value, role, type, itemId }) {
-  const [imgSrc, setImgSrc] = useState(null)
-  const isUpload = field.fieldType === 'IMAGE_UPLOAD' || field.fieldType === 'PDF_UPLOAD'
-
-  useEffect(() => {
-    if (field.fieldType === 'IMAGE_UPLOAD' && value && !imgSrc) {
-      // derive doc index from formData key mapping — fetch via blob
-      // We use a simpler approach: display as link
-    }
-  }, [value])
-
   if (field.fieldType === 'LABEL') {
     return (
       <div style={{
-        padding: '0.5rem 0.75rem', borderRadius: 8,
+        padding: '0.5rem 0.85rem', borderRadius: 9,
         background: 'var(--bg-secondary)', borderLeft: '3px solid var(--primary)',
-        fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.88rem'
+        fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.88rem',
+        marginTop: '0.25rem',
       }}>
         {field.fieldLabel}
       </div>
@@ -259,7 +300,6 @@ function FieldRow({ field, value, role, type, itemId }) {
           </div>
         : <span style={{ color: 'var(--text-muted)' }}>None selected</span>
     } else {
-      // Try to parse JSON array
       try {
         const parsed = JSON.parse(value)
         if (Array.isArray(parsed)) {
@@ -286,22 +326,13 @@ function FieldRow({ field, value, role, type, itemId }) {
       }
     }
   } else if (field.fieldType === 'IMAGE_UPLOAD') {
-    if (!value) {
-      displayValue = <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>No image uploaded</span>
-    } else {
-      const endpoint = `/${role}/${type === 'application' ? 'applications' : 'claims'}/${itemId}/form-file`
-      displayValue = (
-        <FileLink path={value} label="View Image" isImage={true} role={role} type={type} itemId={itemId} fieldId={field.id} />
-      )
-    }
+    displayValue = !value
+      ? <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>No image uploaded</span>
+      : <FileLink path={value} label="View Image" isImage={true} role={role} type={type} itemId={itemId} fieldId={field.id} />
   } else if (field.fieldType === 'PDF_UPLOAD') {
-    if (!value) {
-      displayValue = <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>No file uploaded</span>
-    } else {
-      displayValue = (
-        <FileLink path={value} label="View File" isImage={false} role={role} type={type} itemId={itemId} fieldId={field.id} />
-      )
-    }
+    displayValue = !value
+      ? <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>No file uploaded</span>
+      : <FileLink path={value} label="View File" isImage={false} role={role} type={type} itemId={itemId} fieldId={field.id} />
   } else {
     displayValue = value
       ? <span style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{value}</span>
@@ -310,12 +341,12 @@ function FieldRow({ field, value, role, type, itemId }) {
 
   return (
     <div style={{
-      display: 'grid', gridTemplateColumns: '180px 1fr', gap: '0.5rem',
-      padding: '0.6rem 0.75rem', borderRadius: 8,
+      display: 'grid', gridTemplateColumns: '170px 1fr', gap: '0.5rem',
+      padding: '0.6rem 0.85rem', borderRadius: 9,
       background: 'var(--bg-secondary)', border: '1px solid var(--border)',
-      alignItems: 'start'
+      alignItems: 'start',
     }}>
-      <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', fontWeight: 600, paddingTop: 1 }}>
+      <div style={{ fontSize: '0.79rem', color: 'var(--text-secondary)', fontWeight: 600, paddingTop: 2 }}>
         {field.fieldLabel}
         {field.required && <span style={{ color: '#dc2626', marginLeft: 2 }}>*</span>}
       </div>
@@ -346,7 +377,7 @@ function FileLink({ path, label, isImage, role, type, itemId, fieldId }) {
       padding: '0.3rem 0.75rem', borderRadius: 6,
       border: '1.5px solid var(--primary)', background: 'transparent',
       color: 'var(--primary)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600,
-      display: 'inline-flex', alignItems: 'center', gap: 4
+      display: 'inline-flex', alignItems: 'center', gap: 4,
     }}>
       {loading
         ? <><span className="spinner-border spinner-border-sm"></span> Loading...</>
@@ -355,32 +386,79 @@ function FileLink({ path, label, isImage, role, type, itemId, fieldId }) {
   )
 }
 
-function NotesSection({ item, type }) {
-  const notes = type === 'application' ? item.notes : item.description
-  const agentNote = item.agentNote
-  const adminNote = item.adminNote
-  if (!notes && !agentNote && !adminNote) return null
+function NotesSection({ item, type, typeColor }) {
+  const customerNote = type === 'application' ? item.notes : item.description
+  const agentNote    = item.agentNote
+  const adminNote    = item.adminNote
+  const hasAny       = customerNote || agentNote || adminNote
+
+  const noteEntries = [
+    { key: 'customer', icon: 'bi-person-circle',   label: 'Customer', color: '#0369a1', bg: '#e0f2fe', value: customerNote },
+    { key: 'agent',    icon: 'bi-headset',          label: 'Agent',    color: '#7c3aed', bg: '#ede9fe', value: agentNote },
+    { key: 'admin',    icon: 'bi-shield-lock-fill', label: 'Admin',    color: '#b45309', bg: '#fef3c7', value: adminNote },
+  ].filter(e => e.value)
+
   return (
-    <div style={{ marginTop: '1.25rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
-      <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Notes</div>
-      {notes && (
-        <div style={{ marginBottom: '0.5rem' }}>
-          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>Customer: </span>
-          <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{notes}</span>
+    <div style={{
+      marginTop: '1.5rem',
+      borderRadius: 14,
+      border: '1.5px solid var(--border)',
+      overflow: 'hidden',
+    }}>
+      {/* Note header */}
+      <div style={{
+        padding: '0.65rem 1rem',
+        background: 'linear-gradient(90deg, ' + typeColor + '12 0%, transparent 100%)',
+        borderBottom: '1px solid var(--border)',
+        display: 'flex', alignItems: 'center', gap: 8,
+      }}>
+        <div style={{
+          width: 26, height: 26, borderRadius: 7,
+          background: typeColor + '20',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: '0.82rem', color: typeColor,
+        }}>
+          <i className="bi bi-sticky-fill"></i>
         </div>
-      )}
-      {agentNote && (
-        <div style={{ marginBottom: '0.5rem' }}>
-          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>Agent: </span>
-          <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{agentNote}</span>
-        </div>
-      )}
-      {adminNote && (
-        <div>
-          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)' }}>Admin: </span>
-          <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{adminNote}</span>
-        </div>
-      )}
+        <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+          Notes
+        </span>
+      </div>
+
+      {/* Note body */}
+      <div style={{ padding: '0.9rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+        {!hasAny ? (
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            color: 'var(--text-muted)', fontSize: '0.83rem',
+            padding: '0.4rem 0',
+          }}>
+            <i className="bi bi-chat-dots" style={{ fontSize: '1rem', opacity: 0.45 }}></i>
+            <span>No notes have been added yet.</span>
+          </div>
+        ) : noteEntries.map(({ key, icon, label, color, bg, value }) => (
+          <div key={key} style={{
+            display: 'flex', gap: 10, alignItems: 'flex-start',
+            padding: '0.6rem 0.75rem', borderRadius: 10,
+            background: bg, border: '1px solid ' + color + '33',
+          }}>
+            <div style={{
+              width: 26, height: 26, borderRadius: 7,
+              background: color + '20',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '0.82rem', color: color, flexShrink: 0, marginTop: 1,
+            }}>
+              <i className={'bi ' + icon}></i>
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: color, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>
+                {label}
+              </div>
+              <div style={{ fontSize: '0.85rem', color: 'var(--text-primary)', whiteSpace: 'pre-wrap' }}>{value}</div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
