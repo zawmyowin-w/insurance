@@ -162,14 +162,6 @@ export default function ManagePackagesPage() {
                 <input name="durations" className="form-control-custom w-100" placeholder="1, 2, 3, 5" value={form.durations} onChange={handleChange} />
               </div>
               <div className="col-12 col-md-4">
-                <label className="form-label-custom">Min Policy Term (years)</label>
-                <input name="minPolicyTerm" type="number" className="form-control-custom w-100" placeholder="e.g. 1" value={form.minPolicyTerm} onChange={handleChange} min={1} />
-              </div>
-              <div className="col-12 col-md-4">
-                <label className="form-label-custom">Max Policy Term (years)</label>
-                <input name="policyTerm" type="number" className="form-control-custom w-100" placeholder="e.g. 30" value={form.policyTerm} onChange={handleChange} min={1} />
-              </div>
-              <div className="col-12 col-md-4">
                 <label className="form-label-custom">Active</label>
                 <div className="d-flex align-items-center gap-2 mt-1">
                   <input type="checkbox" name="active" checked={form.active} onChange={handleChange} id="pkgActive" />
