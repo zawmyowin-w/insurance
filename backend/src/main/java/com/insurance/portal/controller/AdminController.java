@@ -31,6 +31,7 @@ public class AdminController {
     private final ClaimRepository claimRepo;
     private final PaymentRepository paymentRepo;
     private final NotificationRepository notifRepo;
+    private final InsurancePackageRepository packageRepo;
     private final PasswordEncoder passwordEncoder;
 
     // ── Dashboard Stats ───────────────────────────────────────────────
@@ -44,7 +45,7 @@ public class AdminController {
         stats.put("pendingClaims", claimRepo.countByStatus(ClaimStatus.PENDING));
         stats.put("verifiedApplications", appRepo.countByStatus(ApplicationStatus.VERIFIED));
         stats.put("verifiedClaims", claimRepo.countByStatus(ClaimStatus.VERIFIED));
-        stats.put("totalPackages", 0);
+        stats.put("totalPackages", packageRepo.count());
         stats.put("monthlyRevenue", 0);
         return stats;
     }
