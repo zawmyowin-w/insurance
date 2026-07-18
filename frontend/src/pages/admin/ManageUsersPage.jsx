@@ -39,6 +39,7 @@ export default function ManageUsersPage() {
   const [editingUser, setEditingUser] = useState(null)
   const [editForm, setEditForm] = useState(EMPTY_EDIT)
   const [editPwdFocused, setEditPwdFocused] = useState(false)
+  const [showEditPwd, setShowEditPwd] = useState(false)
   const [editSaving, setEditSaving] = useState(false)
   const [insuranceTypes, setInsuranceTypes] = useState(['LIFE', 'HEALTH', 'VEHICLE', 'PROPERTY'])
 
@@ -449,12 +450,19 @@ export default function ManageUsersPage() {
                 </div>
                 <div className="col-12">
                   <label className="form-label-custom">
-                    Reset Password <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(leave blank to keep)</span>
+                    Password <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(leave blank to keep)</span>
                   </label>
-                  <input type="password" className="form-control-custom w-100"
-                    placeholder="New password…" value={editForm.newPassword}
-                    onChange={e => setEditForm(f => ({ ...f, newPassword: e.target.value }))}
-                    onFocus={() => setEditPwdFocused(true)} onBlur={() => setEditPwdFocused(false)} />
+                  <div style={{ position: 'relative' }}>
+                    <input type={showEditPwd ? 'text' : 'password'} className="form-control-custom w-100"
+                      placeholder="New password…" value={editForm.newPassword}
+                      style={{ paddingRight: '2.5rem' }}
+                      onChange={e => setEditForm(f => ({ ...f, newPassword: e.target.value }))}
+                      onFocus={() => setEditPwdFocused(true)} onBlur={() => setEditPwdFocused(false)} />
+                    <button type="button" onClick={() => setShowEditPwd(v => !v)}
+                      style={{ position: 'absolute', right: '0.65rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 0, lineHeight: 1 }}>
+                      <i className={`bi bi-eye${showEditPwd ? '-slash' : ''}`}></i>
+                    </button>
+                  </div>
                   {(editPwdFocused || editForm.newPassword.length > 0) && (
                     <PasswordStrengthWidget password={editForm.newPassword} compact />
                   )}
