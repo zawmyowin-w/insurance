@@ -3,10 +3,9 @@ import api from '../../services/api'
 import { toast } from 'react-toastify'
 import { useAuth } from '../../context/AuthContext'
 import ProfileAvatar from '../../components/ProfileAvatar'
-import PasswordStrengthWidget from '../../components/PasswordStrengthWidget'
 import {
   EMAIL_MAX_LENGTH, EMAIL_ERROR, isEmailValid,
-  PHONE_PATTERN, PHONE_ERROR, isStrongPassword,
+  PHONE_PATTERN, PHONE_ERROR,
 } from '../../utils/validation'
 
 function handlePhoneChange(val, setter) {
@@ -26,11 +25,7 @@ export default function AdminProfilePage() {
   })
   const [pendingPhotoFile, setPendingPhotoFile] = useState(null)
   const [pendingPhotoPreview, setPendingPhotoPreview] = useState(null)
-  const [pwd, setPwd] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
-  const [pwdFocused, setPwdFocused] = useState(false)
   const [savingProfile, setSavingProfile] = useState(false)
-  const [savingPwd, setSavingPwd] = useState(false)
-  const [showPwdModal, setShowPwdModal] = useState(false)
   const [emailTouched, setEmailTouched] = useState(false)
 
   const handlePhotoSelected = file => {
@@ -84,32 +79,6 @@ export default function AdminProfilePage() {
     setEmailTouched(false)
     clearPendingPhoto()
     setEditMode(false)
-  }
-
-  const handlePasswordSubmit = async e => {
-    e.preventDefault()
-    if (!isStrongPassword(pwd.newPassword)) {
-      toast.error('Password must be at least 8 characters with uppercase, lowercase, number and special character')
-      return
-    }
-    if (pwd.newPassword !== pwd.confirmPassword) { toast.error('New passwords do not match'); return }
-    setSavingPwd(true)
-    try {
-      const { data } = await api.put('/auth/profile', {
-        currentPassword: pwd.currentPassword, newPassword: pwd.newPassword,
-      })
-      setUser(data)
-      toast.success('Password changed successfully')
-      closePwdModal()
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to change password')
-    } finally { setSavingPwd(false) }
-  }
-
-  const closePwdModal = () => {
-    setShowPwdModal(false)
-    setPwd({ currentPassword: '', newPassword: '', confirmPassword: '' })
-    setPwdFocused(false)
   }
 
   const emailInvalid = emailTouched && form.email && !isEmailValid(form.email)
@@ -237,9 +206,6 @@ export default function AdminProfilePage() {
                     <button type="button" onClick={() => setEditMode(true)} className="btn-primary-custom" style={{ justifyContent: 'center' }}>
                       <i className="bi bi-pencil me-2"></i>Update
                     </button>
-                    <button type="button" onClick={() => setShowPwdModal(true)} className="btn-outline-custom" style={{ justifyContent: 'center' }}>
-                      <i className="bi bi-key me-2"></i>Change Password
-                    </button>
                   </React.Fragment>
                 )}
               </div>
@@ -248,59 +214,6 @@ export default function AdminProfilePage() {
         </div>
       </div>
 
-      {/* Change Password Modal */}
-      {showPwdModal && (
-        <div style={{
-          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1050,
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem'
-        }} onClick={closePwdModal}>
-          <div className="card-custom fade-in" style={{ maxWidth: 420, width: '100%', margin: 0, maxHeight: '92vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
-            <div className="d-flex align-items-center justify-content-between mb-3">
-              <h6 style={{ fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>Change Password</h6>
-              <button className="icon-btn" onClick={closePwdModal}><i className="bi bi-x-lg"></i></button>
-            </div>
-
-            <form onSubmit={handlePasswordSubmit}>
-              <div className="mb-3">
-                <label className="form-label-custom">Current Password</label>
-                <input type="password" className="form-control-custom w-100" value={pwd.currentPassword}
-                  onChange={e => setPwd(p => ({ ...p, currentPassword: e.target.value }))} />
-              </div>
-              <div className="mb-2">
-                <label className="form-label-custom">New Password</label>
-                <input type="password" className="form-control-custom w-100" value={pwd.newPassword}
-                  onChange={e => setPwd(p => ({ ...p, newPassword: e.target.value }))}
-                  onFocus={() => setPwdFocused(true)} onBlur={() => setPwdFocused(false)} />
-                {(pwdFocused || pwd.newPassword.length > 0) && (
-                  <PasswordStrengthWidget password={pwd.newPassword} compact />
-                )}
-              </div>
-              <div className="mb-3">
-                <label className="form-label-custom">Confirm New Password</label>
-                <div style={{ position: 'relative' }}>
-                  <input type="password" className="form-control-custom w-100" value={pwd.confirmPassword}
-                    style={{ paddingRight: '2.5rem' }}
-                    onChange={e => setPwd(p => ({ ...p, confirmPassword: e.target.value }))} />
-                  {pwd.confirmPassword.length > 0 && (
-                    <span style={{
-                      position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)',
-                      color: pwd.confirmPassword === pwd.newPassword ? '#16a34a' : '#ef4444',
-                    }}>
-                      <i className={`bi bi-${pwd.confirmPassword === pwd.newPassword ? 'check-circle-fill' : 'x-circle-fill'}`}></i>
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="d-flex gap-2">
-                <button type="submit" disabled={savingPwd} className="btn-primary-custom" style={{ justifyContent: 'center' }}>
-                  {savingPwd ? <><span className="spinner-border spinner-border-sm me-2"></span>Updating...</> : 'Update Password'}
-                </button>
-                <button type="button" className="btn-outline-custom" onClick={closePwdModal}>Cancel</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

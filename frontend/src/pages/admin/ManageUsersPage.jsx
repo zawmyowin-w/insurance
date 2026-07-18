@@ -154,14 +154,14 @@ export default function ManageUsersPage() {
           <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Manage Users</h4>
           <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>Manage customers, agents, and admins</p>
         </div>
-        {(activeTab === 'AGENT' || activeTab === 'ADMIN') && (
+        {activeTab === 'AGENT' && (
           <button className="btn-primary-custom" style={{ fontSize: '0.88rem', padding: '0.45rem 1rem' }}
             onClick={() => {
               if (showCreatePanel && fromDashboard) { navigate('/admin/dashboard'); return }
               setShowCreatePanel(v => !v)
             }}>
             <i className={`bi bi-${showCreatePanel ? (fromDashboard ? 'arrow-left' : 'x-lg') : 'person-plus'} me-1`}></i>
-            {showCreatePanel ? (fromDashboard ? 'Back' : 'Cancel') : `Create ${activeTab === 'AGENT' ? 'Agent' : 'Admin'}`}
+            {showCreatePanel ? (fromDashboard ? 'Back' : 'Cancel') : 'Create Agent'}
           </button>
         )}
       </div>
@@ -191,12 +191,12 @@ export default function ManageUsersPage() {
         })}
       </div>
 
-      {/* Create panel — only for AGENT and ADMIN tabs */}
-      {showCreatePanel && (activeTab === 'AGENT' || activeTab === 'ADMIN') && (
+      {/* Create panel — only for AGENT tab */}
+      {showCreatePanel && activeTab === 'AGENT' && (
         <div className="card-custom mb-4 fade-in" style={{ borderLeft: `3px solid ${tabMeta[activeTab].color}` }}>
           <h6 style={{ fontWeight: 700, marginBottom: '1.25rem', color: tabMeta[activeTab].color }}>
             <i className={`bi ${tabMeta[activeTab].icon} me-2`}></i>
-            Create {activeTab === 'AGENT' ? 'Agent' : 'Admin'} Account
+            Create Agent Account
           </h6>
           <form onSubmit={handleCreate}>
             <div className="row g-3">
