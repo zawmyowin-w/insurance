@@ -97,10 +97,12 @@ public class AdminController {
     @Transactional(readOnly = true)
     public Map<String, Object> getReports() {
         Map<String, Object> r = new LinkedHashMap<>();
-        var allApps    = appRepo.findAll();
-        var allClaims  = claimRepo.findAll();
+        var allApps     = appRepo.findAll();
+        var allClaims   = claimRepo.findAll();
         var allPayments = paymentRepo.findAll();
+        var now         = java.time.LocalDateTime.now();
 
+        // ── Basic counts ──────────────────────────────────────────────
         r.put("totalCustomers",       userRepo.findAllByRole(Role.CUSTOMER).size());
         r.put("totalAgents",          userRepo.findAllByRole(Role.AGENT).size());
         r.put("totalApplications",    allApps.size());
@@ -112,13 +114,56 @@ public class AdminController {
         r.put("pendingClaims",        allClaims.stream().filter(c -> c.getStatus() == ClaimStatus.PENDING || c.getStatus() == ClaimStatus.VERIFIED).count());
         r.put("rejectedClaims",       allClaims.stream().filter(c -> c.getStatus() == ClaimStatus.REJECTED).count());
 
-        java.math.BigDecimal revenue = allPayments.stream()
+        // ── Revenue (verified payments only) ──────────────────────────
+        var verifiedPayments = allPayments.stream()
                 .filter(p -> p.getStatus() == PaymentStatus.VERIFIED && p.getAmount() != null)
+                .toList();
+        java.math.BigDecimal totalRevenue = verifiedPayments.stream()
                 .map(Payment::getAmount)
                 .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
-        r.put("totalRevenue", revenue);
+        r.put("totalRevenue", totalRevenue);
 
-        // Active policies by insurance type
+        // ── Claims paid out (APPROVED claims) ────────────────────────
+        java.math.BigDecimal totalClaimsPaid = allClaims.stream()
+                .filter(c -> c.getStatus() == ClaimStatus.APPROVED && c.getAmount() != null)
+                .map(Claim::getAmount)
+                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+        r.put("totalClaimsPaid", totalClaimsPaid);
+
+        // ── Profit metrics (Myanmar insurance industry standards) ──────
+        // Operating expense: ~15% of gross premium (agent commissions, admin, overhead)
+        double opExpensePct = 15.0;
+        java.math.BigDecimal opExpense = totalRevenue.multiply(
+                java.math.BigDecimal.valueOf(opExpensePct / 100.0))
+                .setScale(2, java.math.RoundingMode.HALF_UP);
+        java.math.BigDecimal netProfit = totalRevenue.subtract(totalClaimsPaid).subtract(opExpense);
+        double lossRatio = totalRevenue.compareTo(java.math.BigDecimal.ZERO) > 0
+                ? totalClaimsPaid.multiply(java.math.BigDecimal.valueOf(100))
+                        .divide(totalRevenue, 2, java.math.RoundingMode.HALF_UP).doubleValue() : 0.0;
+        double expenseRatio = opExpensePct;
+        double combinedRatio = lossRatio + expenseRatio;
+        double profitMarginPct = totalRevenue.compareTo(java.math.BigDecimal.ZERO) > 0
+                ? netProfit.multiply(java.math.BigDecimal.valueOf(100))
+                        .divide(totalRevenue, 2, java.math.RoundingMode.HALF_UP).doubleValue() : 0.0;
+
+        r.put("netProfit",         netProfit);
+        r.put("operatingExpense",  opExpense);
+        r.put("lossRatioPct",      lossRatio);
+        r.put("expenseRatioPct",   expenseRatio);
+        r.put("combinedRatioPct",  combinedRatio);
+        r.put("profitMarginPct",   profitMarginPct);
+
+        // ── Revenue by insurance type ─────────────────────────────────
+        Map<String, java.math.BigDecimal> revenueByType = new java.util.TreeMap<>();
+        for (Payment p : verifiedPayments) {
+            if (p.getApplication() != null && p.getApplication().getInsurancePackage() != null) {
+                String type = p.getApplication().getInsurancePackage().getType();
+                revenueByType.merge(type, p.getAmount(), java.math.BigDecimal::add);
+            }
+        }
+        r.put("revenueByType", revenueByType);
+
+        // ── Active policies by type ───────────────────────────────────
         Map<String, Long> byType = allApps.stream()
                 .filter(a -> a.getStatus() == ApplicationStatus.APPROVED && a.getInsurancePackage() != null)
                 .collect(java.util.stream.Collectors.groupingBy(
@@ -126,19 +171,169 @@ public class AdminController {
                         java.util.stream.Collectors.counting()));
         r.put("policiesByType", byType);
 
-        // Applications submitted per month (last 6 months)
-        Map<String, Long> byMonth = allApps.stream()
-                .filter(a -> a.getCreatedAt() != null
-                        && a.getCreatedAt().isAfter(java.time.LocalDateTime.now().minusMonths(6)))
-                .collect(java.util.stream.Collectors.groupingBy(
-                        a -> a.getCreatedAt().getMonth().getDisplayName(
-                                java.time.format.TextStyle.SHORT, java.util.Locale.ENGLISH)
-                                + " " + a.getCreatedAt().getYear(),
-                        java.util.LinkedHashMap::new,
-                        java.util.stream.Collectors.counting()));
-        r.put("applicationsByMonth", byMonth);
+        // ── Monthly revenue — last 12 months ─────────────────────────
+        Map<String, java.math.BigDecimal> monthlyRevenue = new java.util.LinkedHashMap<>();
+        for (int i = 11; i >= 0; i--) {
+            var month = now.minusMonths(i);
+            String key = month.getMonth().getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.ENGLISH)
+                    + " " + month.getYear();
+            monthlyRevenue.put(key, java.math.BigDecimal.ZERO);
+        }
+        for (Payment p : verifiedPayments) {
+            if (p.getCreatedAt() != null && p.getCreatedAt().isAfter(now.minusMonths(12))) {
+                String key = p.getCreatedAt().getMonth().getDisplayName(
+                        java.time.format.TextStyle.SHORT, java.util.Locale.ENGLISH)
+                        + " " + p.getCreatedAt().getYear();
+                monthlyRevenue.merge(key, p.getAmount(), java.math.BigDecimal::add);
+            }
+        }
+        r.put("monthlyRevenue", monthlyRevenue);
+
+        // ── Monthly claims paid — last 12 months ─────────────────────
+        Map<String, java.math.BigDecimal> monthlyClaims = new java.util.LinkedHashMap<>();
+        for (int i = 11; i >= 0; i--) {
+            var month = now.minusMonths(i);
+            String key = month.getMonth().getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.ENGLISH)
+                    + " " + month.getYear();
+            monthlyClaims.put(key, java.math.BigDecimal.ZERO);
+        }
+        for (Claim c : allClaims) {
+            if (c.getStatus() == ClaimStatus.APPROVED && c.getCreatedAt() != null
+                    && c.getCreatedAt().isAfter(now.minusMonths(12)) && c.getAmount() != null) {
+                String key = c.getCreatedAt().getMonth().getDisplayName(
+                        java.time.format.TextStyle.SHORT, java.util.Locale.ENGLISH)
+                        + " " + c.getCreatedAt().getYear();
+                monthlyClaims.merge(key, c.getAmount(), java.math.BigDecimal::add);
+            }
+        }
+        r.put("monthlyClaims", monthlyClaims);
+
+        // ── Applications per month — last 12 months ───────────────────
+        Map<String, Long> appsByMonth = new java.util.LinkedHashMap<>();
+        for (int i = 11; i >= 0; i--) {
+            var month = now.minusMonths(i);
+            String key = month.getMonth().getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.ENGLISH)
+                    + " " + month.getYear();
+            appsByMonth.put(key, 0L);
+        }
+        for (PolicyApplication a : allApps) {
+            if (a.getCreatedAt() != null && a.getCreatedAt().isAfter(now.minusMonths(12))) {
+                String key = a.getCreatedAt().getMonth().getDisplayName(
+                        java.time.format.TextStyle.SHORT, java.util.Locale.ENGLISH)
+                        + " " + a.getCreatedAt().getYear();
+                appsByMonth.merge(key, 1L, Long::sum);
+            }
+        }
+        r.put("applicationsByMonth", appsByMonth);
+        // legacy 6-month key kept for backward compat
+        r.put("applicationsByMonth6", appsByMonth.entrySet().stream()
+                .skip(Math.max(0, appsByMonth.size() - 6))
+                .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
+                        (a, b) -> b, java.util.LinkedHashMap::new)));
 
         return r;
+    }
+
+    // ── Wallet ────────────────────────────────────────────────────────
+    @GetMapping("/wallet")
+    @Transactional(readOnly = true)
+    public Map<String, Object> getWallet() {
+        Map<String, Object> w = new LinkedHashMap<>();
+        var now         = java.time.LocalDateTime.now();
+        var allPayments = paymentRepo.findAll();
+        var allClaims   = claimRepo.findAll();
+
+        // ── Totals ──────────────────────────────────────────────────────
+        var verifiedPayments = allPayments.stream()
+                .filter(p -> p.getStatus() == PaymentStatus.VERIFIED && p.getAmount() != null)
+                .toList();
+        java.math.BigDecimal totalInflow = verifiedPayments.stream()
+                .map(Payment::getAmount).reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+
+        java.math.BigDecimal totalClaims = allClaims.stream()
+                .filter(c -> c.getStatus() == ClaimStatus.APPROVED && c.getAmount() != null)
+                .map(Claim::getAmount).reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+
+        java.math.BigDecimal opExpense = totalInflow
+                .multiply(java.math.BigDecimal.valueOf(0.15))
+                .setScale(2, java.math.RoundingMode.HALF_UP);
+
+        java.math.BigDecimal totalOutflow = totalClaims.add(opExpense);
+        java.math.BigDecimal walletBalance = totalInflow.subtract(totalOutflow);
+
+        w.put("totalInflow",    totalInflow);
+        w.put("totalOutflow",   totalOutflow);
+        w.put("totalClaimsPaid", totalClaims);
+        w.put("operatingExpense", opExpense);
+        w.put("walletBalance",  walletBalance);
+
+        // ── Monthly inflow/outflow — last 12 months ───────────────────
+        Map<String, java.math.BigDecimal> monthlyIn  = new java.util.LinkedHashMap<>();
+        Map<String, java.math.BigDecimal> monthlyOut = new java.util.LinkedHashMap<>();
+        for (int i = 11; i >= 0; i--) {
+            var m   = now.minusMonths(i);
+            String k = m.getMonth().getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.ENGLISH)
+                    + " " + m.getYear();
+            monthlyIn.put(k,  java.math.BigDecimal.ZERO);
+            monthlyOut.put(k, java.math.BigDecimal.ZERO);
+        }
+        for (Payment p : verifiedPayments) {
+            if (p.getCreatedAt() != null && p.getCreatedAt().isAfter(now.minusMonths(12))) {
+                String k = p.getCreatedAt().getMonth().getDisplayName(
+                        java.time.format.TextStyle.SHORT, java.util.Locale.ENGLISH)
+                        + " " + p.getCreatedAt().getYear();
+                monthlyIn.merge(k, p.getAmount(), java.math.BigDecimal::add);
+            }
+        }
+        for (Claim c : allClaims) {
+            if (c.getStatus() == ClaimStatus.APPROVED && c.getCreatedAt() != null
+                    && c.getCreatedAt().isAfter(now.minusMonths(12)) && c.getAmount() != null) {
+                String k = c.getCreatedAt().getMonth().getDisplayName(
+                        java.time.format.TextStyle.SHORT, java.util.Locale.ENGLISH)
+                        + " " + c.getCreatedAt().getYear();
+                monthlyOut.merge(k, c.getAmount(), java.math.BigDecimal::add);
+            }
+        }
+        w.put("monthlyInflow",  monthlyIn);
+        w.put("monthlyOutflow", monthlyOut);
+
+        // ── Per-customer transaction list ─────────────────────────────
+        Map<Long, Map<String, Object>> custMap = new java.util.LinkedHashMap<>();
+        for (Payment p : verifiedPayments) {
+            if (p.getCustomer() == null) continue;
+            Long cid = p.getCustomer().getId();
+            custMap.computeIfAbsent(cid, id -> {
+                Map<String, Object> cm = new LinkedHashMap<>();
+                cm.put("customerId",    p.getCustomer().getId());
+                cm.put("customerName",  p.getCustomer().getName());
+                cm.put("customerEmail", p.getCustomer().getEmail());
+                cm.put("totalPaid",     java.math.BigDecimal.ZERO);
+                cm.put("paymentCount",  0);
+                cm.put("transactions",  new java.util.ArrayList<>());
+                return cm;
+            });
+            Map<String, Object> cm = custMap.get(cid);
+            cm.put("totalPaid", ((java.math.BigDecimal) cm.get("totalPaid")).add(p.getAmount()));
+            cm.put("paymentCount", (int) cm.get("paymentCount") + 1);
+            Map<String, Object> tx = new LinkedHashMap<>();
+            tx.put("id",          p.getId());
+            tx.put("amount",      p.getAmount());
+            tx.put("method",      p.getPaymentMethod());
+            tx.put("periodLabel", p.getPeriodLabel());
+            tx.put("policyName",  p.getApplication() != null && p.getApplication().getInsurancePackage() != null
+                    ? p.getApplication().getInsurancePackage().getName() : null);
+            tx.put("insuranceType", p.getApplication() != null && p.getApplication().getInsurancePackage() != null
+                    ? p.getApplication().getInsurancePackage().getType() : null);
+            tx.put("createdAt",   p.getCreatedAt());
+            ((java.util.List<Object>) cm.get("transactions")).add(tx);
+        }
+        List<Map<String, Object>> customerList = custMap.values().stream()
+                .sorted(Comparator.comparing(cm ->
+                        ((java.math.BigDecimal) cm.get("totalPaid")).negate()))
+                .toList();
+        w.put("customers", customerList);
+
+        return w;
     }
 
     // ── Users ─────────────────────────────────────────────────────────
