@@ -252,11 +252,16 @@ export default function SubmitClaimPage() {
   )
 }
 
+// Field types already covered by SystemFormFields — skip to avoid duplication
+const SYSTEM_FIELD_TYPES = new Set(['NAME', 'EMAIL', 'NRC'])
+
 function DynamicFormFields({ fields, fieldValues, fieldFiles, onValue, onFile, onCheckboxOption }) {
   if (!fields || fields.length === 0) return null
+  const visibleFields = fields.filter(f => !SYSTEM_FIELD_TYPES.has(f.fieldType))
+  if (visibleFields.length === 0) return null
   return (
     <div className="d-flex flex-column gap-3 mb-3">
-      {fields.map(field => (
+      {visibleFields.map(field => (
         <DynamicField
           key={field.id}
           field={field}
