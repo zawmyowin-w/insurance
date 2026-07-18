@@ -121,8 +121,8 @@ export default function MyApplicationsPage() {
                       }}>
                         <i className="bi bi-eye"></i> View
                       </button>
-                      {/* Edit — for PENDING and REVISION_REQUESTED */}
-                      {(app.status === 'PENDING' || app.status === 'REVISION_REQUESTED') && (
+                      {/* Edit — for PENDING, REVISION_REQUESTED, and REJECTED */}
+                      {(app.status === 'PENDING' || app.status === 'REVISION_REQUESTED' || app.status === 'REJECTED') && (
                         <button onClick={() => setReviseItem(app)} style={{
                           padding: '0.4rem 0.9rem', borderRadius: 8, border: '1.5px solid #d97706',
                           background: 'transparent', color: '#d97706', cursor: 'pointer',

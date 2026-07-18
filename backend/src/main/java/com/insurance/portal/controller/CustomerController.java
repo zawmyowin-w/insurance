@@ -181,8 +181,10 @@ public class CustomerController {
                 .orElseThrow(() -> new RuntimeException("Application not found"));
         if (!app.getCustomer().getId().equals(user.getId()))
             return ResponseEntity.status(403).body(Map.of("message", "Forbidden"));
-        if (app.getStatus() != ApplicationStatus.REVISION_REQUESTED && app.getStatus() != ApplicationStatus.PENDING)
-            return ResponseEntity.badRequest().body(Map.of("message", "Only PENDING or REVISION_REQUESTED applications can be edited"));
+        if (app.getStatus() != ApplicationStatus.REVISION_REQUESTED
+                && app.getStatus() != ApplicationStatus.PENDING
+                && app.getStatus() != ApplicationStatus.REJECTED)
+            return ResponseEntity.badRequest().body(Map.of("message", "Only PENDING, REVISION_REQUESTED, or REJECTED applications can be edited"));
 
         if (formData != null) {
             try {
