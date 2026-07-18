@@ -135,6 +135,7 @@ export default function ApplyPolicyPage() {
   const premium = selectedPlan && coverage
     ? Math.round(Number(coverage) * selectedPlan.premiumRate * duration)
     : null
+  const meta2 = selectedPlan ? getTypeMeta(selectedPlan.type) : {}
 
   return (
     <div className="fade-in">
@@ -245,56 +246,84 @@ export default function ApplyPolicyPage() {
       {step === 2 && selectedPlan && (
         <div className="row g-4">
           <div className="col-12 col-lg-8">
-            <div className="card-custom">
-              {/* Plan summary */}
-              <div style={{ padding: '0.75rem 1rem', borderRadius: 8, background: 'var(--bg-secondary)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: 12 }}>
-                <i className={`bi ${getTypeMeta(selectedPlan.type).icon}`} style={{ fontSize: '1.4rem', color: getTypeMeta(selectedPlan.type).color, flexShrink: 0 }}></i>
-                <div className="flex-grow-1">
-                  <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{selectedPlan.name}</div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{selectedPlan.type} • {(selectedPlan.premiumRate * 100).toFixed(1)}% premium rate</div>
+            {/* Hero banner */}
+            <div style={{
+              borderRadius: '16px 16px 0 0',
+              background: 'linear-gradient(135deg, ' + meta2.color + ' 0%, ' + meta2.color + 'bb 100%)',
+              padding: '1.75rem 1.75rem 2.5rem',
+              position: 'relative', overflow: 'hidden',
+            }}>
+              {/* decorative circles */}
+              <div style={{ position: 'absolute', top: -30, right: -30, width: 130, height: 130, borderRadius: '50%', background: 'rgba(255,255,255,0.08)' }} />
+              <div style={{ position: 'absolute', bottom: -20, right: 60, width: 80, height: 80, borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, position: 'relative' }}>
+                <div style={{ width: 54, height: 54, borderRadius: 14, background: 'rgba(255,255,255,0.2)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <i className={`bi ${meta2.icon}`} style={{ fontSize: '1.6rem', color: '#fff' }}></i>
                 </div>
-                <button onClick={() => { setStep(1); setSelectedPlan(null) }} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.82rem' }}>
-                  Change Plan
+                <div className="flex-grow-1">
+                  <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{selectedPlan.type}</div>
+                  <div style={{ color: '#fff', fontWeight: 800, fontSize: '1.15rem', lineHeight: 1.2 }}>{selectedPlan.name}</div>
+                  <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.8rem', marginTop: 3 }}>
+                    {(selectedPlan.premiumRate * 100).toFixed(1)}% premium rate &nbsp;·&nbsp; {Number(selectedPlan.coverageMin).toLocaleString()} – {Number(selectedPlan.coverageMax).toLocaleString()} MMK
+                  </div>
+                </div>
+                <button onClick={() => { setStep(1); setSelectedPlan(null) }} style={{
+                  background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.3)',
+                  color: '#fff', borderRadius: 8, padding: '0.35rem 0.75rem',
+                  cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, backdropFilter: 'blur(4px)',
+                  flexShrink: 0,
+                }}>
+                  <i className="bi bi-arrow-left me-1"></i>Change
                 </button>
               </div>
+            </div>
+
+            {/* Form card — attached below hero */}
+            <div className="card-custom" style={{ borderRadius: '0 0 16px 16px', marginTop: 0, borderTop: 'none', paddingTop: '1.5rem' }}>
 
               {/* Coverage & duration */}
-              <div className="row g-3 mb-3">
-                <div className="col-12 col-sm-6">
-                  <label className="form-label-custom">Coverage Amount (MMK)</label>
-                  <input type="number" className="form-control-custom w-100"
-                    value={coverage}
-                    min={selectedPlan.coverageMin} max={selectedPlan.coverageMax}
-                    onChange={e => setCoverage(e.target.value)} />
-                  <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
-                    Range: {Number(selectedPlan.coverageMin).toLocaleString()} – {Number(selectedPlan.coverageMax).toLocaleString()} MMK
-                  </small>
+              <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, padding: '1rem 1.25rem', marginBottom: '1.25rem' }}>
+                <div style={{ fontSize: '0.78rem', fontWeight: 700, color: meta2.color, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
+                  <i className="bi bi-sliders me-1"></i>Coverage Details
                 </div>
-                <div className="col-12 col-sm-6">
-                  <label className="form-label-custom">Duration (years)</label>
-                  <select className="form-select-custom w-100" value={duration} onChange={e => setDuration(Number(e.target.value))}>
-                    {(Array.isArray(durations) ? durations : String(durations).split(',').map(Number)).map(d => (
-                      <option key={d} value={d}>{d} year{d > 1 ? 's' : ''}</option>
-                    ))}
-                  </select>
+                <div className="row g-3">
+                  <div className="col-12 col-sm-6">
+                    <label className="form-label-custom">Coverage Amount (MMK)</label>
+                    <input type="number" className="form-control-custom w-100"
+                      value={coverage}
+                      min={selectedPlan.coverageMin} max={selectedPlan.coverageMax}
+                      onChange={e => setCoverage(e.target.value)} />
+                    <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
+                      Range: {Number(selectedPlan.coverageMin).toLocaleString()} – {Number(selectedPlan.coverageMax).toLocaleString()} MMK
+                    </small>
+                  </div>
+                  <div className="col-12 col-sm-6">
+                    <label className="form-label-custom">Duration (years)</label>
+                    <select className="form-select-custom w-100" value={duration} onChange={e => setDuration(Number(e.target.value))}>
+                      {(Array.isArray(durations) ? durations : String(durations).split(',').map(Number)).map(d => (
+                        <option key={d} value={d}>{d} year{d > 1 ? 's' : ''}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
               </div>
 
               {/* Dynamic form fields */}
               {templateLoading && (
                 <div className="text-center py-3">
-                  <span className="spinner-border spinner-border-sm me-2" style={{ color: 'var(--primary)' }}></span>
+                  <span className="spinner-border spinner-border-sm me-2" style={{ color: meta2.color }}></span>
                   <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Loading form fields...</span>
                 </div>
               )}
 
               {!templateLoading && template && template.fields?.length > 0 && (
-                <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '0.5rem' }}>
-                  <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)', marginBottom: '1rem' }}>
-                    {template.name}
+                <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '0.25rem' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: meta2.color, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '1rem' }}>
+                    <i className="bi bi-ui-checks me-1"></i>{template.name}
                   </div>
                   <DynamicFormFields
-                    fields={template.fields}
+                    fields={template.fields.filter(f => !(f.fieldType === 'LABEL' && f.fieldLabel?.toLowerCase().includes('personal information')))}
                     fieldValues={fieldValues}
                     fieldFiles={fieldFiles}
                     onValue={handleFieldValue}
@@ -321,7 +350,7 @@ export default function ApplyPolicyPage() {
               </div>
 
               <div className="d-flex gap-2 mt-4">
-                <button onClick={() => setStep(3)} className="btn-primary-custom flex-grow-1" style={{ justifyContent: 'center' }}
+                <button onClick={() => setStep(3)} className="btn-primary-custom flex-grow-1" style={{ justifyContent: 'center', background: meta2.color, borderColor: meta2.color }}
                   disabled={templateLoading}>
                   Review Application →
                 </button>
