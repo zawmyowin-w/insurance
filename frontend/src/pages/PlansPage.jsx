@@ -188,7 +188,9 @@ export default function PlansPage() {
                       <div className="col-6">
                         <div style={{ background: 'var(--bg-secondary)', borderRadius: 8, padding: '0.5rem 0.65rem' }}>
                           <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Policy Term</div>
-                          <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.88rem' }}>{plan.policyTerm ? `Up to ${plan.policyTerm} yrs` : 'Flexible'}</div>
+                          <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.88rem' }}>
+                            {plan.minPolicyTerm && plan.policyTerm ? `${plan.minPolicyTerm} – ${plan.policyTerm} yrs` : plan.policyTerm ? `Up to ${plan.policyTerm} yrs` : plan.minPolicyTerm ? `From ${plan.minPolicyTerm} yrs` : 'Flexible'}
+                          </div>
                         </div>
                       </div>
                       <div className="col-12">

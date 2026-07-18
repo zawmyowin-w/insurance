@@ -4,7 +4,7 @@ import api from '../../services/api'
 import { toast } from 'react-toastify'
 
 const INSURANCE_TYPE_SUGGESTIONS = ['LIFE', 'HEALTH', 'VEHICLE', 'PROPERTY']
-const EMPTY = { name: '', type: '', description: '', coverageMin: '', coverageMax: '', premiumRate: '', durations: '1,2,3,5', benefits: '', eligibility: '', exclusions: '', policyTerm: '', active: true }
+const EMPTY = { name: '', type: '', description: '', coverageMin: '', coverageMax: '', premiumRate: '', durations: '1,2,3,5', benefitsList: [''], eligibility: '', exclusions: '', minPolicyTerm: '', policyTerm: '', active: true }
 
 export default function ManagePackagesPage() {
   const navigate = useNavigate()
@@ -47,6 +47,10 @@ export default function ManagePackagesPage() {
     setForm(f => ({ ...f, [name]: type === 'checkbox' ? checked : value }))
   }
 
+  const handleBenefitChange = (i, value) => setForm(f => { const l = [...f.benefitsList]; l[i] = value; return { ...f, benefitsList: l } })
+  const addBenefit = () => setForm(f => ({ ...f, benefitsList: [...f.benefitsList, ''] }))
+  const removeBenefit = (i) => setForm(f => ({ ...f, benefitsList: f.benefitsList.length > 1 ? f.benefitsList.filter((_, idx) => idx !== i) : [''] }))
+
   const handleSubmit = async e => {
     e.preventDefault()
     setSaving(true)
@@ -57,8 +61,9 @@ export default function ManagePackagesPage() {
         coverageMax: Number(form.coverageMax),
         premiumRate: Number(form.premiumRate),
         policyTerm: form.policyTerm ? Number(form.policyTerm) : null,
+        minPolicyTerm: form.minPolicyTerm ? Number(form.minPolicyTerm) : null,
         durations: form.durations.split(',').map(d => Number(d.trim())).filter(Boolean),
-        benefits: form.benefits.split('\n').map(b => b.trim()).filter(Boolean),
+        benefits: form.benefitsList.map(b => b.trim()).filter(Boolean),
         eligibility: form.eligibility || null,
         exclusions: form.exclusions || null,
       }
@@ -75,7 +80,7 @@ export default function ManagePackagesPage() {
 
   const handleEdit = (pkg) => {
     setEditing(pkg.id)
-    setForm({ ...pkg, durations: (pkg.durations || []).join(', '), benefits: (pkg.benefits || []).join('\n'), eligibility: pkg.eligibility || '', exclusions: pkg.exclusions || '', policyTerm: pkg.policyTerm || '' })
+    setForm({ ...pkg, durations: (pkg.durations || []).join(', '), benefitsList: (pkg.benefits || []).length ? pkg.benefits : [''], eligibility: pkg.eligibility || '', exclusions: pkg.exclusions || '', minPolicyTerm: pkg.minPolicyTerm || '', policyTerm: pkg.policyTerm || '' })
     setShowForm(true)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -157,6 +162,10 @@ export default function ManagePackagesPage() {
                 <input name="durations" className="form-control-custom w-100" placeholder="1, 2, 3, 5" value={form.durations} onChange={handleChange} />
               </div>
               <div className="col-12 col-md-4">
+                <label className="form-label-custom">Min Policy Term (years)</label>
+                <input name="minPolicyTerm" type="number" className="form-control-custom w-100" placeholder="e.g. 1" value={form.minPolicyTerm} onChange={handleChange} min={1} />
+              </div>
+              <div className="col-12 col-md-4">
                 <label className="form-label-custom">Max Policy Term (years)</label>
                 <input name="policyTerm" type="number" className="form-control-custom w-100" placeholder="e.g. 30" value={form.policyTerm} onChange={handleChange} min={1} />
               </div>
@@ -172,9 +181,24 @@ export default function ManagePackagesPage() {
                 <textarea name="description" rows={2} className="form-control-custom w-100" style={{ resize: 'vertical' }} value={form.description} onChange={handleChange} />
               </div>
               <div className="col-12">
-                <label className="form-label-custom">Benefits (one per line)</label>
-                <textarea name="benefits" rows={3} className="form-control-custom w-100" style={{ resize: 'vertical' }}
-                  placeholder="Death benefit payout&#10;Accidental coverage&#10;24/7 support" value={form.benefits} onChange={handleChange} />
+                <label className="form-label-custom">Benefits</label>
+                {form.benefitsList.map((b, i) => (
+                  <div key={i} className="d-flex align-items-center gap-2 mb-2">
+                    <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', minWidth: 36, fontWeight: 600 }}>No.{i + 1}</span>
+                    <input
+                      className="form-control-custom flex-grow-1"
+                      placeholder={`Benefit ${i + 1}`}
+                      value={b}
+                      onChange={e => handleBenefitChange(i, e.target.value)}
+                    />
+                    <button type="button" onClick={() => removeBenefit(i)} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', fontSize: '1rem', padding: '0 0.25rem', flexShrink: 0 }} title="Remove">
+                      <i className="bi bi-x-lg"></i>
+                    </button>
+                  </div>
+                ))}
+                <button type="button" onClick={addBenefit} style={{ fontSize: '0.82rem', color: 'var(--primary)', background: 'none', border: '1.5px dashed var(--primary)', borderRadius: 8, padding: '0.35rem 0.9rem', cursor: 'pointer', fontWeight: 600, marginTop: 2 }}>
+                  <i className="bi bi-plus me-1"></i>Add Benefit
+                </button>
               </div>
               <div className="col-12 col-md-6">
                 <label className="form-label-custom">Eligibility Requirements</label>

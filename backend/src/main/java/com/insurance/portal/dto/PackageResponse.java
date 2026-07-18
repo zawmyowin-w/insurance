@@ -20,6 +20,10 @@ public class PackageResponse {
     private List<Integer> durations;
     private List<String> benefits;
     private boolean active;
+    private Integer minPolicyTerm;
+    private Integer policyTerm;
+    private String eligibility;
+    private String exclusions;
 
     public static PackageResponse from(InsurancePackage pkg) {
         PackageResponse dto = new PackageResponse();
@@ -31,6 +35,10 @@ public class PackageResponse {
         dto.setCoverageMax(pkg.getCoverageMax());
         dto.setPremiumRate(pkg.getPremiumRate());
         dto.setActive(pkg.isActive());
+        dto.setMinPolicyTerm(pkg.getMinPolicyTerm());
+        dto.setPolicyTerm(pkg.getPolicyTerm());
+        dto.setEligibility(pkg.getEligibility());
+        dto.setExclusions(pkg.getExclusions());
         // Parse durations
         try {
             if (pkg.getDurationsJson() != null) {

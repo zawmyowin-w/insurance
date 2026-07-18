@@ -215,6 +215,12 @@ export default function ApplyPolicyPage() {
                         <span style={{ color: 'var(--text-muted)' }}>{Number(plan.coverageMin).toLocaleString()} – {Number(plan.coverageMax).toLocaleString()} MMK</span>
                         <span style={{ fontWeight: 700, color: meta.color }}>{(plan.premiumRate * 100).toFixed(1)}%/yr</span>
                       </div>
+                      {(plan.minPolicyTerm || plan.policyTerm) && (
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>
+                          <i className="bi bi-clock me-1"></i>
+                          Policy Term: {plan.minPolicyTerm && plan.policyTerm ? `${plan.minPolicyTerm} – ${plan.policyTerm} yrs` : plan.policyTerm ? `Up to ${plan.policyTerm} yrs` : `From ${plan.minPolicyTerm} yrs`}
+                        </div>
+                      )}
                       <button style={{
                         marginTop: '0.75rem', width: '100%', padding: '0.5rem', borderRadius: 8,
                         border: 'none', background: meta.color, color: '#fff',
@@ -331,6 +337,7 @@ export default function ApplyPolicyPage() {
                   ['Coverage', coverage ? Number(coverage).toLocaleString() + ' MMK' : '—'],
                   ['Duration', duration + ' year(s)'],
                   ['Rate', (selectedPlan.premiumRate * 100).toFixed(1) + '%/year'],
+                  ...(selectedPlan.minPolicyTerm || selectedPlan.policyTerm ? [['Policy Term', selectedPlan.minPolicyTerm && selectedPlan.policyTerm ? `${selectedPlan.minPolicyTerm} – ${selectedPlan.policyTerm} yrs` : selectedPlan.policyTerm ? `Up to ${selectedPlan.policyTerm} yrs` : `From ${selectedPlan.minPolicyTerm} yrs`]] : []),
                 ].map(([l, v]) => (
                   <div key={l} style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: 'var(--text-muted)' }}>{l}</span>

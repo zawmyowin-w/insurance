@@ -82,6 +82,10 @@ public class PackageController {
             if (b instanceof List<?> list) pkg.setBenefitsJson(list.stream().map(Object::toString).reduce((a, bc) -> a + "\n" + bc).orElse(""));
             else pkg.setBenefitsJson(b.toString());
         }
+        if (req.containsKey("policyTerm"))    pkg.setPolicyTerm(req.get("policyTerm") != null ? ((Number) req.get("policyTerm")).intValue() : null);
+        if (req.containsKey("minPolicyTerm")) pkg.setMinPolicyTerm(req.get("minPolicyTerm") != null ? ((Number) req.get("minPolicyTerm")).intValue() : null);
+        if (req.containsKey("eligibility"))   pkg.setEligibility((String) req.get("eligibility"));
+        if (req.containsKey("exclusions"))    pkg.setExclusions((String) req.get("exclusions"));
         return pkg;
     }
 }

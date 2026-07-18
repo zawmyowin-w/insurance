@@ -51,6 +51,9 @@ public class InsurancePackage {
     @Column(columnDefinition = "TEXT")
     private String eligibility; // eligibility requirements
 
+    @Column(name = "min_policy_term")
+    private Integer minPolicyTerm; // minimum policy term in years
+
     @Column(name = "policy_term")
     private Integer policyTerm; // maximum policy term in years
 
