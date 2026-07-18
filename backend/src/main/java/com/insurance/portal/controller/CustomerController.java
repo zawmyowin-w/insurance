@@ -356,6 +356,20 @@ public class CustomerController {
                 .map(PaymentResponse::from).toList();
     }
 
+    /** Returns the full installment schedule for all APPROVED policies of this customer. */
+    @GetMapping("/payment-schedule")
+    @Transactional(readOnly = true)
+    public List<com.insurance.portal.dto.PremiumScheduleResponse> getPaymentSchedule(
+            @AuthenticationPrincipal UserDetails principal) {
+        User user = getUser(principal);
+        return appRepo.findAllByCustomerAndStatus(user, ApplicationStatus.APPROVED).stream()
+                .map(app -> {
+                    List<Payment> payments = paymentRepo.findAllByApplication_Id(app.getId());
+                    return com.insurance.portal.util.PremiumScheduleUtil.buildSchedule(app, payments);
+                })
+                .toList();
+    }
+
     @PostMapping("/payments")
     @Transactional
     public ResponseEntity<?> submitPayment(@AuthenticationPrincipal UserDetails principal,
@@ -363,7 +377,9 @@ public class CustomerController {
                                            @RequestParam(required = false) String paymentMethod,
                                            @RequestParam(required = false) MultipartFile screenshot,
                                            @RequestParam(required = false) String notes,
-                                           @RequestParam(required = false) String signature) {
+                                           @RequestParam(required = false) String signature,
+                                           @RequestParam(required = false) Integer periodNumber,
+                                           @RequestParam(required = false) String periodLabel) {
         User user = getUser(principal);
         PolicyApplication app = appRepo.findById(Long.valueOf(applicationId))
                 .orElseThrow(() -> new RuntimeException("Application not found"));
@@ -371,8 +387,19 @@ public class CustomerController {
             return ResponseEntity.status(403).body(Map.of("message", "This application does not belong to you"));
         if (app.getStatus() != ApplicationStatus.APPROVED)
             return ResponseEntity.badRequest().body(Map.of("message", "Payment can only be submitted for APPROVED applications"));
-        if (paymentRepo.existsByApplication_IdAndStatus(app.getId(), PaymentStatus.PENDING))
-            return ResponseEntity.badRequest().body(Map.of("message", "A pending payment already exists for this application"));
+
+        // For period-based payments: block duplicate submission for same period
+        if (periodNumber != null) {
+            if (paymentRepo.existsByApplication_IdAndPeriodNumberAndStatusNot(
+                    app.getId(), periodNumber, PaymentStatus.REJECTED)) {
+                return ResponseEntity.badRequest().body(Map.of("message",
+                        "A payment for period " + periodNumber + " already exists"));
+            }
+        } else {
+            // Legacy / one-time: block if any pending payment exists
+            if (paymentRepo.existsByApplication_IdAndStatus(app.getId(), PaymentStatus.PENDING))
+                return ResponseEntity.badRequest().body(Map.of("message", "A pending payment already exists for this application"));
+        }
 
         // Validate payment method against DB (fall back to built-in list if no DB entries yet)
         boolean methodValid;
@@ -400,11 +427,25 @@ public class CustomerController {
             return ResponseEntity.badRequest().body(Map.of("message", "Failed to save screenshot"));
         }
 
+        // Determine installment amount for this period
+        BigDecimal payAmount = app.getPremiumAmount();
+        if (periodNumber != null && app.getInsurancePackage() != null) {
+            Integer intervalMonths = app.getInsurancePackage().getPaymentIntervalMonths();
+            if (intervalMonths != null && intervalMonths > 0 && app.getDuration() != null) {
+                int totalInstallments = (app.getDuration() * 12) / intervalMonths;
+                if (totalInstallments > 1) {
+                    payAmount = app.getPremiumAmount()
+                            .divide(java.math.BigDecimal.valueOf(totalInstallments), 2, java.math.RoundingMode.HALF_UP);
+                }
+            }
+        }
+
         Payment payment = Payment.builder()
                 .application(app).customer(user)
-                .amount(app.getPremiumAmount())
+                .amount(payAmount)
                 .paymentType("PREMIUM").paymentMethod(paymentMethod)
                 .screenshotPath(screenshotPath).notes(notes)
+                .periodNumber(periodNumber).periodLabel(periodLabel)
                 .status(PaymentStatus.PENDING).build();
         return ResponseEntity.ok(PaymentResponse.from(paymentRepo.save(payment)));
     }

@@ -5,3 +5,4 @@
 - [JSON array in TEXT column for multi-file paths](json-array-in-text-column.md) — FileStorageUtil toJsonArray/fromJsonArray; documentCount derived at DTO level from list size
 - [Dynamic form system architecture](dynamic-form-system.md) — form_templates→package FK, form_data JSON in applications/claims, FormDetailModal, PDF via itext7
 - [React button type mutation triggers phantom submit](react-button-type-mutation-submit.md) — toggle button changing type button→submit at same JSX position can self-submit on the toggling click; fix with distinct Fragment keys
+- [Premium installment schedule system](premium-schedule-system.md) — dynamic schedule from app+package data; Payment.periodNumber tracks which installment is paid; PremiumScheduleUtil shared by both endpoints

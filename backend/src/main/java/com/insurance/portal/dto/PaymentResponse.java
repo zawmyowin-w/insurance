@@ -21,6 +21,8 @@ public class PaymentResponse {
     private boolean hasScreenshot;
     private String status;
     private String notes;
+    private Integer periodNumber;
+    private String periodLabel;
     private String verifiedBy;
     private LocalDateTime createdAt;
 
@@ -45,6 +47,8 @@ public class PaymentResponse {
         dto.setHasScreenshot(p.getScreenshotPath() != null && !p.getScreenshotPath().isBlank());
         dto.setStatus(p.getStatus().name());
         dto.setNotes(p.getNotes());
+        dto.setPeriodNumber(p.getPeriodNumber());
+        dto.setPeriodLabel(p.getPeriodLabel());
         dto.setVerifiedBy(p.getVerifiedBy());
         dto.setCreatedAt(p.getCreatedAt());
         return dto;

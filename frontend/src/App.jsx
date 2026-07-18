@@ -57,6 +57,7 @@ import AdminReportsPage from './pages/admin/AdminReportsPage'
 import AdminProfilePage from './pages/admin/AdminProfilePage'
 import AdminFeedbackPage from './pages/admin/AdminFeedbackPage'
 import AdminPaymentMethodsPage from './pages/admin/AdminPaymentMethodsPage'
+import AdminPremiumSchedulePage from './pages/admin/AdminPremiumSchedulePage'
 
 export default function App() {
   return (
@@ -116,6 +117,7 @@ export default function App() {
               <Route path="applications" element={<AdminApplicationsPage />} />
               <Route path="claims" element={<AdminClaimsPage />} />
               <Route path="payments" element={<AdminPaymentsPage />} />
+              <Route path="premium-schedule" element={<AdminPremiumSchedulePage />} />
               <Route path="forms" element={<AdminFormBuilderPage />} />
               <Route path="notifications" element={<AdminNotificationsPage />} />
               <Route path="feedback" element={<AdminFeedbackPage />} />

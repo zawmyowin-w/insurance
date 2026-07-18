@@ -52,6 +52,14 @@ public class Payment {
 
     private String notes;
 
+    /** Which installment period this payment covers (1-based). Null for one-time/legacy payments. */
+    @Column(name = "period_number")
+    private Integer periodNumber;
+
+    /** Human-readable period label, e.g. "2026-07" for monthly, "Year 2" for annual */
+    @Column(name = "period_label", length = 30)
+    private String periodLabel;
+
     @Column(name = "verified_by")
     private String verifiedBy;
 

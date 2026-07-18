@@ -12,7 +12,9 @@ import java.util.List;
 public interface PaymentRepository extends JpaRepository<Payment, Long> {
     List<Payment> findAllByCustomer(User customer);
     List<Payment> findAllByStatus(PaymentStatus status);
+    List<Payment> findAllByApplication_Id(Long applicationId);
     boolean existsByApplication_IdAndStatus(Long applicationId, PaymentStatus status);
+    boolean existsByApplication_IdAndPeriodNumberAndStatusNot(Long applicationId, Integer periodNumber, PaymentStatus status);
 
     void deleteAllByCustomer(User customer);
 }
