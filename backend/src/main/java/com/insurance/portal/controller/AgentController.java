@@ -86,10 +86,18 @@ public class AgentController {
     @GetMapping("/applications")
     @Transactional(readOnly = true)
     public List<ApplicationResponse> getApplications(@AuthenticationPrincipal UserDetails principal,
-                                                      @RequestParam(required = false) Integer limit) {
+                                                      @RequestParam(required = false) Integer limit,
+                                                      @RequestParam(required = false) String status) {
         User agent = getAgent(principal);
         return appRepo.findAllByAgent(agent).stream()
-                .filter(a -> a.getStatus() == ApplicationStatus.PENDING || a.getStatus() == ApplicationStatus.REVISION_REQUESTED)
+                .filter(a -> {
+                    if (status != null && !status.isBlank() && !status.equalsIgnoreCase("ALL")) {
+                        try { return a.getStatus() == ApplicationStatus.valueOf(status.toUpperCase()); }
+                        catch (IllegalArgumentException e) { return false; }
+                    }
+                    // default: PENDING + REVISION_REQUESTED only
+                    return a.getStatus() == ApplicationStatus.PENDING || a.getStatus() == ApplicationStatus.REVISION_REQUESTED;
+                })
                 .sorted(Comparator.comparing(PolicyApplication::getCreatedAt).reversed())
                 .limit(limit != null ? limit : Long.MAX_VALUE)
                 .map(ApplicationResponse::from).toList();
@@ -196,10 +204,17 @@ public class AgentController {
 
     @GetMapping("/claims")
     @Transactional(readOnly = true)
-    public List<ClaimResponse> getClaims(@AuthenticationPrincipal UserDetails principal) {
+    public List<ClaimResponse> getClaims(@AuthenticationPrincipal UserDetails principal,
+                                         @RequestParam(required = false) String status) {
         User agent = getAgent(principal);
         return claimRepo.findAllByAgent(agent).stream()
-                .filter(c -> c.getStatus() == ClaimStatus.PENDING || c.getStatus() == ClaimStatus.REVISION_REQUESTED)
+                .filter(c -> {
+                    if (status != null && !status.isBlank() && !status.equalsIgnoreCase("ALL")) {
+                        try { return c.getStatus() == ClaimStatus.valueOf(status.toUpperCase()); }
+                        catch (IllegalArgumentException e) { return false; }
+                    }
+                    return c.getStatus() == ClaimStatus.PENDING || c.getStatus() == ClaimStatus.REVISION_REQUESTED;
+                })
                 .sorted(Comparator.comparing(Claim::getCreatedAt).reversed())
                 .map(ClaimResponse::from).toList();
     }

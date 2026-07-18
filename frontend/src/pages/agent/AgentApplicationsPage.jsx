@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import FormDetailModal from '../../components/FormDetailModal'
 
 export default function AgentApplicationsPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [apps, setApps] = useState([])
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState(null)
@@ -15,13 +17,18 @@ export default function AgentApplicationsPage() {
   const [forwardNote, setForwardNote] = useState('')
   const [viewItem, setViewItem] = useState(null)
 
+  const FILTERS = ['ALL', 'PENDING', 'VERIFIED', 'REVISION_REQUESTED', 'REJECTED']
+  const filter = (() => { const f = searchParams.get('filter'); return FILTERS.includes(f) ? f : 'ALL' })()
+
   const fetchApps = () => {
-    api.get('/agent/applications')
+    setLoading(true)
+    const url = filter && filter !== 'ALL' ? `/agent/applications?status=${filter}` : '/agent/applications?status=ALL'
+    api.get(url)
       .then(res => setApps(Array.isArray(res.data) ? res.data : []))
       .catch(() => setApps([]))
       .finally(() => setLoading(false))
   }
-  useEffect(() => { fetchApps() }, [])
+  useEffect(() => { fetchApps() }, [filter])
 
   const clearActions = () => {
     setSelected(null); setNote('')
@@ -60,8 +67,20 @@ export default function AgentApplicationsPage() {
   return (
     <div className="fade-in">
       <div className="mb-4">
-        <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Review Applications</h4>
+        <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Check Applications</h4>
         <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>Verify customer policy applications before forwarding to admin</p>
+      </div>
+
+      {/* Filter tabs */}
+      <div className="d-flex gap-2 flex-wrap mb-4">
+        {FILTERS.map(f => (
+          <button key={f} onClick={() => setSearchParams(f === 'ALL' ? {} : { filter: f })} style={{
+            padding: '0.35rem 0.85rem', borderRadius: 8, fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer',
+            border: `1.5px solid ${filter === f ? 'var(--primary)' : 'var(--border)'}`,
+            background: filter === f ? 'var(--primary)' : 'var(--bg-card)',
+            color: filter === f ? '#fff' : 'var(--text-secondary)'
+          }}>{f}</button>
+        ))}
       </div>
 
       {loading ? (

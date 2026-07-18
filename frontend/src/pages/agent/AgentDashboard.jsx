@@ -20,10 +20,10 @@ export default function AgentDashboard() {
   }, [])
 
   const statCards = [
-    { label: 'Pending Applications', value: stats.pending, icon: 'bi-file-earmark-text', color: '#f59e0b', bg: '#fefce8' },
-    { label: 'Verified Applications', value: stats.verified, icon: 'bi-check-circle', color: '#16a34a', bg: '#f0fdf4' },
-    { label: 'Pending Claims', value: stats.pendingClaims, icon: 'bi-file-earmark-medical', color: '#dc2626', bg: '#fff0f0' },
-    { label: 'Verified Claims', value: stats.verifiedClaims, icon: 'bi-shield-check', color: '#1d4ed8', bg: '#eff6ff' },
+    { label: 'Pending Applications', value: stats.pending, icon: 'bi-file-earmark-text', color: '#f59e0b', bg: '#fefce8', link: '/agent/applications?filter=PENDING' },
+    { label: 'Verified Applications', value: stats.verified, icon: 'bi-check-circle', color: '#16a34a', bg: '#f0fdf4', link: '/agent/applications?filter=VERIFIED' },
+    { label: 'Pending Claims', value: stats.pendingClaims, icon: 'bi-file-earmark-medical', color: '#dc2626', bg: '#fff0f0', link: '/agent/claims?filter=PENDING' },
+    { label: 'Verified Claims', value: stats.verifiedClaims, icon: 'bi-shield-check', color: '#1d4ed8', bg: '#eff6ff', link: '/agent/claims?filter=VERIFIED' },
   ]
 
   return (
@@ -35,13 +35,15 @@ export default function AgentDashboard() {
       <div className="row g-3 mb-4">
         {statCards.map(card => (
           <div key={card.label} className="col-6 col-lg-3">
-            <div className="card-custom">
-              <div style={{ width: 40, height: 40, borderRadius: 10, background: card.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.75rem' }}>
-                <i className={`bi ${card.icon}`} style={{ color: card.color, fontSize: '1.1rem' }}></i>
+            <Link to={card.link} style={{ textDecoration: 'none' }}>
+              <div className="card-custom h-100">
+                <div style={{ width: 40, height: 40, borderRadius: 10, background: card.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.75rem' }}>
+                  <i className={`bi ${card.icon}`} style={{ color: card.color, fontSize: '1.1rem' }}></i>
+                </div>
+                <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.2 }}>{loading ? '—' : card.value}</div>
+                <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>{card.label}</div>
               </div>
-              <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.2 }}>{loading ? '—' : card.value}</div>
-              <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>{card.label}</div>
-            </div>
+            </Link>
           </div>
         ))}
       </div>

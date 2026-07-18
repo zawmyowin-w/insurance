@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import FormDetailModal from '../../components/FormDetailModal'
 
 export default function AgentClaimsPage() {
+  const [searchParams, setSearchParams] = useSearchParams()
   const [claims, setClaims] = useState([])
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState(null)
@@ -15,13 +17,18 @@ export default function AgentClaimsPage() {
   const [submitting, setSubmitting] = useState(false)
   const [viewItem, setViewItem] = useState(null)
 
+  const FILTERS = ['ALL', 'PENDING', 'VERIFIED', 'REVISION_REQUESTED', 'REJECTED']
+  const filter = (() => { const f = searchParams.get('filter'); return FILTERS.includes(f) ? f : 'ALL' })()
+
   const fetchClaims = () => {
-    api.get('/agent/claims')
+    setLoading(true)
+    const url = filter && filter !== 'ALL' ? `/agent/claims?status=${filter}` : '/agent/claims?status=ALL'
+    api.get(url)
       .then(res => setClaims(Array.isArray(res.data) ? res.data : []))
       .catch(() => setClaims([]))
       .finally(() => setLoading(false))
   }
-  useEffect(() => { fetchClaims() }, [])
+  useEffect(() => { fetchClaims() }, [filter])
 
   const clearActions = () => {
     setSelected(null); setNote('')
@@ -60,8 +67,20 @@ export default function AgentClaimsPage() {
   return (
     <div className="fade-in">
       <div className="mb-4">
-        <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Review Claims</h4>
+        <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Check Claims</h4>
         <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>Verify customer claims before forwarding to admin</p>
+      </div>
+
+      {/* Filter tabs */}
+      <div className="d-flex gap-2 flex-wrap mb-4">
+        {FILTERS.map(f => (
+          <button key={f} onClick={() => setSearchParams(f === 'ALL' ? {} : { filter: f })} style={{
+            padding: '0.35rem 0.85rem', borderRadius: 8, fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer',
+            border: `1.5px solid ${filter === f ? 'var(--primary)' : 'var(--border)'}`,
+            background: filter === f ? 'var(--primary)' : 'var(--bg-card)',
+            color: filter === f ? '#fff' : 'var(--text-secondary)'
+          }}>{f}</button>
+        ))}
       </div>
 
       {loading ? (
@@ -69,7 +88,7 @@ export default function AgentClaimsPage() {
       ) : claims.length === 0 ? (
         <div className="card-custom text-center py-5">
           <i className="bi bi-check-circle" style={{ fontSize: '3rem', color: 'var(--secondary)' }}></i>
-          <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>No pending claims</h5>
+          <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>No claims for "{filter}"</h5>
         </div>
       ) : (
         <div className="row g-4">
