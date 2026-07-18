@@ -16,15 +16,15 @@ export default function ManagePackagesPage() {
   const [form, setForm] = useState(EMPTY)
   const [saving, setSaving] = useState(false)
   const [pkgForms, setPkgForms] = useState({})  // packageId -> { APPLICATION, CLAIM }
-  const [insuranceTypes, setInsuranceTypes] = useState([])
+  const [insuranceTypes, setInsuranceTypes] = useState(['LIFE', 'HEALTH', 'VEHICLE', 'PROPERTY'])
 
   const fetchInsuranceTypes = () => {
     api.get('/admin/insurance-types')
       .then(res => {
         const names = Array.isArray(res.data) ? res.data.map(t => t.name) : []
-        setInsuranceTypes(names.length > 0 ? names : ['LIFE', 'HEALTH', 'VEHICLE', 'PROPERTY'])
+        if (names.length > 0) setInsuranceTypes(names)
       })
-      .catch(() => setInsuranceTypes(['LIFE', 'HEALTH', 'VEHICLE', 'PROPERTY']))
+      .catch(() => {/* keep fallback */})
   }
 
   const fetchPackages = () => {
