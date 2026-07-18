@@ -5,6 +5,7 @@ import api from '../../services/api'
 import { toast } from 'react-toastify'
 import NrcInput from '../../components/NrcInput'
 import { getTypeMeta } from '../../utils/typeMeta'
+import AgentProfileCard from '../../components/AgentProfileCard'
 
 const STEPS = [
   { id: 1, title: 'Select Plan',   icon: 'bi-grid-3x3-gap' },
@@ -361,8 +362,9 @@ export default function ApplyPolicyPage() {
             </div>
           </div>
 
-          {/* Premium estimate */}
+          {/* Side panel: agent card + premium estimate */}
           <div className="col-12 col-lg-4">
+            <AgentProfileCard packageType={selectedPlan?.type} style={{ marginBottom: '1rem' }} />
             <div className="card-custom">
               <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>Premium Estimate</h6>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.88rem' }}>

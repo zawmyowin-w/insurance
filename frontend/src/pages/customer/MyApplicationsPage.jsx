@@ -107,6 +107,7 @@ export default function MyApplicationsPage() {
                       <span style={{ color: 'var(--text-muted)' }}>Duration: <strong style={{ color: 'var(--text-primary)' }}>{app.duration} year</strong></span>
                       {app.premiumAmount && <span style={{ color: 'var(--text-muted)' }}>Premium: <strong style={{ color: 'var(--primary)' }}>{Number(app.premiumAmount).toLocaleString()} MMK</strong></span>}
                       {app.riskLevel && <span style={{ color: 'var(--text-muted)' }}>Risk: <strong style={{ color: app.riskLevel === 'HIGH' ? '#dc2626' : app.riskLevel === 'MEDIUM' ? '#d97706' : '#16a34a' }}>{app.riskLevel}</strong></span>}
+                      {app.agentName && <span style={{ color: 'var(--text-muted)' }}><i className="bi bi-person-badge me-1" style={{ color: '#1d4ed8' }}></i>Agent: <strong style={{ color: '#1d4ed8' }}>{app.agentName}</strong></span>}
                     </div>
                     {!isRevision && app.adminNote && <p style={{ color: '#16a34a', fontSize: '0.82rem', margin: '0.4rem 0 0' }}><i className="bi bi-check-circle me-1"></i>{app.adminNote}</p>}
                     {!isRevision && app.agentNote && <p style={{ color: '#1d4ed8', fontSize: '0.82rem', margin: '0.25rem 0 0' }}><i className="bi bi-person me-1"></i>Agent: {app.agentNote}</p>}

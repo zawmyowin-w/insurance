@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import NrcInput from '../../components/NrcInput'
+import AgentProfileCard from '../../components/AgentProfileCard'
 
 const CLAIM_TYPES = ['Accident', 'Hospitalization', 'Death Benefit', 'Property Damage', 'Vehicle Damage', 'Critical Illness', 'Other']
 
@@ -157,6 +158,14 @@ export default function SubmitClaimPage() {
                   <small style={{ color: 'var(--danger)', fontSize: '0.8rem', marginTop: 4, display: 'block' }}>All policies already have a claim. Only one claim per policy.</small>
                 )}
               </div>
+
+              {/* Agent card — shown once a policy is selected */}
+              {form.applicationId && (() => {
+                const sel = activePolicies.find(p => String(p.id) === String(form.applicationId))
+                return sel?.packageType ? (
+                  <AgentProfileCard packageType={sel.packageType} style={{ marginBottom: '1rem' }} />
+                ) : null
+              })()}
 
               {/* Template loading */}
               {templateLoading && (

@@ -82,6 +82,11 @@ export default function ManageUsersPage() {
     AGENT: users.filter(u => u.role === 'AGENT').length,
   }
 
+  // Map of insuranceType -> { id, name } for active agents (for conflict warnings)
+  const agentTypeMap = users
+    .filter(u => u.role === 'AGENT' && u.active && u.insuranceType && u.insuranceType !== 'ALL')
+    .reduce((acc, u) => ({ ...acc, [u.insuranceType]: { id: u.id, name: u.name } }), {})
+
   const handleCreate = async e => {
     e.preventDefault()
     if (!isEmailValid(createForm.email)) { toast.error(EMAIL_ERROR.en); return }
@@ -229,6 +234,12 @@ export default function ManageUsersPage() {
                     onChange={e => setCreateForm(f => ({ ...f, insuranceType: e.target.value }))}>
                     {[...insuranceTypes, 'ALL'].map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
+                  {createForm.insuranceType !== 'ALL' && agentTypeMap[createForm.insuranceType] && (
+                    <p style={{ fontSize: '0.76rem', color: '#d97706', margin: '0.25rem 0 0' }}>
+                      <i className="bi bi-exclamation-triangle me-1"></i>
+                      <strong>{agentTypeMap[createForm.insuranceType].name}</strong> သည် ဤ type ကို ယူထားသည်။ သိမ်းမည်ဆိုလျှင် ပိတ်ပင်မည်။
+                    </p>
+                  )}
                 </div>
               )}
               <div className={activeTab === 'AGENT' ? 'col-12 col-md-4' : 'col-12 col-md-6'}>
@@ -438,6 +449,14 @@ export default function ManageUsersPage() {
                       onChange={e => setEditForm(f => ({ ...f, insuranceType: e.target.value }))}>
                       {[...insuranceTypes, 'ALL'].map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
+                    {editForm.insuranceType !== 'ALL' &&
+                      agentTypeMap[editForm.insuranceType] &&
+                      agentTypeMap[editForm.insuranceType].id !== editingUser.id && (
+                      <p style={{ fontSize: '0.76rem', color: '#d97706', margin: '0.25rem 0 0' }}>
+                        <i className="bi bi-exclamation-triangle me-1"></i>
+                        <strong>{agentTypeMap[editForm.insuranceType].name}</strong> သည် ဤ type ကို ယူထားသည်။ သိမ်းမည်ဆိုလျှင် ပိတ်ပင်မည်။
+                      </p>
+                    )}
                   </div>
                 )}
                 <div className="col-12">

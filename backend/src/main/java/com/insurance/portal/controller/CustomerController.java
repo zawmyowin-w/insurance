@@ -451,6 +451,40 @@ public class CustomerController {
         return ResponseEntity.ok(ApplicationResponse.from(appRepo.save(renewal)));
     }
 
+    // ── Agent profile (customer-facing) ──────────────────────────────
+
+    /** Returns the active agent assigned to a given insurance type (for customer view). */
+    @GetMapping("/agent/by-type")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getAgentByType(@RequestParam String packageType) {
+        java.util.Optional<User> agent = userRepo.findFirstByRoleAndInsuranceTypeAndActive(Role.AGENT, packageType, true);
+        if (agent.isEmpty()) {
+            agent = userRepo.findFirstByRoleAndInsuranceTypeAndActive(Role.AGENT, "ALL", true);
+        }
+        return agent.<ResponseEntity<?>>map(a -> ResponseEntity.ok(Map.of(
+            "id", a.getId(),
+            "name", a.getName(),
+            "phone", a.getPhone() != null ? a.getPhone() : "",
+            "insuranceType", a.getInsuranceType() != null ? a.getInsuranceType() : "",
+            "hasProfilePicture", a.getProfilePicture() != null && !a.getProfilePicture().isBlank()
+        ))).orElse(ResponseEntity.notFound().build());
+    }
+
+    /** Streams an agent's profile picture (accessible by authenticated customers). */
+    @GetMapping("/agent/{id}/picture")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getAgentPicture(@PathVariable Long id) throws java.io.IOException {
+        User agent = userRepo.findById(id).orElseThrow(() -> new RuntimeException("Agent not found"));
+        if (agent.getRole() != Role.AGENT) return ResponseEntity.status(403).build();
+        String path = agent.getProfilePicture();
+        if (path == null || path.isBlank()) return ResponseEntity.notFound().build();
+        File file = new File(path);
+        if (!file.exists()) return ResponseEntity.notFound().build();
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(FileStorageUtil.contentTypeFor(path)))
+                .body(new FileSystemResource(file));
+    }
+
     // ── Form field file serving ──────────────────────────────────────
     @GetMapping("/applications/{id}/form-file/{fieldId}")
     @Transactional(readOnly = true)

@@ -130,6 +130,14 @@ public class AdminController {
         if (!com.insurance.portal.util.PasswordValidationUtil.isStrong(agentPassword)) {
             return ResponseEntity.badRequest().body(Map.of("message", com.insurance.portal.util.PasswordValidationUtil.ERROR_MESSAGE));
         }
+        String insuranceType = req.containsKey("insuranceType") ? req.get("insuranceType").toString() : "ALL";
+        if (!"ALL".equals(insuranceType)) {
+            java.util.Optional<User> taken = userRepo.findFirstByRoleAndInsuranceTypeAndActive(Role.AGENT, insuranceType, true);
+            if (taken.isPresent()) {
+                return ResponseEntity.status(409).body(Map.of("message",
+                    "\"" + taken.get().getName() + "\" သည် " + insuranceType + " type ကို ယူထားပြီးဖြစ်သည်။ Insurance type တစ်မျိုးလျှင် agent တစ်ယောက်သာ ရပါသည်။"));
+            }
+        }
         User agent = User.builder()
                 .name(req.get("name").toString())
                 .email(email)
@@ -137,7 +145,7 @@ public class AdminController {
                 .role(Role.AGENT)
                 .phone(req.containsKey("phone") ? req.get("phone").toString() : null)
                 .address(req.containsKey("address") ? req.get("address").toString() : null)
-                .insuranceType(req.containsKey("insuranceType") ? req.get("insuranceType").toString() : "ALL")
+                .insuranceType(insuranceType)
                 .active(true)
                 .build();
         return ResponseEntity.ok(UserResponse.from(userRepo.save(agent)));
@@ -192,7 +200,15 @@ public class AdminController {
         if (req.getPhone() != null) user.setPhone(req.getPhone());
         if (req.getAddress() != null) user.setAddress(req.getAddress());
         if (user.getRole() == Role.AGENT && req.getInsuranceType() != null && !req.getInsuranceType().isBlank()) {
-            user.setInsuranceType(req.getInsuranceType());
+            String newType = req.getInsuranceType();
+            if (!"ALL".equals(newType)) {
+                java.util.Optional<User> existing = userRepo.findFirstByRoleAndInsuranceTypeAndActive(Role.AGENT, newType, true);
+                if (existing.isPresent() && !existing.get().getId().equals(id)) {
+                    return ResponseEntity.status(409).body(Map.of("message",
+                        "\"" + existing.get().getName() + "\" သည် " + newType + " type ကို ယူထားပြီးဖြစ်သည်။ Insurance type တစ်မျိုးလျှင် agent တစ်ယောက်သာ ရပါသည်။"));
+                }
+            }
+            user.setInsuranceType(newType);
         }
         if (req.getNewPassword() != null && !req.getNewPassword().isBlank()) {
             if (!com.insurance.portal.util.PasswordValidationUtil.isStrong(req.getNewPassword())) {

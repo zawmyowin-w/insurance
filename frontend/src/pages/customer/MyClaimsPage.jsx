@@ -82,6 +82,7 @@ export default function MyClaimsPage() {
                     <div className="d-flex gap-3 flex-wrap" style={{ fontSize: '0.83rem' }}>
                       <span style={{ color: 'var(--text-muted)' }}>Amount: <strong style={{ color: 'var(--text-primary)' }}>{Number(claim.amount).toLocaleString()} MMK</strong></span>
                       {claim.incidentDate && <span style={{ color: 'var(--text-muted)' }}>Incident: <strong style={{ color: 'var(--text-primary)' }}>{new Date(claim.incidentDate).toLocaleDateString()}</strong></span>}
+                      {claim.agentName && <span style={{ color: 'var(--text-muted)' }}><i className="bi bi-person-badge me-1" style={{ color: '#1d4ed8' }}></i>Agent: <strong style={{ color: '#1d4ed8' }}>{claim.agentName}</strong></span>}
                     </div>
                     {!isRevision && claim.adminNote && <p style={{ color: '#16a34a', fontSize: '0.82rem', margin: '0.4rem 0 0' }}><i className="bi bi-check-circle me-1"></i>{claim.adminNote}</p>}
                     {!isRevision && claim.agentNote && <p style={{ color: '#1d4ed8', fontSize: '0.82rem', margin: '0.25rem 0 0' }}><i className="bi bi-person me-1"></i>Agent: {claim.agentNote}</p>}
