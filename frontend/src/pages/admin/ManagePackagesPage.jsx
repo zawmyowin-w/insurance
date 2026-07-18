@@ -191,7 +191,7 @@ export default function ManagePackagesPage() {
               <button type="submit" disabled={saving} className="btn-primary-custom" style={{ justifyContent: 'center' }}>
                 {saving ? <><span className="spinner-border spinner-border-sm me-2"></span>Saving...</> : (editing ? 'Update Package' : 'Create Package')}
               </button>
-              <button type="button" className="btn-danger-sm" onClick={() => { setForm({ ...EMPTY }); setEditing(null); setShowForm(false) }}>
+              <button type="button" className="btn-danger-sm" onClick={() => { setForm({ ...EMPTY }); setEditing(null) }}>
                 <i className="bi bi-x-lg me-1"></i>Cancel
               </button>
             </div>
