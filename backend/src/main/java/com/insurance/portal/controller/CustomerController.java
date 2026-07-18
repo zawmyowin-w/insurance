@@ -472,18 +472,8 @@ public class CustomerController {
         return FileStorageUtil.serveFormFile(claim.getFormData(), fieldId);
     }
 
-    // ── Notifications ────────────────────────────────────────────────
-    @GetMapping("/notifications")
-    @Transactional(readOnly = true)
-    public List<?> getNotifications(@AuthenticationPrincipal UserDetails principal) {
-        User user = getUser(principal);
-        return notifRepo.findAllByRecipientOrderByCreatedAtDesc(user).stream().map(n -> {
-            Map<String, Object> m = new HashMap<>();
-            m.put("id", n.getId()); m.put("title", n.getTitle()); m.put("message", n.getMessage());
-            m.put("type", n.getType().name()); m.put("read", n.isRead()); m.put("createdAt", n.getCreatedAt());
-            return m;
-        }).toList();
-    }
+    // ── Notifications ─────────────────────────────────────────────────
+    // Listing is handled by the shared NotificationController GET /notifications
 
     // ── Helper methods ───────────────────────────────────────────────
 

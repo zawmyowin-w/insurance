@@ -11,6 +11,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -20,6 +22,23 @@ public class NotificationController {
 
     private final NotificationRepository notifRepo;
     private final UserRepository userRepo;
+
+    /** List all notifications for the currently authenticated user (any role). */
+    @GetMapping
+    @Transactional(readOnly = true)
+    public List<?> getNotifications(@AuthenticationPrincipal UserDetails principal) {
+        User user = userRepo.findByEmail(principal.getUsername()).orElseThrow();
+        return notifRepo.findAllByRecipientOrderByCreatedAtDesc(user).stream().map(n -> {
+            Map<String, Object> m = new HashMap<>();
+            m.put("id", n.getId());
+            m.put("title", n.getTitle());
+            m.put("message", n.getMessage());
+            m.put("type", n.getType().name());
+            m.put("read", n.isRead());
+            m.put("createdAt", n.getCreatedAt());
+            return m;
+        }).toList();
+    }
 
     @PutMapping("/{id}/read")
     @Transactional

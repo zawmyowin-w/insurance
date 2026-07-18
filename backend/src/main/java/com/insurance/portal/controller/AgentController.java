@@ -323,15 +323,5 @@ public class AgentController {
         return FileStorageUtil.serveFormFile(claim.getFormData(), fieldId);
     }
 
-    @GetMapping("/notifications")
-    @Transactional(readOnly = true)
-    public List<?> getNotifications(@AuthenticationPrincipal UserDetails principal) {
-        User agent = getAgent(principal);
-        return notifRepo.findAllByRecipientOrderByCreatedAtDesc(agent).stream().map(n -> {
-            Map<String, Object> m = new HashMap<>();
-            m.put("id", n.getId()); m.put("title", n.getTitle()); m.put("message", n.getMessage());
-            m.put("type", n.getType().name()); m.put("read", n.isRead()); m.put("createdAt", n.getCreatedAt());
-            return m;
-        }).toList();
-    }
+    // Notification listing is handled by the shared NotificationController GET /notifications
 }
