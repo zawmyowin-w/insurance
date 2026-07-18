@@ -4,14 +4,7 @@ import { useAuth } from '../../context/AuthContext'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import NrcInput from '../../components/NrcInput'
-
-const ALL_TYPES = ['LIFE', 'HEALTH', 'VEHICLE', 'PROPERTY']
-const TYPE_META = {
-  LIFE:     { color: '#dc2626', bg: '#fef2f2', icon: 'bi-heart-pulse',  label: 'Life Insurance' },
-  HEALTH:   { color: '#16a34a', bg: '#f0fdf4', icon: 'bi-hospital',     label: 'Health Insurance' },
-  VEHICLE:  { color: '#2563eb', bg: '#eff6ff', icon: 'bi-truck',        label: 'Vehicle Insurance' },
-  PROPERTY: { color: '#ca8a04', bg: '#fefce8', icon: 'bi-house-check',  label: 'Property Insurance' },
-}
+import { getTypeMeta } from '../../utils/typeMeta'
 
 const STEPS = [
   { id: 1, title: 'Select Plan',   icon: 'bi-grid-3x3-gap' },
@@ -177,14 +170,19 @@ export default function ApplyPolicyPage() {
       {step === 1 && (
         <>
           <div className="d-flex gap-2 mb-4 flex-wrap">
-            {['ALL', ...ALL_TYPES].map(t => (
-              <button key={t} onClick={() => setTypeFilter(t)} style={{
-                padding: '0.4rem 1rem', borderRadius: 20, border: 'none', cursor: 'pointer',
-                fontWeight: 600, fontSize: '0.82rem',
-                background: typeFilter === t ? 'var(--primary)' : 'var(--bg-secondary)',
-                color: typeFilter === t ? '#fff' : 'var(--text-secondary)',
-              }}>{t}</button>
-            ))}
+            {['ALL', ...[...new Set(plans.map(p => p.type))]].map(t => {
+              const meta = t === 'ALL' ? null : getTypeMeta(t)
+              return (
+                <button key={t} onClick={() => setTypeFilter(t)} style={{
+                  padding: '0.4rem 1rem', borderRadius: 20, border: `2px solid ${typeFilter === t ? (meta?.color || 'var(--primary)') : 'transparent'}`,
+                  cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem',
+                  background: typeFilter === t ? (meta?.bg || 'var(--bg-secondary)') : 'var(--bg-secondary)',
+                  color: typeFilter === t ? (meta?.color || 'var(--primary)') : 'var(--text-secondary)',
+                }}>
+                  {meta && <i className={`bi ${meta.icon} me-1`}></i>}{t === 'ALL' ? 'All' : meta?.label || t}
+                </button>
+              )
+            })}
           </div>
           {filteredPlans.length === 0 ? (
             <div className="card-custom text-center py-5">
@@ -194,7 +192,7 @@ export default function ApplyPolicyPage() {
           ) : (
             <div className="row g-3">
               {filteredPlans.map(plan => {
-                const meta = TYPE_META[plan.type] || {}
+                const meta = getTypeMeta(plan.type)
                 return (
                   <div key={plan.id} className="col-12 col-md-6">
                     <div onClick={() => selectPlan(plan)} style={{
@@ -242,7 +240,7 @@ export default function ApplyPolicyPage() {
             <div className="card-custom">
               {/* Plan summary */}
               <div style={{ padding: '0.75rem 1rem', borderRadius: 8, background: 'var(--bg-secondary)', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: 12 }}>
-                <i className={`bi ${TYPE_META[selectedPlan.type]?.icon || 'bi-shield'}`} style={{ fontSize: '1.4rem', color: TYPE_META[selectedPlan.type]?.color, flexShrink: 0 }}></i>
+                <i className={`bi ${getTypeMeta(selectedPlan.type).icon}`} style={{ fontSize: '1.4rem', color: getTypeMeta(selectedPlan.type).color, flexShrink: 0 }}></i>
                 <div className="flex-grow-1">
                   <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{selectedPlan.name}</div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{selectedPlan.type} • {(selectedPlan.premiumRate * 100).toFixed(1)}% premium rate</div>

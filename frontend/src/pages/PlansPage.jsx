@@ -3,8 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Navbar from '../components/Navbar'
 import api from '../services/api'
-
-const ALL_TYPES = ['LIFE', 'HEALTH', 'TRAVEL', 'MOTOR', 'EDUCATION', 'VEHICLE', 'PROPERTY']
+import { getTypeMeta } from '../utils/typeMeta'
 
 const TYPE_META = {
   LIFE:      { color: '#dc2626', bg: '#fef2f2',  icon: 'bi-heart-pulse',   label: 'Life Insurance',      desc: 'Financial protection for your family' },
@@ -119,7 +118,7 @@ export default function PlansPage() {
               <div className="d-flex gap-2 flex-wrap">
                 {recommendations.map(rec => (
                   <button key={rec.type} onClick={() => setTypeFilter(rec.type)} style={{ padding: '0.35rem 0.85rem', borderRadius: 99, border: '1.5px solid rgba(255,255,255,0.5)', background: typeFilter === rec.type ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.15)', color: typeFilter === rec.type ? '#1d4ed8' : '#fff', cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem', transition: 'all 0.15s' }}>
-                    <i className={`bi ${TYPE_META[rec.type]?.icon} me-1`}></i>{TYPE_META[rec.type]?.label}
+                    <i className={`bi ${getTypeMeta(rec.type).icon} me-1`}></i>{getTypeMeta(rec.type).label}
                     <span style={{ opacity: 0.7, fontSize: '0.72rem', marginLeft: 4 }}>— {rec.reason}</span>
                   </button>
                 ))}
@@ -133,8 +132,8 @@ export default function PlansPage() {
 
         {/* Type Filter Tabs */}
         <div className="d-flex gap-2 mb-4" style={{ flexWrap: 'wrap' }}>
-          {['ALL', ...ALL_TYPES].map(t => {
-            const meta = TYPE_META[t]
+          {['ALL', ...[...new Set(plans.map(p => p.type))]].map(t => {
+            const meta = t === 'ALL' ? null : getTypeMeta(t)
             return (
               <button key={t} onClick={() => setTypeFilter(t)} style={{
                 padding: '0.4rem 1rem', borderRadius: 99, border: `2px solid ${typeFilter === t ? (meta?.color || 'var(--primary)') : 'var(--border)'}`,
@@ -159,7 +158,7 @@ export default function PlansPage() {
         ) : (
           <div className="row g-4">
             {filtered.map(plan => {
-              const meta = TYPE_META[plan.type] || { color: '#6b7280', bg: '#f3f4f6', icon: 'bi-shield', label: plan.type }
+              const meta = getTypeMeta(plan.type)
               const expanded = expandedId === plan.id
               return (
                 <div key={plan.id} className="col-12 col-md-6 col-xl-4">
