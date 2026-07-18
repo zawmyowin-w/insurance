@@ -82,7 +82,7 @@ export default function AdminApplicationsPage() {
                         { label: 'Plan', value: app.packageName || app.package?.name },
                         { label: 'Type', value: app.packageType || app.package?.type },
                         { label: 'Coverage', value: `${Number(app.coverageAmount).toLocaleString()} MMK` },
-                        { label: 'Duration', value: `${app.duration} yr${app.duration > 1 ? 's' : ''}` },
+                        { label: 'Duration', value: `${app.duration} year${app.duration > 1 ? 's' : ''}` },
                         { label: 'Agent', value: app.agentName || app.agent?.name || 'N/A' },
                         { label: 'Applied', value: app.createdAt ? new Date(app.createdAt).toLocaleDateString() : '—' },
                       ].map(item => (

@@ -93,7 +93,7 @@ export default function MyApplicationsPage() {
                     </div>
                     <div className="d-flex gap-3 flex-wrap" style={{ fontSize: '0.83rem' }}>
                       <span style={{ color: 'var(--text-muted)' }}>Coverage: <strong style={{ color: 'var(--text-primary)' }}>{Number(app.coverageAmount).toLocaleString()} MMK</strong></span>
-                      <span style={{ color: 'var(--text-muted)' }}>Duration: <strong style={{ color: 'var(--text-primary)' }}>{app.duration} yr</strong></span>
+                      <span style={{ color: 'var(--text-muted)' }}>Duration: <strong style={{ color: 'var(--text-primary)' }}>{app.duration} year</strong></span>
                       {app.premiumAmount && <span style={{ color: 'var(--text-muted)' }}>Premium: <strong style={{ color: 'var(--primary)' }}>{Number(app.premiumAmount).toLocaleString()} MMK</strong></span>}
                       {app.riskLevel && <span style={{ color: 'var(--text-muted)' }}>Risk: <strong style={{ color: app.riskLevel === 'HIGH' ? '#dc2626' : app.riskLevel === 'MEDIUM' ? '#d97706' : '#16a34a' }}>{app.riskLevel}</strong></span>}
                     </div>

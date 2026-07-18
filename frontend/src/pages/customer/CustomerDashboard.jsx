@@ -113,7 +113,7 @@ export default function CustomerDashboard() {
                   <tr key={app.id}>
                     <td style={{ fontWeight: 500 }}>{app.packageName || app.package?.name}</td>
                     <td>{Number(app.coverageAmount).toLocaleString()}</td>
-                    <td>{app.duration} yr{app.duration > 1 ? 's' : ''}</td>
+                    <td>{app.duration} year{app.duration > 1 ? 's' : ''}</td>
                     <td><span className={`badge-status badge-${app.status?.toLowerCase()}`}>{app.status}</span></td>
                     <td>{app.createdAt ? new Date(app.createdAt).toLocaleDateString() : '—'}</td>
                   </tr>

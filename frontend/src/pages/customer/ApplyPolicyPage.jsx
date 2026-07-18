@@ -213,7 +213,7 @@ export default function ApplyPolicyPage() {
                       <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 0.75rem' }}>{plan.description}</p>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
                         <span style={{ color: 'var(--text-muted)' }}>{Number(plan.coverageMin).toLocaleString()} – {Number(plan.coverageMax).toLocaleString()} MMK</span>
-                        <span style={{ fontWeight: 700, color: meta.color }}>{(plan.premiumRate * 100).toFixed(1)}%/yr</span>
+                        <span style={{ fontWeight: 700, color: meta.color }}>{(plan.premiumRate * 100).toFixed(1)}%/year</span>
                       </div>
                       {(plan.minPolicyTerm || plan.policyTerm) && (
                         <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>

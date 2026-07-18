@@ -123,7 +123,7 @@ export default function AgentApplicationsPage() {
                       { label: 'Plan', value: app.packageName || app.package?.name },
                       { label: 'Type', value: app.packageType || app.package?.type },
                       { label: 'Coverage', value: `${Number(app.coverageAmount).toLocaleString()} MMK` },
-                      { label: 'Duration', value: `${app.duration} yr${app.duration > 1 ? 's' : ''}` },
+                      { label: 'Duration', value: `${app.duration} year${app.duration > 1 ? 's' : ''}` },
                     ].map(item => (
                       <div key={item.label} className="col-6">
                         <div style={{ background: 'var(--bg-secondary)', borderRadius: 6, padding: '0.5rem 0.75rem' }}>

@@ -241,7 +241,7 @@ export default function ManagePackagesPage() {
                           <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>·</span>
                           <span style={{ fontSize: '0.78rem', color: 'var(--accent)', fontWeight: 600 }}>{(pkg.premiumRate * 100).toFixed(1)}%</span>
                           <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>·</span>
-                          <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>{(pkg.durations || []).join(', ')} yr</span>
+                          <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>{(pkg.durations || []).join(', ')} year</span>
                         </div>
                       </div>
                       <span className={`badge-status ${pkg.active ? 'badge-active' : 'badge-cancelled'}`}>{pkg.active ? 'Active' : 'Inactive'}</span>
