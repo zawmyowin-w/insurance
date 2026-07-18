@@ -5,7 +5,7 @@ import api from '../../services/api'
 
 export default function AdminDashboard() {
   const { user } = useAuth()
-  const [stats, setStats] = useState({ totalCustomers: 0, totalAgents: 0, pendingApplications: 0, pendingClaims: 0, totalPackages: 0, monthlyRevenue: 0 })
+  const [stats, setStats] = useState({ totalCustomers: 0, totalAgents: 0, pendingApplications: 0, pendingClaims: 0, verifiedApplications: 0, verifiedClaims: 0, totalPackages: 0, monthlyRevenue: 0 })
   const [recentActivities, setRecentActivities] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -24,8 +24,10 @@ export default function AdminDashboard() {
     { label: 'Total Agents', value: stats.totalAgents, icon: 'bi-person-badge', color: '#9333ea', bg: '#faf5ff', link: '/admin/users?tab=AGENT' },
     { label: 'Pending Applications', value: stats.pendingApplications, icon: 'bi-file-earmark-text', color: '#f59e0b', bg: '#fefce8', link: '/admin/applications?filter=PENDING' },
     { label: 'Pending Claims', value: stats.pendingClaims, icon: 'bi-file-earmark-medical', color: '#dc2626', bg: '#fff0f0', link: '/admin/claims?filter=PENDING' },
-    { label: 'Insurance Packages', value: stats.totalPackages, icon: 'bi-box-seam', color: '#16a34a', bg: '#f0fdf4', link: '/admin/packages' },
-    { label: 'Monthly Revenue (MMK)', value: stats.monthlyRevenue ? Number(stats.monthlyRevenue).toLocaleString() : '0', icon: 'bi-cash-coin', color: '#0891b2', bg: '#ecfeff', link: '#' },
+    { label: 'Verified Applications', value: stats.verifiedApplications, icon: 'bi-file-earmark-check', color: '#16a34a', bg: '#f0fdf4', link: '/admin/applications?filter=VERIFIED' },
+    { label: 'Verified Claims', value: stats.verifiedClaims, icon: 'bi-file-earmark-medical', color: '#0891b2', bg: '#ecfeff', link: '/admin/claims?filter=VERIFIED' },
+    { label: 'Insurance Packages', value: stats.totalPackages, icon: 'bi-box-seam', color: '#7c3aed', bg: '#f5f3ff', link: '/admin/packages' },
+    { label: 'Monthly Revenue (MMK)', value: stats.monthlyRevenue ? Number(stats.monthlyRevenue).toLocaleString() : '0', icon: 'bi-cash-coin', color: '#b45309', bg: '#fffbeb', link: '#' },
   ]
 
   return (

@@ -40,8 +40,10 @@ public class AdminController {
         Map<String, Object> stats = new HashMap<>();
         stats.put("totalCustomers", userRepo.findAllByRole(Role.CUSTOMER).size());
         stats.put("totalAgents", userRepo.findAllByRole(Role.AGENT).size());
-        stats.put("pendingApplications", appRepo.countByStatus(ApplicationStatus.VERIFIED));
-        stats.put("pendingClaims", claimRepo.countByStatus(ClaimStatus.VERIFIED));
+        stats.put("pendingApplications", appRepo.countByStatus(ApplicationStatus.PENDING));
+        stats.put("pendingClaims", claimRepo.countByStatus(ClaimStatus.PENDING));
+        stats.put("verifiedApplications", appRepo.countByStatus(ApplicationStatus.VERIFIED));
+        stats.put("verifiedClaims", claimRepo.countByStatus(ClaimStatus.VERIFIED));
         stats.put("totalPackages", 0);
         stats.put("monthlyRevenue", 0);
         return stats;
