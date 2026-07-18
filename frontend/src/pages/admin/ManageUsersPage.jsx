@@ -153,14 +153,11 @@ export default function ManageUsersPage() {
           <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Manage Users</h4>
           <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>Manage customers and agents</p>
         </div>
-        {activeTab === 'AGENT' && (
+        {activeTab === 'AGENT' && !showCreatePanel && (
           <button className="btn-primary-custom" style={{ fontSize: '0.88rem', padding: '0.45rem 1rem' }}
-            onClick={() => {
-              if (showCreatePanel && fromDashboard) { navigate('/admin/dashboard'); return }
-              setShowCreatePanel(v => !v)
-            }}>
-            <i className={`bi bi-${showCreatePanel ? (fromDashboard ? 'arrow-left' : 'x-lg') : 'person-plus'} me-1`}></i>
-            {showCreatePanel ? (fromDashboard ? 'Back' : 'Cancel') : 'Create Agent'}
+            onClick={() => setShowCreatePanel(true)}>
+            <i className="bi bi-person-plus me-1"></i>
+            Create Agent
           </button>
         )}
       </div>
