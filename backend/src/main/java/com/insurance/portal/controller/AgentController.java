@@ -40,6 +40,7 @@ public class AgentController {
         stats.put("verified", appRepo.findAllByAgentAndStatus(agent, ApplicationStatus.VERIFIED).size());
         stats.put("pendingClaims", claimRepo.findAllByAgentAndStatus(agent, ClaimStatus.PENDING).size());
         stats.put("verifiedClaims", claimRepo.findAllByAgentAndStatus(agent, ClaimStatus.VERIFIED).size());
+        stats.put("unreadNotifications", notifRepo.findAllByRecipientOrderByCreatedAtDesc(agent).stream().filter(n -> !n.isRead()).count());
         return stats;
     }
 

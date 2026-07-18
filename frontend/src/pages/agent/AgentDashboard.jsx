@@ -5,7 +5,7 @@ import api from '../../services/api'
 
 export default function AgentDashboard() {
   const { user } = useAuth()
-  const [stats, setStats] = useState({ pending: 0, verified: 0, pendingClaims: 0, verifiedClaims: 0 })
+  const [stats, setStats] = useState({ pending: 0, verified: 0, pendingClaims: 0, verifiedClaims: 0, unreadNotifications: 0 })
   const [recentApps, setRecentApps] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -24,6 +24,7 @@ export default function AgentDashboard() {
     { label: 'Verified Applications', value: stats.verified, icon: 'bi-check-circle', color: '#16a34a', bg: '#f0fdf4', link: '/agent/applications?filter=VERIFIED' },
     { label: 'Pending Claims', value: stats.pendingClaims, icon: 'bi-file-earmark-medical', color: '#dc2626', bg: '#fff0f0', link: '/agent/claims?filter=PENDING' },
     { label: 'Verified Claims', value: stats.verifiedClaims, icon: 'bi-shield-check', color: '#1d4ed8', bg: '#eff6ff', link: '/agent/claims?filter=VERIFIED' },
+    { label: 'Notifications', value: stats.unreadNotifications, icon: 'bi-bell', color: '#7c3aed', bg: '#f5f3ff', link: '/agent/notifications' },
   ]
 
   return (
