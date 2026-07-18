@@ -181,8 +181,8 @@ public class CustomerController {
                 .orElseThrow(() -> new RuntimeException("Application not found"));
         if (!app.getCustomer().getId().equals(user.getId()))
             return ResponseEntity.status(403).body(Map.of("message", "Forbidden"));
-        if (app.getStatus() != ApplicationStatus.REVISION_REQUESTED)
-            return ResponseEntity.badRequest().body(Map.of("message", "Only REVISION_REQUESTED applications can be revised"));
+        if (app.getStatus() != ApplicationStatus.REVISION_REQUESTED && app.getStatus() != ApplicationStatus.PENDING)
+            return ResponseEntity.badRequest().body(Map.of("message", "Only PENDING or REVISION_REQUESTED applications can be edited"));
 
         if (formData != null) {
             try {
@@ -207,6 +207,24 @@ public class CustomerController {
         }
         app.setStatus(ApplicationStatus.PENDING);
         return ResponseEntity.ok(ApplicationResponse.from(appRepo.save(app)));
+    }
+
+    /**
+     * Permanently delete a CANCELLED application from the database.
+     */
+    @DeleteMapping("/applications/{id}/permanent")
+    @Transactional
+    public ResponseEntity<?> deleteApplication(@PathVariable Long id,
+                                               @AuthenticationPrincipal UserDetails principal) {
+        User user = getUser(principal);
+        PolicyApplication app = appRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Application not found"));
+        if (!app.getCustomer().getId().equals(user.getId()))
+            return ResponseEntity.status(403).body(Map.of("message", "Forbidden"));
+        if (app.getStatus() != ApplicationStatus.CANCELLED)
+            return ResponseEntity.badRequest().body(Map.of("message", "Only CANCELLED applications can be deleted"));
+        appRepo.delete(app);
+        return ResponseEntity.ok(Map.of("message", "Application deleted"));
     }
 
     /**

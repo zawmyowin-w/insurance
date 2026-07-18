@@ -30,6 +30,17 @@ export default function MyApplicationsPage() {
     }
   }
 
+  const handleDelete = async (id) => {
+    if (!window.confirm('Permanently delete this application? This cannot be undone.')) return
+    try {
+      await api.delete(`/customer/applications/${id}/permanent`)
+      toast.success('Application deleted')
+      fetchApps()
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to delete')
+    }
+  }
+
   return (
     <div className="fade-in">
       <div className="d-flex align-items-center justify-content-between mb-4">
@@ -102,29 +113,42 @@ export default function MyApplicationsPage() {
                   </div>
                   <div className="col-12 col-md-5">
                     <div className="d-flex gap-2 justify-content-md-end flex-wrap">
+                      {/* View — always visible */}
                       <button onClick={() => setViewItem(app)} style={{
                         padding: '0.4rem 0.9rem', borderRadius: 8, border: '1.5px solid var(--primary)',
                         background: 'transparent', color: 'var(--primary)', cursor: 'pointer',
                         fontWeight: 600, fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: 4
                       }}>
-                        <i className="bi bi-eye"></i> View Form
+                        <i className="bi bi-eye"></i> View
                       </button>
-                      {isRevision && (
+                      {/* Edit — for PENDING and REVISION_REQUESTED */}
+                      {(app.status === 'PENDING' || app.status === 'REVISION_REQUESTED') && (
                         <button onClick={() => setReviseItem(app)} style={{
-                          padding: '0.4rem 0.9rem', borderRadius: 8, border: 'none',
-                          background: '#d97706', color: '#fff', cursor: 'pointer',
+                          padding: '0.4rem 0.9rem', borderRadius: 8, border: '1.5px solid #d97706',
+                          background: 'transparent', color: '#d97706', cursor: 'pointer',
                           fontWeight: 600, fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: 4
                         }}>
-                          <i className="bi bi-pencil-square"></i> Edit & Resubmit
+                          <i className="bi bi-pencil"></i> Edit
                         </button>
                       )}
+                      {/* Cancel — only for PENDING */}
                       {app.status === 'PENDING' && (
                         <button onClick={() => handleCancel(app.id)} style={{
                           padding: '0.4rem 0.9rem', borderRadius: 8, border: '1.5px solid #dc2626',
                           background: 'transparent', color: '#dc2626', cursor: 'pointer',
-                          fontWeight: 600, fontSize: '0.82rem'
+                          fontWeight: 600, fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: 4
                         }}>
-                          Cancel
+                          <i className="bi bi-x-circle"></i> Cancel
+                        </button>
+                      )}
+                      {/* Delete — only after CANCELLED */}
+                      {app.status === 'CANCELLED' && (
+                        <button onClick={() => handleDelete(app.id)} style={{
+                          padding: '0.4rem 0.9rem', borderRadius: 8, border: 'none',
+                          background: '#dc2626', color: '#fff', cursor: 'pointer',
+                          fontWeight: 600, fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: 4
+                        }}>
+                          <i className="bi bi-trash"></i> Delete
                         </button>
                       )}
                     </div>
