@@ -47,10 +47,10 @@ export default function AgentDashboard() {
       </div>
       <div className="d-flex gap-2 mb-4">
         <Link to="/agent/applications" className="btn-primary-custom" style={{ fontSize: '0.88rem', padding: '0.45rem 1rem' }}>
-          <i className="bi bi-file-earmark-text me-2"></i>Review Applications
+          <i className="bi bi-file-earmark-text me-2"></i>Check Applications
         </Link>
         <Link to="/agent/claims" className="btn-primary-sm" style={{ fontSize: '0.88rem', padding: '0.45rem 1rem' }}>
-          <i className="bi bi-file-earmark-medical me-2"></i>Review Claims
+          <i className="bi bi-file-earmark-medical me-2"></i>Check Claims
         </Link>
       </div>
       <div className="card-custom">
