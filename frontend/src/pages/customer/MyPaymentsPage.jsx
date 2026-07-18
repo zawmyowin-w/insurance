@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import PaymentMethodIcon, { PAYMENT_METHODS } from '../../components/PaymentMethodIcon'
+import DigitalSignatureCanvas from '../../components/DigitalSignatureCanvas'
 
 export default function MyPaymentsPage() {
   const { t } = useTranslation()
@@ -11,6 +12,8 @@ export default function MyPaymentsPage() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [payForm, setPayForm] = useState({ applicationId: '', paymentMethod: '', screenshot: null, notes: '' })
+  const [paySignature, setPaySignature] = useState(null)
+  const paySignatureRef = useRef()
   const [submitting, setSubmitting] = useState(false)
 
   const fetchData = () => {
@@ -30,6 +33,7 @@ export default function MyPaymentsPage() {
     if (!payForm.applicationId) { toast.error('Select a policy'); return }
     if (!payForm.paymentMethod) { toast.error('Select a payment method'); return }
     if (!payForm.screenshot) { toast.error('Upload payment proof screenshot'); return }
+    if (!paySignature) { toast.error('လက်မှတ်ရေးထိုးပါ — Digital Signature လိုအပ်သည်'); return }
     setSubmitting(true)
     try {
       const fd = new FormData()
@@ -37,10 +41,12 @@ export default function MyPaymentsPage() {
       fd.append('paymentMethod', payForm.paymentMethod)
       fd.append('screenshot', payForm.screenshot)
       fd.append('notes', payForm.notes)
+      fd.append('signature', paySignature)
       await api.post('/customer/payments', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
       toast.success('Payment submitted! Awaiting admin verification.')
       setShowModal(false)
       setPayForm({ applicationId: '', paymentMethod: '', screenshot: null, notes: '' })
+      setPaySignature(null)
       fetchData()
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to submit payment')
@@ -223,9 +229,27 @@ export default function MyPaymentsPage() {
                       value={payForm.notes} onChange={e => setPayForm(f => ({ ...f, notes: e.target.value }))}
                       placeholder="Transaction reference, bank name, etc." />
                   </div>
+
+                  {/* Digital Signature */}
+                  <div className="mb-2">
+                    <div style={{ padding: '0.55rem 0.85rem', borderRadius: 8, background: '#eff6ff', border: '1px solid #bfdbfe', marginBottom: '0.6rem', fontSize: '0.8rem', color: '#1e40af' }}>
+                      <i className="bi bi-pen me-2"></i>
+                      <strong>Digital Signature</strong> — ငွေပေးချေမှုကို တရားဝင်အတည်ပြုရန် လက်မှတ်ရေးထိုးပါ
+                    </div>
+                    <DigitalSignatureCanvas
+                      ref={paySignatureRef}
+                      label="ငွေပေးသူ လက်မှတ်"
+                      required
+                      onChange={data => setPaySignature(data)}
+                      height={140}
+                    />
+                  </div>
                 </div>
                 <div className="modal-footer">
-                  <button type="button" className="btn-outline-custom" onClick={() => setShowModal(false)}>Cancel</button>
+                  <button type="button" className="btn-outline-custom" onClick={() => {
+                    setShowModal(false)
+                    setPaySignature(null)
+                  }}>Cancel</button>
                   <button type="submit" disabled={submitting} className="btn-primary-custom" style={{ justifyContent: 'center' }}>
                     {submitting ? <><span className="spinner-border spinner-border-sm me-2"></span>Submitting...</> : 'Submit Payment'}
                   </button>

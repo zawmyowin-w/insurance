@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../services/api'
@@ -6,6 +6,7 @@ import { toast } from 'react-toastify'
 import NrcInput from '../../components/NrcInput'
 import { getTypeMeta } from '../../utils/typeMeta'
 import AgentProfileCard from '../../components/AgentProfileCard'
+import DigitalSignatureCanvas from '../../components/DigitalSignatureCanvas'
 
 const STEPS = [
   { id: 1, title: 'Select Plan',   icon: 'bi-grid-3x3-gap' },
@@ -19,6 +20,9 @@ export default function ApplyPolicyPage() {
   const location = useLocation()
   const preselectedId = location.state?.planId
 
+  const signatureRef = useRef()
+  const [signatureData, setSignatureData] = useState(null)
+
   const [step, setStep] = useState(1)
   const [plans, setPlans] = useState([])
   const [typeFilter, setTypeFilter] = useState('ALL')
@@ -26,7 +30,6 @@ export default function ApplyPolicyPage() {
   const [coverage, setCoverage] = useState('')
   const [duration, setDuration] = useState(1)
   const [notes, setNotes] = useState('')
-
 
   // Dynamic form state
   const [template, setTemplate] = useState(null)
@@ -103,9 +106,16 @@ export default function ApplyPolicyPage() {
         formDataObj[k] = Array.isArray(v) ? JSON.stringify(v) : v
       })
 
+      if (!signatureData) {
+        toast.error('လက်မှတ်ရေးထိုးပါ — Digital Signature လိုအပ်သည်')
+        setSubmitting(false)
+        return
+      }
+
       const mergedFormData = {
         __name: user?.name || '',
         __email: user?.email || '',
+        __signature: signatureData,
         ...formDataObj,
       }
 
@@ -350,9 +360,34 @@ export default function ApplyPolicyPage() {
                   value={notes} onChange={e => setNotes(e.target.value)} />
               </div>
 
+              {/* Digital Signature */}
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '0.75rem' }}>
+                <div style={{ padding: '0.6rem 0.9rem', borderRadius: 8, background: '#eff6ff', border: '1px solid #bfdbfe', marginBottom: '0.75rem', fontSize: '0.82rem', color: '#1e40af' }}>
+                  <i className="bi bi-pen me-2"></i>
+                  <strong>Digital Signature</strong> — Insurance Application ကို တရားဝင်ဖြစ်စေသောအတွက် လက်မှတ်ရေးထိုးပါ
+                </div>
+                <DigitalSignatureCanvas
+                  ref={signatureRef}
+                  label="Applicant လက်မှတ်"
+                  required
+                  onChange={data => setSignatureData(data)}
+                  height={160}
+                />
+              </div>
+
               <div className="d-flex gap-2 mt-4">
-                <button onClick={() => setStep(3)} className="btn-primary-custom flex-grow-1" style={{ justifyContent: 'center', background: meta2.color, borderColor: meta2.color }}
-                  disabled={templateLoading}>
+                <button
+                  onClick={() => {
+                    if (!signatureData) {
+                      toast.error('လက်မှတ်ရေးထိုးပါ — Digital Signature လိုအပ်သည်')
+                      return
+                    }
+                    setStep(3)
+                  }}
+                  className="btn-primary-custom flex-grow-1"
+                  style={{ justifyContent: 'center', background: meta2.color, borderColor: meta2.color }}
+                  disabled={templateLoading}
+                >
                   Review Application →
                 </button>
                 <button onClick={() => { setStep(1); setSelectedPlan(null) }} className="btn-outline-custom">
@@ -412,6 +447,17 @@ export default function ApplyPolicyPage() {
               <ReviewRow label="Duration" value={duration + ' year(s)'} />
               <ReviewRow label="Est. Premium" value={premium ? Number(premium).toLocaleString() + ' MMK' : '—'} />
               {notes && <ReviewRow label="Notes" value={notes} />}
+              {signatureData && (
+                <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border)' }}>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.4rem' }}>
+                    <i className="bi bi-pen me-1"></i>Digital Signature
+                  </div>
+                  <img src={signatureData} alt="Signature" style={{ maxHeight: 80, border: '1px solid var(--border)', borderRadius: 8, background: '#fff', padding: 4 }} />
+                  <div style={{ fontSize: '0.7rem', color: '#16a34a', marginTop: 4 }}>
+                    <i className="bi bi-check-circle me-1"></i>လက်မှတ်ရေးထိုးပြီးပါပြီ
+                  </div>
+                </div>
+              )}
 
               {/* Dynamic form summary */}
               {template?.fields && template.fields.filter(f => f.fieldType !== 'LABEL').length > 0 && (

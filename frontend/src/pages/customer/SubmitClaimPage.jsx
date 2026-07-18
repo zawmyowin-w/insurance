@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import NrcInput from '../../components/NrcInput'
 import AgentProfileCard from '../../components/AgentProfileCard'
+import DigitalSignatureCanvas from '../../components/DigitalSignatureCanvas'
 
 const CLAIM_TYPES = ['Accident', 'Hospitalization', 'Death Benefit', 'Property Damage', 'Vehicle Damage', 'Critical Illness', 'Other']
 
@@ -18,6 +19,8 @@ export default function SubmitClaimPage() {
   const [fieldValues, setFieldValues] = useState({})  // fieldId -> value
   const [fieldFiles, setFieldFiles] = useState({})     // fieldId -> File
   const [loading, setLoading] = useState(false)
+  const [signatureData, setSignatureData] = useState(null)
+  const signatureRef = useRef()
   const { user } = useAuth()
 
   useEffect(() => {
@@ -94,11 +97,17 @@ export default function SubmitClaimPage() {
       }
     }
 
+    if (!signatureData) {
+      toast.error('လက်မှတ်ရေးထိုးပါ — Digital Signature လိုအပ်သည်')
+      return
+    }
+
     setLoading(true)
     try {
       const formDataObj = {
         __name: user?.name || '',
         __email: user?.email || '',
+        __signature: signatureData,
       }
       Object.entries(fieldValues).forEach(([k, v]) => {
         formDataObj[k] = Array.isArray(v) ? JSON.stringify(v) : v
@@ -225,6 +234,23 @@ export default function SubmitClaimPage() {
                     </div>
                   </div>
                 </>
+              )}
+
+              {/* Digital Signature — shown once a policy is selected */}
+              {form.applicationId && (
+                <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '0.75rem' }}>
+                  <div style={{ padding: '0.6rem 0.9rem', borderRadius: 8, background: '#fef3c7', border: '1px solid #fcd34d', marginBottom: '0.75rem', fontSize: '0.82rem', color: '#92400e' }}>
+                    <i className="bi bi-pen me-2"></i>
+                    <strong>Digital Signature</strong> — Claim Form တင်သွင်းခြင်းကို တရားဝင်ဖြစ်စေသောအတွက် လက်မှတ်ရေးထိုးပါ
+                  </div>
+                  <DigitalSignatureCanvas
+                    ref={signatureRef}
+                    label="Claimant လက်မှတ်"
+                    required
+                    onChange={data => setSignatureData(data)}
+                    height={160}
+                  />
+                </div>
               )}
 
               {form.applicationId && (

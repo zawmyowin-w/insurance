@@ -716,32 +716,93 @@ function PackageDetailModal({ pkg, onClose, onEdit }) {
           {tiers.length > 0 && (
             <div style={{ background: 'linear-gradient(135deg, #eff6ff, #f0fdf4)', borderRadius: 12, padding: '1rem' }}>
               <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '0.75rem' }}>
-                <i className="bi bi-calculator me-1" style={{ color: 'var(--primary)' }}></i>Premium Calculator
+                <i className="bi bi-calculator me-1" style={{ color: 'var(--primary)' }}></i>Premium Calculator (တိကျသောပမာဏ)
               </div>
-              <div className="row g-2">
-                <div className="col-12 col-md-5">
-                  <input type="number" className="form-control-custom w-100" placeholder="Coverage Amount (MMK)" min={pkg.coverageMin} max={pkg.coverageMax} value={calcCoverage} onChange={e => setCalcCoverage(e.target.value)} />
-                  <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: '0.25rem 0 0' }}>{fmt(pkg.coverageMin)} – {fmt(pkg.coverageMax)} MMK</p>
+              <div className="row g-2 mb-3">
+                <div className="col-12 col-md-6">
+                  <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 4 }}>Coverage Amount (MMK)</label>
+                  <input type="number" className="form-control-custom w-100" placeholder="Coverage ပမာဏထည့်ပါ" min={pkg.coverageMin} max={pkg.coverageMax} value={calcCoverage} onChange={e => setCalcCoverage(e.target.value)} />
+                  <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: '0.25rem 0 0' }}>Range: MMK {fmt(pkg.coverageMin)} – {fmt(pkg.coverageMax)}</p>
                 </div>
-                <div className="col-12 col-md-4">
+                <div className="col-12 col-md-6">
+                  <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 4 }}>Duration & Premium Tier</label>
                   <select className="form-select-custom w-100" value={calcDuration} onChange={e => setCalcDuration(e.target.value)}>
                     {tiers.map(t => <option key={t.years} value={t.years}>{t.years} နှစ် — {(t.premiumRate * 100).toFixed(2)}%/yr</option>)}
                   </select>
                 </div>
-                <div className="col-12 col-md-3">
-                  {calcResult ? (
-                    <div style={{ background: '#fff', borderRadius: 8, padding: '0.5rem 0.75rem', border: '1px solid var(--border)' }}>
-                      <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Per Payment</div>
-                      <div style={{ fontWeight: 800, color: '#16a34a', fontSize: '1rem' }}>MMK {fmt(calcResult.perPayment)}</div>
-                      <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)' }}>Annual: MMK {fmt(calcResult.annual)}</div>
-                    </div>
-                  ) : (
-                    <div style={{ background: 'rgba(255,255,255,0.6)', borderRadius: 8, padding: '0.65rem 0.75rem', border: '1px dashed var(--border)', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
-                      <i className="bi bi-arrow-left me-1"></i>Coverage ထည့်ပါ
-                    </div>
-                  )}
-                </div>
               </div>
+
+              {calcResult ? (() => {
+                const intervalMonths = pkg.paymentIntervalMonths || 1
+                const years = Number(calcDuration) || 1
+                const totalPremium = calcResult.annual * years
+                const numPayments = Math.round((years * 12) / intervalMonths)
+                const freqName = PAYMENT_FREQ_OPTIONS.find(o => o.months === intervalMonths)?.label?.split('(')[0].trim() || `${intervalMonths} လတစ်ကြိမ်`
+                return (
+                  <div style={{ background: '#fff', borderRadius: 10, overflow: 'hidden', border: '1px solid #e2e8f0' }}>
+                    {/* Header */}
+                    <div style={{ background: 'var(--primary)', padding: '0.6rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ color: '#fff', fontWeight: 700, fontSize: '0.85rem' }}>
+                        <i className="bi bi-receipt me-2"></i>Premium ပမာဏ အသေးစိတ်
+                      </span>
+                      <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.75rem' }}>
+                        Coverage: MMK {fmt(calcCoverage)} · {years} နှစ်
+                      </span>
+                    </div>
+                    {/* Breakdown rows */}
+                    <div style={{ padding: '0.75rem 1rem' }}>
+                      {[
+                        { icon: 'bi-calculator', label: 'Coverage Amount', value: `MMK ${fmt(calcCoverage)}`, color: '#1d4ed8' },
+                        { icon: 'bi-percent', label: `Premium Rate (${years} နှစ် tier)`, value: `${(selectedTier?.premiumRate * 100).toFixed(3)}% / year`, color: '#7c3aed' },
+                        { icon: 'bi-calendar-year', label: 'Annual Premium', value: `MMK ${fmt(calcResult.annual)}`, color: '#d97706', formula: `(${fmt(calcCoverage)} × ${(selectedTier?.premiumRate * 100).toFixed(3)}%)` },
+                        { icon: 'bi-calendar-range', label: `${years} နှစ် စုစုပေါင်း Premium`, value: `MMK ${fmt(totalPremium)}`, color: '#dc2626', formula: `(${fmt(calcResult.annual)} × ${years} နှစ်)`, highlight: true },
+                      ].map((row, i) => (
+                        <div key={i} style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          padding: '0.45rem 0.6rem', borderRadius: 8, marginBottom: 4,
+                          background: row.highlight ? '#fef2f2' : 'var(--bg-secondary)',
+                          border: row.highlight ? '1px solid #fecaca' : '1px solid transparent',
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <i className={`bi ${row.icon}`} style={{ color: row.color, fontSize: '0.85rem', width: 16 }}></i>
+                            <div>
+                              <div style={{ fontSize: '0.8rem', color: 'var(--text-primary)', fontWeight: row.highlight ? 700 : 500 }}>{row.label}</div>
+                              {row.formula && <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)' }}>{row.formula}</div>}
+                            </div>
+                          </div>
+                          <span style={{ fontWeight: row.highlight ? 800 : 700, color: row.color, fontSize: row.highlight ? '0.95rem' : '0.85rem' }}>{row.value}</span>
+                        </div>
+                      ))}
+
+                      {/* Divider */}
+                      <div style={{ borderTop: '2px dashed #e2e8f0', margin: '0.6rem 0' }}></div>
+
+                      {/* Payment schedule box */}
+                      <div style={{ background: '#f0fdf4', borderRadius: 8, padding: '0.65rem 0.75rem', border: '1px solid #86efac' }}>
+                        <div style={{ fontWeight: 700, fontSize: '0.78rem', color: '#16a34a', marginBottom: '0.5rem' }}>
+                          <i className="bi bi-calendar-check me-1"></i>ပေးချေမှုဇယား ({freqName})
+                        </div>
+                        <div className="row g-2">
+                          <div className="col-6">
+                            <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>တစ်ကြိမ်ပေးချေရမည့်ပမာဏ</div>
+                            <div style={{ fontWeight: 800, color: '#16a34a', fontSize: '1.15rem' }}>MMK {fmt(calcResult.perPayment)}</div>
+                          </div>
+                          <div className="col-6">
+                            <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>စုစုပေါင်း ပေးချေကြိမ်</div>
+                            <div style={{ fontWeight: 800, color: '#1d4ed8', fontSize: '1.15rem' }}>{numPayments} ကြိမ်</div>
+                            <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)' }}>(လ {intervalMonths} တစ်ကြိမ် × {years} နှစ်)</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })() : (
+                <div style={{ background: 'rgba(255,255,255,0.7)', borderRadius: 8, padding: '1.25rem', border: '1px dashed var(--border)', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                  <i className="bi bi-calculator" style={{ fontSize: '1.5rem', opacity: 0.4, display: 'block', marginBottom: 4 }}></i>
+                  Coverage Amount ထည့်၍ တွက်ချက်မည်
+                </div>
+              )}
             </div>
           )}
 
