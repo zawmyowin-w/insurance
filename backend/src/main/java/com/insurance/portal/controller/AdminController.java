@@ -78,7 +78,17 @@ public class AdminController {
         stats.put("verifiedApplications", appRepo.countByStatus(ApplicationStatus.VERIFIED));
         stats.put("verifiedClaims", claimRepo.countByStatus(ClaimStatus.VERIFIED));
         stats.put("totalPackages", packageRepo.count());
-        stats.put("monthlyRevenue", 0);
+        // Monthly revenue: sum of VERIFIED payments created this calendar month
+        var now = java.time.LocalDateTime.now();
+        var startOfMonth = now.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        java.math.BigDecimal monthlyRevenue = paymentRepo.findAll().stream()
+                .filter(p -> p.getStatus() == PaymentStatus.VERIFIED
+                        && p.getAmount() != null
+                        && p.getCreatedAt() != null
+                        && !p.getCreatedAt().isBefore(startOfMonth))
+                .map(Payment::getAmount)
+                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+        stats.put("monthlyRevenue", monthlyRevenue);
         return stats;
     }
 

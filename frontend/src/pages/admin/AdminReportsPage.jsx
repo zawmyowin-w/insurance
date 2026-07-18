@@ -19,6 +19,7 @@ function BarChart({ data, color = 'var(--primary)', height = 180, label = '' }) 
   const entries = Object.entries(data || {})
   if (!entries.length) return <Empty />
   const vals = entries.map(([, v]) => Number(v))
+  if (vals.every(v => v === 0)) return <Empty />
   const maxV  = Math.max(...vals, 1)
   const W = 600, H = height, PAD_L = 60, PAD_B = 28, PAD_T = 16, PAD_R = 8
   const bw = Math.floor((W - PAD_L - PAD_R) / entries.length)
@@ -545,11 +546,19 @@ export default function AdminReportsPage() {
 function WalletTab({ wallet, walletLoaded }) {
   const [expand, setExpand] = useState(null)
 
-  if (!walletLoaded || !wallet) {
+  if (!walletLoaded) {
     return (
       <div className="text-center py-5">
         <div className="spinner-border" style={{ color: 'var(--primary)' }}></div>
         <p style={{ marginTop: 12, color: 'var(--text-muted)', fontSize: '0.85rem' }}>Wallet ဒေတာ ဆွဲယူနေသည်...</p>
+      </div>
+    )
+  }
+  if (!wallet) {
+    return (
+      <div className="card-custom text-center py-5">
+        <i className="bi bi-exclamation-triangle" style={{ fontSize: '2rem', color: '#d97706', display: 'block', marginBottom: 8 }}></i>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', margin: 0 }}>Wallet ဒေတာ ဆွဲယူ၍ မရပါ။ နောက်မှ ထပ်ကြည့်ပါ။</p>
       </div>
     )
   }
