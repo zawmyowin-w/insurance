@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
-import SystemFormFields from '../../components/SystemFormFields'
 import NrcInput from '../../components/NrcInput'
 
 const CLAIM_TYPES = ['Accident', 'Hospitalization', 'Death Benefit', 'Property Damage', 'Vehicle Damage', 'Critical Illness', 'Other']
@@ -19,10 +18,6 @@ export default function SubmitClaimPage() {
   const [fieldFiles, setFieldFiles] = useState({})     // fieldId -> File
   const [loading, setLoading] = useState(false)
   const { user } = useAuth()
-
-  // System mandatory fields
-  const [systemValues, setSystemValues] = useState({ __dob: '', __nrc: '' })
-  const handleSystemChange = (key, val) => setSystemValues(v => ({ ...v, [key]: val }))
 
   useEffect(() => {
     Promise.all([
@@ -46,7 +41,19 @@ export default function SubmitClaimPage() {
     setFieldValues({})
     setFieldFiles({})
     api.get(`/forms/public?packageId=${selectedPolicy.packageId}&formType=CLAIM`)
-      .then(res => setClaimTemplate(res.data))
+      .then(res => {
+        const tmpl = res.data
+        setClaimTemplate(tmpl)
+        // Auto-fill NAME / EMAIL fields from user profile
+        if (tmpl?.fields && user) {
+          const prefill = {}
+          tmpl.fields.forEach(f => {
+            if (f.fieldType === 'NAME')  prefill[String(f.id)] = user.name  || ''
+            if (f.fieldType === 'EMAIL') prefill[String(f.id)] = user.email || ''
+          })
+          if (Object.keys(prefill).length > 0) setFieldValues(prefill)
+        }
+      })
       .catch(() => setClaimTemplate(null))
       .finally(() => setTemplateLoading(false))
   }, [form.applicationId])
@@ -68,11 +75,7 @@ export default function SubmitClaimPage() {
     e.preventDefault()
     if (!form.applicationId) { toast.error('Please select a policy'); return }
 
-    // Validate system mandatory fields
-    if (!systemValues.__dob) { toast.error('မွေးသက္ကရာဇ် (Date of Birth) ဖြည့်ပေးပါ'); return }
-    if (!systemValues.__nrc || systemValues.__nrc.length < 5) { toast.error('မှတ်ပုံတင်အမှတ် (NRC No.) ဖြည့်ပေးပါ'); return }
-
-    // Validate required fields
+    // Validate required dynamic fields
     if (claimTemplate?.fields) {
       for (const field of claimTemplate.fields) {
         if (field.fieldType === 'LABEL') continue
@@ -92,12 +95,9 @@ export default function SubmitClaimPage() {
 
     setLoading(true)
     try {
-      // Build formData JSON (non-file values)
       const formDataObj = {
         __name: user?.name || '',
         __email: user?.email || '',
-        __dob: systemValues.__dob,
-        __nrc: systemValues.__nrc,
       }
       Object.entries(fieldValues).forEach(([k, v]) => {
         formDataObj[k] = Array.isArray(v) ? JSON.stringify(v) : v
@@ -111,7 +111,6 @@ export default function SubmitClaimPage() {
       fd.append('incidentDate', form.incidentDate || new Date().toISOString().split('T')[0])
       fd.append('formData', JSON.stringify(formDataObj))
 
-      // Append file fields
       Object.entries(fieldFiles).forEach(([fieldId, file]) => {
         if (file) fd.append(`file_${fieldId}`, file)
       })
@@ -126,8 +125,6 @@ export default function SubmitClaimPage() {
     }
   }
 
-  const selectedPolicy = activePolicies.find(p => String(p.id) === String(form.applicationId))
-
   return (
     <div className="fade-in">
       <div className="mb-4">
@@ -139,9 +136,12 @@ export default function SubmitClaimPage() {
         <div className="col-12 col-lg-8">
           <div className="card-custom">
             <form onSubmit={handleSubmit}>
+
               {/* Policy selection */}
-              <div className="mb-3">
-                <label className="form-label-custom">Select Policy *</label>
+              <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, padding: '1rem 1.25rem', marginBottom: '1.25rem' }}>
+                <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
+                  <i className="bi bi-shield-check me-1"></i>Select Policy
+                </div>
                 <select name="applicationId" required className="form-select-custom w-100" value={form.applicationId} onChange={handleChange}>
                   <option value="">Choose an approved policy...</option>
                   {availablePolicies.map(p => (
@@ -151,21 +151,12 @@ export default function SubmitClaimPage() {
                   ))}
                 </select>
                 {activePolicies.length === 0 && (
-                  <small style={{ color: 'var(--danger)', fontSize: '0.8rem' }}>No approved policies. Apply for a policy first.</small>
+                  <small style={{ color: 'var(--danger)', fontSize: '0.8rem', marginTop: 4, display: 'block' }}>No approved policies. Apply for a policy first.</small>
                 )}
                 {activePolicies.length > 0 && availablePolicies.length === 0 && (
-                  <small style={{ color: 'var(--danger)', fontSize: '0.8rem' }}>All policies already have a claim. Only one claim per policy.</small>
+                  <small style={{ color: 'var(--danger)', fontSize: '0.8rem', marginTop: 4, display: 'block' }}>All policies already have a claim. Only one claim per policy.</small>
                 )}
               </div>
-
-              {/* System mandatory fields — always shown when a policy is selected */}
-              {form.applicationId && (
-                <SystemFormFields
-                  user={user}
-                  values={systemValues}
-                  onChange={handleSystemChange}
-                />
-              )}
 
               {/* Template loading */}
               {templateLoading && (
@@ -177,14 +168,20 @@ export default function SubmitClaimPage() {
 
               {/* Dynamic claim form fields */}
               {!templateLoading && form.applicationId && claimTemplate && (
-                <DynamicFormFields
-                  fields={claimTemplate.fields}
-                  fieldValues={fieldValues}
-                  fieldFiles={fieldFiles}
-                  onValue={handleFieldValue}
-                  onFile={handleFieldFile}
-                  onCheckboxOption={handleCheckboxOption}
-                />
+                <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '0.25rem' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '1rem' }}>
+                    <i className="bi bi-ui-checks me-1"></i>{claimTemplate.name}
+                  </div>
+                  <DynamicFormFields
+                    fields={claimTemplate.fields}
+                    fieldValues={fieldValues}
+                    fieldFiles={fieldFiles}
+                    onValue={handleFieldValue}
+                    onFile={handleFieldFile}
+                    onCheckboxOption={handleCheckboxOption}
+                    user={user}
+                  />
+                </div>
               )}
 
               {/* No template fallback */}
@@ -223,7 +220,7 @@ export default function SubmitClaimPage() {
 
               {form.applicationId && (
                 <button type="submit" disabled={loading || templateLoading} className="btn-primary-custom mt-4 w-100" style={{ justifyContent: 'center' }}>
-                  {loading ? <><span className="spinner-border spinner-border-sm me-2"></span>Submitting...</> : 'Submit Claim'}
+                  {loading ? <><span className="spinner-border spinner-border-sm me-2"></span>Submitting...</> : <><i className="bi bi-send me-2"></i>Submit Claim</>}
                 </button>
               )}
             </form>
@@ -252,16 +249,14 @@ export default function SubmitClaimPage() {
   )
 }
 
-// Field types already covered by SystemFormFields — skip to avoid duplication
+// Field types already covered by system — skip to avoid duplication
 const SYSTEM_FIELD_TYPES = new Set(['NAME', 'EMAIL', 'NRC'])
 
-function DynamicFormFields({ fields, fieldValues, fieldFiles, onValue, onFile, onCheckboxOption }) {
+function DynamicFormFields({ fields, fieldValues, fieldFiles, onValue, onFile, onCheckboxOption, user }) {
   if (!fields || fields.length === 0) return null
-  const visibleFields = fields.filter(f => !SYSTEM_FIELD_TYPES.has(f.fieldType))
-  if (visibleFields.length === 0) return null
   return (
     <div className="d-flex flex-column gap-3 mb-3">
-      {visibleFields.map(field => (
+      {fields.map(field => (
         <DynamicField
           key={field.id}
           field={field}
@@ -270,13 +265,14 @@ function DynamicFormFields({ fields, fieldValues, fieldFiles, onValue, onFile, o
           onValue={v => onValue(field.id, v)}
           onFile={f => onFile(field.id, f)}
           onCheckboxOption={(opt, checked) => onCheckboxOption(field.id, opt, checked)}
+          user={user}
         />
       ))}
     </div>
   )
 }
 
-function DynamicField({ field, value, file, onValue, onFile, onCheckboxOption }) {
+function DynamicField({ field, value, file, onValue, onFile, onCheckboxOption, user }) {
   if (field.fieldType === 'LABEL') {
     return (
       <div style={{
@@ -289,6 +285,8 @@ function DynamicField({ field, value, file, onValue, onFile, onCheckboxOption })
     )
   }
 
+  const isAutoFilled = field.fieldType === 'NAME' || field.fieldType === 'EMAIL'
+
   let options = []
   if (field.fieldType === 'CHECKBOX' && field.fieldOptions) {
     try { options = JSON.parse(field.fieldOptions) } catch { options = ['Yes', 'No'] }
@@ -298,10 +296,25 @@ function DynamicField({ field, value, file, onValue, onFile, onCheckboxOption })
   return (
     <div>
       <label className="form-label-custom">
-        {field.fieldLabel} {field.required && <span style={{ color: '#dc2626' }}>*</span>}
+        {field.fieldLabel}
+        {field.required && <span style={{ color: '#dc2626' }}> *</span>}
+        {isAutoFilled && (
+          <span style={{ fontSize: '0.7rem', color: '#16a34a', marginLeft: 6, fontWeight: 400 }}>
+            <i className="bi bi-lock-fill me-1"></i>ပရိုဖိုင်မှ အလိုလျှောက်ထည့်သည်
+          </span>
+        )}
       </label>
+      {isAutoFilled && (
+        <input className="form-control-custom w-100" value={value || ''} readOnly
+          style={{ background: '#f0fdf4', borderColor: '#86efac', color: 'var(--text-primary)', cursor: 'not-allowed' }} />
+      )}
       {field.fieldType === 'TEXT' && (
         <input className="form-control-custom w-100" value={value || ''} required={field.required}
+          onChange={e => onValue(e.target.value)} />
+      )}
+      {field.fieldType === 'PHONE' && (
+        <input type="tel" className="form-control-custom w-100" value={value || ''}
+          placeholder="+95 9xxxxxxxx" required={field.required}
           onChange={e => onValue(e.target.value)} />
       )}
       {field.fieldType === 'TEXTAREA' && (
