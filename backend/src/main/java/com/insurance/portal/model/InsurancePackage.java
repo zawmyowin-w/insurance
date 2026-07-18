@@ -57,6 +57,33 @@ public class InsurancePackage {
     @Column(name = "policy_term")
     private Integer policyTerm; // maximum policy term in years
 
+    // Duration-based premium tiers: JSON array [{years, premiumRate}]
+    @Column(name = "duration_tiers", columnDefinition = "TEXT")
+    private String durationTiersJson;
+
+    // Payment schedule
+    @Column(name = "payment_frequency", length = 20)
+    private String paymentFrequency; // MONTHLY, QUARTERLY, HALF_YEARLY, YEARLY
+
+    @Column(name = "payment_interval_months")
+    private Integer paymentIntervalMonths; // e.g. 1=monthly, 3=quarterly, 6=half-yearly, 12=yearly
+
+    // Maximum claimable amount
+    @Column(name = "max_claim_amount", precision = 20, scale = 2)
+    private BigDecimal maxClaimAmount;
+
+    // Who can be a beneficiary
+    @Column(name = "beneficiary_info", columnDefinition = "TEXT")
+    private String beneficiaryInfo;
+
+    // Required documents for application: JSON array of strings
+    @Column(name = "required_documents", columnDefinition = "TEXT")
+    private String requiredDocumentsJson;
+
+    // Terms, rules, and policy conditions
+    @Column(name = "terms_and_conditions", columnDefinition = "TEXT")
+    private String termsAndConditions;
+
     @Builder.Default
     private boolean active = true;
 
