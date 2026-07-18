@@ -219,6 +219,14 @@ export default function ApplyPolicyPage() {
                           Policy Term: {plan.minPolicyTerm && plan.policyTerm ? `${plan.minPolicyTerm} – ${plan.policyTerm} yrs` : plan.policyTerm ? `Up to ${plan.policyTerm} yrs` : `From ${plan.minPolicyTerm} yrs`}
                         </div>
                       )}
+                      {plan.eligibility && (
+                        <div style={{ marginTop: '0.6rem', padding: '0.5rem 0.65rem', borderRadius: 8, background: 'rgba(255,255,255,0.6)', border: `1px solid ${meta.color}22` }}>
+                          <div style={{ fontSize: '0.7rem', fontWeight: 700, color: meta.color, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.2rem' }}>
+                            <i className="bi bi-person-check me-1"></i>Eligibility
+                          </div>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>{plan.eligibility}</div>
+                        </div>
+                      )}
                       <button style={{
                         marginTop: '0.75rem', width: '100%', padding: '0.5rem', borderRadius: 8,
                         border: 'none', background: meta.color, color: '#fff',
