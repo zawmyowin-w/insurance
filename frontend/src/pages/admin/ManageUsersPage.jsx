@@ -41,16 +41,15 @@ export default function ManageUsersPage() {
   const [editPwdFocused, setEditPwdFocused] = useState(false)
   const [showEditPwd, setShowEditPwd] = useState(false)
   const [editSaving, setEditSaving] = useState(false)
-  const [insuranceTypes, setInsuranceTypes] = useState(['LIFE', 'HEALTH', 'VEHICLE', 'PROPERTY'])
+  const [insuranceTypes, setInsuranceTypes] = useState([])
 
   const fetchInsuranceTypes = () => {
-    api.get('/admin/packages')
+    api.get('/admin/insurance-types')
       .then(res => {
-        const pkgs = Array.isArray(res.data) ? res.data : []
-        const types = [...new Set(pkgs.map(p => p.type).filter(Boolean))].sort()
-        if (types.length > 0) setInsuranceTypes(types)
+        const types = Array.isArray(res.data) ? res.data.map(t => t.name) : []
+        setInsuranceTypes(types.length > 0 ? types : ['LIFE', 'HEALTH', 'VEHICLE', 'PROPERTY'])
       })
-      .catch(() => {})
+      .catch(() => setInsuranceTypes(['LIFE', 'HEALTH', 'VEHICLE', 'PROPERTY']))
   }
 
   const fetchUsers = () => {

@@ -45,6 +45,7 @@ import AgentMessagesPage from './pages/agent/AgentMessagesPage'
 import AdminLayout from './pages/admin/AdminLayout'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import ManagePackagesPage from './pages/admin/ManagePackagesPage'
+import ManageInsuranceTypesPage from './pages/admin/ManageInsuranceTypesPage'
 import ManageUsersPage from './pages/admin/ManageUsersPage'
 import AdminApplicationsPage from './pages/admin/AdminApplicationsPage'
 import AdminClaimsPage from './pages/admin/AdminClaimsPage'
@@ -106,6 +107,7 @@ export default function App() {
             <Route path="/admin" element={<ProtectedRoute role="ADMIN"><AdminLayout /></ProtectedRoute>}>
               <Route index element={<Navigate to="dashboard" replace />} />
               <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="insurance-types" element={<ManageInsuranceTypesPage />} />
               <Route path="packages" element={<ManagePackagesPage />} />
               <Route path="users" element={<ManageUsersPage />} />
               <Route path="applications" element={<AdminApplicationsPage />} />

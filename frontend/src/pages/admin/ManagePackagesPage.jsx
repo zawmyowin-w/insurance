@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 
-const INSURANCE_TYPE_SUGGESTIONS = ['LIFE', 'HEALTH', 'VEHICLE', 'PROPERTY']
 const EMPTY = { name: '', type: '', description: '', coverageMin: '', coverageMax: '', premiumRate: '', durations: '1,2,3,5', benefitsList: [''], eligibility: '', exclusions: '', minPolicyTerm: '', policyTerm: '', active: true }
 
 export default function ManagePackagesPage() {
@@ -17,6 +16,16 @@ export default function ManagePackagesPage() {
   const [form, setForm] = useState(EMPTY)
   const [saving, setSaving] = useState(false)
   const [pkgForms, setPkgForms] = useState({})  // packageId -> { APPLICATION, CLAIM }
+  const [insuranceTypes, setInsuranceTypes] = useState([])
+
+  const fetchInsuranceTypes = () => {
+    api.get('/admin/insurance-types')
+      .then(res => {
+        const names = Array.isArray(res.data) ? res.data.map(t => t.name) : []
+        setInsuranceTypes(names.length > 0 ? names : ['LIFE', 'HEALTH', 'VEHICLE', 'PROPERTY'])
+      })
+      .catch(() => setInsuranceTypes(['LIFE', 'HEALTH', 'VEHICLE', 'PROPERTY']))
+  }
 
   const fetchPackages = () => {
     api.get('/admin/packages')
@@ -40,7 +49,7 @@ export default function ManagePackagesPage() {
       }).catch(() => setPackages([]))
       .finally(() => setLoading(false))
   }
-  useEffect(() => { fetchPackages() }, [])
+  useEffect(() => { fetchInsuranceTypes(); fetchPackages() }, [])
 
   const handleChange = e => {
     const { name, value, type, checked } = e.target
@@ -132,17 +141,21 @@ export default function ManagePackagesPage() {
               </div>
               <div className="col-12 col-md-3">
                 <label className="form-label-custom">Type *</label>
-                <input
-                  name="type" required list="insurance-type-suggestions"
-                  className="form-control-custom w-100"
-                  placeholder="e.g. LIFE, HEALTH, VEHICLE…"
-                  value={form.type} onChange={handleChange}
-                  style={{ textTransform: 'uppercase' }}
-                  onBlur={e => setForm(f => ({ ...f, type: e.target.value.trim().toUpperCase() }))}
-                />
-                <datalist id="insurance-type-suggestions">
-                  {INSURANCE_TYPE_SUGGESTIONS.map(t => <option key={t} value={t} />)}
-                </datalist>
+                {insuranceTypes.length > 0 ? (
+                  <select name="type" required className="form-select-custom w-100"
+                    value={form.type} onChange={handleChange}>
+                    <option value="">— ရွေးချယ်ပါ —</option>
+                    {insuranceTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                ) : (
+                  <div className="d-flex align-items-center gap-2" style={{ height: 38 }}>
+                    <span className="spinner-border spinner-border-sm" style={{ color: 'var(--primary)' }}></span>
+                    <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Loading types…</span>
+                  </div>
+                )}
+                <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0.25rem 0 0' }}>
+                  <a href="/admin/insurance-types" style={{ color: 'var(--primary)' }}>Insurance Types</a> တွင် type အသစ်ထည့်နိုင်သည်
+                </p>
               </div>
               <div className="col-12 col-md-3">
                 <label className="form-label-custom">Premium Rate (%) *</label>

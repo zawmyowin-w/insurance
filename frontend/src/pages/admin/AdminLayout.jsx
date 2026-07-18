@@ -2,9 +2,10 @@ import React from 'react'
 import DashboardLayout from '../../components/DashboardLayout'
 
 const links = [
-  { to: '/admin/dashboard',     icon: 'bi-speedometer2',         label: 'Dashboard'          },
-  { to: '/admin/packages',      icon: 'bi-box-seam',             label: 'Insurance Packages' },
-  { to: '/admin/users',         icon: 'bi-people',               label: 'Manage Users'       },
+  { to: '/admin/dashboard',       icon: 'bi-speedometer2',         label: 'Dashboard'          },
+  { to: '/admin/insurance-types', icon: 'bi-tags',                 label: 'Insurance Types'    },
+  { to: '/admin/packages',        icon: 'bi-box-seam',             label: 'Insurance Packages' },
+  { to: '/admin/users',           icon: 'bi-people',               label: 'Manage Users'       },
   { to: '/admin/forms',         icon: 'bi-ui-checks',            label: 'Form Templates'     },
   { to: '/admin/applications',  icon: 'bi-file-earmark-text',    label: 'Applications'       },
   { to: '/admin/claims',        icon: 'bi-file-earmark-medical', label: 'Claims'             },

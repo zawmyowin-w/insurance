@@ -32,7 +32,39 @@ public class AdminController {
     private final PaymentRepository paymentRepo;
     private final NotificationRepository notifRepo;
     private final InsurancePackageRepository packageRepo;
+    private final InsuranceTypeRepository insuranceTypeRepo;
     private final PasswordEncoder passwordEncoder;
+
+    // ── Insurance Types CRUD ──────────────────────────────────────────
+
+    @GetMapping("/insurance-types")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> listInsuranceTypes() {
+        return ResponseEntity.ok(insuranceTypeRepo.findAllByOrderByNameAsc().stream()
+            .map(t -> Map.of("id", t.getId(), "name", t.getName(),
+                             "createdAt", t.getCreatedAt() != null ? t.getCreatedAt().toString() : ""))
+            .toList());
+    }
+
+    @PostMapping("/insurance-types")
+    @Transactional
+    public ResponseEntity<?> createInsuranceType(@RequestBody Map<String, Object> body) {
+        String name = body.getOrDefault("name", "").toString().trim().toUpperCase();
+        if (name.isBlank()) return ResponseEntity.badRequest().body(Map.of("message", "Name is required"));
+        if (insuranceTypeRepo.findByNameIgnoreCase(name).isPresent())
+            return ResponseEntity.status(409).body(Map.of("message", "\"" + name + "\" သည် ရှိပြီးသားဖြစ်သည်"));
+        var saved = insuranceTypeRepo.save(com.insurance.portal.model.InsuranceType.builder().name(name).build());
+        return ResponseEntity.ok(Map.of("id", saved.getId(), "name", saved.getName()));
+    }
+
+    @DeleteMapping("/insurance-types/{id}")
+    @Transactional
+    public ResponseEntity<?> deleteInsuranceType(@PathVariable Long id) {
+        if (!insuranceTypeRepo.existsById(id))
+            return ResponseEntity.notFound().build();
+        insuranceTypeRepo.deleteById(id);
+        return ResponseEntity.ok(Map.of("message", "Deleted"));
+    }
 
     // ── Dashboard Stats ───────────────────────────────────────────────
     @GetMapping("/dashboard/stats")

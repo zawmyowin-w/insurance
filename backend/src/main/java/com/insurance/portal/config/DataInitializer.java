@@ -1,7 +1,9 @@
 package com.insurance.portal.config;
 
 import com.insurance.portal.model.InsurancePackage;
+import com.insurance.portal.model.InsuranceType;
 import com.insurance.portal.repository.InsurancePackageRepository;
+import com.insurance.portal.repository.InsuranceTypeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
@@ -18,11 +20,20 @@ import java.util.List;
 public class DataInitializer implements ApplicationRunner {
 
     private final InsurancePackageRepository packageRepo;
+    private final InsuranceTypeRepository insuranceTypeRepo;
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
+        seedInsuranceTypes();
         seedPackages();
+    }
+
+    private void seedInsuranceTypes() {
+        if (insuranceTypeRepo.count() > 0) return;
+        List<String> defaults = List.of("LIFE", "HEALTH", "VEHICLE", "PROPERTY");
+        defaults.forEach(name -> insuranceTypeRepo.save(InsuranceType.builder().name(name).build()));
+        log.info("✅ Seeded {} default insurance types", defaults.size());
     }
 
     private void seedPackages() {
