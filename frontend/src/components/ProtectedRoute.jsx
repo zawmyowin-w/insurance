@@ -20,7 +20,8 @@ export default function ProtectedRoute({ children, role }) {
   }
 
   if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />
+    const loginPath = role === 'AGENT' ? '/agent/login' : '/login'
+    return <Navigate to={loginPath} state={{ from: location }} replace />
   }
 
   if (role && user.role !== role) {

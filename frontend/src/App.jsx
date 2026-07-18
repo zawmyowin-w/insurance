@@ -32,6 +32,7 @@ import CustomerProfilePage from './pages/customer/CustomerProfilePage'
 import SendFeedbackPage from './pages/customer/SendFeedbackPage'
 
 // Agent pages
+import AgentLoginPage from './pages/agent/AgentLoginPage'
 import AgentLayout from './pages/agent/AgentLayout'
 import AgentDashboard from './pages/agent/AgentDashboard'
 import AgentApplicationsPage from './pages/agent/AgentApplicationsPage'
@@ -90,6 +91,7 @@ export default function App() {
             </Route>
 
             {/* Agent */}
+            <Route path="/agent/login" element={<AgentLoginPage />} />
             <Route path="/agent" element={<ProtectedRoute role="AGENT"><AgentLayout /></ProtectedRoute>}>
               <Route index element={<Navigate to="dashboard" replace />} />
               <Route path="dashboard" element={<AgentDashboard />} />
