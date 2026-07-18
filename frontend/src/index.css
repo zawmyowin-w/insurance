@@ -22,6 +22,7 @@
   --shadow-lg: 0 10px 15px rgba(0,0,0,.08), 0 4px 6px rgba(0,0,0,.05);
   --navbar-bg: #ffffff;
   --navbar-border: #e5e7eb;
+  --navbar-height: 70px;
 }
 
 [data-theme="dark"] {
@@ -150,7 +151,7 @@ body {
 
 /* ─── Hero Section ─── */
 .hero-section {
-  min-height: calc(100vh - 70px);
+  min-height: calc(100vh - var(--navbar-height));
   background-color: var(--bg-secondary);
   position: relative;
   overflow: hidden;
@@ -186,7 +187,7 @@ body {
 }
 
 .hero-title {
-  font-size: clamp(2.2rem, 5vw, 3.2rem);
+  font-size: clamp(1.8rem, 5vw, 3.2rem);
   font-weight: 800;
   line-height: 1.18;
   color: var(--text-primary);
@@ -244,7 +245,7 @@ body {
 
 /* ─── Section Styles ─── */
 .section-title {
-  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-size: clamp(1.4rem, 3vw, 2.2rem);
   font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 0.5rem;
@@ -459,10 +460,13 @@ body {
 .sidebar {
   background: var(--bg-card);
   border-right: 1px solid var(--border);
-  min-height: calc(100vh - 70px);
+  min-height: calc(100vh - var(--navbar-height));
   padding: 1.5rem 0;
   position: sticky;
-  top: 70px;
+  top: var(--navbar-height);
+  align-self: flex-start;
+  overflow-y: auto;
+  max-height: calc(100vh - var(--navbar-height));
 }
 
 .sidebar-link {
@@ -493,8 +497,60 @@ body {
 
 .dashboard-content {
   background-color: var(--bg-secondary);
-  min-height: calc(100vh - 70px);
+  min-height: calc(100vh - var(--navbar-height));
   padding: 2rem;
+}
+
+/* ─── Mobile Dashboard Header (hamburger bar) ─── */
+.mobile-dashboard-header {
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 1rem;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  margin: -2rem -2rem 1.5rem;   /* counteract dashboard-content padding, then re-add gap */
+}
+
+/* ─── Mobile Slide-out Drawer ─── */
+.sidebar-drawer-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 1040;
+  backdrop-filter: blur(1px);
+}
+
+.sidebar-drawer-overlay.open {
+  display: block;
+}
+
+.sidebar-drawer {
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  width: min(280px, 85vw);
+  background: var(--bg-card);
+  border-right: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  z-index: 1050;
+  transform: translateX(-100%);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-y: auto;
+  padding-top: 0.5rem;
+  padding-bottom: 2rem;
+}
+
+.sidebar-drawer.open {
+  transform: translateX(0);
+}
+
+.sidebar-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 0.5rem;
 }
 
 /* ─── Status Badges ─── */
@@ -529,6 +585,7 @@ body {
   letter-spacing: 0.05em;
   border-bottom: 1px solid var(--border);
   padding: 0.85rem 1rem;
+  white-space: nowrap;
 }
 
 .table-custom td {
@@ -665,19 +722,6 @@ body {
   margin-top: 0.25rem;
 }
 
-/* ─── Responsive ─── */
-@media (max-width: 768px) {
-  .hero-shield-bg { display: none; }
-  .dashboard-content { padding: 1rem; }
-  .auth-card { padding: 1.75rem 1.25rem; }
-  .sidebar { position: static; min-height: unset; }
-}
-
-@media (max-width: 576px) {
-  .hero-title { font-size: 1.9rem; }
-  .btn-primary-custom, .btn-outline-custom { padding: 0.55rem 1.1rem; font-size: 0.9rem; }
-}
-
 /* ─── Scrollbar (webkit) ─── */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg-secondary); }
@@ -692,4 +736,188 @@ body {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* ════════════════════════════════════════════════
+   RESPONSIVE
+   Breakpoints:
+     Desktop  : > 1199px  (xl+)
+     Laptop   : 992–1199px (lg)
+     Tablet   : 768–991px  (md)
+     Mobile   : 576–767px  (sm)
+     Small    : < 576px    (xs)
+   ════════════════════════════════════════════════ */
+
+/* ── Laptop (≤ 1199px) ── */
+@media (max-width: 1199px) {
+  .sidebar {
+    width: 210px !important;
+  }
+
+  .dashboard-content {
+    padding: 1.75rem;
+  }
+}
+
+/* ── Tablet (≤ 991px) ── */
+@media (max-width: 991px) {
+  .sidebar {
+    width: 190px !important;
+    font-size: 0.85rem;
+  }
+
+  .sidebar-link {
+    padding: 0.55rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .dashboard-content {
+    padding: 1.5rem;
+  }
+
+  .hero-section {
+    min-height: auto;
+    padding: 4rem 0;
+  }
+
+  .hero-shield-bg {
+    width: 40%;
+    opacity: 0.08;
+  }
+
+  .stat-number { font-size: 1.9rem; }
+
+  .card-custom { padding: 1.25rem; }
+
+  /* Modal: slightly narrower on tablet */
+  .modal-dialog { max-width: 600px; }
+}
+
+/* ── Mobile (≤ 767px) ── */
+@media (max-width: 767px) {
+  /* Dashboard */
+  .dashboard-content {
+    padding: 1rem;
+  }
+
+  .mobile-dashboard-header {
+    margin: -1rem -1rem 1rem;
+  }
+
+  /* Hero */
+  .hero-section {
+    padding: 3rem 0;
+    min-height: auto;
+  }
+
+  .hero-shield-bg { display: none; }
+
+  .hero-subtitle {
+    font-size: 0.95rem;
+    max-width: 100%;
+  }
+
+  /* Tables — horizontal scroll */
+  .table-custom {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 8px;
+  }
+
+  /* Auth card */
+  .auth-card {
+    padding: 1.75rem 1.25rem;
+    border-radius: 12px;
+  }
+
+  /* Cards */
+  .card-custom { padding: 1.1rem; }
+
+  /* Stat */
+  .stat-number { font-size: 1.7rem; }
+  .stat-card { padding: 1.1rem 0.75rem; }
+
+  /* Buttons: full-width in form contexts */
+  .btn-primary-custom.w-100,
+  .btn-outline-custom.w-100 {
+    justify-content: center;
+  }
+
+  /* Footer: stack & compact */
+  .footer-custom { padding: 2rem 0 1rem; }
+
+  /* Modal: slide up from bottom on mobile */
+  .modal-custom .modal-dialog {
+    margin: auto 0 0;
+    max-width: 100%;
+  }
+
+  .modal-custom .modal-content {
+    border-radius: 16px 16px 0 0;
+  }
+
+  /* Plan detail panel */
+  .plan-detail-panel { min-height: 200px; padding: 1.25rem; }
+
+  /* Page section padding */
+  section { padding-top: 2.5rem !important; padding-bottom: 2.5rem !important; }
+}
+
+/* ── Small mobile (≤ 575px) ── */
+@media (max-width: 575px) {
+  .hero-title { font-size: 1.75rem; }
+
+  .section-title { font-size: 1.35rem; }
+
+  .hero-subtitle { font-size: 0.9rem; }
+
+  .card-custom { padding: 1rem; border-radius: 10px; }
+
+  .stat-number { font-size: 1.5rem; }
+  .stat-label { font-size: 0.82rem; }
+
+  .auth-page { padding: 1.25rem 0.75rem; }
+  .auth-card { padding: 1.5rem 1rem; border-radius: 10px; }
+
+  .btn-primary-custom,
+  .btn-outline-custom {
+    padding: 0.55rem 1.1rem;
+    font-size: 0.88rem;
+  }
+
+  .dashboard-content { padding: 0.75rem; }
+
+  .mobile-dashboard-header {
+    margin: -0.75rem -0.75rem 0.75rem;
+  }
+
+  /* Tables */
+  .table-custom th { font-size: 0.75rem; padding: 0.65rem 0.75rem; }
+  .table-custom td { font-size: 0.85rem; padding: 0.65rem 0.75rem; }
+
+  /* Badge status */
+  .badge-status { font-size: 0.72rem; padding: 0.25rem 0.55rem; }
+
+  /* Modal full-screen */
+  .modal-custom .modal-dialog { margin: 0; max-width: 100%; height: 100%; }
+  .modal-custom .modal-content { border-radius: 0; height: 100%; }
+  .modal-custom .modal-body { overflow-y: auto; }
+
+  /* Footer compact */
+  .footer-custom { padding: 1.5rem 0 0.75rem; }
+
+  /* Premium result */
+  .premium-result-amount { font-size: 1.6rem; }
+
+  /* Notification */
+  .notification-item { padding: 0.75rem 1rem; }
+
+  /* Step numbers */
+  .step-number { width: 36px; height: 36px; font-size: 0.9rem; }
+
+  /* Insurance icon box */
+  .insurance-icon-box { width: 40px; height: 40px; font-size: 1.2rem; }
+
+  /* Section label */
+  .section-label { font-size: 0.72rem; }
 }
