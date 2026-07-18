@@ -107,8 +107,8 @@ export default function ManagePackagesPage() {
           <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>Create and manage insurance plans and their forms</p>
         </div>
         <button className="btn-primary-custom" style={{ fontSize: '0.88rem', padding: '0.45rem 1rem' }} onClick={() => {
-          if (showForm) { setShowForm(false); setEditing(null); setForm(EMPTY); navigate(-1); return }
-          setShowForm(true)
+          if (showForm) { setShowForm(false); setEditing(null); setForm({ ...EMPTY }); navigate(-1); return }
+          setEditing(null); setForm({ ...EMPTY }); setShowForm(true)
         }}>
           <i className={`bi bi-${showForm ? 'arrow-left' : 'plus-circle'} me-1`}></i>
           {showForm ? 'Back' : 'New Package'}
@@ -191,7 +191,7 @@ export default function ManagePackagesPage() {
               <button type="submit" disabled={saving} className="btn-primary-custom" style={{ justifyContent: 'center' }}>
                 {saving ? <><span className="spinner-border spinner-border-sm me-2"></span>Saving...</> : (editing ? 'Update Package' : 'Create Package')}
               </button>
-              <button type="button" className="btn-danger-sm" onClick={() => { setShowForm(false); setEditing(null); setForm(EMPTY) }}>
+              <button type="button" className="btn-danger-sm" onClick={() => { setForm({ ...EMPTY }); setEditing(null); setShowForm(false) }}>
                 <i className="bi bi-x-lg me-1"></i>Cancel
               </button>
             </div>
