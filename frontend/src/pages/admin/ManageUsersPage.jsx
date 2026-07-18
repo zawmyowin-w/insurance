@@ -34,6 +34,7 @@ export default function ManageUsersPage() {
   const [showCreatePanel, setShowCreatePanel] = useState(fromDashboard)
   const [createForm, setCreateForm] = useState(EMPTY_FORM)
   const [createPwdFocused, setCreatePwdFocused] = useState(false)
+  const [showCreatePwd, setShowCreatePwd] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editingUser, setEditingUser] = useState(null)
   const [editForm, setEditForm] = useState(EMPTY_EDIT)
@@ -233,10 +234,17 @@ export default function ManageUsersPage() {
                 </div>
               )}
               <div className={activeTab === 'AGENT' ? 'col-12 col-md-4' : 'col-12 col-md-6'}>
-                <label className="form-label-custom">Temporary Password *</label>
-                <input type="password" required className="form-control-custom w-100" value={createForm.password}
-                  onChange={e => setCreateForm(f => ({ ...f, password: e.target.value }))}
-                  onFocus={() => setCreatePwdFocused(true)} onBlur={() => setCreatePwdFocused(false)} />
+                <label className="form-label-custom">Password *</label>
+                <div style={{ position: 'relative' }}>
+                  <input type={showCreatePwd ? 'text' : 'password'} required className="form-control-custom w-100"
+                    value={createForm.password} style={{ paddingRight: '2.5rem' }}
+                    onChange={e => setCreateForm(f => ({ ...f, password: e.target.value }))}
+                    onFocus={() => setCreatePwdFocused(true)} onBlur={() => setCreatePwdFocused(false)} />
+                  <button type="button" onClick={() => setShowCreatePwd(v => !v)}
+                    style={{ position: 'absolute', right: '0.65rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 0, lineHeight: 1 }}>
+                    <i className={`bi bi-eye${showCreatePwd ? '-slash' : ''}`}></i>
+                  </button>
+                </div>
                 {(createPwdFocused || createForm.password.length > 0) && (
                   <PasswordStrengthWidget password={createForm.password} compact />
                 )}
