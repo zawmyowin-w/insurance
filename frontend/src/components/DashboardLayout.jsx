@@ -12,11 +12,17 @@ import api from '../services/api'
  *   badgeApi — optional { url } — polls this endpoint for an unread count
  *              and renders a red pill on the link that has badge:true
  */
-export default function DashboardLayout({ title, links, badgeApi }) {
+/**
+ * externalBadge — when provided (number), the sidebar badge uses this value
+ *                 directly and skips internal polling (used by CustomerLayout
+ *                 to share the NotifCountContext count with the sidebar).
+ */
+export default function DashboardLayout({ title, links, badgeApi, externalBadge }) {
   const [badge, setBadge] = useState(0)
 
+  // Internal polling — only runs when badgeApi is set AND no externalBadge override
   useEffect(() => {
-    if (!badgeApi) return
+    if (!badgeApi || externalBadge !== undefined) return
     const fetch = () => {
       api.get(badgeApi.url)
         .then(res => setBadge(res.data?.count ?? 0))
@@ -25,7 +31,12 @@ export default function DashboardLayout({ title, links, badgeApi }) {
     fetch()
     const id = setInterval(fetch, 30000)
     return () => clearInterval(id)
-  }, [badgeApi])
+  }, [badgeApi, externalBadge])
+
+  // When externalBadge changes, sync it into local state so the existing JSX (badge > 0 check) still works
+  useEffect(() => {
+    if (externalBadge !== undefined) setBadge(externalBadge)
+  }, [externalBadge])
 
   return (
     <div>

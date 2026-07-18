@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import api from '../services/api'
 import { toast } from 'react-toastify'
+import { useNotifCount } from '../context/NotifCountContext'
 
 const ICON_MAP  = { APPROVAL: 'bi-check-circle-fill', REJECTION: 'bi-x-circle-fill', PAYMENT: 'bi-credit-card-fill', CLAIM: 'bi-file-earmark-medical-fill', INFO: 'bi-info-circle-fill', REMINDER: 'bi-bell-fill' }
 const COLOR_MAP = { APPROVAL: '#16a34a', REJECTION: '#dc2626', PAYMENT: '#1d4ed8', CLAIM: '#f59e0b', INFO: '#6b7280', REMINDER: '#9333ea' }
@@ -15,6 +16,7 @@ const notifColor = type => COLOR_MAP[type] || '#6b7280'
 export default function NotificationsPage({ subtitle = 'Stay updated on your applications and claims' }) {
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
+  const { refreshUnread } = useNotifCount()
 
   const fetchNotifications = () => {
     api.get('/notifications')
@@ -29,6 +31,7 @@ export default function NotificationsPage({ subtitle = 'Stay updated on your app
     try {
       await api.put(`/notifications/${id}/read`)
       setNotifications(ns => ns.map(n => n.id === id ? { ...n, read: true } : n))
+      refreshUnread()  // update navbar bell + sidebar badge immediately
     } catch {}
   }
 
@@ -36,6 +39,7 @@ export default function NotificationsPage({ subtitle = 'Stay updated on your app
     try {
       await api.put('/notifications/read-all')
       setNotifications(ns => ns.map(n => ({ ...n, read: true })))
+      refreshUnread()  // update navbar bell + sidebar badge immediately
       toast.success('All notifications marked as read')
     } catch {}
   }

@@ -3,12 +3,14 @@ import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
+import { useNotifCount } from '../context/NotifCountContext'
 import ProfileAvatar from './ProfileAvatar'
 
 export default function Navbar() {
   const { t, i18n } = useTranslation()
   const { user, logout } = useAuth()
   const { theme, toggleTheme } = useTheme()
+  const { unreadCount } = useNotifCount()
   const navigate = useNavigate()
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -76,6 +78,31 @@ export default function Navbar() {
             <button className="icon-btn" onClick={toggleTheme} title="Toggle theme">
               <i className={`bi bi-${theme === 'light' ? 'sun' : 'moon-stars'}`}></i>
             </button>
+
+            {/* Notification bell — visible immediately for logged-in customers */}
+            {user?.role === 'CUSTOMER' && (
+              <Link
+                to="/customer/notifications"
+                className="icon-btn"
+                title="Notifications"
+                style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <i className="bi bi-bell" style={{ fontSize: '1.05rem' }}></i>
+                {unreadCount > 0 && (
+                  <span style={{
+                    position: 'absolute', top: 0, right: 0,
+                    transform: 'translate(35%, -35%)',
+                    background: '#dc2626', color: '#fff',
+                    borderRadius: '999px', fontSize: '0.6rem', fontWeight: 700,
+                    minWidth: 15, height: 15,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    padding: '0 3px', lineHeight: 1, pointerEvents: 'none'
+                  }}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+              </Link>
+            )}
 
             {/* Auth buttons or user menu */}
             {!user ? (

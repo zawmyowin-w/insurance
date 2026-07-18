@@ -2,6 +2,7 @@ import React from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
+import { NotifCountProvider } from './context/NotifCountContext'
 import ProtectedRoute from './components/ProtectedRoute'
 
 // Public pages
@@ -60,6 +61,7 @@ export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
+        <NotifCountProvider>
         <BrowserRouter>
           <Routes>
             {/* Public */}
@@ -123,6 +125,7 @@ export default function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
+        </NotifCountProvider>
       </AuthProvider>
     </ThemeProvider>
   )

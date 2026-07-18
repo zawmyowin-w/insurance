@@ -63,4 +63,13 @@ public class NotificationController {
         notifRepo.markAllReadByRecipient(user);
         return ResponseEntity.ok(Map.of("message", "All notifications marked as read"));
     }
+
+    /** Returns the number of unread notifications for the currently authenticated user. */
+    @GetMapping("/unread-count")
+    @Transactional(readOnly = true)
+    public Map<String, Object> getUnreadCount(@AuthenticationPrincipal UserDetails principal) {
+        User user = userRepo.findByEmail(principal.getUsername()).orElseThrow();
+        long count = notifRepo.countByRecipientAndReadFalse(user);
+        return Map.of("count", count);
+    }
 }
