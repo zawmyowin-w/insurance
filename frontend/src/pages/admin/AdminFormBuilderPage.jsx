@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
+import { getTypeMeta } from '../../utils/typeMeta'
 
 const FORM_TYPES = ['APPLICATION', 'CLAIM']
 const FIELD_TYPES = [
@@ -133,8 +134,6 @@ export default function AdminFormBuilderPage() {
     } catch { toast.error('Delete failed') }
   }
 
-  const typeColors = { LIFE: '#dc2626', HEALTH: '#16a34a', VEHICLE: '#1d4ed8', PROPERTY: '#ca8a04' }
-
   const appForm   = forms.find(f => f.formType === 'APPLICATION')
   const claimForm = forms.find(f => f.formType === 'CLAIM')
 
@@ -162,26 +161,36 @@ export default function AdminFormBuilderPage() {
             ) : packages.length === 0 ? (
               <div className="text-center py-4" style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No packages found. Create packages first.</div>
             ) : (
-              packages.map(pkg => (
-                <div key={pkg.id} onClick={() => loadForms(pkg)} style={{
-                  padding: '0.9rem 1.25rem', cursor: 'pointer',
-                  borderBottom: '1px solid var(--border)',
-                  background: selectedPkg?.id === pkg.id ? 'var(--bg-secondary)' : 'transparent',
-                  borderLeft: selectedPkg?.id === pkg.id ? '3px solid var(--primary)' : '3px solid transparent',
-                  transition: 'all 0.1s',
-                }}>
-                  <div className="d-flex align-items-center justify-content-between">
-                    <div>
-                      <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.9rem' }}>{pkg.name}</div>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: typeColors[pkg.type] || '#6b7280' }}>{pkg.type}</span>
+              packages.map(pkg => {
+                const meta = getTypeMeta(pkg.type)
+                const isSelected = selectedPkg?.id === pkg.id
+                return (
+                  <div key={pkg.id} onClick={() => loadForms(pkg)} style={{
+                    padding: '0.85rem 1.25rem', cursor: 'pointer',
+                    borderBottom: '1px solid var(--border)',
+                    background: isSelected ? `${meta.color}10` : 'transparent',
+                    borderLeft: isSelected ? `3px solid ${meta.color}` : '3px solid transparent',
+                    transition: 'all 0.1s',
+                  }}>
+                    <div className="d-flex align-items-center gap-3">
+                      <div style={{
+                        width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+                        background: meta.bg, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}>
+                        <i className={`bi ${meta.icon}`} style={{ color: meta.color, fontSize: '1rem' }}></i>
+                      </div>
+                      <div className="flex-grow-1 min-w-0">
+                        <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.88rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{pkg.name}</div>
+                        <span style={{ fontSize: '0.72rem', fontWeight: 700, color: meta.color, textTransform: 'uppercase', letterSpacing: '0.03em' }}>{pkg.type}</span>
+                      </div>
+                      <span style={{ padding: '0.15rem 0.45rem', borderRadius: 99, fontSize: '0.72rem', fontWeight: 700, flexShrink: 0,
+                        background: pkg.active ? '#dcfce7' : '#fee2e2', color: pkg.active ? '#16a34a' : '#dc2626' }}>
+                        {pkg.active ? 'Active' : 'Off'}
+                      </span>
                     </div>
-                    <span style={{ padding: '0.15rem 0.45rem', borderRadius: 99, fontSize: '0.72rem', fontWeight: 700,
-                      background: pkg.active ? '#dcfce7' : '#fee2e2', color: pkg.active ? '#16a34a' : '#dc2626' }}>
-                      {pkg.active ? 'Active' : 'Off'}
-                    </span>
                   </div>
-                </div>
-              ))
+                )
+              })
             )}
           </div>
         </div>
