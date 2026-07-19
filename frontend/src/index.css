@@ -131,32 +131,34 @@ body {
 
 /* ─── Auth page logo ─── */
 .auth-logo-wrap {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 1rem;
-  border-radius: 20px;
+  width: 96px;
+  height: 96px;
+  margin: 0 auto 1.25rem;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
+  background: #fff;
+  /* Layered ring: indigo border + shadow */
+  box-shadow:
+    0 0 0 4px rgba(79,70,229,0.12),
+    0 0 0 8px rgba(79,70,229,0.06),
+    0 12px 32px rgba(79,70,229,0.2);
+  padding: 10px;
+  overflow: hidden;
 }
 .auth-logo-img {
-  width: 80px;
-  height: 80px;
+  width: 76px;
+  height: 76px;
   object-fit: contain;
-  mix-blend-mode: multiply;
   display: block;
-  filter: drop-shadow(0 4px 12px rgba(79,70,229,0.25));
 }
 [data-theme="dark"] .auth-logo-wrap {
-  background: rgba(255,255,255,0.9);
-  padding: 8px;
-  border-radius: 20px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-}
-[data-theme="dark"] .auth-logo-img {
-  mix-blend-mode: normal;
-  filter: none;
+  background: #fff;
+  box-shadow:
+    0 0 0 4px rgba(99,102,241,0.25),
+    0 0 0 8px rgba(99,102,241,0.1),
+    0 12px 32px rgba(0,0,0,0.45);
 }
 
 .navbar-brand-text {
