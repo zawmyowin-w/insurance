@@ -198,6 +198,18 @@ CREATE TABLE `notifications` (
   CONSTRAINT `FK_notifications_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ── scheduler_settings (singleton row — runtime-editable cron schedule) ──────
+CREATE TABLE IF NOT EXISTS `scheduler_settings` (
+  `id`                    bigint       NOT NULL DEFAULT 1,
+  `enabled`               bit(1)       NOT NULL DEFAULT 1,
+  `verify_cron`           varchar(100) NOT NULL DEFAULT '0 30 2 * * *',
+  `reminder_cron`         varchar(100) NOT NULL DEFAULT '0 30 1 * * *',
+  `revision_cleanup_cron` varchar(100) NOT NULL DEFAULT '0 0 3 * * *',
+  `min_pending_hours`     int          NOT NULL DEFAULT 1,
+  `updated_at`            datetime(6)  DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ── Restore session settings ──────────────────────────────────────────────────
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
