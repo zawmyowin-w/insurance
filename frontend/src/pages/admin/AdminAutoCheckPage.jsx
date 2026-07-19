@@ -8,8 +8,36 @@ const STATUS_STYLE = {
   ERROR:    { bg: '#fee2e2', color: '#dc2626', icon: 'bi-x-circle-fill' },
 }
 const TYPE_LABEL = {
-  AUTO_VERIFY: { label: 'ငွေပေးချေ အလိုအလျောက် စစ်ဆေး', icon: 'bi-shield-check', color: '#1d4ed8' },
-  REMINDER:    { label: 'Premium Due သတိပေး',               icon: 'bi-bell-fill',    color: '#d97706' },
+  AUTO_VERIFY:      { label: 'ငွေပေးချေ အလိုအလျောက် စစ်ဆေး', icon: 'bi-shield-check',  color: '#1d4ed8' },
+  REMINDER:         { label: 'Premium Due သတိပေး',               icon: 'bi-bell-fill',    color: '#d97706' },
+  REVISION_CLEANUP: { label: 'Revision Cleanup',                  icon: 'bi-trash3-fill', color: '#dc2626' },
+}
+
+// Myanmar timezone offset = UTC+6:30
+// Convert "HH:MM" Myanmar time → Spring cron (UTC)
+function myanmarTimeToCron(hhmm) {
+  const [h, m] = hhmm.split(':').map(Number)
+  let totalMin = h * 60 + m - (6 * 60 + 30)   // subtract UTC+6:30
+  if (totalMin < 0) totalMin += 24 * 60
+  const utcH = Math.floor(totalMin / 60) % 24
+  const utcM = totalMin % 60
+  return `0 ${utcM} ${utcH} * * *`
+}
+
+// Parse simple daily cron "0 MM HH * * *" → "HH:MM" Myanmar time
+function cronToMyanmarTime(cron) {
+  try {
+    const parts = cron.trim().split(/\s+/)
+    if (parts.length < 3) return null
+    const utcH = parseInt(parts[2], 10)
+    const utcM = parseInt(parts[1], 10)
+    if (isNaN(utcH) || isNaN(utcM)) return null
+    let totalMin = utcH * 60 + utcM + 6 * 60 + 30   // add UTC+6:30
+    if (totalMin >= 24 * 60) totalMin -= 24 * 60
+    const mmH = String(Math.floor(totalMin / 60)).padStart(2, '0')
+    const mmM = String(totalMin % 60).padStart(2, '0')
+    return `${mmH}:${mmM}`
+  } catch { return null }
 }
 
 function Badge({ status }) {
@@ -40,14 +68,213 @@ function StatCard({ icon, label, value, color, bg, sub }) {
   )
 }
 
+// ─── Settings Edit Modal ───────────────────────────────────────────────────
+function SettingsModal({ status, onClose, onSaved }) {
+  const [form, setForm] = useState({
+    enabled:             status?.enabled ?? true,
+    verifyCron:          status?.verifyCron          ?? '0 30 2 * * *',
+    reminderCron:        status?.reminderCron        ?? '0 30 1 * * *',
+    revisionCleanupCron: status?.revisionCleanupCron ?? '0 0 3 * * *',
+    minPendingHours:     status?.minPendingHours     ?? 1,
+  })
+  // derived Myanmar-time display
+  const [verifyTime,   setVerifyTime]   = useState(cronToMyanmarTime(form.verifyCron)          ?? '09:00')
+  const [reminderTime, setReminderTime] = useState(cronToMyanmarTime(form.reminderCron)        ?? '08:00')
+  const [cleanupTime,  setCleanupTime]  = useState(cronToMyanmarTime(form.revisionCleanupCron) ?? '09:30')
+  const [advanced,     setAdvanced]     = useState(false)
+  const [saving,       setSaving]       = useState(false)
+  const [err,          setErr]          = useState(null)
+
+  const handleTimeChange = (field, cronField, time) => {
+    if (field === 'verify')   setVerifyTime(time)
+    if (field === 'reminder') setReminderTime(time)
+    if (field === 'cleanup')  setCleanupTime(time)
+    setForm(f => ({ ...f, [cronField]: myanmarTimeToCron(time) }))
+  }
+
+  const save = async () => {
+    setSaving(true); setErr(null)
+    try {
+      await api.put('/admin/autocheck/settings', form)
+      onSaved()
+    } catch (e) {
+      setErr(e?.response?.data?.message || 'သိမ်းဆည်းမ မအောင်မြင်ပါ')
+    } finally { setSaving(false) }
+  }
+
+  const inputStyle = {
+    width: '100%', padding: '0.5rem 0.75rem', borderRadius: 8,
+    border: '1.5px solid var(--border)', background: 'var(--bg-primary)',
+    color: 'var(--text-primary)', fontSize: '0.85rem',
+    outline: 'none',
+  }
+  const labelStyle = { fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4, display: 'block' }
+
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9000, padding: '1rem',
+    }} onClick={e => e.target === e.currentTarget && onClose()}>
+      <div style={{
+        background: 'var(--bg-primary)', borderRadius: 16, width: '100%', maxWidth: 560,
+        boxShadow: '0 20px 60px rgba(0,0,0,.25)', maxHeight: '90vh', overflowY: 'auto',
+      }}>
+        {/* Header */}
+        <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)' }}>
+              <i className="bi bi-gear-fill me-2" style={{ color: 'var(--primary)' }}></i>
+              Scheduler ဆက်တင်ပြင်ဆင်ခြင်း
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>
+              အချိန်များကို Myanmar Time (UTC+6:30) ဖြင့် ရိုက်ထည့်ပါ
+            </div>
+          </div>
+          <button type="button" onClick={onClose}
+            style={{ background: 'none', border: 'none', cursor: 'pointer',
+              color: 'var(--text-muted)', fontSize: '1.2rem', lineHeight: 1 }}>
+            <i className="bi bi-x-lg"></i>
+          </button>
+        </div>
+
+        <div style={{ padding: '1.5rem' }}>
+          {/* Enable toggle */}
+          <div className="d-flex align-items-center justify-content-between mb-4"
+            style={{ background: 'var(--bg-secondary)', borderRadius: 12, padding: '0.85rem 1.1rem' }}>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)' }}>
+                Auto-Check System
+              </div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 1 }}>
+                {form.enabled ? 'ဖွင့်ထားသည် — Scheduler လုပ်ဆောင်နေသည်' : 'ပိတ်ထားသည် — အချိန်မရောက်ဘဲ run လုပ်မည်မဟုတ်'}
+              </div>
+            </div>
+            <label style={{ position: 'relative', width: 48, height: 26, cursor: 'pointer', flexShrink: 0 }}>
+              <input type="checkbox" checked={form.enabled}
+                onChange={e => setForm(f => ({ ...f, enabled: e.target.checked }))}
+                style={{ opacity: 0, width: 0, height: 0, position: 'absolute' }} />
+              <span style={{
+                position: 'absolute', inset: 0, borderRadius: 13, transition: '.25s',
+                background: form.enabled ? 'var(--primary)' : '#cbd5e1',
+              }}>
+                <span style={{
+                  position: 'absolute', width: 20, height: 20, borderRadius: '50%',
+                  background: '#fff', top: 3, transition: '.25s',
+                  left: form.enabled ? 25 : 3,
+                  boxShadow: '0 1px 3px rgba(0,0,0,.2)',
+                }}></span>
+              </span>
+            </label>
+          </div>
+
+          {/* Time pickers */}
+          <div className="d-flex flex-column gap-3 mb-3">
+            {[
+              { field: 'verify',   cronField: 'verifyCron',          label: 'ငွေပေးချေ စစ်ဆေး အချိန်', icon: 'bi-shield-check', color: '#1d4ed8', val: verifyTime },
+              { field: 'reminder', cronField: 'reminderCron',        label: 'Premium Reminder အချိန်',   icon: 'bi-bell-fill',    color: '#d97706', val: reminderTime },
+              { field: 'cleanup',  cronField: 'revisionCleanupCron', label: 'Revision Cleanup အချိန်',   icon: 'bi-trash3',       color: '#dc2626', val: cleanupTime },
+            ].map(row => (
+              <div key={row.field}>
+                <label style={labelStyle}>
+                  <i className={`bi ${row.icon} me-1`} style={{ color: row.color }}></i>
+                  {row.label} (Myanmar Time)
+                </label>
+                <div className="d-flex align-items-center gap-2">
+                  <input type="time" value={row.val}
+                    onChange={e => handleTimeChange(row.field, row.cronField, e.target.value)}
+                    style={{ ...inputStyle, flex: 1 }} />
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', minWidth: 110 }}>
+                    Cron: <code style={{ fontSize: '0.72rem' }}>{form[row.cronField]}</code>
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Min pending hours */}
+          <div className="mb-3">
+            <label style={labelStyle}>
+              <i className="bi bi-hourglass me-1" style={{ color: '#7c3aed' }}></i>
+              Payment အနည်းဆုံး Pending အချိန် (နာရီ)
+            </label>
+            <input type="number" min={0} max={72} value={form.minPendingHours}
+              onChange={e => setForm(f => ({ ...f, minPendingHours: parseInt(e.target.value) || 0 }))}
+              style={{ ...inputStyle, width: 120 }} />
+            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 4 }}>
+              Payment submit ပြီး ဤနာရီ မပြည့်မချင်း auto-verify မလုပ်ပါ
+            </div>
+          </div>
+
+          {/* Advanced: raw cron edit */}
+          <button type="button" onClick={() => setAdvanced(v => !v)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer',
+              color: 'var(--text-muted)', fontSize: '0.75rem', padding: 0, marginBottom: 8 }}>
+            <i className={`bi bi-chevron-${advanced ? 'up' : 'down'} me-1`}></i>
+            Advanced: Cron Expression တိုက်ရိုက် ပြင်ဆင်ရန်
+          </button>
+          {advanced && (
+            <div className="d-flex flex-column gap-2 mb-3">
+              {[
+                { label: 'Verify Cron (UTC)',          key: 'verifyCron' },
+                { label: 'Reminder Cron (UTC)',        key: 'reminderCron' },
+                { label: 'Revision Cleanup Cron (UTC)', key: 'revisionCleanupCron' },
+              ].map(row => (
+                <div key={row.key}>
+                  <label style={labelStyle}>{row.label}</label>
+                  <input value={form[row.key]}
+                    onChange={e => setForm(f => ({ ...f, [row.key]: e.target.value }))}
+                    placeholder="0 30 2 * * *" style={inputStyle} />
+                </div>
+              ))}
+              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', background: 'var(--bg-secondary)',
+                borderRadius: 8, padding: '0.5rem 0.75rem' }}>
+                Format: <code>seconds minutes hours day month weekday</code><br />
+                Myanmar Time ↔ UTC: Myanmar = UTC+6:30 (UTC ထက် 6 နာရီ 30 မိနစ် မြန်သည်)
+              </div>
+            </div>
+          )}
+
+          {err && (
+            <div style={{ background: '#fee2e2', color: '#dc2626', borderRadius: 8, padding: '0.6rem 0.85rem',
+              fontSize: '0.8rem', marginBottom: 12 }}>
+              <i className="bi bi-exclamation-triangle-fill me-2"></i>{err}
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="d-flex gap-2 justify-content-end">
+            <button type="button" onClick={onClose}
+              style={{ padding: '0.5rem 1.25rem', borderRadius: 8, border: '1.5px solid var(--border)',
+                background: 'transparent', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}>
+              ပယ်ဖျက်ရန်
+            </button>
+            <button type="button" onClick={save} disabled={saving}
+              style={{ padding: '0.5rem 1.5rem', borderRadius: 8, border: 'none', cursor: 'pointer',
+                background: saving ? '#e2e8f0' : 'var(--primary)',
+                color: saving ? '#64748b' : '#fff', fontWeight: 700, fontSize: '0.85rem',
+                display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              {saving
+                ? <><span className="spinner-border spinner-border-sm"></span> သိမ်းဆည်းနေသည်...</>
+                : <><i className="bi bi-floppy-fill"></i> သိမ်းဆည်းရန်</>}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Main Page ──────────────────────────────────────────────────────────────
 export default function AdminAutoCheckPage() {
-  const [status,   setStatus]   = useState(null)
-  const [logs,     setLogs]     = useState([])
-  const [loading,  setLoading]  = useState(true)
-  const [running,  setRunning]  = useState(null)   // 'verify' | 'reminder' | null
-  const [logType,  setLogType]  = useState('ALL')
+  const [status,    setStatus]    = useState(null)
+  const [logs,      setLogs]      = useState([])
+  const [loading,   setLoading]   = useState(true)
+  const [running,   setRunning]   = useState(null)   // 'verify' | 'reminder' | null
+  const [logType,   setLogType]   = useState('ALL')
   const [expandLog, setExpandLog] = useState(null)
-  const [toast,    setToast]    = useState(null)
+  const [toast,     setToast]     = useState(null)
+  const [showEdit,  setShowEdit]  = useState(false)
 
   const load = useCallback(() => {
     return Promise.all([
@@ -69,19 +296,21 @@ export default function AdminAutoCheckPage() {
 
   const showToast = (msg, ok = true) => {
     setToast({ msg, ok })
-    setTimeout(() => setToast(null), 4000)
+    setTimeout(() => setToast(null), 4500)
   }
 
   const trigger = async (type) => {
     setRunning(type)
     try {
-      const url = type === 'verify' ? '/admin/autocheck/run/verify' : '/admin/autocheck/run/reminders'
+      const url = type === 'verify'  ? '/admin/autocheck/run/verify'
+                : type === 'cleanup' ? '/admin/autocheck/run/cleanup'
+                :                      '/admin/autocheck/run/reminders'
       const res = await api.post(url)
       const d = res.data
       if (type === 'verify') {
         showToast(`✅ စစ်ဆေးပြီး — Verified: ${d.verified ?? 0} | Skipped: ${d.skipped ?? 0} | Errors: ${d.errors ?? 0}`)
       } else {
-        showToast(`✅ သတိပေးချက်များ ပေးပို့ပြီး`)
+        showToast(`✅ လုပ်ဆောင်ပြီးပါပြီ`)
       }
       await load()
     } catch (e) {
@@ -89,6 +318,12 @@ export default function AdminAutoCheckPage() {
     } finally {
       setRunning(null)
     }
+  }
+
+  const handleSettingsSaved = async () => {
+    setShowEdit(false)
+    showToast('✅ Scheduler ဆက်တင်များ သိမ်းဆည်းပြီး အသစ် schedule လုပ်ပြီးပါပြီ')
+    await load()
   }
 
   if (loading) return (
@@ -99,6 +334,10 @@ export default function AdminAutoCheckPage() {
 
   const lastVerify   = status?.lastRuns?.AUTO_VERIFY
   const lastReminder = status?.lastRuns?.REMINDER
+  const lastCleanup  = status?.lastRuns?.REVISION_CLEANUP
+
+  const verifyMM   = cronToMyanmarTime(status?.verifyCron)
+  const reminderMM = cronToMyanmarTime(status?.reminderCron)
 
   return (
     <div className="fade-in">
@@ -111,10 +350,19 @@ export default function AdminAutoCheckPage() {
           border: `1px solid ${toast.ok ? '#86efac' : '#fca5a5'}`,
           borderRadius: 10, padding: '0.75rem 1.25rem',
           fontWeight: 600, fontSize: '0.85rem', boxShadow: '0 4px 20px rgba(0,0,0,.12)',
-          maxWidth: 440,
+          maxWidth: 460,
         }}>
           {toast.msg}
         </div>
+      )}
+
+      {/* Settings modal */}
+      {showEdit && (
+        <SettingsModal
+          status={status}
+          onClose={() => setShowEdit(false)}
+          onSaved={handleSettingsSaved}
+        />
       )}
 
       {/* Header */}
@@ -128,7 +376,7 @@ export default function AdminAutoCheckPage() {
             Spring AI ဖြင့် လုပ်ဆောင်သည့် အလိုအလျောက် စစ်ဆေး / သတိပေးစနစ်
           </p>
         </div>
-        <div className="d-flex align-items-center gap-2">
+        <div className="d-flex align-items-center gap-2 flex-wrap">
           <span style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
             background: status?.enabled ? '#dcfce7' : '#fee2e2',
@@ -151,6 +399,16 @@ export default function AdminAutoCheckPage() {
             <i className="bi bi-stars"></i>
             {status?.aiEnabled ? 'Spring AI ✓' : 'Spring AI (key မပါ)'}
           </span>
+          {/* ← Edit settings button */}
+          <button type="button" onClick={() => setShowEdit(true)}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              padding: '0.35rem 0.9rem', borderRadius: 8, border: '1.5px solid var(--border)',
+              background: 'var(--bg-primary)', color: 'var(--text-primary)',
+              fontWeight: 600, fontSize: '0.82rem', cursor: 'pointer',
+            }}>
+            <i className="bi bi-gear"></i> ဆက်တင်ပြင်ဆင်ရန်
+          </button>
         </div>
       </div>
 
@@ -181,12 +439,18 @@ export default function AdminAutoCheckPage() {
             color="#d97706" bg="#fffbeb" sub="သတိပေးချက် ပေးပို့ပြီး" />
         </div>
         <div className="col-6 col-md-3">
-          <StatCard icon="bi-clock" label="Verify အချိန်" value="9:00 AM"
-            color="#7c3aed" bg="#f5f3ff" sub="Myanmar Time နေ့စဥ်" />
+          <StatCard icon="bi-clock"
+            label="Verify အချိန်"
+            value={verifyMM ?? '—'}
+            color="#7c3aed" bg="#f5f3ff"
+            sub={`Myanmar Time • ${status?.verifyCron ?? ''}`} />
         </div>
         <div className="col-6 col-md-3">
-          <StatCard icon="bi-alarm" label="Reminder အချိန်" value="8:00 AM"
-            color="#0891b2" bg="#ecfeff" sub="Myanmar Time နေ့စဥ်" />
+          <StatCard icon="bi-alarm"
+            label="Reminder အချိန်"
+            value={reminderMM ?? '—'}
+            color="#0891b2" bg="#ecfeff"
+            sub={`Myanmar Time • ${status?.reminderCron ?? ''}`} />
         </div>
       </div>
 
@@ -195,31 +459,64 @@ export default function AdminAutoCheckPage() {
         {/* Scheduler config */}
         <div className="col-12 col-lg-5">
           <div className="card-custom h-100">
-            <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1.25rem' }}>
-              <i className="bi bi-gear me-2" style={{ color: 'var(--primary)' }}></i>
-              Scheduler ဆက်တင်များ
-            </h6>
+            <div className="d-flex align-items-center justify-content-between mb-3">
+              <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+                <i className="bi bi-gear me-2" style={{ color: 'var(--primary)' }}></i>
+                Scheduler ဆက်တင်များ
+              </h6>
+              <button type="button" onClick={() => setShowEdit(true)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer',
+                  color: 'var(--primary)', fontSize: '0.78rem', fontWeight: 700, padding: 0 }}>
+                <i className="bi bi-pencil me-1"></i>ပြင်ဆင်ရန်
+              </button>
+            </div>
             <div className="d-flex flex-column gap-3">
               {[
-                { label: 'ငွေပေးချေ စစ်ဆေး Cron',   value: status?.verifyCron,     icon: 'bi-shield-check', color: '#1d4ed8' },
-                { label: 'Reminder Cron',              value: status?.reminderCron,   icon: 'bi-bell',         color: '#d97706' },
-                { label: 'Pending အနည်းဆုံးစောင့်ချိန်', value: `${status?.minPendingHours} နာရီ`, icon: 'bi-hourglass', color: '#7c3aed' },
-                { label: 'Myanmar ယခုအချိန်',         value: status?.currentTimeMM,  icon: 'bi-clock',        color: '#0891b2' },
+                {
+                  label: 'ငွေပေးချေ စစ်ဆေး အချိန်',
+                  value: verifyMM ? `${verifyMM} (Myanmar) · ${status?.verifyCron}` : (status?.verifyCron ?? '—'),
+                  icon: 'bi-shield-check', color: '#1d4ed8'
+                },
+                {
+                  label: 'Reminder အချိန်',
+                  value: reminderMM ? `${reminderMM} (Myanmar) · ${status?.reminderCron}` : (status?.reminderCron ?? '—'),
+                  icon: 'bi-bell', color: '#d97706'
+                },
+                {
+                  label: 'Revision Cleanup Cron',
+                  value: status?.revisionCleanupCron ?? '—',
+                  icon: 'bi-trash3', color: '#dc2626'
+                },
+                {
+                  label: 'Pending အနည်းဆုံးစောင့်ချိန်',
+                  value: `${status?.minPendingHours ?? '—'} နာရီ`,
+                  icon: 'bi-hourglass', color: '#7c3aed'
+                },
+                {
+                  label: 'Myanmar ယခုအချိန်',
+                  value: status?.currentTimeMM ?? '—',
+                  icon: 'bi-clock', color: '#0891b2'
+                },
               ].map(row => (
-                <div key={row.label} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div key={row.label} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
                   <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--bg-secondary)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
                     <i className={`bi ${row.icon}`} style={{ color: row.color, fontSize: '0.9rem' }}></i>
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)' }}>{row.label}</div>
-                    <code style={{ fontSize: '0.82rem', color: 'var(--text-primary)', fontWeight: 600 }}>
-                      {row.value ?? '—'}
+                    <code style={{ fontSize: '0.8rem', color: 'var(--text-primary)', fontWeight: 600, wordBreak: 'break-all' }}>
+                      {row.value}
                     </code>
                   </div>
                 </div>
               ))}
             </div>
+            {status?.settingsUpdatedAt && (
+              <div style={{ marginTop: 12, fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                နောက်ဆုံး ပြင်ဆင်ချိန်: {new Date(status.settingsUpdatedAt).toLocaleString()}
+              </div>
+            )}
           </div>
         </div>
 
@@ -232,8 +529,9 @@ export default function AdminAutoCheckPage() {
             </h6>
             <div className="d-flex flex-column gap-3">
               {[
-                { key: 'AUTO_VERIFY', data: lastVerify   },
-                { key: 'REMINDER',    data: lastReminder },
+                { key: 'AUTO_VERIFY',      data: lastVerify   },
+                { key: 'REMINDER',         data: lastReminder },
+                { key: 'REVISION_CLEANUP', data: lastCleanup  },
               ].map(({ key, data }) => {
                 const t = TYPE_LABEL[key]
                 return (
@@ -284,10 +582,7 @@ export default function AdminAutoCheckPage() {
           Scheduler မစောင့်ဘဲ ချက်ချင်း run ချင်ပါက အောက်ပါ ခလုတ်များကို နှိပ်ပါ
         </p>
         <div className="d-flex gap-3 flex-wrap">
-          <button
-            type="button"
-            onClick={() => trigger('verify')}
-            disabled={running !== null}
+          <button type="button" onClick={() => trigger('verify')} disabled={running !== null}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
               padding: '0.55rem 1.25rem', borderRadius: 10, border: 'none', cursor: 'pointer',
@@ -299,10 +594,7 @@ export default function AdminAutoCheckPage() {
               ? <><span className="spinner-border spinner-border-sm"></span> စစ်ဆေးနေသည်...</>
               : <><i className="bi bi-shield-check"></i> ငွေပေးချေ စစ်ဆေး (Run Now)</>}
           </button>
-          <button
-            type="button"
-            onClick={() => trigger('reminder')}
-            disabled={running !== null}
+          <button type="button" onClick={() => trigger('reminder')} disabled={running !== null}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
               padding: '0.55rem 1.25rem', borderRadius: 10, border: 'none', cursor: 'pointer',
@@ -326,7 +618,7 @@ export default function AdminAutoCheckPage() {
             Run မှတ်တမ်း Log (နောက်ဆုံး 50)
           </div>
           <div className="d-flex gap-1" style={{ background: 'var(--bg-secondary)', padding: '0.25rem', borderRadius: 8 }}>
-            {['ALL', 'AUTO_VERIFY', 'REMINDER'].map(t => (
+            {['ALL', 'AUTO_VERIFY', 'REMINDER', 'REVISION_CLEANUP'].map(t => (
               <button key={t} type="button" onClick={() => setLogType(t)}
                 style={{
                   padding: '0.3rem 0.75rem', borderRadius: 6, border: 'none', cursor: 'pointer',
@@ -335,7 +627,7 @@ export default function AdminAutoCheckPage() {
                   color: logType === t ? 'var(--text-primary)' : 'var(--text-muted)',
                   boxShadow: logType === t ? '0 1px 3px rgba(0,0,0,.08)' : 'none',
                 }}>
-                {t === 'ALL' ? 'အားလုံး' : t === 'AUTO_VERIFY' ? 'Verify' : 'Reminder'}
+                {t === 'ALL' ? 'အားလုံး' : t === 'AUTO_VERIFY' ? 'Verify' : t === 'REMINDER' ? 'Reminder' : 'Cleanup'}
               </button>
             ))}
           </div>
@@ -392,14 +684,14 @@ export default function AdminAutoCheckPage() {
                               border: '1px solid var(--border)', fontSize: '0.78rem' }}>
                               <span style={{ background: s.bg, color: s.color, borderRadius: 4,
                                 padding: '0.1rem 0.4rem', fontWeight: 700, fontSize: '0.7rem' }}>{outcome}</span>
-                              {d.paymentId && <span style={{ color: 'var(--text-muted)' }}>Payment #{d.paymentId}</span>}
-                              {d.customer && <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{d.customer}</span>}
+                              {d.paymentId   && <span style={{ color: 'var(--text-muted)' }}>Payment #{d.paymentId}</span>}
+                              {d.customer    && <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{d.customer}</span>}
                               {d.customerName && <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{d.customerName}</span>}
-                              {d.policy && <span style={{ color: 'var(--text-secondary)' }}>{d.policy}</span>}
-                              {d.amount && <span style={{ color: '#16a34a', fontWeight: 700 }}>{Number(d.amount).toLocaleString()} MMK</span>}
-                              {d.period && <span style={{ color: '#7c3aed' }}>{d.period}</span>}
-                              {d.urgency && <span style={{ color: d.urgency === 'OVERDUE' ? '#dc2626' : '#d97706', fontWeight: 600 }}>{d.urgency}</span>}
-                              {d.reason && <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>({d.reason})</span>}
+                              {d.policy      && <span style={{ color: 'var(--text-secondary)' }}>{d.policy}</span>}
+                              {d.amount      && <span style={{ color: '#16a34a', fontWeight: 700 }}>{Number(d.amount).toLocaleString()} MMK</span>}
+                              {d.period      && <span style={{ color: '#7c3aed' }}>{d.period}</span>}
+                              {d.urgency     && <span style={{ color: d.urgency === 'OVERDUE' ? '#dc2626' : '#d97706', fontWeight: 600 }}>{d.urgency}</span>}
+                              {d.reason      && <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>({d.reason})</span>}
                             </div>
                           )
                         })}

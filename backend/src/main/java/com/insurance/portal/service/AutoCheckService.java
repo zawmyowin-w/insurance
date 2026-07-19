@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -37,29 +36,29 @@ public class AutoCheckService {
     @Value("${OPENAI_API_KEY:}")
     private String openAiApiKey;
 
-    @Value("${app.autocheck.enabled:true}")
-    private boolean autoCheckEnabled;
+    private final com.insurance.portal.repository.SchedulerSettingsRepository schedulerSettingsRepo;
 
-    @Value("${app.autocheck.min-pending-hours:1}")
-    private int minPendingHours;
+    private boolean isEnabled() {
+        return schedulerSettingsRepo.findById(1L).map(s -> s.isEnabled()).orElse(true);
+    }
 
-    @Value("${app.autocheck.revision-cleanup-cron:0 0 3 * * *}")
-    private String revisionCleanupCron;
+    private int getMinPendingHours() {
+        return schedulerSettingsRepo.findById(1L).map(s -> s.getMinPendingHours()).orElse(1);
+    }
 
     // ──────────────────────────────────────────────────────────────────────────
-    // 1. AUTO-VERIFY PENDING PAYMENTS  —  9:00 AM Myanmar Time (02:30 UTC)
+    // 1. AUTO-VERIFY PENDING PAYMENTS  —  scheduled via DynamicSchedulerService
     // ──────────────────────────────────────────────────────────────────────────
-    @Scheduled(cron = "${app.autocheck.verify-cron:0 30 2 * * *}")
     @Transactional
     public void runDailyPaymentVerification() {
-        if (!autoCheckEnabled) { log.info("[AutoCheck] Disabled — skipping verification"); return; }
+        if (!isEnabled()) { log.info("[AutoCheck] Disabled — skipping verification"); return; }
         log.info("[AutoCheck] ▶ Daily payment auto-verification started");
 
         List<Map<String, Object>> results = new ArrayList<>();
         int verified = 0, skipped = 0, errors = 0;
 
         List<Payment> pending = paymentRepo.findAllByStatus(PaymentStatus.PENDING);
-        LocalDateTime cutoff  = LocalDateTime.now().minusHours(minPendingHours);
+        LocalDateTime cutoff  = LocalDateTime.now().minusHours(getMinPendingHours());
 
         for (Payment p : pending) {
             try {
@@ -93,7 +92,7 @@ public class AutoCheckService {
         // Must have waited min-pending-hours (gives admin time to flag suspicious payments)
         if (p.getCreatedAt() != null && p.getCreatedAt().isAfter(cutoff))
             return Map.of("paymentId", p.getId(), "outcome", "SKIPPED",
-                    "reason", "Too recent (< " + minPendingHours + "h)");
+                    "reason", "Too recent (< " + getMinPendingHours() + "h)");
 
         PolicyApplication app = p.getApplication();
         if (app == null || app.getStatus() != ApplicationStatus.APPROVED)
@@ -139,12 +138,11 @@ public class AutoCheckService {
     }
 
     // ──────────────────────────────────────────────────────────────────────────
-    // 2. PREMIUM DUE REMINDERS  —  8:00 AM Myanmar Time (01:30 UTC)
+    // 2. PREMIUM DUE REMINDERS  —  scheduled via DynamicSchedulerService
     // ──────────────────────────────────────────────────────────────────────────
-    @Scheduled(cron = "${app.autocheck.reminder-cron:0 30 1 * * *}")
     @Transactional
     public void runDailyPremiumReminders() {
-        if (!autoCheckEnabled) { log.info("[AutoCheck] Disabled — skipping reminders"); return; }
+        if (!isEnabled()) { log.info("[AutoCheck] Disabled — skipping reminders"); return; }
         log.info("[AutoCheck] ▶ Daily premium reminders started");
 
         List<PolicyApplication> approvedApps = appRepo.findAllByStatus(ApplicationStatus.APPROVED);
@@ -223,12 +221,11 @@ public class AutoCheckService {
     }
 
     // ──────────────────────────────────────────────────────────────────────────
-    // 3. AUTO-CANCEL REVISION_REQUESTED FORMS — 3:00 AM UTC daily
+    // 3. AUTO-CANCEL REVISION_REQUESTED FORMS — scheduled via DynamicSchedulerService
     // ──────────────────────────────────────────────────────────────────────────
-    @Scheduled(cron = "${app.autocheck.revision-cleanup-cron:0 0 3 * * *}")
     @Transactional
     public void runRevisionCleanup() {
-        if (!autoCheckEnabled) { log.info("[AutoCheck] Disabled — skipping revision cleanup"); return; }
+        if (!isEnabled()) { log.info("[AutoCheck] Disabled — skipping revision cleanup"); return; }
         log.info("[AutoCheck] ▶ Revision cleanup started");
 
         LocalDateTime now = LocalDateTime.now();
@@ -309,7 +306,7 @@ public class AutoCheckService {
         log.info("[AutoCheck] Manual trigger: payment verification");
         List<Map<String, Object>> results = new ArrayList<>();
         int verified = 0, skipped = 0, errors = 0;
-        LocalDateTime cutoff = LocalDateTime.now().minusHours(minPendingHours);
+        LocalDateTime cutoff = LocalDateTime.now().minusHours(getMinPendingHours());
         for (Payment p : paymentRepo.findAllByStatus(PaymentStatus.PENDING)) {
             try {
                 Map<String, Object> r = verifyPayment(p, cutoff);
