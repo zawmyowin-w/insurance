@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
+import { apiError } from '../../utils/apiError'
 import PaymentMethodIcon, { PAYMENT_METHODS } from '../../components/PaymentMethodIcon'
 
 export default function AdminPaymentsPage() {
@@ -35,7 +36,7 @@ export default function AdminPaymentsPage() {
       toast.success(`Payment ${action === 'verify' ? 'verified' : 'rejected'}`)
       setActionId(null); setActionNote(''); fetchPayments()
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed')
+      apiError(err)
     } finally {
       setSubmitting(false)
     }

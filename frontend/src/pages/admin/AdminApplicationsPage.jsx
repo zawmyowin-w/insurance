@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import FormDetailModal from '../../components/FormDetailModal'
+import { apiError } from '../../utils/apiError'
 
 export default function AdminApplicationsPage() {
   const [searchParams] = useSearchParams()
@@ -32,7 +33,7 @@ export default function AdminApplicationsPage() {
       await api.put(`/admin/applications/${id}/${action}`, { note: actionNote })
       toast.success(`Application ${action}d successfully`)
       setSelected(null); setActionNote(''); fetchApps()
-    } catch (err) { toast.error(err.response?.data?.message || 'Failed') } finally { setSubmitting(false) }
+    } catch (err) { apiError(err) } finally { setSubmitting(false) }
   }
 
   return (

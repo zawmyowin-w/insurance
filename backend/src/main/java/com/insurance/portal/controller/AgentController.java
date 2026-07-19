@@ -4,6 +4,7 @@ import com.insurance.portal.dto.*;
 import com.insurance.portal.model.*;
 import com.insurance.portal.model.enums.*;
 import com.insurance.portal.repository.*;
+import com.insurance.portal.service.NotificationService;
 import com.insurance.portal.util.FileStorageUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +24,7 @@ public class AgentController {
     private final UserRepository userRepo;
     private final PolicyApplicationRepository appRepo;
     private final ClaimRepository claimRepo;
-    private final NotificationRepository notifRepo;
+    private final NotificationService notifService;
 
     private User getAgent(UserDetails principal) {
         return userRepo.findByEmail(principal.getUsername()).orElseThrow();
@@ -38,7 +39,7 @@ public class AgentController {
         stats.put("verified", appRepo.findAllByAgentAndStatus(agent, ApplicationStatus.VERIFIED).size());
         stats.put("pendingClaims", claimRepo.findAllByAgentAndStatus(agent, ClaimStatus.PENDING).size());
         stats.put("verifiedClaims", claimRepo.findAllByAgentAndStatus(agent, ClaimStatus.VERIFIED).size());
-        stats.put("unreadNotifications", notifRepo.findAllByRecipientOrderByCreatedAtDesc(agent).stream().filter(n -> !n.isRead()).count());
+        stats.put("unreadNotifications", notifService.countUnread(agent));
         return stats;
     }
 
@@ -91,12 +92,10 @@ public class AgentController {
         String body = req.getOrDefault("body", "");
         User recipient = userRepo.findById(recipientId)
                 .orElseThrow(() -> new RuntimeException("Recipient not found"));
-        notifRepo.save(Notification.builder()
-                .recipient(recipient)
-                .title("Message from Agent " + agent.getName() + ": " + subject)
-                .message(body)
-                .type(NotificationType.INFO)
-                .build());
+        notifService.send(recipient,
+                "Message from Agent " + agent.getName() + ": " + subject,
+                body,
+                NotificationType.INFO);
         return ResponseEntity.ok(Map.of("success", true));
     }
 
@@ -158,13 +157,11 @@ public class AgentController {
         app.setStatus(ApplicationStatus.REJECTED);
         app.setAgentNote(req.get("note"));
         appRepo.save(app);
-        notifRepo.save(Notification.builder()
-                .recipient(app.getCustomer())
-                .title("Application Rejected")
-                .message("Your application for " + app.getInsurancePackage().getName()
-                        + " was rejected. Reason: " + req.getOrDefault("note", "N/A"))
-                .type(NotificationType.REJECTION)
-                .build());
+        notifService.send(app.getCustomer(),
+                "Application Rejected",
+                "Your application for " + app.getInsurancePackage().getName()
+                        + " was rejected. Reason: " + req.getOrDefault("note", "N/A"),
+                NotificationType.REJECTION);
         return ResponseEntity.ok(ApplicationResponse.from(app));
     }
 
@@ -183,14 +180,12 @@ public class AgentController {
         String note = req.get("note");
         app.setAgentNote(note);
         appRepo.save(app);
-        notifRepo.save(Notification.builder()
-                .recipient(app.getCustomer())
-                .title("Action Required: Update Your Application")
-                .message("Your application for " + app.getInsurancePackage().getName()
+        notifService.send(app.getCustomer(),
+                "Action Required: Update Your Application",
+                "Your application for " + app.getInsurancePackage().getName()
                         + " needs to be updated. "
-                        + (note != null && !note.isBlank() ? "Agent note: " + note : "Please review and resubmit your form."))
-                .type(NotificationType.INFO)
-                .build());
+                        + (note != null && !note.isBlank() ? "Agent note: " + note : "Please review and resubmit your form."),
+                NotificationType.INFO);
         return ResponseEntity.ok(ApplicationResponse.from(app));
     }
 
@@ -209,13 +204,11 @@ public class AgentController {
         String note = req.get("note");
         claim.setAgentNote(note);
         claimRepo.save(claim);
-        notifRepo.save(Notification.builder()
-                .recipient(claim.getCustomer())
-                .title("Action Required: Update Your Claim")
-                .message("Your claim requires additional information. "
-                        + (note != null && !note.isBlank() ? "Agent note: " + note : "Please review and resubmit your form."))
-                .type(NotificationType.INFO)
-                .build());
+        notifService.send(claim.getCustomer(),
+                "Action Required: Update Your Claim",
+                "Your claim requires additional information. "
+                        + (note != null && !note.isBlank() ? "Agent note: " + note : "Please review and resubmit your form."),
+                NotificationType.INFO);
         return ResponseEntity.ok(ClaimResponse.from(claim));
     }
 
@@ -274,13 +267,11 @@ public class AgentController {
         claim.setStatus(ClaimStatus.REJECTED);
         claim.setAgentNote(req.get("note"));
         claimRepo.save(claim);
-        notifRepo.save(Notification.builder()
-                .recipient(claim.getCustomer())
-                .title("Claim Rejected")
-                .message("Your claim of " + claim.getAmount() + " MMK was rejected. Reason: "
-                        + req.getOrDefault("note", "N/A"))
-                .type(NotificationType.REJECTION)
-                .build());
+        notifService.send(claim.getCustomer(),
+                "Claim Rejected",
+                "Your claim of " + claim.getAmount() + " MMK was rejected. Reason: "
+                        + req.getOrDefault("note", "N/A"),
+                NotificationType.REJECTION);
         return ResponseEntity.ok(ClaimResponse.from(claim));
     }
 

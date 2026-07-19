@@ -1,14 +1,13 @@
 package com.insurance.portal.controller;
 
 import com.insurance.portal.dto.PaymentResponse;
-import com.insurance.portal.model.Notification;
 import com.insurance.portal.model.Payment;
 import com.insurance.portal.model.User;
 import com.insurance.portal.model.enums.NotificationType;
 import com.insurance.portal.model.enums.PaymentStatus;
-import com.insurance.portal.repository.NotificationRepository;
 import com.insurance.portal.repository.PaymentRepository;
 import com.insurance.portal.repository.UserRepository;
+import com.insurance.portal.service.NotificationService;
 import com.insurance.portal.util.FileStorageUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.FileSystemResource;
@@ -33,7 +32,7 @@ public class AdminPaymentController {
 
     private final PaymentRepository paymentRepo;
     private final UserRepository userRepo;
-    private final NotificationRepository notifRepo;
+    private final NotificationService notifService;
 
     @GetMapping
     @Transactional(readOnly = true)
@@ -66,12 +65,10 @@ public class AdminPaymentController {
         payment.setVerifiedBy(admin != null ? admin.getName() : "Admin");
         if (req != null && req.get("note") != null) payment.setNotes(req.get("note"));
         paymentRepo.save(payment);
-        notifRepo.save(Notification.builder()
-                .recipient(payment.getCustomer())
-                .title("Payment Verified")
-                .message("Your payment of " + payment.getAmount() + " MMK has been verified. Thank you!")
-                .type(NotificationType.PAYMENT)
-                .build());
+        notifService.send(payment.getCustomer(),
+                "Payment Verified",
+                "Your payment of " + payment.getAmount() + " MMK has been verified. Thank you!",
+                NotificationType.PAYMENT);
         return ResponseEntity.ok(PaymentResponse.from(payment));
     }
 
@@ -86,12 +83,10 @@ public class AdminPaymentController {
         payment.setStatus(PaymentStatus.REJECTED);
         payment.setNotes(note);
         paymentRepo.save(payment);
-        notifRepo.save(Notification.builder()
-                .recipient(payment.getCustomer())
-                .title("Payment Rejected")
-                .message("Your payment submission was rejected. Reason: " + note + ". Please resubmit with a valid screenshot.")
-                .type(NotificationType.REJECTION)
-                .build());
+        notifService.send(payment.getCustomer(),
+                "Payment Rejected",
+                "Your payment submission was rejected. Reason: " + note + ". Please resubmit with a valid screenshot.",
+                NotificationType.REJECTION);
         return ResponseEntity.ok(PaymentResponse.from(payment));
     }
 

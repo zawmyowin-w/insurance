@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import FormDetailModal from '../../components/FormDetailModal'
+import { apiError } from '../../utils/apiError'
 
 export default function AgentClaimsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -42,7 +43,7 @@ export default function AgentClaimsPage() {
       await api.put(`/agent/claims/${id}/verify`, { note })
       toast.success('Claim verified and sent to admin')
       clearActions(); fetchClaims()
-    } catch (err) { toast.error(err.response?.data?.message || 'Failed') } finally { setSubmitting(false) }
+    } catch (err) { apiError(err) } finally { setSubmitting(false) }
   }
 
   const handleReject = async (id) => {
@@ -52,7 +53,7 @@ export default function AgentClaimsPage() {
       await api.put(`/agent/claims/${id}/reject`, { note: rejectNote })
       toast.success('Claim rejected')
       clearActions(); fetchClaims()
-    } catch (err) { toast.error(err.response?.data?.message || 'Failed') } finally { setSubmitting(false) }
+    } catch (err) { apiError(err) } finally { setSubmitting(false) }
   }
 
   const handleForward = async (id) => {
@@ -61,7 +62,7 @@ export default function AgentClaimsPage() {
       await api.put(`/agent/claims/${id}/request-revision`, { note: forwardNote })
       toast.success('Customer notified to update their claim')
       clearActions(); fetchClaims()
-    } catch (err) { toast.error(err.response?.data?.message || 'Failed') } finally { setSubmitting(false) }
+    } catch (err) { apiError(err) } finally { setSubmitting(false) }
   }
 
   return (

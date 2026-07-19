@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import FormDetailModal from '../../components/FormDetailModal'
+import { apiError } from '../../utils/apiError'
 
 export default function AgentApplicationsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -42,7 +43,7 @@ export default function AgentApplicationsPage() {
       await api.put(`/agent/applications/${id}/verify`, { note })
       toast.success('Application verified and sent to admin')
       clearActions(); fetchApps()
-    } catch (err) { toast.error(err.response?.data?.message || 'Failed') } finally { setSubmitting(false) }
+    } catch (err) { apiError(err) } finally { setSubmitting(false) }
   }
 
   const handleReject = async (id) => {
@@ -52,7 +53,7 @@ export default function AgentApplicationsPage() {
       await api.put(`/agent/applications/${id}/reject`, { note: rejectNote })
       toast.success('Application rejected')
       clearActions(); fetchApps()
-    } catch (err) { toast.error(err.response?.data?.message || 'Failed') } finally { setSubmitting(false) }
+    } catch (err) { apiError(err) } finally { setSubmitting(false) }
   }
 
   const handleForward = async (id) => {
@@ -61,7 +62,7 @@ export default function AgentApplicationsPage() {
       await api.put(`/agent/applications/${id}/request-revision`, { note: forwardNote })
       toast.success('Customer notified to update their application')
       clearActions(); fetchApps()
-    } catch (err) { toast.error(err.response?.data?.message || 'Failed') } finally { setSubmitting(false) }
+    } catch (err) { apiError(err) } finally { setSubmitting(false) }
   }
 
   return (

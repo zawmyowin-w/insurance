@@ -4,6 +4,7 @@ import com.insurance.portal.dto.*;
 import com.insurance.portal.model.*;
 import com.insurance.portal.model.enums.*;
 import com.insurance.portal.repository.*;
+import com.insurance.portal.service.NotificationService;
 import com.insurance.portal.util.FileStorageUtil;
 import com.insurance.portal.util.PremiumScheduleUtil;
 import lombok.RequiredArgsConstructor;
@@ -30,10 +31,11 @@ public class AdminController {
     private final PolicyApplicationRepository appRepo;
     private final ClaimRepository claimRepo;
     private final PaymentRepository paymentRepo;
-    private final NotificationRepository notifRepo;
+    private final NotificationRepository notifRepo;   // kept for query-only endpoints (getSentNotifications, sendNotifications)
     private final InsurancePackageRepository packageRepo;
     private final InsuranceTypeRepository insuranceTypeRepo;
     private final PasswordEncoder passwordEncoder;
+    private final NotificationService notifService;
 
     // ── Insurance Types CRUD ──────────────────────────────────────────
 
@@ -669,7 +671,7 @@ public class AdminController {
         app.setStatus(ApplicationStatus.APPROVED);
         app.setAdminNote(req.get("note"));
         appRepo.save(app);
-        sendNotification(app.getCustomer(),
+        notifService.send(app.getCustomer(),
                 "Application Approved! 🎉",
                 "Your application for " + app.getInsurancePackage().getName()
                         + " has been approved. Please proceed with payment to activate your policy.",
@@ -685,7 +687,7 @@ public class AdminController {
         app.setStatus(ApplicationStatus.REJECTED);
         app.setAdminNote(req.get("note"));
         appRepo.save(app);
-        sendNotification(app.getCustomer(),
+        notifService.send(app.getCustomer(),
                 "Application Rejected",
                 "Your application for " + app.getInsurancePackage().getName()
                         + " was rejected. Reason: " + req.getOrDefault("note", "N/A"),
@@ -702,7 +704,7 @@ public class AdminController {
         app.setAdminNote(req.get("note"));
         app.setRevisionDeadline(LocalDateTime.now().plusDays(7));
         appRepo.save(app);
-        sendNotification(app.getCustomer(),
+        notifService.send(app.getCustomer(),
                 "Revision Required for Your Application",
                 "Your application requires changes: " + req.getOrDefault("note", "N/A")
                         + ". Please update within 7 days.",
@@ -750,7 +752,7 @@ public class AdminController {
                 .build();
         paymentRepo.save(payout);
 
-        sendNotification(claim.getCustomer(),
+        notifService.send(claim.getCustomer(),
                 "Claim Approved ✅",
                 "Your claim of " + claim.getAmount() + " MMK has been approved. Compensation will be disbursed shortly.",
                 NotificationType.APPROVAL);
@@ -765,7 +767,7 @@ public class AdminController {
         claim.setStatus(ClaimStatus.REJECTED);
         claim.setAdminNote(req.get("note"));
         claimRepo.save(claim);
-        sendNotification(claim.getCustomer(),
+        notifService.send(claim.getCustomer(),
                 "Claim Rejected",
                 "Your claim was rejected. Reason: " + req.getOrDefault("note", "N/A"),
                 NotificationType.REJECTION);
@@ -781,7 +783,7 @@ public class AdminController {
         claim.setAdminNote(req.get("note"));
         claim.setRevisionDeadline(LocalDateTime.now().plusDays(7));
         claimRepo.save(claim);
-        sendNotification(claim.getCustomer(),
+        notifService.send(claim.getCustomer(),
                 "Claim Revision Required",
                 "Additional information is needed for your claim: " + req.getOrDefault("note", "N/A"),
                 NotificationType.INFO);
@@ -831,14 +833,8 @@ public class AdminController {
 
         final NotificationType finalType = type;
         final String finalTargetRole = targetRole;
-        List<Notification> notifications = recipients.stream().map(u ->
-                Notification.builder()
-                        .recipient(u).title(title).message(message)
-                        .type(finalType).targetRole(finalTargetRole)
-                        .build()
-        ).toList();
-        notifRepo.saveAll(notifications);
-        return ResponseEntity.ok(Map.of("sent", notifications.size()));
+        notifService.sendToAll(recipients, title, message, finalType, finalTargetRole);
+        return ResponseEntity.ok(Map.of("sent", recipients.size()));
     }
 
     // ── Form field file serving ───────────────────────────────────────
@@ -858,9 +854,4 @@ public class AdminController {
         return FileStorageUtil.serveFormFile(claim.getFormData(), fieldId);
     }
 
-    // ── Helpers ───────────────────────────────────────────────────────
-    private void sendNotification(User recipient, String title, String message, NotificationType type) {
-        notifRepo.save(Notification.builder()
-                .recipient(recipient).title(title).message(message).type(type).build());
-    }
 }
