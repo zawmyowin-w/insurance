@@ -98,6 +98,37 @@ body {
   flex-shrink: 0;
 }
 
+/* ─── Logo image in navbar ─── */
+.navbar-logo-wrap {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Light mode: white bg blends away via multiply */
+  background: transparent;
+  overflow: hidden;
+}
+.navbar-logo-img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  /* Blends white background away on light surfaces */
+  mix-blend-mode: multiply;
+  display: block;
+}
+/* Dark mode: multiply doesn't work on dark bg — use a white pill instead */
+[data-theme="dark"] .navbar-logo-wrap {
+  background: rgba(255,255,255,0.92);
+  padding: 3px;
+  border-radius: 10px;
+}
+[data-theme="dark"] .navbar-logo-img {
+  mix-blend-mode: normal;
+}
+
 .navbar-brand-text {
   color: var(--text-primary) !important;
   font-weight: 600;
