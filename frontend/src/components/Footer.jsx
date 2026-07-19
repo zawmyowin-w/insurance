@@ -140,16 +140,19 @@ export default function Footer() {
               © {new Date().getFullYear()} Digital Insurance Claim and Premiums. All rights reserved.
             </p>
             <div className="d-flex gap-4">
-              {['Privacy Policy', 'Terms of Service'].map(item => (
-                <a
-                  key={item}
-                  href="#"
+              {[
+                { label: 'Privacy Policy', to: '/privacy' },
+                { label: 'Terms of Service', to: '/terms' },
+              ].map(({ label, to }) => (
+                <Link
+                  key={to}
+                  to={to}
                   style={{ color: '#64748b', fontSize: '0.8rem', textDecoration: 'none', transition: 'color 0.15s' }}
                   onMouseOver={e => e.currentTarget.style.color = '#94a3b8'}
                   onMouseOut={e => e.currentTarget.style.color = '#64748b'}
                 >
-                  {item}
-                </a>
+                  {label}
+                </Link>
               ))}
             </div>
           </div>
