@@ -71,142 +71,18 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Right – 3D illustration */}
-            <div className="col-12 col-lg-6 d-flex justify-content-center align-items-center py-5">
-              <div className="hero-3d-scene fade-in">
-                <svg viewBox="0 0 480 500" fill="none" xmlns="http://www.w3.org/2000/svg" className="hero-3d-svg">
-                  {/* Definitions */}
-                  <defs>
-                    <linearGradient id="shieldGrad" x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0%" stopColor="#3b82f6"/>
-                      <stop offset="100%" stopColor="#1a3a5c"/>
-                    </linearGradient>
-                    <linearGradient id="shieldLight" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="rgba(255,255,255,0.3)"/>
-                      <stop offset="100%" stopColor="rgba(255,255,255,0)"/>
-                    </linearGradient>
-                    <linearGradient id="cardGrad1" x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0%" stopColor="#6366f1"/>
-                      <stop offset="100%" stopColor="#4f46e5"/>
-                    </linearGradient>
-                    <linearGradient id="cardGrad2" x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0%" stopColor="#0ea5e9"/>
-                      <stop offset="100%" stopColor="#0284c7"/>
-                    </linearGradient>
-                    <linearGradient id="cardGrad3" x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0%" stopColor="#10b981"/>
-                      <stop offset="100%" stopColor="#059669"/>
-                    </linearGradient>
-                    <filter id="shadow3d" x="-20%" y="-20%" width="140%" height="140%">
-                      <feDropShadow dx="0" dy="20" stdDeviation="15" floodColor="rgba(0,0,0,0.35)"/>
-                    </filter>
-                    <filter id="cardShadow" x="-20%" y="-20%" width="140%" height="140%">
-                      <feDropShadow dx="0" dy="8" stdDeviation="10" floodColor="rgba(0,0,0,0.3)"/>
-                    </filter>
-                    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
-                      <feGaussianBlur stdDeviation="8" result="blur"/>
-                      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-                    </filter>
-                  </defs>
-
-                  {/* Shadow on ground */}
-                  <ellipse cx="240" cy="455" rx="120" ry="18" fill="rgba(0,0,0,0.18)"/>
-
-                  {/* ── Main 3D Shield ── */}
-                  {/* Back / depth layer */}
-                  <path d="M240 52L128 90V178C128 248 178 308 240 328C302 308 352 248 352 178V90L240 52Z"
-                    fill="#0f2540" transform="translate(8,12)" opacity="0.6"/>
-                  {/* Main shield body */}
-                  <path d="M240 52L128 90V178C128 248 178 308 240 328C302 308 352 248 352 178V90L240 52Z"
-                    fill="url(#shieldGrad)" filter="url(#shadow3d)"/>
-                  {/* Shine overlay */}
-                  <path d="M240 52L128 90V178C128 248 178 308 240 328C302 308 352 248 352 178V90L240 52Z"
-                    fill="url(#shieldLight)" opacity="0.5"/>
-                  {/* Inner bevel ring */}
-                  <path d="M240 75L148 107V178C148 238 190 291 240 309C290 291 332 238 332 178V107L240 75Z"
-                    fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="2"/>
-                  {/* Checkmark */}
-                  <path d="M200 190L225 215L285 155" stroke="white" strokeWidth="12" strokeLinecap="round" strokeLinejoin="round" filter="url(#glow)"/>
-                  {/* Lock icon at bottom of shield */}
-                  <rect x="228" y="292" width="24" height="18" rx="4" fill="rgba(255,255,255,0.25)"/>
-                  <path d="M234 292V287C234 283.7 236.7 281 240 281C243.3 281 246 283.7 246 287V292" stroke="rgba(255,255,255,0.5)" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
-
-                  {/* ── Floating card 1 – Policy card (top-left) ── */}
-                  <g transform="translate(42,80) rotate(-12,0,0)" className="hero-float-1">
-                    <rect width="145" height="90" rx="14" fill="url(#cardGrad1)" filter="url(#cardShadow)"/>
-                    <rect width="145" height="90" rx="14" fill="url(#shieldLight)" opacity="0.3"/>
-                    {/* Card chip */}
-                    <rect x="14" y="18" width="28" height="22" rx="5" fill="rgba(255,255,255,0.35)"/>
-                    <rect x="18" y="22" width="20" height="14" rx="3" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" strokeWidth="1"/>
-                    {/* Card text lines */}
-                    <rect x="14" y="54" width="60" height="6" rx="3" fill="rgba(255,255,255,0.6)"/>
-                    <rect x="14" y="66" width="40" height="5" rx="2.5" fill="rgba(255,255,255,0.35)"/>
-                    <rect x="14" y="76" width="50" height="4" rx="2" fill="rgba(255,255,255,0.25)"/>
-                    {/* Logo dot */}
-                    <circle cx="125" cy="22" r="12" fill="rgba(255,255,255,0.2)"/>
-                    <circle cx="125" cy="22" r="8" fill="rgba(255,255,255,0.15)"/>
-                    <text x="122" y="27" fill="white" fontSize="9" fontWeight="bold">✦</text>
-                  </g>
-
-                  {/* ── Floating card 2 – Claim status (right) ── */}
-                  <g transform="translate(315,135) rotate(10,0,0)" className="hero-float-2">
-                    <rect width="140" height="110" rx="14" fill="url(#cardGrad2)" filter="url(#cardShadow)"/>
-                    <rect width="140" height="110" rx="14" fill="url(#shieldLight)" opacity="0.25"/>
-                    {/* Header */}
-                    <rect x="0" y="0" width="140" height="30" rx="14" fill="rgba(0,0,0,0.15)"/>
-                    <rect x="0" y="16" width="140" height="14" fill="rgba(0,0,0,0.15)"/>
-                    <circle cx="20" cy="15" r="8" fill="rgba(255,255,255,0.3)"/>
-                    <text x="16" y="19" fill="white" fontSize="9">✓</text>
-                    <rect x="34" y="10" width="70" height="5" rx="2.5" fill="rgba(255,255,255,0.7)"/>
-                    {/* Bars */}
-                    <rect x="14" y="42" width="110" height="8" rx="4" fill="rgba(255,255,255,0.15)"/>
-                    <rect x="14" y="42" width="80" height="8" rx="4" fill="rgba(255,255,255,0.5)"/>
-                    <rect x="14" y="58" width="110" height="8" rx="4" fill="rgba(255,255,255,0.15)"/>
-                    <rect x="14" y="58" width="50" height="8" rx="4" fill="rgba(255,255,255,0.4)"/>
-                    <rect x="14" y="74" width="110" height="8" rx="4" fill="rgba(255,255,255,0.15)"/>
-                    <rect x="14" y="74" width="95" height="8" rx="4" fill="rgba(255,255,255,0.45)"/>
-                    <rect x="14" y="90" width="75" height="14" rx="7" fill="rgba(255,255,255,0.25)"/>
-                    <text x="28" y="101" fill="white" fontSize="8" fontWeight="600">APPROVED</text>
-                  </g>
-
-                  {/* ── Floating card 3 – Premium payment (bottom-left) ── */}
-                  <g transform="translate(50,300) rotate(-8,0,0)" className="hero-float-3">
-                    <rect width="155" height="80" rx="14" fill="url(#cardGrad3)" filter="url(#cardShadow)"/>
-                    <rect width="155" height="80" rx="14" fill="url(#shieldLight)" opacity="0.2"/>
-                    <circle cx="22" cy="22" r="14" fill="rgba(255,255,255,0.2)"/>
-                    <text x="15" y="27" fill="white" fontSize="13">💎</text>
-                    <rect x="46" y="14" width="80" height="6" rx="3" fill="rgba(255,255,255,0.7)"/>
-                    <rect x="46" y="24" width="55" height="5" rx="2.5" fill="rgba(255,255,255,0.4)"/>
-                    <rect x="14" y="50" width="55" height="20" rx="8" fill="rgba(255,255,255,0.2)"/>
-                    <rect x="14" y="50" width="55" height="20" rx="8" fill="rgba(255,255,255,0.08)"/>
-                    <text x="21" y="63" fill="white" fontSize="9" fontWeight="700">PAID ✓</text>
-                    <rect x="80" y="50" width="65" height="20" rx="8" fill="rgba(0,0,0,0.15)"/>
-                    <text x="88" y="63" fill="rgba(255,255,255,0.8)" fontSize="9">24 Jul 2026</text>
-                  </g>
-
-                  {/* ── Floating badge – notification (top-right) ── */}
-                  <g transform="translate(355,55)" className="hero-float-badge">
-                    <rect width="100" height="44" rx="22" fill="white" filter="url(#cardShadow)"/>
-                    <circle cx="22" cy="22" r="15" fill="#dcfce7"/>
-                    <text x="15" y="27" fontSize="14">🔔</text>
-                    <rect x="42" y="12" width="48" height="6" rx="3" fill="#e5e7eb"/>
-                    <rect x="42" y="23" width="38" height="5" rx="2.5" fill="#e5e7eb"/>
-                    {/* Red dot */}
-                    <circle cx="30" cy="10" r="6" fill="#ef4444"/>
-                    <text x="27" y="14" fill="white" fontSize="7" fontWeight="bold">3</text>
-                  </g>
-
-                  {/* ── Small floating dots ── */}
-                  <circle cx="88" cy="240" r="8" fill="rgba(59,130,246,0.4)" className="hero-dot-1"/>
-                  <circle cx="395" cy="280" r="6" fill="rgba(16,185,129,0.45)" className="hero-dot-2"/>
-                  <circle cx="155" cy="395" r="5" fill="rgba(245,158,11,0.5)" className="hero-dot-3"/>
-                  <circle cx="350" cy="400" r="9" fill="rgba(139,92,246,0.35)" className="hero-dot-1"/>
-
-                  {/* ── Geometric accent rings ── */}
-                  <circle cx="60" cy="400" r="30" stroke="rgba(99,102,241,0.2)" strokeWidth="2" fill="none"/>
-                  <circle cx="60" cy="400" r="20" stroke="rgba(99,102,241,0.15)" strokeWidth="1.5" fill="none"/>
-                  <circle cx="420" cy="350" r="25" stroke="rgba(16,185,129,0.2)" strokeWidth="2" fill="none"/>
-                </svg>
+            {/* Right – Hero illustration */}
+            <div className="col-12 col-lg-6 d-flex justify-content-center align-items-center py-4 py-lg-0">
+              <div className="hero-img-scene fade-in">
+                <img
+                  src="/hero-illustration.jpg"
+                  alt="Insurance illustration"
+                  className="hero-img-main"
+                />
+                {/* Floating accent dots */}
+                <span className="hero-img-dot hero-img-dot-1"/>
+                <span className="hero-img-dot hero-img-dot-2"/>
+                <span className="hero-img-dot hero-img-dot-3"/>
               </div>
             </div>
           </div>
