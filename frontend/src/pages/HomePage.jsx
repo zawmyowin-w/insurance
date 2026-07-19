@@ -79,10 +79,6 @@ export default function HomePage() {
                   alt="Insurance illustration"
                   className="hero-img-main"
                 />
-                {/* Floating accent dots */}
-                <span className="hero-img-dot hero-img-dot-1"/>
-                <span className="hero-img-dot hero-img-dot-2"/>
-                <span className="hero-img-dot hero-img-dot-3"/>
               </div>
             </div>
           </div>
