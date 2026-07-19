@@ -47,9 +47,11 @@ export default function Navbar() {
 
           {/* Brand */}
           <Link to="/" className="d-flex align-items-center gap-2 text-decoration-none" style={{ flexShrink: 0 }}>
-            <div className="navbar-brand-logo">
-              <i className="bi bi-shield-check" style={{ fontSize: '1rem' }}></i>
-            </div>
+            <img
+              src="/logo.png"
+              alt="DICP Logo"
+              style={{ width: 36, height: 36, objectFit: 'contain', flexShrink: 0 }}
+            />
             <span className="navbar-brand-text d-none d-sm-inline">
               {t('brand')}
             </span>
