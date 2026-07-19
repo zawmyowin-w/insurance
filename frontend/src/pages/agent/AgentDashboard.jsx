@@ -20,46 +20,79 @@ export default function AgentDashboard() {
   }, [])
 
   const statCards = [
-    { label: 'Pending Applications', value: stats.pending, icon: 'bi-file-earmark-text', color: '#f59e0b', bg: '#fefce8', link: '/agent/applications?filter=PENDING' },
-    { label: 'Verified Applications', value: stats.verified, icon: 'bi-check-circle', color: '#16a34a', bg: '#f0fdf4', link: '/agent/applications?filter=VERIFIED' },
-    { label: 'Pending Claims', value: stats.pendingClaims, icon: 'bi-file-earmark-medical', color: '#dc2626', bg: '#fff0f0', link: '/agent/claims?filter=PENDING' },
-    { label: 'Verified Claims', value: stats.verifiedClaims, icon: 'bi-shield-check', color: '#1d4ed8', bg: '#eff6ff', link: '/agent/claims?filter=VERIFIED' },
-    { label: 'Notifications', value: stats.unreadNotifications, icon: 'bi-bell', color: '#7c3aed', bg: '#f5f3ff', link: '/agent/notifications' },
+    { label: 'Pending Applications', value: stats.pending,               icon: 'bi-file-earmark-text-fill',    grad: 'linear-gradient(135deg,#f59e0b,#d97706)', link: '/agent/applications?filter=PENDING' },
+    { label: 'Verified Applications',value: stats.verified,              icon: 'bi-check-circle-fill',          grad: 'linear-gradient(135deg,#22c55e,#16a34a)', link: '/agent/applications?filter=VERIFIED' },
+    { label: 'Pending Claims',        value: stats.pendingClaims,         icon: 'bi-file-earmark-medical-fill', grad: 'linear-gradient(135deg,#ef4444,#dc2626)', link: '/agent/claims?filter=PENDING' },
+    { label: 'Verified Claims',       value: stats.verifiedClaims,        icon: 'bi-shield-fill-check',         grad: 'linear-gradient(135deg,#3b82f6,#1d4ed8)', link: '/agent/claims?filter=VERIFIED' },
+    { label: 'Notifications',         value: stats.unreadNotifications,   icon: 'bi-bell-fill',                 grad: 'linear-gradient(135deg,#a855f7,#7c3aed)', link: '/agent/notifications' },
   ]
+
+  const now = new Date()
+  const hour = now.getHours()
+  const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening'
 
   return (
     <div className="fade-in">
-      <div className="mb-4">
-        <h4 style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Welcome, {user?.name} 👋</h4>
-        <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>Agent Dashboard — Review and verify customer submissions</p>
+
+      {/* ── Dashboard Welcome Banner ── */}
+      <div className="dashboard-banner dashboard-banner-agent mb-4">
+        <div className="dashboard-banner-orb dashboard-banner-orb-1" />
+        <div className="dashboard-banner-orb dashboard-banner-orb-2" />
+        <div className="d-flex align-items-center justify-content-between flex-wrap gap-3" style={{ position: 'relative', zIndex: 1 }}>
+          <div>
+            <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)', fontWeight: 500, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
+              {greeting} 👋
+            </div>
+            <h4 style={{ fontWeight: 800, color: '#fff', margin: 0, fontSize: '1.4rem' }}>
+              {user?.name}
+            </h4>
+            <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.85rem', marginTop: '0.3rem' }}>
+              Agent Dashboard — Review and verify customer submissions
+            </div>
+          </div>
+          <div className="d-flex gap-2">
+            <Link to="/agent/applications" className="banner-action-btn">
+              <i className="bi bi-file-earmark-text me-1"></i> Applications
+            </Link>
+            <Link to="/agent/claims" className="banner-action-btn banner-action-btn-outline">
+              <i className="bi bi-file-earmark-medical me-1"></i> Claims
+            </Link>
+          </div>
+        </div>
       </div>
+
+      {/* ── Stat Cards ── */}
       <div className="row g-3 mb-4">
         {statCards.map(card => (
-          <div key={card.label} className="col-6 col-lg-3">
+          <div key={card.label} className="col-6 col-lg-4 col-xl-2-4">
             <Link to={card.link} style={{ textDecoration: 'none' }}>
-              <div className="card-custom h-100">
-                <div style={{ width: 40, height: 40, borderRadius: 10, background: card.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.75rem' }}>
-                  <i className={`bi ${card.icon}`} style={{ color: card.color, fontSize: '1.1rem' }}></i>
+              <div className="stat-card-3d">
+                <div className="stat-card-3d-icon-wrap" style={{ background: card.grad }}>
+                  <i className={`bi ${card.icon}`} style={{ fontSize: '1.3rem', color: '#fff' }}></i>
+                  <div className="stat-card-3d-shine" />
                 </div>
-                <div style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.2 }}>{loading ? '—' : card.value}</div>
-                <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>{card.label}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '1.7rem', fontWeight: 900, color: 'var(--text-primary)', lineHeight: 1.1 }}>
+                    {loading ? <span className="stat-loading-bar" /> : card.value}
+                  </div>
+                  <div style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', marginTop: '0.2rem', fontWeight: 500 }}>{card.label}</div>
+                </div>
+                <i className="bi bi-arrow-right-short stat-card-arrow"></i>
               </div>
             </Link>
           </div>
         ))}
       </div>
-      <div className="d-flex gap-2 mb-4">
-        <Link to="/agent/applications" className="btn-primary-custom" style={{ fontSize: '0.88rem', padding: '0.45rem 1rem' }}>
-          <i className="bi bi-file-earmark-text me-2"></i>Check Applications
-        </Link>
-        <Link to="/agent/claims" className="btn-primary-sm" style={{ fontSize: '0.88rem', padding: '0.45rem 1rem' }}>
-          <i className="bi bi-file-earmark-medical me-2"></i>Check Claims
-        </Link>
-      </div>
+
+      {/* ── Recent Applications ── */}
       <div className="card-custom">
         <div className="d-flex align-items-center justify-content-between mb-3">
-          <h6 style={{ fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>Recent Applications</h6>
-          <Link to="/agent/applications" style={{ color: 'var(--primary)', fontSize: '0.85rem', textDecoration: 'none' }}>View all →</Link>
+          <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <i className="bi bi-clock-history" style={{ color: 'var(--primary)' }}></i> Recent Applications
+          </h6>
+          <Link to="/agent/applications" style={{ color: 'var(--primary)', fontSize: '0.85rem', textDecoration: 'none', fontWeight: 500 }}>
+            View all <i className="bi bi-arrow-right"></i>
+          </Link>
         </div>
         {loading ? (
           <div className="text-center py-3"><div className="spinner-border" style={{ color: 'var(--primary)', width: 28, height: 28 }}></div></div>
@@ -72,7 +105,7 @@ export default function AgentDashboard() {
               <tbody>
                 {recentApps.map(a => (
                   <tr key={a.id}>
-                    <td style={{ fontWeight: 500 }}>{a.customerName || a.customer?.name}</td>
+                    <td style={{ fontWeight: 600 }}>{a.customerName || a.customer?.name}</td>
                     <td>{a.packageName || a.package?.name}</td>
                     <td>{Number(a.coverageAmount).toLocaleString()} MMK</td>
                     <td><span className={`badge-status badge-${a.status?.toLowerCase()}`}>{a.status}</span></td>

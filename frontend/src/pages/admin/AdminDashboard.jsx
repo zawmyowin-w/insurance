@@ -20,42 +20,75 @@ export default function AdminDashboard() {
   }, [])
 
   const statCards = [
-    { label: 'Total Customers', value: stats.totalCustomers, icon: 'bi-people', color: '#1d4ed8', bg: '#eff6ff', link: '/admin/users?tab=CUSTOMER' },
-    { label: 'Total Agents', value: stats.totalAgents, icon: 'bi-person-badge', color: '#9333ea', bg: '#faf5ff', link: '/admin/users?tab=AGENT' },
-    { label: 'Pending Applications', value: stats.pendingApplications, icon: 'bi-file-earmark-text', color: '#f59e0b', bg: '#fefce8', link: '/admin/applications?filter=PENDING' },
-    { label: 'Pending Claims', value: stats.pendingClaims, icon: 'bi-file-earmark-medical', color: '#dc2626', bg: '#fff0f0', link: '/admin/claims?filter=PENDING' },
-    { label: 'Verified Applications', value: stats.verifiedApplications, icon: 'bi-file-earmark-check', color: '#16a34a', bg: '#f0fdf4', link: '/admin/applications?filter=VERIFIED' },
-    { label: 'Verified Claims', value: stats.verifiedClaims, icon: 'bi-file-earmark-medical', color: '#0891b2', bg: '#ecfeff', link: '/admin/claims?filter=VERIFIED' },
-    { label: 'Insurance Packages', value: stats.totalPackages, icon: 'bi-box-seam', color: '#7c3aed', bg: '#f5f3ff', link: '/admin/packages' },
-    { label: 'Monthly Revenue (MMK)', value: stats.monthlyRevenue ? Number(stats.monthlyRevenue).toLocaleString() : '0', icon: 'bi-cash-coin', color: '#b45309', bg: '#fffbeb', link: '#' },
+    { label: 'Total Customers',          value: stats.totalCustomers,                                          icon: 'bi-people-fill',          grad: 'linear-gradient(135deg,#3b82f6,#1d4ed8)', link: '/admin/users?tab=CUSTOMER' },
+    { label: 'Total Agents',             value: stats.totalAgents,                                             icon: 'bi-person-badge-fill',    grad: 'linear-gradient(135deg,#a855f7,#7c3aed)', link: '/admin/users?tab=AGENT' },
+    { label: 'Pending Applications',     value: stats.pendingApplications,                                     icon: 'bi-file-earmark-text-fill',grad: 'linear-gradient(135deg,#f59e0b,#d97706)', link: '/admin/applications?filter=PENDING' },
+    { label: 'Pending Claims',           value: stats.pendingClaims,                                           icon: 'bi-file-earmark-medical-fill', grad: 'linear-gradient(135deg,#ef4444,#dc2626)', link: '/admin/claims?filter=PENDING' },
+    { label: 'Verified Applications',    value: stats.verifiedApplications,                                    icon: 'bi-file-earmark-check-fill',grad: 'linear-gradient(135deg,#22c55e,#16a34a)', link: '/admin/applications?filter=VERIFIED' },
+    { label: 'Verified Claims',          value: stats.verifiedClaims,                                          icon: 'bi-shield-fill-check',    grad: 'linear-gradient(135deg,#06b6d4,#0891b2)', link: '/admin/claims?filter=VERIFIED' },
+    { label: 'Insurance Packages',       value: stats.totalPackages,                                           icon: 'bi-box-seam-fill',        grad: 'linear-gradient(135deg,#8b5cf6,#6d28d9)', link: '/admin/packages' },
+    { label: 'Monthly Revenue (MMK)',    value: stats.monthlyRevenue ? Number(stats.monthlyRevenue).toLocaleString() : '0', icon: 'bi-cash-coin', grad: 'linear-gradient(135deg,#f59e0b,#b45309)', link: '#' },
   ]
+
+  const now = new Date()
+  const hour = now.getHours()
+  const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening'
 
   return (
     <div className="fade-in">
-      <div className="mb-4">
-        <h4 style={{ fontWeight: 700, color: 'var(--text-primary)' }}>Admin Dashboard</h4>
-        <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>Welcome, {user?.name} — System Overview</p>
+
+      {/* ── Dashboard Welcome Banner ── */}
+      <div className="dashboard-banner mb-4">
+        <div className="dashboard-banner-orb dashboard-banner-orb-1" />
+        <div className="dashboard-banner-orb dashboard-banner-orb-2" />
+        <div className="d-flex align-items-center justify-content-between flex-wrap gap-3" style={{ position: 'relative', zIndex: 1 }}>
+          <div>
+            <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)', fontWeight: 500, letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
+              {greeting}
+            </div>
+            <h4 style={{ fontWeight: 800, color: '#fff', margin: 0, fontSize: '1.4rem' }}>
+              {user?.name} &nbsp;<span style={{ opacity: 0.7, fontWeight: 400, fontSize: '1rem' }}>— System Overview</span>
+            </h4>
+            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.82rem', marginTop: '0.25rem' }}>
+              {now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            </div>
+          </div>
+          <div className="d-flex gap-2 align-items-center">
+            <div className="dashboard-banner-badge">
+              <i className="bi bi-shield-fill-check me-1"></i> Admin
+            </div>
+          </div>
+        </div>
       </div>
 
+      {/* ── Stat Cards ── */}
       <div className="row g-3 mb-4">
         {statCards.map(card => (
-          <div key={card.label} className="col-6 col-lg-4 col-xl-2">
+          <div key={card.label} className="col-6 col-lg-4 col-xl-3">
             <Link to={card.link} style={{ textDecoration: 'none' }}>
-              <div className="card-custom h-100">
-                <div style={{ width: 40, height: 40, borderRadius: 10, background: card.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.75rem' }}>
-                  <i className={`bi ${card.icon}`} style={{ color: card.color, fontSize: '1.1rem' }}></i>
+              <div className="stat-card-3d">
+                <div className="stat-card-3d-icon-wrap" style={{ background: card.grad }}>
+                  <i className={`bi ${card.icon}`} style={{ fontSize: '1.3rem', color: '#fff' }}></i>
+                  <div className="stat-card-3d-shine" />
                 </div>
-                <div style={{ fontSize: '1.6rem', fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.2 }}>{loading ? '—' : card.value}</div>
-                <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>{card.label}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '1.65rem', fontWeight: 900, color: 'var(--text-primary)', lineHeight: 1.1 }}>
+                    {loading ? <span className="stat-loading-bar" /> : card.value}
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.2rem', fontWeight: 500 }}>{card.label}</div>
+                </div>
+                <i className="bi bi-arrow-right-short stat-card-arrow"></i>
               </div>
             </Link>
           </div>
         ))}
       </div>
 
-      {/* Quick Actions */}
+      {/* ── Quick Actions ── */}
       <div className="card-custom mb-4">
-        <h6 style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '1rem' }}>Quick Actions</h6>
+        <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <i className="bi bi-lightning-fill" style={{ color: '#f59e0b' }}></i> Quick Actions
+        </h6>
         <div className="d-flex gap-2 flex-wrap">
           <Link to="/admin/packages?action=new" className="btn-primary-custom" style={{ fontSize: '0.85rem', padding: '0.4rem 0.9rem' }}>
             <i className="bi bi-plus-circle me-1"></i>Add Package
@@ -75,9 +108,11 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Recent Activity */}
+      {/* ── Recent Activity ── */}
       <div className="card-custom">
-        <h6 style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '1rem' }}>Recent Activity</h6>
+        <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <i className="bi bi-activity" style={{ color: 'var(--primary)' }}></i> Recent Activity
+        </h6>
         {loading ? (
           <div className="text-center py-3"><div className="spinner-border" style={{ color: 'var(--primary)', width: 28, height: 28 }}></div></div>
         ) : recentActivities.length === 0 ? (
@@ -86,8 +121,8 @@ export default function AdminDashboard() {
           <div>
             {recentActivities.map((act, i) => (
               <div key={i} className="d-flex align-items-start gap-3 pb-3 mb-3" style={{ borderBottom: i < recentActivities.length - 1 ? '1px solid var(--border-light)' : 'none' }}>
-                <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <i className={`bi ${act.icon || 'bi-activity'}`} style={{ color: 'var(--primary)', fontSize: '0.85rem' }}></i>
+                <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg,var(--primary),#2d5986)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <i className={`bi ${act.icon || 'bi-activity'}`} style={{ color: '#fff', fontSize: '0.85rem' }}></i>
                 </div>
                 <div className="flex-grow-1">
                   <div style={{ fontWeight: 500, fontSize: '0.88rem', color: 'var(--text-primary)' }}>{act.description}</div>
