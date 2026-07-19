@@ -16,6 +16,7 @@ public class ClaimResponse {
     private Long applicationId;
     private Long packageId;
     private String policyName;
+    private java.math.BigDecimal coverageAmount;
     private String agentName;
     private String claimType;
     private BigDecimal amount;
@@ -37,6 +38,7 @@ public class ClaimResponse {
         }
         if (claim.getApplication() != null) {
             dto.setApplicationId(claim.getApplication().getId());
+            dto.setCoverageAmount(claim.getApplication().getCoverageAmount());
             if (claim.getApplication().getInsurancePackage() != null) {
                 dto.setPackageId(claim.getApplication().getInsurancePackage().getId());
                 dto.setPolicyName(claim.getApplication().getInsurancePackage().getName());

@@ -79,11 +79,12 @@ export default function AdminClaimsPage() {
                     <div className="d-flex gap-3 flex-wrap mb-2">
                       {[
                         { label: 'Policy', value: claim.policyName || claim.policy?.packageName },
-                        { label: 'Amount', value: `${Number(claim.amount).toLocaleString()} MMK` },
+                        { label: 'Claim Amount', value: `${Number(claim.amount).toLocaleString()} MMK` },
+                        claim.coverageAmount ? { label: 'Coverage Limit', value: `${Number(claim.coverageAmount).toLocaleString()} MMK` } : null,
                         { label: 'Incident Date', value: claim.incidentDate ? new Date(claim.incidentDate).toLocaleDateString() : '—' },
                         { label: 'Submitted', value: claim.createdAt ? new Date(claim.createdAt).toLocaleDateString() : '—' },
                         { label: 'Agent', value: claim.agentName || claim.agent?.name || 'N/A' },
-                      ].map(item => (
+                      ].filter(Boolean).map(item => (
                         <div key={item.label} style={{ minWidth: 100 }}>
                           <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{item.label}</div>
                           <div style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--text-primary)' }}>{item.value}</div>
@@ -98,6 +99,12 @@ export default function AdminClaimsPage() {
                       <i className="bi bi-eye"></i> View Details
                     </button>
                     {claim.agentNote && <p style={{ color: '#1d4ed8', fontSize: '0.85rem', margin: '0.5rem 0 0' }}>Agent: {claim.agentNote}</p>}
+                    {claim.status === 'APPROVED' && (
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: '0.5rem', padding: '0.35rem 0.75rem', borderRadius: 8, background: '#f0fdf4', border: '1px solid #86efac', fontSize: '0.82rem', color: '#15803d', fontWeight: 600 }}>
+                        <i className="bi bi-arrow-up-right-circle-fill"></i>
+                        Payout: {Number(claim.amount).toLocaleString()} MMK — ထွက်ငွေတွင် မှတ်တမ်းတင်ပြီး
+                      </div>
+                    )}
                   </div>
                   {claim.status === 'VERIFIED' && (
                     <div className="col-12 col-md-4 mt-3 mt-md-0">

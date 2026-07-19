@@ -313,6 +313,17 @@ public class CustomerController {
         if (claimRepo.existsByApplication_Id(app.getId()))
             return ResponseEntity.badRequest().body(Map.of("message", "A claim has already been submitted for this policy. Only one claim is allowed per policy."));
 
+        // Validate that claim amount does not exceed the policy coverage amount
+        BigDecimal claimAmt;
+        try { claimAmt = new BigDecimal(amount); } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Invalid claim amount"));
+        }
+        if (claimAmt.compareTo(BigDecimal.ZERO) <= 0)
+            return ResponseEntity.badRequest().body(Map.of("message", "Claim amount must be greater than zero"));
+        if (app.getCoverageAmount() != null && claimAmt.compareTo(app.getCoverageAmount()) > 0)
+            return ResponseEntity.badRequest().body(Map.of("message",
+                "Claim amount cannot exceed your policy coverage of " + app.getCoverageAmount().toPlainString() + " MMK"));
+
         // Process dynamic form file uploads
         String processedFormData = formData;
         if (formData != null && request instanceof MultipartHttpServletRequest mpr) {

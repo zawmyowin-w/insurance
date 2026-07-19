@@ -737,6 +737,19 @@ public class AdminController {
         claim.setStatus(ClaimStatus.APPROVED);
         claim.setAdminNote(req.get("note"));
         claimRepo.save(claim);
+
+        // Record the claim payout as an outgoing payment entry
+        Payment payout = Payment.builder()
+                .application(claim.getApplication())
+                .customer(claim.getCustomer())
+                .amount(claim.getAmount())
+                .paymentType("CLAIM_PAYOUT")
+                .status(com.insurance.portal.model.enums.PaymentStatus.VERIFIED)
+                .notes("Claim #" + claim.getId() + " approved payout"
+                        + (req.get("note") != null && !req.get("note").isBlank() ? ": " + req.get("note") : ""))
+                .build();
+        paymentRepo.save(payout);
+
         sendNotification(claim.getCustomer(),
                 "Claim Approved ✅",
                 "Your claim of " + claim.getAmount() + " MMK has been approved. Compensation will be disbursed shortly.",

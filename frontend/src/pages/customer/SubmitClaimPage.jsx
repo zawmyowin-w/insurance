@@ -36,6 +36,9 @@ export default function SubmitClaimPage() {
 
   const availablePolicies = activePolicies.filter(p => !claimedIds.has(p.id))
 
+  const selectedPolicy = activePolicies.find(p => String(p.id) === String(form.applicationId))
+  const maxClaimAmount = selectedPolicy?.coverageAmount ? Number(selectedPolicy.coverageAmount) : null
+
   // Fetch claim form template when policy is selected
   useEffect(() => {
     if (!form.applicationId) { setClaimTemplate(null); return }
@@ -78,6 +81,15 @@ export default function SubmitClaimPage() {
   const handleSubmit = async e => {
     e.preventDefault()
     if (!form.applicationId) { toast.error('Please select a policy'); return }
+
+    // Validate claim amount
+    const enteredAmount = parseFloat(form.amount)
+    if (!form.amount || isNaN(enteredAmount) || enteredAmount <= 0) {
+      toast.error('ကောင်းမွန်သော ငွေပမာဏ ထည့်သွင်းပါ'); return
+    }
+    if (maxClaimAmount !== null && enteredAmount > maxClaimAmount) {
+      toast.error(`Claim amount သည် coverage ငွေပမာဏ ${maxClaimAmount.toLocaleString()} MMK ထက် မကျော်လွန်ရ`); return
+    }
 
     // Validate required dynamic fields
     if (claimTemplate?.fields) {
@@ -176,6 +188,51 @@ export default function SubmitClaimPage() {
                 ) : null
               })()}
 
+              {/* Claim Amount — always visible when a policy is selected */}
+              {form.applicationId && (
+                <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, padding: '1rem 1.25rem', marginBottom: '1.25rem' }}>
+                  <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
+                    <i className="bi bi-currency-exchange me-1"></i>Claim Amount
+                  </div>
+                  {maxClaimAmount !== null && (
+                    <div style={{ padding: '0.5rem 0.75rem', borderRadius: 8, background: '#eff6ff', border: '1px solid #bfdbfe', marginBottom: '0.75rem', fontSize: '0.83rem', color: '#1e40af' }}>
+                      <i className="bi bi-info-circle me-1"></i>
+                      ကျော်လွန်၍မရသော အများဆုံး ငွေပမာဏ: <strong>{maxClaimAmount.toLocaleString()} MMK</strong>
+                    </div>
+                  )}
+                  <input
+                    name="amount"
+                    type="number"
+                    required
+                    min={1}
+                    max={maxClaimAmount !== null ? maxClaimAmount : undefined}
+                    step="1"
+                    className="form-control-custom w-100"
+                    placeholder="တောင်းဆိုသော ငွေပမာဏ ရေးထည့်ပါ (MMK)"
+                    value={form.amount}
+                    onChange={e => {
+                      handleChange(e)
+                      const v = parseFloat(e.target.value)
+                      if (maxClaimAmount !== null && !isNaN(v) && v > maxClaimAmount) {
+                        e.target.setCustomValidity(`Coverage ငွေပမာဏ ${maxClaimAmount.toLocaleString()} MMK ထက် မကျော်လွန်ရ`)
+                      } else {
+                        e.target.setCustomValidity('')
+                      }
+                    }}
+                  />
+                  {form.amount && maxClaimAmount !== null && parseFloat(form.amount) > 0 && parseFloat(form.amount) <= maxClaimAmount && (
+                    <small style={{ color: '#16a34a', fontSize: '0.78rem', marginTop: 4, display: 'block' }}>
+                      ✓ {parseFloat(form.amount).toLocaleString()} MMK &nbsp;/&nbsp; {maxClaimAmount.toLocaleString()} MMK
+                    </small>
+                  )}
+                  {form.amount && maxClaimAmount !== null && parseFloat(form.amount) > maxClaimAmount && (
+                    <small style={{ color: '#dc2626', fontSize: '0.78rem', marginTop: 4, display: 'block' }}>
+                      ✗ Coverage ငွေပမာဏ {maxClaimAmount.toLocaleString()} MMK ထက် မကျော်လွန်ရ
+                    </small>
+                  )}
+                </div>
+              )}
+
               {/* Template loading */}
               {templateLoading && (
                 <div className="text-center py-3">
@@ -216,11 +273,6 @@ export default function SubmitClaimPage() {
                         <option value="">Select type...</option>
                         {CLAIM_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                       </select>
-                    </div>
-                    <div className="col-12 col-sm-6">
-                      <label className="form-label-custom">Claim Amount (MMK) *</label>
-                      <input name="amount" type="number" required min={1} className="form-control-custom w-100"
-                        placeholder="Enter claim amount" value={form.amount} onChange={handleChange} />
                     </div>
                     <div className="col-12">
                       <label className="form-label-custom">Incident Date *</label>
