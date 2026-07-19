@@ -200,8 +200,8 @@ export default function RegisterPage() {
               style={{ marginTop: '0.2rem', flexShrink: 0 }} />
             <label htmlFor="agree" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', cursor: 'pointer' }}>
               {t('auth.agreeText')}{' '}
-              <Link to="/terms" target="_blank" style={{ color: 'var(--primary)' }}>{t('auth.termsLink')}</Link>{' & '}
-              <Link to="/privacy" target="_blank" style={{ color: 'var(--primary)' }}>{t('auth.privacyLink')}</Link>
+              <Link to="/terms" style={{ color: 'var(--primary)' }}>{t('auth.termsLink')}</Link>{' & '}
+              <Link to="/privacy" style={{ color: 'var(--primary)' }}>{t('auth.privacyLink')}</Link>
             </label>
           </div>
 
