@@ -46,9 +46,9 @@ export default function Footer() {
               {t('footer.company')}
             </h6>
             <ul className="list-unstyled mb-0" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {['/', '/how-it-works', '/plans', '/contact'].map((path, i) => (
+              {['/', '/how-it-works', '/plans'].map((path, i) => (
                 <li key={path}>
-                  <Link to={path}>{[t('footer.home'), t('footer.howItWorks'), t('footer.plans'), t('footer.contact')][i]}</Link>
+                  <Link to={path}>{[t('footer.home'), t('footer.howItWorks'), t('footer.plans')][i]}</Link>
                 </li>
               ))}
             </ul>
@@ -61,25 +61,6 @@ export default function Footer() {
             <ul className="list-unstyled mb-0" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {[t('footer.life'), t('footer.health'), t('footer.vehicle'), t('footer.property')].map(item => (
                 <li key={item}><a href="#">{item}</a></li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="col-12 col-md-4">
-            <h6 style={{ color: '#e2e8f0', fontWeight: 600, fontSize: '0.88rem', marginBottom: '0.75rem' }}>
-              {t('footer.contact')}
-            </h6>
-            <ul className="list-unstyled mb-0" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {[
-                { icon: 'geo-alt', text: 'Yangon, Myanmar' },
-                { icon: 'telephone', text: '+95 9 123 456 789' },
-                { icon: 'envelope', text: 'info@dicp.com.mm' },
-                { icon: 'clock', text: 'Mon – Fri, 9 AM – 5 PM' },
-              ].map(item => (
-                <li key={item.icon} className="d-flex align-items-center gap-2" style={{ color: '#94a3b8', fontSize: '0.88rem' }}>
-                  <i className={`bi bi-${item.icon}`} style={{ color: '#64748b' }}></i>
-                  {item.text}
-                </li>
               ))}
             </ul>
           </div>
