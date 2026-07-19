@@ -40,11 +40,8 @@ export default function LoginPage() {
       <div className="auth-card">
         {/* Logo */}
         <div className="text-center mb-4">
-          <div style={{
-            width: 52, height: 52, background: 'var(--primary)', borderRadius: 12,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem'
-          }}>
-            <i className="bi bi-shield-check" style={{ color: '#fff', fontSize: '1.4rem' }}></i>
+          <div className="auth-logo-wrap">
+            <img src="/logo.png" alt="DICP Logo" className="auth-logo-img" />
           </div>
           <h2 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.25rem', fontSize: '1.5rem' }}>
             {t('auth.welcomeBack')}
