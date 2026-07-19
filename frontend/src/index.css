@@ -100,33 +100,33 @@ body {
 
 /* ─── Logo image in navbar ─── */
 .navbar-logo-wrap {
-  width: 42px;
-  height: 42px;
-  border-radius: 10px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Light mode: white bg blends away via multiply */
-  background: transparent;
+  background: #fff;
+  box-shadow:
+    0 0 0 3px rgba(79,70,229,0.12),
+    0 0 0 6px rgba(79,70,229,0.06),
+    0 4px 12px rgba(79,70,229,0.18);
+  padding: 4px;
   overflow: hidden;
 }
 .navbar-logo-img {
-  width: 42px;
-  height: 42px;
+  width: 32px;
+  height: 32px;
   object-fit: contain;
-  /* Blends white background away on light surfaces */
-  mix-blend-mode: multiply;
   display: block;
 }
-/* Dark mode: multiply doesn't work on dark bg — use a white pill instead */
 [data-theme="dark"] .navbar-logo-wrap {
-  background: rgba(255,255,255,0.92);
-  padding: 3px;
-  border-radius: 10px;
-}
-[data-theme="dark"] .navbar-logo-img {
-  mix-blend-mode: normal;
+  background: #fff;
+  box-shadow:
+    0 0 0 3px rgba(99,102,241,0.25),
+    0 0 0 6px rgba(99,102,241,0.1),
+    0 4px 12px rgba(0,0,0,0.4);
 }
 
 /* ─── Auth page logo ─── */
