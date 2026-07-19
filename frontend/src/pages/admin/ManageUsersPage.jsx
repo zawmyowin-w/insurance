@@ -323,7 +323,7 @@ export default function ManageUsersPage() {
                       <td style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{u.phone || '—'}</td>
                       <td style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', maxWidth: 160, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={u.address || ''}>{u.address || '—'}</td>
                       {activeTab === 'AGENT' && (
-                        <td><span style={{ fontSize: '0.75rem', fontWeight: 600, padding: '0.15rem 0.55rem', borderRadius: 20, background: '#eff6ff', color: '#1d4ed8' }}>{u.insuranceType || '—'}</span></td>
+                        <td><span className="type-badge-pill">{u.insuranceType || '—'}</span></td>
                       )}
                       <td>
                         <span className={`badge-status ${u.active ? 'badge-active' : 'badge-cancelled'}`}>

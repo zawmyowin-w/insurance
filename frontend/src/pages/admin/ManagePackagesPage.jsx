@@ -714,7 +714,7 @@ function PackageDetailModal({ pkg, onClose, onEdit }) {
 
           {/* Premium Calculator */}
           {tiers.length > 0 && (
-            <div style={{ background: 'linear-gradient(135deg, #eff6ff, #f0fdf4)', borderRadius: 12, padding: '1rem' }}>
+            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, padding: '1rem' }}>
               <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '0.75rem' }}>
                 <i className="bi bi-calculator me-1" style={{ color: 'var(--primary)' }}></i>Premium Calculator (တိကျသောပမာဏ)
               </div>
@@ -739,7 +739,7 @@ function PackageDetailModal({ pkg, onClose, onEdit }) {
                 const numPayments = Math.round((years * 12) / intervalMonths)
                 const freqName = PAYMENT_FREQ_OPTIONS.find(o => o.months === intervalMonths)?.label?.split('(')[0].trim() || `${intervalMonths} လတစ်ကြိမ်`
                 return (
-                  <div style={{ background: '#fff', borderRadius: 10, overflow: 'hidden', border: '1px solid #e2e8f0' }}>
+                  <div style={{ background: 'var(--bg-card)', borderRadius: 10, overflow: 'hidden', border: '1px solid var(--border)' }}>
                     {/* Header */}
                     <div style={{ background: 'var(--primary)', padding: '0.6rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <span style={{ color: '#fff', fontWeight: 700, fontSize: '0.85rem' }}>

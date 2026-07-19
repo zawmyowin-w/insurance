@@ -362,7 +362,7 @@ export default function ApplyPolicyPage() {
 
               {/* Digital Signature */}
               <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '0.75rem' }}>
-                <div style={{ padding: '0.6rem 0.9rem', borderRadius: 8, background: '#eff6ff', border: '1px solid #bfdbfe', marginBottom: '0.75rem', fontSize: '0.82rem', color: '#1e40af' }}>
+                <div className="info-box-blue-sm mb-3">
                   <i className="bi bi-pen me-2"></i>
                   <strong>Digital Signature</strong> — Insurance Application ကို တရားဝင်ဖြစ်စေသောအတွက် လက်မှတ်ရေးထိုးပါ
                 </div>

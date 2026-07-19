@@ -23,7 +23,7 @@ function PolicyCertificate({ policy, onClose }) {
   return (
     <div className="modal show d-block" tabIndex="-1" style={{ background: 'rgba(0,0,0,0.5)' }}>
       <div className="modal-dialog modal-dialog-centered modal-lg">
-        <div className="modal-content" style={{ borderRadius: 16 }}>
+        <div className="modal-content certificate-modal-content">
           <div className="modal-header" style={{ background: 'linear-gradient(135deg, #1d4ed8, #4338ca)', borderRadius: '16px 16px 0 0' }}>
             <div>
               <h5 className="modal-title" style={{ color: '#fff', fontWeight: 700 }}>Insurance Policy Certificate</h5>
@@ -33,11 +33,11 @@ function PolicyCertificate({ policy, onClose }) {
           </div>
           <div className="modal-body" style={{ padding: '2rem' }}>
             {/* Certificate body */}
-            <div style={{ border: '2px solid #1d4ed8', borderRadius: 12, padding: '1.5rem', background: '#fafbff' }}>
+            <div className="certificate-body">
               <div className="text-center mb-4">
                 <i className="bi bi-shield-fill-check" style={{ fontSize: '2.5rem', color: '#1d4ed8' }}></i>
                 <div style={{ fontWeight: 800, fontSize: '1.3rem', color: '#1d4ed8', marginTop: 8 }}>INSURANCE POLICY CERTIFICATE</div>
-                <div style={{ color: '#6b7280', fontSize: '0.85rem' }}>This certifies that the following insurance policy is active</div>
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>This certifies that the following insurance policy is active</div>
               </div>
               <div className="row g-3">
                 {[
@@ -52,8 +52,8 @@ function PolicyCertificate({ policy, onClose }) {
                   ['Status', 'ACTIVE'],
                 ].map(([label, value]) => (
                   <div key={label} className="col-6">
-                    <div style={{ fontSize: '0.75rem', color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
-                    <div style={{ fontWeight: 600, color: '#111827' }}>{value}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
+                    <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{value}</div>
                   </div>
                 ))}
               </div>

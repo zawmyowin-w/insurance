@@ -701,7 +701,7 @@ function ClaimsPayoutTab({ claimsPayoutByCustomer, totalClaimsPaid, monthlyClaim
                                   #{claim.claimId} — {claim.claimType || '—'}
                                 </div>
                                 <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                                  {claim.insuranceType && <span style={{ background: '#eff6ff', color: '#1d4ed8', padding: '0.05rem 0.35rem', borderRadius: 3, marginRight: 4, fontWeight: 700 }}>{claim.insuranceType}</span>}
+                                  {claim.insuranceType && <span className="type-badge-pill" style={{ padding: '0.05rem 0.35rem', borderRadius: 3, marginRight: 4 }}>{claim.insuranceType}</span>}
                                   {claim.approvedAt ? new Date(claim.approvedAt).toLocaleDateString() : '—'}
                                 </div>
                               </div>

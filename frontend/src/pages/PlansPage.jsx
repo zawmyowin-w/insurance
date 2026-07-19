@@ -411,7 +411,7 @@ function PlanDetailModal({ plan, onClose, onApply, user, t, freqLabel }) {
           <div className="row g-2 mt-3">
             {quickStats.map((s, i) => (
               <div key={i} className="col-6 col-md-3">
-                <div style={{ background: 'rgba(255,255,255,0.7)', borderRadius: 10, padding: '0.5rem 0.75rem', backdropFilter: 'blur(4px)' }}>
+                <div className="quick-stat-card">
                   <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
                     <i className={`bi ${s.icon}`} style={{ color: s.color, fontSize: '0.8rem' }}></i>
                     <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>{s.label}</span>
@@ -445,27 +445,27 @@ function PlanDetailModal({ plan, onClose, onApply, user, t, freqLabel }) {
           {activeTab === 'overview' && (
             <div className="d-flex flex-column gap-3">
               {plan.eligibility && (
-                <div style={{ background: '#eff6ff', borderRadius: 10, padding: '1rem', border: '1px solid #bfdbfe' }}>
-                  <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#1d4ed8', marginBottom: '0.5rem' }}>
+                <div className="info-box-blue">
+                  <div className="info-box-title">
                     <i className="bi bi-person-check me-1"></i>{t('plans.eligibility')}
                   </div>
-                  <p style={{ fontSize: '0.84rem', color: '#1e40af', whiteSpace: 'pre-line', margin: 0 }}>{plan.eligibility}</p>
+                  <p className="info-box-body">{plan.eligibility}</p>
                 </div>
               )}
               {plan.exclusions && (
-                <div style={{ background: '#fef2f2', borderRadius: 10, padding: '1rem', border: '1px solid #fecaca' }}>
-                  <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#dc2626', marginBottom: '0.5rem' }}>
+                <div className="info-box-red">
+                  <div className="info-box-title">
                     <i className="bi bi-x-circle me-1"></i>{t('plans.exclusions')}
                   </div>
-                  <p style={{ fontSize: '0.84rem', color: '#991b1b', whiteSpace: 'pre-line', margin: 0 }}>{plan.exclusions}</p>
+                  <p className="info-box-body">{plan.exclusions}</p>
                 </div>
               )}
               {plan.beneficiaryInfo && (
-                <div style={{ background: '#faf5ff', borderRadius: 10, padding: '1rem', border: '1px solid #e9d5ff' }}>
-                  <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#7c3aed', marginBottom: '0.5rem' }}>
+                <div className="info-box-purple">
+                  <div className="info-box-title">
                     <i className="bi bi-people me-1"></i>{t('plans.beneficiary')}
                   </div>
-                  <p style={{ fontSize: '0.84rem', color: '#5b21b6', whiteSpace: 'pre-line', margin: 0 }}>{plan.beneficiaryInfo}</p>
+                  <p className="info-box-body">{plan.beneficiaryInfo}</p>
                 </div>
               )}
               {!plan.eligibility && !plan.exclusions && !plan.beneficiaryInfo && (

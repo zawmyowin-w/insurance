@@ -54,7 +54,7 @@ export default function AgentProfileCard({ packageType, style }) {
           <div>
             <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.9rem' }}>{agent.name}</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 3, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '0.72rem', fontWeight: 700, padding: '0.1rem 0.5rem', borderRadius: 20, background: '#eff6ff', color: '#1d4ed8' }}>
+              <span className="type-badge-pill" style={{ fontSize: '0.72rem', padding: '0.1rem 0.5rem' }}>
                 {agent.insuranceType}
               </span>
               {agent.phone && (

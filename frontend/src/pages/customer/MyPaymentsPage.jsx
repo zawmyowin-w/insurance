@@ -270,14 +270,14 @@ function PolicyScheduleCard({ sched, onPay }) {
       {/* Policy header */}
       <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
         <div className="d-flex align-items-center gap-3">
-          <div style={{ width: 48, height: 48, borderRadius: 12, background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <div style={{ width: 48, height: 48, borderRadius: 12, background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <i className="bi bi-shield-check" style={{ fontSize: '1.4rem', color: 'var(--primary)' }}></i>
           </div>
           <div>
             <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.95rem' }}>
               {sched.packageName || 'Insurance Policy'}
               {sched.packageType && (
-                <span style={{ marginLeft: 8, background: '#eff6ff', color: 'var(--primary)', padding: '0.1rem 0.4rem', borderRadius: 4, fontSize: '0.7rem', fontWeight: 700 }}>
+                <span className="type-badge-pill" style={{ marginLeft: 8, padding: '0.1rem 0.4rem', borderRadius: 4, fontSize: '0.7rem' }}>
                   {sched.packageType}
                 </span>
               )}
@@ -538,7 +538,7 @@ function PaymentModal({ payForm, setPayForm, payMethods, selectedMethod, paySign
 
               {/* Digital Signature */}
               <div className="mb-2">
-                <div style={{ padding: '0.55rem 0.85rem', borderRadius: 8, background: '#eff6ff', border: '1px solid #bfdbfe', marginBottom: '0.6rem', fontSize: '0.8rem', color: '#1e40af' }}>
+                <div className="info-box-blue-sm mb-2">
                   <i className="bi bi-pen me-2"></i>
                   <strong>Digital Signature</strong> — ငွေပေးချေမှုကို တရားဝင်အတည်ပြုရန် လက်မှတ်ရေးထိုးပါ
                 </div>

@@ -195,7 +195,7 @@ export default function SubmitClaimPage() {
                     <i className="bi bi-currency-exchange me-1"></i>Claim Amount
                   </div>
                   {maxClaimAmount !== null && (
-                    <div style={{ padding: '0.5rem 0.75rem', borderRadius: 8, background: '#eff6ff', border: '1px solid #bfdbfe', marginBottom: '0.75rem', fontSize: '0.83rem', color: '#1e40af' }}>
+                    <div className="info-box-blue-sm mb-3">
                       <i className="bi bi-info-circle me-1"></i>
                       ကျော်လွန်၍မရသော အများဆုံး ငွေပမာဏ: <strong>{maxClaimAmount.toLocaleString()} MMK</strong>
                     </div>
