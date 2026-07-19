@@ -5,7 +5,7 @@ const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [user,    setUser]    = useState(null)
-  const [token,   setToken]   = useState(() => localStorage.getItem('token'))
+  const [token,   setToken]   = useState(() => sessionStorage.getItem('token'))
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -14,7 +14,7 @@ export function AuthProvider({ children }) {
     api.get('/auth/me')
       .then(res => setUser(res.data))
       .catch(() => {
-        localStorage.removeItem('token')
+        sessionStorage.removeItem('token')
         setToken(null)
       })
       .finally(() => setLoading(false))
@@ -22,7 +22,7 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     const { data } = await api.post('/auth/login', { email, password })
-    localStorage.setItem('token', data.token)
+    sessionStorage.setItem('token', data.token)
     setToken(data.token)
     setUser(data.user)
     return data.user
@@ -36,7 +36,7 @@ export function AuthProvider({ children }) {
   }
 
   const logout = () => {
-    localStorage.removeItem('token')
+    sessionStorage.removeItem('token')
     setToken(null)
     setUser(null)
   }

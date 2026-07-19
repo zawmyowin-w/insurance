@@ -5,9 +5,9 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-// Request interceptor — attach JWT from localStorage on every request
+// Request interceptor — attach JWT from sessionStorage on every request
 api.interceptors.request.use(cfg => {
-  const token = localStorage.getItem('token')
+  const token = sessionStorage.getItem('token')
   if (token) cfg.headers.Authorization = `Bearer ${token}`
   return cfg
 })
@@ -17,7 +17,7 @@ api.interceptors.response.use(
   res => res,
   err => {
     if (err.response?.status === 401) {
-      localStorage.removeItem('token')
+      sessionStorage.removeItem('token')
       delete api.defaults.headers.common['Authorization']
       if (window.location.pathname !== '/login') {
         window.location.href = '/login'

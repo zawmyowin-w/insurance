@@ -20,7 +20,7 @@ export default function AgentLoginPage() {
       const user = await login(form.email, form.password)
       if (user.role !== 'AGENT') {
         // Not an agent account — log back out immediately
-        localStorage.removeItem('token')
+        sessionStorage.removeItem('token')
         window.location.reload()
         toast.error('This login is for agent accounts only.')
         return
