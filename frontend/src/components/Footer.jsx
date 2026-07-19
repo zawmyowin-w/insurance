@@ -42,48 +42,9 @@ export default function Footer() {
               </span>
             </div>
 
-            <p style={{ fontSize: '0.875rem', color: '#94a3b8', lineHeight: 1.75, marginBottom: '1.25rem', maxWidth: 300 }}>
+            <p style={{ fontSize: '0.875rem', color: '#94a3b8', lineHeight: 1.75, maxWidth: 300 }}>
               {t('footer.tagline')}
             </p>
-
-            {/* Social icons */}
-            <div className="d-flex gap-2">
-              {[
-                { id: 'facebook',  icon: 'facebook' },
-                { id: 'twitter',   icon: 'twitter-x' },
-                { id: 'linkedin',  icon: 'linkedin' },
-                { id: 'instagram', icon: 'instagram' },
-              ].map(s => (
-                <a
-                  key={s.id}
-                  href="#"
-                  aria-label={s.id}
-                  style={{
-                    width: 34, height: 34,
-                    background: 'rgba(255,255,255,0.08)',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: 7,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: '#94a3b8',
-                    fontSize: '0.88rem',
-                    transition: 'background 0.15s, color 0.15s, border-color 0.15s',
-                    textDecoration: 'none',
-                  }}
-                  onMouseOver={e => {
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.18)'
-                    e.currentTarget.style.color = '#fff'
-                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.25)'
-                  }}
-                  onMouseOut={e => {
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.08)'
-                    e.currentTarget.style.color = '#94a3b8'
-                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'
-                  }}
-                >
-                  <i className={`bi bi-${s.icon}`}></i>
-                </a>
-              ))}
-            </div>
           </div>
 
           {/* Spacer on large screens */}
@@ -118,14 +79,14 @@ export default function Footer() {
             <ul className="list-unstyled mb-0" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {insuranceLinks.map(item => (
                 <li key={item}>
-                  <a
-                    href="#"
+                  <Link
+                    to="/plans"
                     style={{ color: '#94a3b8', fontSize: '0.875rem', textDecoration: 'none', transition: 'color 0.15s' }}
                     onMouseOver={e => e.currentTarget.style.color = '#fff'}
                     onMouseOut={e => e.currentTarget.style.color = '#94a3b8'}
                   >
                     {item}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
