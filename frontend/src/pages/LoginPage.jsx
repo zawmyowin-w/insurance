@@ -41,7 +41,7 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="text-center mb-4">
           <div className="auth-logo-wrap">
-            <img src="/logo.png" alt="DICP Logo" className="auth-logo-img" />
+            <img src="/logo-transparent.png" alt="DICP Logo" className="auth-logo-img" />
           </div>
           <h2 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.25rem', fontSize: '1.5rem' }}>
             {t('auth.welcomeBack')}
