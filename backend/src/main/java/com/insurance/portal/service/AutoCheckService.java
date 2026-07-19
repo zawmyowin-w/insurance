@@ -28,6 +28,7 @@ public class AutoCheckService {
 
     private final PaymentRepository           paymentRepo;
     private final PolicyApplicationRepository appRepo;
+    private final ClaimRepository             claimRepo;
     private final NotificationRepository      notifRepo;
     private final AutoCheckLogRepository      logRepo;
     private final ObjectMapper                objectMapper;
@@ -41,6 +42,9 @@ public class AutoCheckService {
 
     @Value("${app.autocheck.min-pending-hours:1}")
     private int minPendingHours;
+
+    @Value("${app.autocheck.revision-cleanup-cron:0 0 3 * * *}")
+    private String revisionCleanupCron;
 
     // ──────────────────────────────────────────────────────────────────────────
     // 1. AUTO-VERIFY PENDING PAYMENTS  —  9:00 AM Myanmar Time (02:30 UTC)
@@ -216,6 +220,85 @@ public class AutoCheckService {
                 approvedApps.size(), reminded, results);
 
         log.info("[AutoCheck] ✅ Reminders complete — sent={}", reminded);
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // 3. AUTO-CANCEL REVISION_REQUESTED FORMS — 3:00 AM UTC daily
+    // ──────────────────────────────────────────────────────────────────────────
+    @Scheduled(cron = "${app.autocheck.revision-cleanup-cron:0 0 3 * * *}")
+    @Transactional
+    public void runRevisionCleanup() {
+        if (!autoCheckEnabled) { log.info("[AutoCheck] Disabled — skipping revision cleanup"); return; }
+        log.info("[AutoCheck] ▶ Revision cleanup started");
+
+        LocalDateTime now = LocalDateTime.now();
+        int cancelledApps = 0, cancelledClaims = 0;
+        List<Map<String, Object>> results = new ArrayList<>();
+
+        // --- Applications ---
+        List<com.insurance.portal.model.PolicyApplication> revisionApps =
+            appRepo.findAllByStatus(com.insurance.portal.model.enums.ApplicationStatus.REVISION_REQUESTED);
+        for (com.insurance.portal.model.PolicyApplication app : revisionApps) {
+            if (app.getRevisionDeadline() == null || now.isBefore(app.getRevisionDeadline())) continue;
+            app.setStatus(com.insurance.portal.model.enums.ApplicationStatus.REJECTED);
+            app.setAdminNote((app.getAdminNote() != null ? app.getAdminNote() + " | " : "")
+                    + "Auto-cancelled: Customer did not respond within 7 days.");
+            appRepo.save(app);
+            cancelledApps++;
+            String customerName = app.getCustomer() != null ? app.getCustomer().getName() : "Customer";
+            String policyName   = app.getInsurancePackage() != null ? app.getInsurancePackage().getName() : "Policy";
+            sendNotification(app.getCustomer(),
+                    "❌ Application Auto-Cancelled",
+                    String.format("%s Application ကို 7 ရက်အတွင်း ပြင်ဆင်မပေးသောကြောင့် " +
+                            "System မှ အလိုအလျောက် ပယ်ချလိုက်ပါသည်။ (Policy: %s)", customerName, policyName),
+                    NotificationType.REJECTION);
+            results.add(Map.of("type", "APPLICATION", "id", app.getId(), "customer", customerName, "policy", policyName));
+            log.info("[AutoCheck] ❌ Auto-cancelled application #{} for {}", app.getId(), customerName);
+        }
+
+        // --- Claims ---
+        List<com.insurance.portal.model.Claim> revisionClaims =
+            claimRepo.findAllByStatus(com.insurance.portal.model.enums.ClaimStatus.REVISION_REQUESTED);
+        for (com.insurance.portal.model.Claim claim : revisionClaims) {
+            if (claim.getRevisionDeadline() == null || now.isBefore(claim.getRevisionDeadline())) continue;
+            claim.setStatus(com.insurance.portal.model.enums.ClaimStatus.REJECTED);
+            claim.setAdminNote((claim.getAdminNote() != null ? claim.getAdminNote() + " | " : "")
+                    + "Auto-cancelled: Customer did not respond within 7 days.");
+            claimRepo.save(claim);
+            cancelledClaims++;
+            String customerName = claim.getCustomer() != null ? claim.getCustomer().getName() : "Customer";
+            sendNotification(claim.getCustomer(),
+                    "❌ Claim Auto-Cancelled",
+                    String.format("%s Claim ကို 7 ရက်အတွင်း ပြင်ဆင်မပေးသောကြောင့် " +
+                            "System မှ အလိုအလျောက် ပယ်ချလိုက်ပါသည်။ Claim ID: #%d", customerName, claim.getId()),
+                    NotificationType.REJECTION);
+            results.add(Map.of("type", "CLAIM", "id", claim.getId(), "customer", customerName));
+            log.info("[AutoCheck] ❌ Auto-cancelled claim #{} for {}", claim.getId(), customerName);
+        }
+
+        int total = cancelledApps + cancelledClaims;
+        saveLog("REVISION_CLEANUP",
+                total > 0 ? "SUCCESS" : "SKIPPED",
+                String.format("Applications ပယ်ချ: %d | Claims ပယ်ချ: %d", cancelledApps, cancelledClaims),
+                revisionApps.size() + revisionClaims.size(), total, results);
+
+        log.info("[AutoCheck] ✅ Revision cleanup complete — apps={} claims={}", cancelledApps, cancelledClaims);
+    }
+
+    @Transactional
+    public Map<String, Object> triggerRevisionCleanup() {
+        log.info("[AutoCheck] Manual trigger: revision cleanup");
+        runRevisionCleanup();
+        return logRepo.findTop1ByCheckTypeOrderByCreatedAtDesc("REVISION_CLEANUP").stream()
+                .findFirst()
+                .<Map<String, Object>>map(l -> {
+                    Map<String, Object> m = new LinkedHashMap<>();
+                    m.put("status",  l.getStatus());
+                    m.put("summary", l.getSummary() != null ? l.getSummary() : "");
+                    m.put("affected", l.getAffectedCount());
+                    return m;
+                })
+                .orElseGet(() -> Map.of("status", "DONE", "summary", ""));
     }
 
     // ──────────────────────────────────────────────────────────────────────────

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import api from '../../services/api'
+import { toast } from 'react-toastify'
 
 const FREQ_LABEL = {
   MONTHLY: 'လစဥ်', QUARTERLY: 'သုံးလတစ်ကြိမ်',
@@ -23,10 +24,12 @@ const TABS = [
 ]
 
 export default function AdminPremiumSchedulePage() {
-  const [entries, setEntries]   = useState([])
-  const [loading, setLoading]   = useState(true)
+  const [entries, setEntries]     = useState([])
+  const [loading, setLoading]     = useState(true)
   const [activeTab, setActiveTab] = useState('ALL')
-  const [search, setSearch]     = useState('')
+  const [search, setSearch]       = useState('')
+  const [expanded, setExpanded]   = useState({})       // appId → full schedule data
+  const [loadingSchedule, setLoadingSchedule] = useState({}) // appId → bool
 
   const fetchData = () => {
     setLoading(true)
@@ -45,11 +48,46 @@ export default function AdminPremiumSchedulePage() {
     return matchTab && matchSearch
   })
 
-  // Count per status for badges
   const counts = entries.reduce((acc, e) => {
     acc[e.scheduleStatus] = (acc[e.scheduleStatus] || 0) + 1
     return acc
   }, {})
+
+  const toggleSchedule = async (appId) => {
+    if (expanded[appId]) {
+      setExpanded(prev => { const n = { ...prev }; delete n[appId]; return n })
+      return
+    }
+    setLoadingSchedule(prev => ({ ...prev, [appId]: true }))
+    try {
+      const res = await api.get(`/admin/applications/${appId}/schedule`)
+      setExpanded(prev => ({ ...prev, [appId]: res.data }))
+    } catch {
+      toast.error('ဇယားဆွဲယူမရပါ')
+    } finally {
+      setLoadingSchedule(prev => ({ ...prev, [appId]: false }))
+    }
+  }
+
+  const downloadPolicy = async (appId, policyNumber) => {
+    try {
+      const res = await api.get(`/admin/applications/${appId}/policy-contract`, { responseType: 'blob' })
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `policy_contract_${policyNumber || appId}.pdf`
+      a.click()
+      window.URL.revokeObjectURL(url)
+    } catch {
+      toast.error('PDF ဒေါင်းလုဒ်မရပါ')
+    }
+  }
+
+  // Summary stats
+  const totalInstallments = entries.reduce((s, e) => s + (e.totalInstallments || 0), 0)
+  const totalPaid         = entries.reduce((s, e) => s + (e.paidInstallments || 0), 0)
+  const totalOverdue      = counts['OVERDUE'] || 0
+  const totalDue          = counts['DUE'] || 0
 
   return (
     <div className="fade-in">
@@ -57,7 +95,7 @@ export default function AdminPremiumSchedulePage() {
       <div className="mb-4">
         <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Premium Payment Schedule</h4>
         <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>
-          Customer များ၏ လစဥ်/နှစ်စဥ် Premium ပေးသွင်းမှု အခြေအနေ
+          Customer များ၏ လစဥ်/နှစ်စဥ် Premium ပေးသွင်းမှု အပြည့်အစုံ စီမံခန့်ခွဲမှု
         </p>
       </div>
 
@@ -88,9 +126,33 @@ export default function AdminPremiumSchedulePage() {
         </div>
       )}
 
+      {/* Progress bar */}
+      {!loading && totalInstallments > 0 && (
+        <div className="card-custom mb-4" style={{ padding: '0.85rem 1rem' }}>
+          <div className="d-flex justify-content-between align-items-center mb-2">
+            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+              <i className="bi bi-graph-up me-1" style={{ color: '#16a34a' }}></i>
+              Overall Premium Collection Progress
+            </span>
+            <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#16a34a' }}>
+              {totalPaid} / {totalInstallments} ({Math.round(totalPaid / totalInstallments * 100)}%)
+            </span>
+          </div>
+          <div style={{ height: 10, background: 'var(--bg-secondary)', borderRadius: 99, overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${Math.round(totalPaid / totalInstallments * 100)}%`, background: 'linear-gradient(90deg, #16a34a, #22c55e)', borderRadius: 99, transition: 'width 0.5s' }}></div>
+          </div>
+          <div className="d-flex gap-4 mt-2" style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+            <span><i className="bi bi-check-circle-fill me-1" style={{ color: '#16a34a' }}></i>Paid: {totalPaid}</span>
+            <span><i className="bi bi-exclamation-triangle-fill me-1" style={{ color: '#dc2626' }}></i>Overdue: {totalOverdue}</span>
+            <span><i className="bi bi-clock-fill me-1" style={{ color: '#d97706' }}></i>Due: {totalDue}</span>
+            <span><i className="bi bi-calendar me-1" style={{ color: '#64748b' }}></i>Total: {totalInstallments}</span>
+          </div>
+        </div>
+      )}
+
       {/* Tabs + Search */}
       <div className="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
-        <div className="d-flex gap-1" style={{ background: 'var(--bg-secondary)', padding: '0.3rem', borderRadius: 12 }}>
+        <div className="d-flex gap-1 flex-wrap" style={{ background: 'var(--bg-secondary)', padding: '0.3rem', borderRadius: 12 }}>
           {TABS.map(tab => (
             <button key={tab.key} type="button" onClick={() => setActiveTab(tab.key)}
               style={{
@@ -133,69 +195,181 @@ export default function AdminPremiumSchedulePage() {
           </p>
         </div>
       ) : (
-        <div className="card-custom p-0">
-          <div className="table-custom">
-            <table className="w-100">
-              <thead>
-                <tr>
-                  {['Customer', 'Policy', 'ငွေပေးချေပုံစံ', 'ကာလ', 'ပေးသွင်းရမည်', 'ရက်', 'ပေးပြီး/စုစုပေါင်း', 'အခြေအနေ'].map(h => (
-                    <th key={h}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((e, i) => {
-                  const meta = STATUS_META[e.scheduleStatus] || STATUS_META.UPCOMING
-                  return (
-                    <tr key={`${e.applicationId}-${i}`}>
-                      <td>
-                        <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{e.customerName}</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{e.customerEmail}</div>
-                      </td>
-                      <td style={{ fontSize: '0.85rem' }}>
-                        <div style={{ fontWeight: 500 }}>{e.packageName}</div>
-                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{e.policyNumber}</div>
-                      </td>
-                      <td style={{ fontSize: '0.82rem' }}>
-                        {FREQ_LABEL[e.paymentFrequency] || e.paymentFrequency || '—'}
-                      </td>
-                      <td style={{ fontSize: '0.82rem', fontWeight: 600 }}>
-                        {e.periodLabel || `Period ${e.currentPeriodNumber}`}
-                      </td>
-                      <td>
-                        <span style={{ fontWeight: 700, color: 'var(--primary)' }}>
-                          {e.installmentAmount != null ? Number(e.installmentAmount).toLocaleString() : '—'} <span style={{ fontSize: '0.75rem', fontWeight: 500 }}>MMK</span>
+        <div className="d-flex flex-column gap-2">
+          {filtered.map((e, i) => {
+            const meta = STATUS_META[e.scheduleStatus] || STATUS_META.UPCOMING
+            const isExpanded = !!expanded[e.applicationId]
+            const isLoadingSched = !!loadingSchedule[e.applicationId]
+            const schedule = expanded[e.applicationId]
+
+            return (
+              <div key={`${e.applicationId}-${i}`} className="card-custom p-0" style={{ overflow: 'hidden' }}>
+                {/* Main row */}
+                <div className="d-flex align-items-center flex-wrap gap-3" style={{ padding: '0.85rem 1rem' }}>
+                  {/* Customer */}
+                  <div style={{ flex: '1 1 160px', minWidth: 0 }}>
+                    <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.customerName}</div>
+                    <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.customerEmail}</div>
+                  </div>
+
+                  {/* Policy */}
+                  <div style={{ flex: '1 1 140px', minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.packageName}</div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{e.policyNumber}</div>
+                  </div>
+
+                  {/* Frequency */}
+                  <div style={{ flex: '0 0 auto' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 600, background: 'var(--bg-secondary)', padding: '0.2rem 0.55rem', borderRadius: 99, color: 'var(--text-secondary)' }}>
+                      {FREQ_LABEL[e.paymentFrequency] || e.paymentFrequency || '—'}
+                    </span>
+                  </div>
+
+                  {/* Period */}
+                  <div style={{ flex: '0 0 auto', textAlign: 'center' }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                      {e.periodLabel || `Period ${e.currentPeriodNumber}`}
+                    </div>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>ကာလ</div>
+                  </div>
+
+                  {/* Amount */}
+                  <div style={{ flex: '0 0 auto', textAlign: 'right' }}>
+                    <div style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '0.95rem' }}>
+                      {e.installmentAmount != null ? Number(e.installmentAmount).toLocaleString() : '—'}
+                      <span style={{ fontSize: '0.7rem', fontWeight: 500, marginLeft: 2 }}>MMK</span>
+                    </div>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                      {e.dueDate ? new Date(e.dueDate + 'T00:00:00').toLocaleDateString() : '—'}
+                    </div>
+                  </div>
+
+                  {/* Paid progress */}
+                  <div style={{ flex: '0 0 80px' }}>
+                    <div className="d-flex align-items-center gap-1 mb-1">
+                      <span style={{ fontWeight: 700, color: e.paidInstallments === e.totalInstallments ? '#16a34a' : 'var(--text-primary)', fontSize: '0.85rem' }}>
+                        {e.paidInstallments}
+                      </span>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>/ {e.totalInstallments}</span>
+                    </div>
+                    <div style={{ height: 5, borderRadius: 99, background: 'var(--bg-secondary)', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', borderRadius: 99, background: '#16a34a', width: `${e.totalInstallments > 0 ? (e.paidInstallments / e.totalInstallments) * 100 : 0}%` }}></div>
+                    </div>
+                  </div>
+
+                  {/* Status badge */}
+                  <div style={{ flex: '0 0 auto' }}>
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 4,
+                      fontSize: '0.72rem', fontWeight: 700, padding: '0.25rem 0.6rem',
+                      borderRadius: 99, background: meta.bg, color: meta.color,
+                    }}>
+                      <i className={`bi ${meta.icon}`}></i>{meta.label}
+                    </span>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="d-flex gap-1 flex-wrap" style={{ flex: '0 0 auto' }}>
+                    <button
+                      className="btn-outline-custom"
+                      style={{ padding: '0.3rem 0.65rem', fontSize: '0.75rem' }}
+                      onClick={() => toggleSchedule(e.applicationId)}
+                      disabled={isLoadingSched}>
+                      {isLoadingSched
+                        ? <span className="spinner-border spinner-border-sm"></span>
+                        : <><i className={`bi bi-${isExpanded ? 'chevron-up' : 'calendar3'} me-1`}></i>{isExpanded ? 'ပိတ်' : 'ဇယားကြည့်'}</>}
+                    </button>
+                    <button
+                      className="btn-outline-custom"
+                      style={{ padding: '0.3rem 0.65rem', fontSize: '0.75rem' }}
+                      title="Policy Contract PDF ဒေါင်းလုဒ်"
+                      onClick={() => downloadPolicy(e.applicationId, e.policyNumber)}>
+                      <i className="bi bi-file-earmark-pdf me-1" style={{ color: '#dc2626' }}></i>PDF
+                    </button>
+                  </div>
+                </div>
+
+                {/* Expanded: full installment schedule */}
+                {isExpanded && schedule && (
+                  <div style={{ borderTop: '1px solid var(--border)', background: 'var(--bg-secondary)' }}>
+                    {/* Schedule header */}
+                    <div style={{ padding: '0.65rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                      <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                        <i className="bi bi-calendar-check me-1" style={{ color: 'var(--primary)' }}></i>
+                        ပေးသွင်းမှု ဇယားအပြည့်အစုံ — {schedule.packageName}
+                      </div>
+                      <div className="d-flex gap-3" style={{ fontSize: '0.75rem' }}>
+                        <span style={{ color: '#16a34a', fontWeight: 700 }}>
+                          <i className="bi bi-check-circle-fill me-1"></i>ပေးပြီး: {schedule.paidCount}/{schedule.totalInstallments}
                         </span>
-                      </td>
-                      <td style={{ fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
-                        {e.dueDate ? new Date(e.dueDate + 'T00:00:00').toLocaleDateString() : '—'}
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <span style={{ fontWeight: 700, color: e.paidInstallments === e.totalInstallments ? '#16a34a' : 'var(--text-primary)' }}>
-                            {e.paidInstallments}
-                          </span>
-                          <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>/ {e.totalInstallments}</span>
-                        </div>
-                        <div style={{ marginTop: 3, height: 4, borderRadius: 99, background: 'var(--bg-secondary)', overflow: 'hidden' }}>
-                          <div style={{ height: '100%', borderRadius: 99, background: '#16a34a', width: `${(e.paidInstallments / e.totalInstallments) * 100}%` }}></div>
-                        </div>
-                      </td>
-                      <td>
-                        <span style={{
-                          display: 'inline-flex', alignItems: 'center', gap: 5,
-                          fontSize: '0.72rem', fontWeight: 700, padding: '0.25rem 0.6rem',
-                          borderRadius: 99, background: meta.bg, color: meta.color,
-                        }}>
-                          <i className={`bi ${meta.icon}`}></i>{meta.label}
+                        <span style={{ color: 'var(--text-muted)' }}>
+                          တစ်ကြိမ်: {schedule.installmentAmount != null ? Number(schedule.installmentAmount).toLocaleString() : '—'} MMK
                         </span>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+                        <span style={{ color: 'var(--text-muted)' }}>
+                          {FREQ_LABEL[schedule.paymentFrequency] || schedule.paymentFrequency || '—'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Installment grid */}
+                    <div style={{ padding: '0 1rem 1rem', overflowX: 'auto' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 8, minWidth: 400 }}>
+                        {(schedule.schedule || []).map(inst => {
+                          const im = STATUS_META[inst.status] || STATUS_META.UPCOMING
+                          return (
+                            <div key={inst.periodNumber} style={{
+                              background: 'var(--bg-primary)',
+                              border: `1px solid ${im.color}40`,
+                              borderLeft: `3px solid ${im.color}`,
+                              borderRadius: 8,
+                              padding: '0.6rem 0.75rem',
+                            }}>
+                              <div className="d-flex justify-content-between align-items-center mb-1">
+                                <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)' }}>
+                                  #{inst.periodNumber}
+                                </span>
+                                <span style={{
+                                  fontSize: '0.65rem', fontWeight: 800, padding: '0.1rem 0.4rem',
+                                  borderRadius: 99, background: im.bg, color: im.color,
+                                }}>
+                                  <i className={`bi ${im.icon} me-1`}></i>{im.label}
+                                </span>
+                              </div>
+                              <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 2 }}>
+                                {inst.periodLabel || `Period ${inst.periodNumber}`}
+                              </div>
+                              <div style={{ fontSize: '0.78rem', fontWeight: 800, color: inst.status === 'PAID' ? '#16a34a' : 'var(--primary)' }}>
+                                {inst.amount != null ? Number(inst.amount).toLocaleString() : '—'} MMK
+                              </div>
+                              <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                                {inst.dueDate ? new Date(inst.dueDate + 'T00:00:00').toLocaleDateString() : '—'}
+                              </div>
+                              {inst.paymentId && (
+                                <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                                  Payment #{inst.paymentId}
+                                  {inst.paymentStatus && <span style={{ marginLeft: 4, fontWeight: 700 }}>({inst.paymentStatus})</span>}
+                                </div>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+
+                      {/* Legend */}
+                      <div className="d-flex gap-3 flex-wrap mt-3" style={{ fontSize: '0.72rem' }}>
+                        {Object.entries(STATUS_META).map(([k, v]) => (
+                          <div key={k} className="d-flex align-items-center gap-1">
+                            <div style={{ width: 10, height: 10, borderRadius: 2, background: v.bg, border: `1px solid ${v.color}` }}></div>
+                            <span style={{ color: v.color, fontWeight: 700 }}>{v.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
       )}
     </div>

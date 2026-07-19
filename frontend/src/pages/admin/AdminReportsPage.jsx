@@ -8,19 +8,17 @@ const TYPE_COLORS = {
   PROPERTY:  '#ca8a04', OTHER:    '#64748b',
 }
 const typeColor = t => TYPE_COLORS[t] || TYPE_COLORS.OTHER
-
-// ── Myanmar month labels ─────────────────────────────────────────────────────
 const MMK = n => (n == null ? '—' : Number(n).toLocaleString() + ' MMK')
 const Pct = n => (n == null ? '—' : Number(n).toFixed(1) + '%')
 const shortMonth = key => key?.split(' ')[0] || key
 
-// ── SVG helpers ──────────────────────────────────────────────────────────────
-function BarChart({ data, color = 'var(--primary)', height = 180, label = '' }) {
+// ── SVG Chart Primitives ──────────────────────────────────────────────────────
+function BarChart({ data, color = 'var(--primary)', height = 180 }) {
   const entries = Object.entries(data || {})
   if (!entries.length) return <Empty />
   const vals = entries.map(([, v]) => Number(v))
   if (vals.every(v => v === 0)) return <Empty />
-  const maxV  = Math.max(...vals, 1)
+  const maxV = Math.max(...vals, 1)
   const W = 600, H = height, PAD_L = 60, PAD_B = 28, PAD_T = 16, PAD_R = 8
   const bw = Math.floor((W - PAD_L - PAD_R) / entries.length)
   const barW = Math.max(bw - 6, 4)
@@ -30,7 +28,6 @@ function BarChart({ data, color = 'var(--primary)', height = 180, label = '' }) 
   const yTicks = 4
   return (
     <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display: 'block', overflow: 'visible' }}>
-      {/* Y grid */}
       {Array.from({ length: yTicks + 1 }, (_, i) => {
         const yv = (maxV * i) / yTicks
         const y  = H - PAD_B - (i / yTicks) * (H - PAD_T - PAD_B)
@@ -43,12 +40,10 @@ function BarChart({ data, color = 'var(--primary)', height = 180, label = '' }) 
           </g>
         )
       })}
-      {/* Bars */}
       {entries.map(([k, v], i) => (
         <g key={k}>
           <rect x={barX(i)} y={barY(Number(v))} width={barW} height={barH(Number(v))}
-            fill={Array.isArray(color) ? color[i % color.length] : color}
-            rx={3} opacity={0.9} />
+            fill={Array.isArray(color) ? color[i % color.length] : color} rx={3} opacity={0.9} />
           <text x={barX(i) + barW / 2} y={barY(Number(v)) - 3} textAnchor="middle" fontSize={8.5} fill="var(--text-muted)" fontWeight={600}>
             {Number(v) >= 1000000 ? (Number(v)/1000000).toFixed(1)+'M' : Number(v) >= 1000 ? (Number(v)/1000).toFixed(0)+'K' : Math.round(Number(v))}
           </text>
@@ -57,7 +52,6 @@ function BarChart({ data, color = 'var(--primary)', height = 180, label = '' }) 
           </text>
         </g>
       ))}
-      {/* Axis */}
       <line x1={PAD_L} x2={PAD_L} y1={PAD_T} y2={H - PAD_B} stroke="var(--border)" strokeWidth={1} />
       <line x1={PAD_L} x2={W - PAD_R} y1={H - PAD_B} y2={H - PAD_B} stroke="var(--border)" strokeWidth={1} />
     </svg>
@@ -102,7 +96,6 @@ function GroupedBarChart({ data1, data2, label1 = 'ဝင်ငွေ', label2 =
       })}
       <line x1={PAD_L} x2={PAD_L} y1={PAD_T} y2={H - PAD_B} stroke="var(--border)" strokeWidth={1} />
       <line x1={PAD_L} x2={W - PAD_R} y1={H - PAD_B} y2={H - PAD_B} stroke="var(--border)" strokeWidth={1} />
-      {/* legend */}
       <rect x={PAD_L} y={4} width={10} height={10} fill="#16a34a" rx={2} />
       <text x={PAD_L + 13} y={13} fontSize={9} fill="var(--text-secondary)">{label1}</text>
       <rect x={PAD_L + 70} y={4} width={10} height={10} fill="#dc2626" rx={2} />
@@ -122,9 +115,6 @@ function PieChart({ data, colors, size = 180 }) {
     const start = angle
     const end   = angle + pct * 2 * Math.PI
     angle = end
-    const lAngle = start + (end - start) / 2
-    const lx = cx + (r + 12) * Math.cos(lAngle)
-    const ly = cy + (r + 12) * Math.sin(lAngle)
     const x1s = cx + r * Math.cos(start), y1s = cy + r * Math.sin(start)
     const x1e = cx + r * Math.cos(end),   y1e = cy + r * Math.sin(end)
     const x2s = cx + ri * Math.cos(end),  y2s = cy + ri * Math.sin(end)
@@ -132,7 +122,7 @@ function PieChart({ data, colors, size = 180 }) {
     const large = pct > 0.5 ? 1 : 0
     const d = `M${x1s},${y1s} A${r},${r} 0 ${large} 1 ${x1e},${y1e} L${x2s},${y2s} A${ri},${ri} 0 ${large} 0 ${x2e},${y2e} Z`
     const clr = colors ? (colors[k] || '#64748b') : `hsl(${(i * 47) % 360}, 65%, 52%)`
-    return { k, v, pct, d, clr, lx, ly, lAngle }
+    return { k, v, pct, d, clr }
   })
   return (
     <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size} style={{ overflow: 'visible' }}>
@@ -193,7 +183,10 @@ function StatCard({ label, value, icon, color, bg, sub }) {
 const TABS = [
   { key: 'overview',  label: 'ဘဏ္ဍာရေး အနှစ်ချုပ်', icon: 'bi-graph-up-arrow' },
   { key: 'bytype',    label: 'Insurance Type',         icon: 'bi-pie-chart'      },
-  { key: 'wallet',    label: 'Admin Wallet',            icon: 'bi-wallet2'        },
+  { key: 'wallet',    label: 'Premium Wallet',          icon: 'bi-wallet2'        },
+  { key: 'claims',    label: 'Claim ထုတ်ပေးမှု',        icon: 'bi-cash-stack'     },
+  { key: 'agents',    label: 'Agent Performance',       icon: 'bi-person-badge'   },
+  { key: 'packages',  label: 'Plan Popularity',         icon: 'bi-star'           },
   { key: 'analytics', label: 'Application Analytics',  icon: 'bi-bar-chart-line' },
 ]
 
@@ -237,11 +230,15 @@ export default function AdminReportsPage() {
   const profitMargin    = Number(reports.profitMarginPct || 0)
   const combinedRatio   = Number(reports.combinedRatioPct|| 0)
 
-  // This month revenue
   const thisMonthKey = Object.keys(monRev).at(-1)
   const thisMonthRev = Number(monRev[thisMonthKey] || 0)
   const prevMonthRev = Number(Object.values(monRev).at(-2) || 0)
   const revGrowth = prevMonthRev > 0 ? ((thisMonthRev - prevMonthRev) / prevMonthRev * 100).toFixed(1) : null
+
+  const agentPerformance       = reports.agentPerformance       || []
+  const packagePopularity      = reports.packagePopularity      || []
+  const claimsPayoutByCustomer = reports.claimsPayoutByCustomer || []
+  const claimsByType           = reports.claimsByType           || {}
 
   return (
     <div className="fade-in">
@@ -252,13 +249,13 @@ export default function AdminReportsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="d-flex gap-1 mb-4 flex-wrap" style={{ background: 'var(--bg-secondary)', padding: '0.3rem', borderRadius: 12, width: 'fit-content' }}>
+      <div className="d-flex gap-1 mb-4 flex-wrap" style={{ background: 'var(--bg-secondary)', padding: '0.3rem', borderRadius: 12, width: 'fit-content', maxWidth: '100%' }}>
         {TABS.map(t => (
           <button key={t.key} type="button" onClick={() => setTab(t.key)}
             style={{
-              padding: '0.45rem 1rem', borderRadius: 9, border: 'none', cursor: 'pointer',
-              fontWeight: 700, fontSize: '0.82rem', transition: 'all .15s',
-              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '0.45rem 0.9rem', borderRadius: 9, border: 'none', cursor: 'pointer',
+              fontWeight: 700, fontSize: '0.78rem', transition: 'all .15s',
+              display: 'flex', alignItems: 'center', gap: 5,
               background: tab === t.key ? 'var(--bg-primary)' : 'transparent',
               color: tab === t.key ? 'var(--text-primary)' : 'var(--text-muted)',
               boxShadow: tab === t.key ? '0 1px 4px rgba(0,0,0,.08)' : 'none',
@@ -272,7 +269,6 @@ export default function AdminReportsPage() {
       {/* ── TAB: Financial Overview ── */}
       {tab === 'overview' && (
         <div className="fade-in d-flex flex-column gap-4">
-          {/* Hero banner */}
           <div className="card-custom" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #1d4ed8 100%)', border: 'none', padding: '1.5rem' }}>
             <div className="row align-items-center g-3">
               <div className="col-12 col-md-5">
@@ -310,7 +306,6 @@ export default function AdminReportsPage() {
             </div>
           </div>
 
-          {/* Myanmar insurance KPI gauges */}
           <div className="card-custom">
             <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
               <i className="bi bi-speedometer2 me-2" style={{ color: 'var(--primary)' }}></i>
@@ -332,7 +327,6 @@ export default function AdminReportsPage() {
             </div>
           </div>
 
-          {/* Profit breakdown cards */}
           <div className="row g-3">
             {[
               { label: 'စုစုပေါင်း Premium ဝင်ငွေ', value: MMK(totalRevenue), icon: 'bi-arrow-down-circle-fill', color: '#16a34a', bg: '#dcfce7' },
@@ -346,7 +340,6 @@ export default function AdminReportsPage() {
             ))}
           </div>
 
-          {/* Monthly revenue bar chart */}
           <div className="card-custom">
             <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
               <i className="bi bi-bar-chart me-2" style={{ color: 'var(--primary)' }}></i>
@@ -361,7 +354,6 @@ export default function AdminReportsPage() {
       {tab === 'bytype' && (
         <div className="fade-in d-flex flex-column gap-4">
           <div className="row g-4">
-            {/* Pie chart */}
             <div className="col-12 col-lg-5">
               <div className="card-custom h-100">
                 <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
@@ -386,24 +378,44 @@ export default function AdminReportsPage() {
                 </div>
               </div>
             </div>
-
-            {/* Revenue by type bar chart */}
             <div className="col-12 col-lg-7">
               <div className="card-custom h-100">
                 <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
                   <i className="bi bi-bar-chart me-2" style={{ color: 'var(--primary)' }}></i>
                   Insurance Type အလိုက် ဝင်ငွေ (MMK)
                 </h6>
-                <BarChart
-                  data={revByType}
-                  color={Object.keys(revByType).map(typeColor)}
-                  height={200}
-                />
+                <BarChart data={revByType} color={Object.keys(revByType).map(typeColor)} height={200} />
               </div>
             </div>
           </div>
 
-          {/* Per-type detail table */}
+          {/* Profit/Loss by type */}
+          <div className="card-custom">
+            <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
+              <i className="bi bi-bar-chart-steps me-2" style={{ color: 'var(--primary)' }}></i>
+              Insurance Type အလိုက် Claim ထုတ်ပေးမှု (ပြီးခဲ့သော ၁၂ လ)
+            </h6>
+            {Object.keys(claimsByType).length === 0 ? <Empty /> : (
+              <div className="d-flex flex-column gap-3">
+                {Object.entries(claimsByType).map(([type, monthData]) => {
+                  const typeTotal = Object.values(monthData).reduce((s, v) => s + Number(v), 0)
+                  return (
+                    <div key={type}>
+                      <div className="d-flex justify-content-between mb-1">
+                        <div className="d-flex align-items-center gap-2">
+                          <div style={{ width: 10, height: 10, borderRadius: 2, background: typeColor(type) }}></div>
+                          <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)' }}>{type}</span>
+                        </div>
+                        <span style={{ fontWeight: 800, fontSize: '0.85rem', color: '#dc2626' }}>{typeTotal.toLocaleString()} MMK</span>
+                      </div>
+                      <BarChart data={monthData} color={typeColor(type)} height={100} />
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
           <div className="card-custom p-0">
             <div style={{ padding: '1rem 1.25rem 0.75rem', fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)', borderBottom: '1px solid var(--border)' }}>
               <i className="bi bi-table me-2" style={{ color: 'var(--primary)' }}></i>
@@ -413,15 +425,16 @@ export default function AdminReportsPage() {
               <table className="w-100">
                 <thead>
                   <tr>
-                    {['Insurance Type', 'Active Policies', 'ဝင်ငွေ (MMK)', 'Policy တစ်ခုမျှ ဝင်ငွေ', 'ဝင်ငွေ အချိုး'].map(h => <th key={h}>{h}</th>)}
+                    {['Insurance Type', 'Active Policies', 'ဝင်ငွေ Premium (MMK)', 'Claim ထုတ် (MMK)', 'Profit/Loss (MMK)', 'ဝင်ငွေ အချိုး'].map(h => <th key={h}>{h}</th>)}
                   </tr>
                 </thead>
                 <tbody>
                   {Object.entries(byType).sort((a, b) => Number(revByType[b[0]] || 0) - Number(revByType[a[0]] || 0)).map(([type, count]) => {
                     const rev = Number(revByType[type] || 0)
+                    const claimsPaid = Object.values(claimsByType[type] || {}).reduce((s, v) => s + Number(v), 0)
+                    const profit = rev - claimsPaid
                     const totalRev = Object.values(revByType).reduce((s, v) => s + Number(v), 0)
                     const pct = totalRev > 0 ? (rev / totalRev * 100).toFixed(1) : 0
-                    const perPolicy = Number(count) > 0 ? Math.round(rev / Number(count)) : 0
                     return (
                       <tr key={type}>
                         <td>
@@ -431,8 +444,11 @@ export default function AdminReportsPage() {
                           </div>
                         </td>
                         <td style={{ fontWeight: 600 }}>{count}</td>
-                        <td style={{ fontWeight: 700, color: 'var(--primary)' }}>{rev.toLocaleString()}</td>
-                        <td style={{ fontSize: '0.83rem', color: 'var(--text-secondary)' }}>{perPolicy.toLocaleString()}</td>
+                        <td style={{ fontWeight: 700, color: '#16a34a' }}>{rev.toLocaleString()}</td>
+                        <td style={{ fontWeight: 700, color: '#dc2626' }}>{claimsPaid.toLocaleString()}</td>
+                        <td style={{ fontWeight: 800, color: profit >= 0 ? '#16a34a' : '#dc2626' }}>
+                          {profit >= 0 ? '+' : ''}{profit.toLocaleString()}
+                        </td>
                         <td>
                           <div className="d-flex align-items-center gap-2">
                             <div style={{ flex: 1, height: 6, background: 'var(--bg-secondary)', borderRadius: 99, overflow: 'hidden' }}>
@@ -452,14 +468,28 @@ export default function AdminReportsPage() {
       )}
 
       {/* ── TAB: Wallet ── */}
-      {tab === 'wallet' && (
-        <WalletTab wallet={wallet} walletLoaded={walletLoaded} />
+      {tab === 'wallet' && <WalletTab wallet={wallet} walletLoaded={walletLoaded} />}
+
+      {/* ── TAB: Claims Payout ── */}
+      {tab === 'claims' && (
+        <ClaimsPayoutTab
+          claimsPayoutByCustomer={claimsPayoutByCustomer}
+          totalClaimsPaid={totalClaimsPaid}
+          monthlyClaims={monClaims}
+          claimsByType={claimsByType}
+          reports={reports}
+        />
       )}
+
+      {/* ── TAB: Agent Performance ── */}
+      {tab === 'agents' && <AgentPerformanceTab agents={agentPerformance} />}
+
+      {/* ── TAB: Package Popularity ── */}
+      {tab === 'packages' && <PackagePopularityTab packages={packagePopularity} />}
 
       {/* ── TAB: Application Analytics ── */}
       {tab === 'analytics' && (
         <div className="fade-in d-flex flex-column gap-4">
-          {/* Stat strip */}
           <div className="row g-3">
             {[
               { label: 'Customers',         value: reports.totalCustomers,       icon: 'bi-people-fill',          color: '#1d4ed8', bg: '#eff6ff' },
@@ -474,8 +504,6 @@ export default function AdminReportsPage() {
               </div>
             ))}
           </div>
-
-          {/* Applications per month bar chart */}
           <div className="card-custom">
             <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
               <i className="bi bi-bar-chart me-2" style={{ color: 'var(--primary)' }}></i>
@@ -483,8 +511,6 @@ export default function AdminReportsPage() {
             </h6>
             <BarChart data={monApps} height={190} />
           </div>
-
-          {/* Application status pie + claims */}
           <div className="row g-4">
             <div className="col-12 col-lg-6">
               <div className="card-custom h-100">
@@ -508,7 +534,6 @@ export default function AdminReportsPage() {
                 </div>
               </div>
             </div>
-
             <div className="col-12 col-lg-6">
               <div className="card-custom h-100">
                 <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
@@ -542,6 +567,366 @@ export default function AdminReportsPage() {
   )
 }
 
+// ── Claims Payout Tab ────────────────────────────────────────────────────────
+function ClaimsPayoutTab({ claimsPayoutByCustomer, totalClaimsPaid, monthlyClaims, claimsByType, reports }) {
+  const [expand, setExpand] = useState(null)
+
+  const totalClaims = reports?.totalClaims || 0
+  const approvedClaims = reports?.approvedClaims || 0
+
+  return (
+    <div className="fade-in d-flex flex-column gap-4">
+      {/* Hero */}
+      <div className="card-custom" style={{ background: 'linear-gradient(135deg, #7f1d1d, #991b1b, #b91c1c)', border: 'none', padding: '1.5rem' }}>
+        <div className="row align-items-center g-3">
+          <div className="col-12 col-md-5">
+            <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>
+              စုစုပေါင်း Claim ထုတ်ပေးပမာဏ (Approved Claims)
+            </div>
+            <div style={{ fontSize: '2rem', fontWeight: 900, color: '#fff', lineHeight: 1 }}>
+              {Number(totalClaimsPaid).toLocaleString()}
+            </div>
+            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem', marginTop: 4 }}>MMK</div>
+          </div>
+          <div className="col-12 col-md-7">
+            <div className="row g-2">
+              {[
+                { l: 'Claim ပေးရမည့် Customer', v: claimsPayoutByCustomer.length + ' ဦး', c: '#fca5a5' },
+                { l: 'Approved Claims', v: approvedClaims + ' ခု', c: '#fde68a' },
+                { l: 'Average per Customer', v: claimsPayoutByCustomer.length > 0 ? Math.round(Number(totalClaimsPaid) / claimsPayoutByCustomer.length).toLocaleString() + ' MMK' : '—', c: '#6ee7b7' },
+                { l: 'Total Claims', v: totalClaims + ' ခု', c: '#c4b5fd' },
+              ].map(x => (
+                <div key={x.l} className="col-6">
+                  <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 10, padding: '0.65rem 0.75rem' }}>
+                    <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.5)', marginBottom: 2 }}>{x.l}</div>
+                    <div style={{ fontWeight: 800, color: x.c, fontSize: '0.95rem' }}>{x.v}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Monthly claims chart */}
+      <div className="card-custom">
+        <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
+          <i className="bi bi-bar-chart me-2" style={{ color: '#dc2626' }}></i>
+          လစဥ် Claim ထုတ်ပေးမှု (MMK) — ပြီးခဲ့သော ၁၂ လ
+        </h6>
+        <BarChart data={monthlyClaims} color="#dc2626" height={180} />
+      </div>
+
+      {/* Claims by type pie */}
+      {Object.keys(claimsByType).length > 0 && (
+        <div className="card-custom">
+          <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
+            <i className="bi bi-pie-chart me-2" style={{ color: 'var(--primary)' }}></i>
+            Insurance Type အလိုက် Claim ထုတ်ပေးမှု
+          </h6>
+          <div className="d-flex align-items-center justify-content-center gap-4 flex-wrap">
+            <PieChart
+              data={Object.fromEntries(Object.entries(claimsByType).map(([t, d]) => [t, Object.values(d).reduce((s, v) => s + Number(v), 0)]))}
+              colors={TYPE_COLORS} size={200}
+            />
+            <div className="d-flex flex-column gap-2">
+              {Object.entries(claimsByType).map(([type, monthData]) => {
+                const total = Object.values(monthData).reduce((s, v) => s + Number(v), 0)
+                return (
+                  <div key={type} className="d-flex align-items-center gap-2">
+                    <div style={{ width: 12, height: 12, borderRadius: 3, background: typeColor(type), flexShrink: 0 }}></div>
+                    <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)' }}>{type}</span>
+                    <span style={{ fontSize: '0.75rem', color: '#dc2626', fontWeight: 700 }}>{total.toLocaleString()} MMK</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Per-customer claim payout list */}
+      <div className="card-custom p-0">
+        <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border)' }}>
+          <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+            <i className="bi bi-people me-2" style={{ color: '#dc2626' }}></i>
+            Customer အလိုက် Claim ထုတ်ပေးမှု
+          </div>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>
+            {claimsPayoutByCustomer.length} ဦးကို Claim ပေးထားပြီး
+          </div>
+        </div>
+        {claimsPayoutByCustomer.length === 0 ? (
+          <div className="text-center py-5" style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+            <i className="bi bi-cash-stack" style={{ fontSize: '2rem', opacity: 0.3, display: 'block', marginBottom: 6 }}></i>
+            Claim ထုတ်ပေးမှု မှတ်တမ်း မရှိသေးပါ
+          </div>
+        ) : (
+          <div>
+            {claimsPayoutByCustomer.map((c, idx) => {
+              const isOpen = expand === idx
+              return (
+                <div key={c.customerId} style={{ borderBottom: idx < claimsPayoutByCustomer.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                  <div
+                    className="d-flex align-items-center justify-content-between flex-wrap gap-2"
+                    style={{ padding: '0.85rem 1.25rem', cursor: 'pointer', background: isOpen ? 'var(--bg-secondary)' : 'transparent', transition: 'background .12s' }}
+                    onClick={() => setExpand(isOpen ? null : idx)}>
+                    <div className="d-flex align-items-center gap-3">
+                      <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'linear-gradient(135deg, #b91c1c, #7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: '0.9rem', flexShrink: 0 }}>
+                        {c.customerName?.charAt(0)?.toUpperCase() || '?'}
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)' }}>{c.customerName}</div>
+                        <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>{c.customerEmail}</div>
+                      </div>
+                    </div>
+                    <div className="d-flex align-items-center gap-3">
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontWeight: 800, fontSize: '1rem', color: '#dc2626' }}>{Number(c.totalPayout).toLocaleString()} <span style={{ fontSize: '0.72rem' }}>MMK</span></div>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{c.claimCount} claim</div>
+                      </div>
+                      <i className={`bi bi-chevron-${isOpen ? 'up' : 'down'}`} style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}></i>
+                    </div>
+                  </div>
+                  {isOpen && c.claims?.length > 0 && (
+                    <div style={{ background: 'var(--bg-secondary)', padding: '0.5rem 1.25rem 0.75rem' }}>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Claim မှတ်တမ်း</div>
+                      <div className="d-flex flex-column gap-2">
+                        {c.claims.map(claim => (
+                          <div key={claim.claimId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6, background: 'var(--bg-primary)', borderRadius: 8, padding: '0.55rem 0.85rem', border: '1px solid var(--border)' }}>
+                            <div className="d-flex align-items-center gap-2">
+                              <i className="bi bi-shield-check" style={{ color: '#16a34a', fontSize: '0.9rem' }}></i>
+                              <div>
+                                <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                                  #{claim.claimId} — {claim.claimType || '—'}
+                                </div>
+                                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                                  {claim.insuranceType && <span style={{ background: '#eff6ff', color: '#1d4ed8', padding: '0.05rem 0.35rem', borderRadius: 3, marginRight: 4, fontWeight: 700 }}>{claim.insuranceType}</span>}
+                                  {claim.approvedAt ? new Date(claim.approvedAt).toLocaleDateString() : '—'}
+                                </div>
+                              </div>
+                            </div>
+                            <span style={{ fontWeight: 800, fontSize: '0.9rem', color: '#dc2626' }}>{Number(claim.amount).toLocaleString()} MMK</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ── Agent Performance Tab ────────────────────────────────────────────────────
+function AgentPerformanceTab({ agents }) {
+  const maxApps = Math.max(...agents.map(a => a.applicationsHandled || 0), 1)
+
+  return (
+    <div className="fade-in d-flex flex-column gap-4">
+      {/* Summary stats */}
+      <div className="row g-3">
+        {[
+          { label: 'Agent စုစုပေါင်း',      value: agents.length,                                                            icon: 'bi-person-badge',  color: '#1d4ed8', bg: '#eff6ff' },
+          { label: 'Application စုစုပေါင်း',  value: agents.reduce((s, a) => s + (a.applicationsHandled || 0), 0),           icon: 'bi-file-earmark',  color: '#7c3aed', bg: '#f5f3ff' },
+          { label: 'Approved Applications',   value: agents.reduce((s, a) => s + (a.applicationsApproved || 0), 0),           icon: 'bi-shield-check',  color: '#16a34a', bg: '#f0fdf4' },
+          { label: 'Claims Handled',          value: agents.reduce((s, a) => s + (a.claimsHandled || 0), 0),                  icon: 'bi-clipboard2',    color: '#d97706', bg: '#fffbeb' },
+        ].map(c => (
+          <div key={c.label} className="col-6 col-md-3">
+            <StatCard {...c} />
+          </div>
+        ))}
+      </div>
+
+      {/* Bar chart of applications per agent */}
+      {agents.length > 0 && (
+        <div className="card-custom">
+          <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
+            <i className="bi bi-bar-chart me-2" style={{ color: 'var(--primary)' }}></i>
+            Agent တစ်ဦးချင်း Application စီမံမှု
+          </h6>
+          <BarChart
+            data={Object.fromEntries(agents.map(a => [a.agentName?.split(' ')[0] || 'Agent', a.applicationsHandled || 0]))}
+            color="#1d4ed8"
+            height={180}
+          />
+        </div>
+      )}
+
+      {/* Agent performance table */}
+      {agents.length === 0 ? (
+        <div className="card-custom text-center py-5">
+          <i className="bi bi-person-badge" style={{ fontSize: '3rem', color: 'var(--border)' }}></i>
+          <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>Agent မရှိသေးပါ</h5>
+        </div>
+      ) : (
+        <div className="card-custom p-0">
+          <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border)', fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+            <i className="bi bi-table me-2" style={{ color: 'var(--primary)' }}></i>
+            Agent အလိုက် Performance အသေးစိတ်
+          </div>
+          <div className="table-custom">
+            <table className="w-100">
+              <thead>
+                <tr>
+                  {['Agent', 'Insurance Type', 'Applications', 'Approved', 'Claims', 'Approval Rate', 'Performance'].map(h => <th key={h}>{h}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {agents.map((agent, i) => {
+                  const rate = agent.approvalRate || 0
+                  const rateColor = rate >= 70 ? '#16a34a' : rate >= 40 ? '#d97706' : '#dc2626'
+                  const barW = maxApps > 0 ? ((agent.applicationsHandled || 0) / maxApps * 100) : 0
+                  return (
+                    <tr key={agent.agentId}>
+                      <td>
+                        <div className="d-flex align-items-center gap-2">
+                          <div style={{ width: 32, height: 32, borderRadius: '50%', background: `hsl(${(i * 67) % 360}, 60%, 50%)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: '0.8rem', flexShrink: 0 }}>
+                            {agent.agentName?.charAt(0)?.toUpperCase() || '?'}
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>{agent.agentName}</div>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{agent.agentEmail}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        {agent.insuranceType ? (
+                          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: typeColor(agent.insuranceType), background: typeColor(agent.insuranceType) + '20', padding: '0.15rem 0.5rem', borderRadius: 99 }}>
+                            {agent.insuranceType}
+                          </span>
+                        ) : <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>ALL</span>}
+                      </td>
+                      <td><span style={{ fontWeight: 700, fontSize: '0.9rem' }}>{agent.applicationsHandled || 0}</span></td>
+                      <td><span style={{ fontWeight: 700, color: '#16a34a' }}>{agent.applicationsApproved || 0}</span></td>
+                      <td><span style={{ fontWeight: 600, color: '#d97706' }}>{agent.claimsHandled || 0}</span></td>
+                      <td>
+                        <span style={{ fontWeight: 800, color: rateColor, fontSize: '0.88rem' }}>{rate.toFixed(1)}%</span>
+                      </td>
+                      <td style={{ minWidth: 120 }}>
+                        <div style={{ height: 8, background: 'var(--bg-secondary)', borderRadius: 99, overflow: 'hidden' }}>
+                          <div style={{ height: '100%', width: `${barW}%`, background: 'var(--primary)', borderRadius: 99 }}></div>
+                        </div>
+                        <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                          {agent.applicationsHandled || 0} / {maxApps} cases
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ── Package Popularity Tab ───────────────────────────────────────────────────
+function PackagePopularityTab({ packages }) {
+  const maxApps = Math.max(...packages.map(p => p.applicationCount || 0), 1)
+
+  return (
+    <div className="fade-in d-flex flex-column gap-4">
+      <div className="row g-3">
+        {[
+          { label: 'Insurance Plan အားလုံး', value: packages.length,                                                icon: 'bi-box-seam',       color: '#7c3aed', bg: '#f5f3ff' },
+          { label: 'Active Plans',            value: packages.filter(p => p.active).length,                         icon: 'bi-check-circle',   color: '#16a34a', bg: '#f0fdf4' },
+          { label: 'လျှောက်မှု စုစုပေါင်း',    value: packages.reduce((s, p) => s + (p.applicationCount || 0), 0), icon: 'bi-file-earmark',   color: '#1d4ed8', bg: '#eff6ff' },
+          { label: 'Plan ဝင်ငွေ စုစုပေါင်း',   value: packages.reduce((s, p) => s + Number(p.revenue || 0), 0).toLocaleString() + ' MMK', icon: 'bi-cash-stack', color: '#d97706', bg: '#fffbeb' },
+        ].map(c => (
+          <div key={c.label} className="col-6 col-md-3">
+            <StatCard {...c} />
+          </div>
+        ))}
+      </div>
+
+      {/* Popularity bar chart */}
+      {packages.length > 0 && (
+        <div className="card-custom">
+          <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
+            <i className="bi bi-bar-chart me-2" style={{ color: 'var(--primary)' }}></i>
+            Plan တစ်ခုချင်း လျှောက်ထားမှု
+          </h6>
+          <BarChart
+            data={Object.fromEntries(packages.slice(0, 15).map(p => [p.packageName?.substring(0, 10) || 'Plan', p.applicationCount || 0]))}
+            color={packages.map(p => typeColor(p.packageType))}
+            height={180}
+          />
+        </div>
+      )}
+
+      {/* Package table */}
+      {packages.length === 0 ? (
+        <div className="card-custom text-center py-5">
+          <i className="bi bi-box-seam" style={{ fontSize: '3rem', color: 'var(--border)' }}></i>
+          <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>Package မရှိသေးပါ</h5>
+        </div>
+      ) : (
+        <div className="card-custom p-0">
+          <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border)', fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+            <i className="bi bi-table me-2" style={{ color: 'var(--primary)' }}></i>
+            Insurance Plan အသေးစိတ် (လူကြိုက်အများဆုံးမှ)
+          </div>
+          <div className="table-custom">
+            <table className="w-100">
+              <thead>
+                <tr>
+                  {['Plan', 'Type', 'Status', 'Applications', 'Approved', 'Approval %', 'ဝင်ငွေ (MMK)', 'Popularity'].map(h => <th key={h}>{h}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {packages.map(pkg => {
+                  const approvalPct = pkg.applicationCount > 0 ? Math.round(pkg.approvedCount / pkg.applicationCount * 100) : 0
+                  const barW = maxApps > 0 ? (pkg.applicationCount / maxApps * 100) : 0
+                  return (
+                    <tr key={pkg.packageId}>
+                      <td>
+                        <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)' }}>{pkg.packageName}</div>
+                      </td>
+                      <td>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 700, color: typeColor(pkg.packageType), background: typeColor(pkg.packageType) + '20', padding: '0.15rem 0.5rem', borderRadius: 99 }}>
+                          {pkg.packageType}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`badge-status ${pkg.active ? 'badge-active' : 'badge-cancelled'}`}>
+                          {pkg.active ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td><span style={{ fontWeight: 700, fontSize: '0.9rem' }}>{pkg.applicationCount || 0}</span></td>
+                      <td><span style={{ fontWeight: 700, color: '#16a34a' }}>{pkg.approvedCount || 0}</span></td>
+                      <td>
+                        <span style={{ fontWeight: 700, color: approvalPct >= 60 ? '#16a34a' : approvalPct >= 30 ? '#d97706' : '#dc2626' }}>
+                          {approvalPct}%
+                        </span>
+                      </td>
+                      <td style={{ fontWeight: 700, color: 'var(--primary)' }}>{Number(pkg.revenue || 0).toLocaleString()}</td>
+                      <td style={{ minWidth: 120 }}>
+                        <div style={{ height: 8, background: 'var(--bg-secondary)', borderRadius: 99, overflow: 'hidden' }}>
+                          <div style={{ height: '100%', width: `${barW}%`, background: typeColor(pkg.packageType), borderRadius: 99 }}></div>
+                        </div>
+                        <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                          {pkg.applicationCount || 0} applications
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Wallet Tab ────────────────────────────────────────────────────────────────
 function WalletTab({ wallet, walletLoaded }) {
   const [expand, setExpand] = useState(null)
@@ -563,22 +948,21 @@ function WalletTab({ wallet, walletLoaded }) {
     )
   }
 
-  const balance    = Number(wallet.walletBalance   || 0)
-  const inflow     = Number(wallet.totalInflow     || 0)
-  const outflow    = Number(wallet.totalOutflow    || 0)
-  const claims     = Number(wallet.totalClaimsPaid || 0)
-  const opExp      = Number(wallet.operatingExpense|| 0)
-  const customers  = wallet.customers || []
-  const monIn      = wallet.monthlyInflow  || {}
-  const monOut     = wallet.monthlyOutflow || {}
+  const balance   = Number(wallet.walletBalance   || 0)
+  const inflow    = Number(wallet.totalInflow     || 0)
+  const outflow   = Number(wallet.totalOutflow    || 0)
+  const claims    = Number(wallet.totalClaimsPaid || 0)
+  const opExp     = Number(wallet.operatingExpense|| 0)
+  const customers = wallet.customers || []
+  const monIn     = wallet.monthlyInflow  || {}
+  const monOut    = wallet.monthlyOutflow || {}
 
   return (
     <div className="fade-in d-flex flex-column gap-4">
-      {/* Wallet balance hero */}
       <div className="card-custom" style={{ background: balance >= 0 ? 'linear-gradient(135deg, #064e3b, #065f46, #047857)' : 'linear-gradient(135deg, #7f1d1d, #991b1b)', border: 'none', padding: '1.5rem' }}>
         <div className="row align-items-center g-3">
           <div className="col-12 col-md-5">
-            <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>Admin Wallet လက်ကျန်ငွေ</div>
+            <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>Premium Wallet လက်ကျန်ငွေ</div>
             <div style={{ fontSize: '2rem', fontWeight: 900, color: '#fff', lineHeight: 1 }}>{balance.toLocaleString()}</div>
             <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.8rem', marginTop: 4 }}>MMK</div>
             <div style={{ marginTop: 10, display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.12)', borderRadius: 8, padding: '0.3rem 0.7rem' }}>
@@ -589,10 +973,10 @@ function WalletTab({ wallet, walletLoaded }) {
           <div className="col-12 col-md-7">
             <div className="row g-2">
               {[
-                { l: 'ဝင်ငွေ (Premium)', v: inflow,  icon: 'bi-arrow-down-circle', c: '#6ee7b7' },
-                { l: 'Claim ထုတ်ပေး',   v: claims,  icon: 'bi-arrow-up-circle',   c: '#fca5a5' },
-                { l: 'ကုန်ကျစရိတ်',     v: opExp,   icon: 'bi-briefcase',         c: '#fde68a' },
-                { l: 'ထွက်ငွေ စုစုပေါင်', v: outflow, icon: 'bi-dash-circle',       c: '#f9a8d4' },
+                { l: 'Premium ဝင်ငွေ', v: inflow,  icon: 'bi-arrow-down-circle', c: '#6ee7b7' },
+                { l: 'Claim ထုတ်ပေး',  v: claims,  icon: 'bi-arrow-up-circle',   c: '#fca5a5' },
+                { l: 'ကုန်ကျစရိတ်',    v: opExp,   icon: 'bi-briefcase',         c: '#fde68a' },
+                { l: 'ထွက်ငွေ စုစုပေါင်', v: outflow, icon: 'bi-dash-circle',    c: '#f9a8d4' },
               ].map(x => (
                 <div key={x.l} className="col-6">
                   <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 10, padding: '0.65rem 0.75rem' }}>
@@ -606,33 +990,29 @@ function WalletTab({ wallet, walletLoaded }) {
         </div>
       </div>
 
-      {/* Monthly inflow vs outflow bar chart */}
       <div className="card-custom">
         <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
           <i className="bi bi-bar-chart me-2" style={{ color: 'var(--primary)' }}></i>
-          လစဥ် ငွေဝင်ငွေထွက် (MMK)
+          လစဥ် Premium ဝင်ငွေ vs Claim ထုတ်ပေး (MMK)
         </h6>
-        <GroupedBarChart data1={monIn} data2={monOut} label1="ဝင်ငွေ" label2="Claim ထုတ်" height={200} />
+        <GroupedBarChart data1={monIn} data2={monOut} label1="Premium ဝင်ငွေ" label2="Claim ထုတ်" height={200} />
       </div>
 
-      {/* Customer transaction list */}
       <div className="card-custom p-0">
         <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
           <div>
             <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
               <i className="bi bi-list-check me-2" style={{ color: 'var(--primary)' }}></i>
-              Customer ငွေပေးချေမှု စာရင်း
+              Customer Premium ပေးချေမှု
             </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>
-              {customers.length} ဦးမှ ငွေပေးချေပြီး
-            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>{customers.length} ဦးမှ ပေးချေပြီး</div>
           </div>
           <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '0.3rem 0.75rem', fontSize: '0.78rem', fontWeight: 700, color: '#16a34a' }}>
             <i className="bi bi-wallet2 me-1"></i>Total: {inflow.toLocaleString()} MMK
           </div>
         </div>
         {customers.length === 0 ? (
-          <div className="text-center py-5" style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>ငွေပေးချေမှု မှတ်တမ်းမရှိသေးပါ</div>
+          <div className="text-center py-5" style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Premium ပေးချေမှု မှတ်တမ်းမရှိသေးပါ</div>
         ) : (
           <div>
             {customers.map((c, idx) => {
@@ -641,8 +1021,7 @@ function WalletTab({ wallet, walletLoaded }) {
                 <div key={c.customerId} style={{ borderBottom: idx < customers.length - 1 ? '1px solid var(--border)' : 'none' }}>
                   <div
                     className="d-flex align-items-center justify-content-between flex-wrap gap-2"
-                    style={{ padding: '0.85rem 1.25rem', cursor: 'pointer', transition: 'background .12s',
-                      background: isOpen ? 'var(--bg-secondary)' : 'transparent' }}
+                    style={{ padding: '0.85rem 1.25rem', cursor: 'pointer', background: isOpen ? 'var(--bg-secondary)' : 'transparent', transition: 'background .12s' }}
                     onClick={() => setExpand(isOpen ? null : idx)}>
                     <div className="d-flex align-items-center gap-3">
                       <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'linear-gradient(135deg, #1d4ed8, #7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: '0.9rem', flexShrink: 0 }}>
@@ -661,7 +1040,6 @@ function WalletTab({ wallet, walletLoaded }) {
                       <i className={`bi bi-chevron-${isOpen ? 'up' : 'down'}`} style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}></i>
                     </div>
                   </div>
-
                   {isOpen && c.transactions?.length > 0 && (
                     <div style={{ background: 'var(--bg-secondary)', padding: '0.5rem 1.25rem 0.75rem' }}>
                       <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Transaction မှတ်တမ်း</div>
@@ -680,9 +1058,7 @@ function WalletTab({ wallet, walletLoaded }) {
                             </div>
                             <div style={{ textAlign: 'right' }}>
                               <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#16a34a' }}>{Number(tx.amount).toLocaleString()} MMK</div>
-                              <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-                                {tx.createdAt ? new Date(tx.createdAt).toLocaleDateString() : '—'}
-                              </div>
+                              <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{tx.createdAt ? new Date(tx.createdAt).toLocaleDateString() : '—'}</div>
                             </div>
                           </div>
                         ))}

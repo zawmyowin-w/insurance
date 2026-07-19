@@ -5,6 +5,7 @@ import com.insurance.portal.model.*;
 import com.insurance.portal.model.enums.*;
 import com.insurance.portal.repository.*;
 import com.insurance.portal.util.FileStorageUtil;
+import com.insurance.portal.util.PremiumScheduleUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.MediaType;
@@ -240,7 +241,124 @@ public class AdminController {
                 .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
                         (a, b) -> b, java.util.LinkedHashMap::new)));
 
+        // ── Agent Performance ──────────────────────────────────────────────
+        List<User> agentUsers = userRepo.findAllByRole(Role.AGENT);
+        List<Map<String, Object>> agentPerformance = agentUsers.stream().map(agent -> {
+            long appsHandled = allApps.stream()
+                .filter(a -> a.getAgent() != null && a.getAgent().getId().equals(agent.getId()))
+                .count();
+            long claimsHandled = allClaims.stream()
+                .filter(c -> c.getAgent() != null && c.getAgent().getId().equals(agent.getId()))
+                .count();
+            long appsApproved = allApps.stream()
+                .filter(a -> a.getAgent() != null && a.getAgent().getId().equals(agent.getId())
+                          && a.getStatus() == ApplicationStatus.APPROVED)
+                .count();
+            long claimsApproved = allClaims.stream()
+                .filter(c -> c.getAgent() != null && c.getAgent().getId().equals(agent.getId())
+                          && c.getStatus() == ClaimStatus.APPROVED)
+                .count();
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("agentId",             agent.getId());
+            m.put("agentName",           agent.getName());
+            m.put("agentEmail",          agent.getEmail());
+            m.put("insuranceType",       agent.getInsuranceType());
+            m.put("applicationsHandled", appsHandled);
+            m.put("claimsHandled",       claimsHandled);
+            m.put("applicationsApproved",appsApproved);
+            m.put("claimsApproved",      claimsApproved);
+            m.put("approvalRate",        appsHandled > 0
+                    ? Math.round((double) appsApproved / appsHandled * 1000.0) / 10.0 : 0.0);
+            return m;
+        }).sorted((a, b) -> Long.compare(
+                (Long) b.get("applicationsHandled"), (Long) a.get("applicationsHandled")))
+          .collect(java.util.stream.Collectors.toList());
+        r.put("agentPerformance", agentPerformance);
+
+        // ── Package Popularity ─────────────────────────────────────────────
+        List<Map<String, Object>> packagePopularity = packageRepo.findAll().stream().map(pkg -> {
+            List<PolicyApplication> pkgApps = allApps.stream()
+                .filter(a -> a.getInsurancePackage() != null
+                          && a.getInsurancePackage().getId().equals(pkg.getId()))
+                .collect(java.util.stream.Collectors.toList());
+            long approved = pkgApps.stream().filter(a -> a.getStatus() == ApplicationStatus.APPROVED).count();
+            java.math.BigDecimal revenue = verifiedPayments.stream()
+                .filter(p -> p.getApplication() != null && p.getApplication().getInsurancePackage() != null
+                          && p.getApplication().getInsurancePackage().getId().equals(pkg.getId()))
+                .map(Payment::getAmount)
+                .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("packageId",       pkg.getId());
+            m.put("packageName",     pkg.getName());
+            m.put("packageType",     pkg.getType());
+            m.put("applicationCount",pkgApps.size());
+            m.put("approvedCount",   (int) approved);
+            m.put("revenue",         revenue);
+            m.put("active",          pkg.isActive());
+            return m;
+        }).sorted((a, b) -> Integer.compare(
+                (Integer) b.get("applicationCount"), (Integer) a.get("applicationCount")))
+          .collect(java.util.stream.Collectors.toList());
+        r.put("packagePopularity", packagePopularity);
+
+        // ── Claims Payout by Customer ──────────────────────────────────────
+        Map<Long, Map<String, Object>> claimsPayoutMap = new LinkedHashMap<>();
+        for (Claim c : allClaims) {
+            if (c.getStatus() != ClaimStatus.APPROVED || c.getCustomer() == null || c.getAmount() == null) continue;
+            Long cid = c.getCustomer().getId();
+            claimsPayoutMap.computeIfAbsent(cid, id -> {
+                Map<String, Object> cm = new LinkedHashMap<>();
+                cm.put("customerId",    c.getCustomer().getId());
+                cm.put("customerName",  c.getCustomer().getName());
+                cm.put("customerEmail", c.getCustomer().getEmail());
+                cm.put("totalPayout",   java.math.BigDecimal.ZERO);
+                cm.put("claimCount",    0);
+                cm.put("claims",        new ArrayList<>());
+                return cm;
+            });
+            Map<String, Object> cm = claimsPayoutMap.get(cid);
+            cm.put("totalPayout", ((java.math.BigDecimal) cm.get("totalPayout")).add(c.getAmount()));
+            cm.put("claimCount", (int) cm.get("claimCount") + 1);
+            @SuppressWarnings("unchecked")
+            List<Object> claimsList = (List<Object>) cm.get("claims");
+            Map<String, Object> entry = new LinkedHashMap<>();
+            entry.put("claimId",      c.getId());
+            entry.put("amount",       c.getAmount());
+            entry.put("claimType",    c.getClaimType());
+            entry.put("insuranceType", c.getApplication() != null && c.getApplication().getInsurancePackage() != null
+                    ? c.getApplication().getInsurancePackage().getType() : null);
+            entry.put("approvedAt",   c.getUpdatedAt());
+            claimsList.add(entry);
+        }
+        r.put("claimsPayoutByCustomer", claimsPayoutMap.values().stream()
+            .sorted(Comparator.comparing(m -> ((java.math.BigDecimal) m.get("totalPayout")).negate()))
+            .collect(java.util.stream.Collectors.toList()));
+
+        // Monthly claims payout by type (last 12 months)
+        Map<String, Map<String, java.math.BigDecimal>> claimsByType = new LinkedHashMap<>();
+        for (Claim c : allClaims) {
+            if (c.getStatus() != ClaimStatus.APPROVED || c.getCreatedAt() == null
+                    || c.getAmount() == null || c.getCreatedAt().isBefore(now.minusMonths(12))) continue;
+            String type  = c.getApplication() != null && c.getApplication().getInsurancePackage() != null
+                    ? c.getApplication().getInsurancePackage().getType() : "OTHER";
+            String month = c.getCreatedAt().getMonth().getDisplayName(
+                    java.time.format.TextStyle.SHORT, java.util.Locale.ENGLISH) + " " + c.getCreatedAt().getYear();
+            claimsByType.computeIfAbsent(type, k -> new LinkedHashMap<>())
+                .merge(month, c.getAmount(), java.math.BigDecimal::add);
+        }
+        r.put("claimsByType", claimsByType);
+
         return r;
+    }
+
+    // ── Application Full Premium Schedule ─────────────────────────────────
+    @GetMapping("/applications/{id}/schedule")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> getApplicationSchedule(@PathVariable Long id) {
+        PolicyApplication app = appRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Application not found"));
+        List<Payment> payments = paymentRepo.findAllByApplication_Id(id);
+        return ResponseEntity.ok(PremiumScheduleUtil.buildSchedule(app, payments));
     }
 
     // ── Wallet ────────────────────────────────────────────────────────
