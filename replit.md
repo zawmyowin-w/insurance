@@ -1,44 +1,39 @@
 # Digital Insurance Claim and Premiums Portal
 
-A full-stack insurance portal for Myanmar, supporting policy plans, premium calculations, claims filing, and an admin dashboard.
+A full-stack insurance management web application for Myanmar, enabling customers to browse plans, apply for policies, submit claims, and track premium payments. Admins can manage plans, users, applications, and claims.
 
 ## Stack
-- **Frontend**: React 19 + Vite (port 5000), Bootstrap 5.3, React Router 7, i18next (EN / Myanmar)
-- **Backend**: Java 17 + Spring Boot 3.2.3, Spring Security (JWT), Hibernate/JPA (port 8080)
-- **Database**: MySQL 8.0 — self-managed inside the container, data persisted in `.mysql/`
 
-## How to run
+| Layer    | Technology                          |
+|----------|-------------------------------------|
+| Frontend | React 18 + Vite, Bootstrap 5, React Router v6 |
+| Backend  | Spring Boot 3.2 (Java 19), REST API at `/api` |
+| Database | MySQL 8.0 (embedded, data in `.mysql/`) |
 
-Two workflows start in parallel via the **Project** run button:
+## How to Run on Replit
 
-| Workflow | Command | Port |
-|---|---|---|
-| Start application | `cd frontend && npm run dev` | 5000 |
-| Backend | `cd backend && bash start-backend.sh` | 8080 |
+Both workflows start automatically:
 
-The `start-backend.sh` script initialises and starts MySQL, applies the schema from `database/schema.sql`, then launches Spring Boot via Maven.
+- **Backend** — starts MySQL (data in `.mysql/`), then Spring Boot on port 8080
+- **Start application** — starts Vite dev server on port 5000
 
-The frontend proxies all `/api/*` requests to the backend (`vite.config.js`), so no hardcoded backend URLs are needed in frontend code.
+The frontend proxies API calls to `http://localhost:8080/api`.
 
-## Default admin credentials
-- Email: `admin@dicp.com.mm`
-- Password: `Admin@123`
+## Default Login
 
-## Environment variables (Replit shared env / `.replit` `[userenv.shared]`)
-| Variable | Purpose |
-|---|---|
-| `CORS_ALLOWED_ORIGINS` | Comma-separated list of allowed CORS origins — must include the current Replit dev domain |
-| `VITE_GOOGLE_CLIENT_ID` | Google OAuth client ID for social login |
+| Role  | Email              | Password  |
+|-------|--------------------|-----------|
+| Admin | admin@dicp.com.mm  | Admin@123 |
 
-## Secrets (set via Replit Secrets)
-| Secret | Purpose |
-|---|---|
-| `JWT_SECRET` | Signs JWT tokens — override the insecure default for production |
-| `DB_PASSWORD` | MySQL root password — currently empty (initialized with `--initialize-insecure`) |
+## Project Structure
 
-## Notes
-- `CORS_ALLOWED_ORIGINS` must be updated if the Replit dev domain changes (visible in `$REPLIT_DEV_DOMAIN`)
-- EmailJS keys (`VITE_EMAILJS_SERVICE_ID`, `VITE_EMAILJS_TEMPLATE_ID`, `VITE_EMAILJS_PUBLIC_KEY`) are optional — needed only if the contact/email features are used
-- The database schema is re-applied on every backend start (idempotent `CREATE TABLE IF NOT EXISTS`)
+```
+frontend/   React + Vite SPA
+backend/    Spring Boot application
+  start-backend.sh   Replit workflow entry point (starts MySQL + Spring Boot)
+database/   SQL seed file (used for local dev reference; Hibernate manages schema on Replit)
+```
 
-## User preferences
+## User Preferences
+
+(None recorded yet)
