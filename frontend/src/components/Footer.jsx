@@ -28,15 +28,7 @@ export default function Footer() {
           {/* Brand */}
           <div className="col-12 col-sm-6 col-lg-4">
             <div className="d-flex align-items-center gap-2 mb-3">
-              <div style={{
-                width: 38, height: 38,
-                background: 'rgba(255,255,255,0.12)',
-                borderRadius: 9,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                flexShrink: 0,
-              }}>
-                <i className="bi bi-shield-check" style={{ color: '#fff', fontSize: '1.1rem' }}></i>
-              </div>
+              <img src="/logo-transparent.png" alt="DICP Logo" style={{ height: 40, width: 'auto' }} />
               <span style={{ color: '#fff', fontWeight: 700, fontSize: '0.95rem', lineHeight: 1.3 }}>
                 {t('brand')}
               </span>
