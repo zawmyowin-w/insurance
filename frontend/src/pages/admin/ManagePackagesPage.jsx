@@ -572,7 +572,7 @@ export default function ManagePackagesPage() {
                           <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--primary)' }}>{pkg.type}</span>
                           {tiers.length > 0 && (
                             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                              · {tiers.map(t => `${t.years}yr@${(t.premiumRate * 100).toFixed(1)}%`).join(', ')}
+                              · {tiers.map(t => `${t.years}yr/${(t.premiumRate * 100).toFixed(1)}%`).join(', ')}
                             </span>
                           )}
                         </div>
