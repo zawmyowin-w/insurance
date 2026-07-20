@@ -67,12 +67,17 @@ export async function sendOtpEmail(email, code, type) {
     const cleanTpl = templateId.trim()
     console.info(`[EmailJS debug] svc="${cleanSvc}" tpl="${cleanTpl}" key_len=${cleanKey.length} key_preview="${cleanKey.slice(0,4)}..."`)
     // EmailJS v4: publicKey must be passed as an object, not a plain string
-    await emailjs.send(
-      cleanSvc,
-      cleanTpl,
-      { to_email: email, otp_code: code, valid_minutes: '5' },
-      { publicKey: cleanKey },
-    )
+    try {
+      await emailjs.send(
+        cleanSvc,
+        cleanTpl,
+        { to_email: email, otp_code: code, valid_minutes: '5' },
+        { publicKey: cleanKey },
+      )
+    } catch (ejsErr) {
+      console.error('[EmailJS send error]', JSON.stringify(ejsErr))
+      throw ejsErr
+    }
   } else {
     throw new Error('EmailJS is not configured. Please set VITE_EMAILJS_SERVICE_ID and VITE_EMAILJS_PUBLIC_KEY.')
   }

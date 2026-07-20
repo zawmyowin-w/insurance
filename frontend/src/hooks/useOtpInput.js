@@ -49,16 +49,13 @@ export function useOtpInput(email, purpose, t) {
   const handleResend = async () => {
     setResending(true)
     try {
-      const code = await issueOtp(email, purpose)
+      await issueOtp(email, purpose)
       setSeconds(300)
       setDigits(Array(BOX_COUNT).fill(''))
       focus(0)
-      if (!import.meta.env.VITE_EMAILJS_SERVICE_ID) {
-        toast.info(`Demo OTP: ${code}`, { autoClose: 15000 })
-      } else {
-        toast.success(t('otp.resent'))
-      }
-    } catch {
+      toast.success(t('otp.resent'))
+    } catch (err) {
+      console.error('[OTP resend error]', err)
       toast.error(t('otp.sendError'))
     } finally {
       setResending(false)
