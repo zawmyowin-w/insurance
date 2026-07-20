@@ -366,8 +366,12 @@ function PlanDetailModal({ plan, onClose, onApply, user, t, freqLabel }) {
     ? calcPremium(calcCoverage, selectedTier.premiumRate, plan.paymentIntervalMonths || 1) : null
 
   const freq = freqLabel(plan.paymentFrequency)
-  const thS = { padding: '0.6rem 0.75rem', textAlign: 'left', fontWeight: 700, fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', borderBottom: '1px solid var(--border)', background: 'var(--bg-secondary)' }
-  const tdS = { padding: '0.55rem 0.75rem', verticalAlign: 'middle', fontSize: '0.84rem' }
+  const thS = {
+    padding: '0.65rem 1rem', textAlign: 'left', fontWeight: 700, fontSize: '0.72rem',
+    color: '#fff', textTransform: 'uppercase', letterSpacing: '0.05em',
+    background: meta.color, borderBottom: 'none',
+  }
+  const tdS = { padding: '0.65rem 1rem', verticalAlign: 'middle', fontSize: '0.85rem', borderBottom: '1px solid var(--border)' }
 
   const TABS = [
     { id: 'overview',  label: t('plans.tabOverview'),  icon: 'bi-grid' },
@@ -378,60 +382,66 @@ function PlanDetailModal({ plan, onClose, onApply, user, t, freqLabel }) {
   ]
 
   const quickStats = [
-    { label: t('plans.coverageMinLabel'), value: `MMK ${fmt(plan.coverageMin)}`,  icon: 'bi-shield',           color: '#1d4ed8' },
-    { label: t('plans.coverageMaxLabel'), value: `MMK ${fmt(plan.coverageMax)}`,  icon: 'bi-shield-fill-check', color: '#16a34a' },
-    { label: t('plans.maxClaimLabel'),    value: plan.maxClaimAmount ? `MMK ${fmt(plan.maxClaimAmount)}` : t('plans.onCoverage'), icon: 'bi-cash-stack', color: '#d97706' },
-    { label: t('plans.paymentModeLabel'), value: freq,                             icon: 'bi-credit-card',      color: '#7c3aed' },
+    { label: t('plans.coverageMinLabel'), value: `MMK ${fmt(plan.coverageMin)}`,  icon: 'bi-shield',            bg: '#eff6ff', border: '#bfdbfe', iconColor: '#1d4ed8', textColor: '#1e3a8a' },
+    { label: t('plans.coverageMaxLabel'), value: `MMK ${fmt(plan.coverageMax)}`,  icon: 'bi-shield-fill-check', bg: '#f0fdf4', border: '#bbf7d0', iconColor: '#16a34a', textColor: '#14532d' },
+    { label: t('plans.maxClaimLabel'),    value: plan.maxClaimAmount ? `MMK ${fmt(plan.maxClaimAmount)}` : t('plans.onCoverage'), icon: 'bi-cash-stack', bg: '#fffbeb', border: '#fde68a', iconColor: '#d97706', textColor: '#92400e' },
+    { label: t('plans.paymentModeLabel'), value: freq || '—',                     icon: 'bi-credit-card',       bg: '#faf5ff', border: '#e9d5ff', iconColor: '#7c3aed', textColor: '#4c1d95' },
   ]
 
   return (
     <div
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
       onClick={onClose}>
       <div onClick={e => e.stopPropagation()}
-        style={{ background: 'var(--bg-primary)', borderRadius: 18, width: '100%', maxWidth: 820, maxHeight: '92vh', display: 'flex', flexDirection: 'column', boxShadow: '0 30px 70px rgba(0,0,0,0.35)' }}>
+        style={{ background: 'var(--bg-card)', borderRadius: 18, width: '100%', maxWidth: 860, maxHeight: '92vh', display: 'flex', flexDirection: 'column', boxShadow: '0 32px 80px rgba(0,0,0,0.4)', overflow: 'hidden' }}>
 
-        {/* Header */}
-        <div style={{ padding: '1.25rem 1.5rem', background: `linear-gradient(135deg, ${meta.color}15, ${meta.bg})`, borderBottom: '1px solid var(--border)', borderRadius: '18px 18px 0 0' }}>
+        {/* Solid colour header */}
+        <div style={{ background: meta.color, padding: '1.4rem 1.6rem 1.1rem', flexShrink: 0 }}>
           <div className="d-flex align-items-start gap-3">
-            <div style={{ width: 52, height: 52, borderRadius: 14, background: meta.bg, border: `2px solid ${meta.color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <i className={`bi ${meta.icon}`} style={{ color: meta.color, fontSize: '1.5rem' }}></i>
+            <div style={{ width: 54, height: 54, borderRadius: 14, background: 'rgba(255,255,255,0.18)', border: '2px solid rgba(255,255,255,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <i className={`bi ${meta.icon}`} style={{ color: '#fff', fontSize: '1.55rem' }}></i>
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '0.72rem', fontWeight: 700, color: meta.color, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{meta.label}</div>
-              <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '1.15rem', lineHeight: 1.2 }}>{plan.name}</div>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.84rem', marginTop: 4, marginBottom: 0 }}>{plan.description}</p>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 2 }}>{meta.label}</div>
+              <div style={{ fontWeight: 800, color: '#fff', fontSize: '1.2rem', lineHeight: 1.2 }}>{plan.name}</div>
+              {plan.description && (
+                <p style={{ color: 'rgba(255,255,255,0.82)', fontSize: '0.84rem', marginTop: 5, marginBottom: 0, lineHeight: 1.5 }}>{plan.description}</p>
+              )}
             </div>
-            <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1.3rem', flexShrink: 0, lineHeight: 1 }}>
+            <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 8, cursor: 'pointer', color: '#fff', fontSize: '1rem', flexShrink: 0, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <i className="bi bi-x-lg"></i>
             </button>
           </div>
+        </div>
 
-          {/* Quick stats */}
-          <div className="row g-2 mt-3">
-            {quickStats.map((s, i) => (
-              <div key={i} className="col-6 col-md-3">
-                <div className="quick-stat-card">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2 }}>
-                    <i className={`bi ${s.icon}`} style={{ color: s.color, fontSize: '0.8rem' }}></i>
-                    <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>{s.label}</span>
-                  </div>
-                  <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.82rem' }}>{s.value}</div>
+        {/* Quick stats strip — white bar below the header */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 0, borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
+          {quickStats.map((s, i) => (
+            <div key={i} style={{
+              padding: '0.85rem 1rem',
+              background: s.bg,
+              borderRight: i < 3 ? '1px solid var(--border)' : 'none',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                <div style={{ width: 26, height: 26, borderRadius: 7, background: '#fff', border: `1px solid ${s.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <i className={`bi ${s.icon}`} style={{ color: s.iconColor, fontSize: '0.78rem' }}></i>
                 </div>
+                <span style={{ fontSize: '0.62rem', color: s.iconColor, textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.04em' }}>{s.label}</span>
               </div>
-            ))}
-          </div>
+              <div style={{ fontWeight: 700, color: s.textColor, fontSize: '0.85rem', lineHeight: 1.2 }}>{s.value}</div>
+            </div>
+          ))}
         </div>
 
         {/* Tabs */}
-        <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', overflowX: 'auto', flexShrink: 0 }}>
+        <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', overflowX: 'auto', flexShrink: 0, background: 'var(--bg-card)' }}>
           {TABS.map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)} style={{
-              padding: '0.75rem 1.1rem', border: 'none', background: 'transparent', cursor: 'pointer',
+              padding: '0.8rem 1.15rem', border: 'none', background: 'transparent', cursor: 'pointer',
               fontWeight: activeTab === tab.id ? 700 : 500, fontSize: '0.82rem',
               color: activeTab === tab.id ? meta.color : 'var(--text-secondary)',
-              borderBottom: activeTab === tab.id ? `2.5px solid ${meta.color}` : '2.5px solid transparent',
-              whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6,
+              borderBottom: activeTab === tab.id ? `3px solid ${meta.color}` : '3px solid transparent',
+              whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6, transition: 'color 0.15s',
             }}>
               <i className={`bi ${tab.icon}`}></i>{tab.label}
             </button>
@@ -439,38 +449,41 @@ function PlanDetailModal({ plan, onClose, onApply, user, t, freqLabel }) {
         </div>
 
         {/* Tab Content */}
-        <div style={{ overflowY: 'auto', padding: '1.25rem 1.5rem', flex: 1 }}>
+        <div style={{ overflowY: 'auto', padding: '1.4rem 1.6rem', flex: 1, background: 'var(--bg-secondary)' }}>
 
           {/* OVERVIEW TAB */}
           {activeTab === 'overview' && (
             <div className="d-flex flex-column gap-3">
               {plan.eligibility && (
-                <div className="info-box-blue">
-                  <div className="info-box-title">
-                    <i className="bi bi-person-check me-1"></i>{t('plans.eligibility')}
+                <div style={{ background: 'var(--bg-card)', borderRadius: 12, overflow: 'hidden', border: '1px solid #bfdbfe', boxShadow: '0 2px 8px rgba(29,78,216,0.07)' }}>
+                  <div style={{ background: '#1d4ed8', padding: '0.6rem 1rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <i className="bi bi-person-check" style={{ color: '#fff', fontSize: '0.9rem' }}></i>
+                    <span style={{ fontWeight: 700, fontSize: '0.82rem', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t('plans.eligibility')}</span>
                   </div>
-                  <p className="info-box-body">{plan.eligibility}</p>
+                  <div style={{ padding: '0.9rem 1rem', fontSize: '0.88rem', color: 'var(--text-primary)', lineHeight: 1.75, whiteSpace: 'pre-line' }}>{plan.eligibility}</div>
                 </div>
               )}
               {plan.exclusions && (
-                <div className="info-box-red">
-                  <div className="info-box-title">
-                    <i className="bi bi-x-circle me-1"></i>{t('plans.exclusions')}
+                <div style={{ background: 'var(--bg-card)', borderRadius: 12, overflow: 'hidden', border: '1px solid #fecaca', boxShadow: '0 2px 8px rgba(220,38,38,0.07)' }}>
+                  <div style={{ background: '#dc2626', padding: '0.6rem 1rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <i className="bi bi-x-circle" style={{ color: '#fff', fontSize: '0.9rem' }}></i>
+                    <span style={{ fontWeight: 700, fontSize: '0.82rem', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t('plans.exclusions')}</span>
                   </div>
-                  <p className="info-box-body">{plan.exclusions}</p>
+                  <div style={{ padding: '0.9rem 1rem', fontSize: '0.88rem', color: 'var(--text-primary)', lineHeight: 1.75, whiteSpace: 'pre-line' }}>{plan.exclusions}</div>
                 </div>
               )}
               {plan.beneficiaryInfo && (
-                <div className="info-box-purple">
-                  <div className="info-box-title">
-                    <i className="bi bi-people me-1"></i>{t('plans.beneficiary')}
+                <div style={{ background: 'var(--bg-card)', borderRadius: 12, overflow: 'hidden', border: '1px solid #e9d5ff', boxShadow: '0 2px 8px rgba(124,58,237,0.07)' }}>
+                  <div style={{ background: '#7c3aed', padding: '0.6rem 1rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <i className="bi bi-people" style={{ color: '#fff', fontSize: '0.9rem' }}></i>
+                    <span style={{ fontWeight: 700, fontSize: '0.82rem', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t('plans.beneficiary')}</span>
                   </div>
-                  <p className="info-box-body">{plan.beneficiaryInfo}</p>
+                  <div style={{ padding: '0.9rem 1rem', fontSize: '0.88rem', color: 'var(--text-primary)', lineHeight: 1.75, whiteSpace: 'pre-line' }}>{plan.beneficiaryInfo}</div>
                 </div>
               )}
               {!plan.eligibility && !plan.exclusions && !plan.beneficiaryInfo && (
-                <div className="text-center py-4" style={{ color: 'var(--text-muted)' }}>
-                  <i className="bi bi-info-circle" style={{ fontSize: '2rem', display: 'block', marginBottom: 8 }}></i>
+                <div style={{ background: 'var(--bg-card)', borderRadius: 12, padding: '2.5rem', textAlign: 'center', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
+                  <i className="bi bi-info-circle" style={{ fontSize: '2.2rem', display: 'block', marginBottom: 10, opacity: 0.5 }}></i>
                   {t('plans.overviewEmpty')}
                 </div>
               )}
@@ -482,9 +495,10 @@ function PlanDetailModal({ plan, onClose, onApply, user, t, freqLabel }) {
             <div className="d-flex flex-column gap-4">
               {tiers.length > 0 ? (
                 <>
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)', marginBottom: '0.75rem' }}>
-                      <i className="bi bi-table me-1" style={{ color: meta.color }}></i>{t('plans.durationTiers')}
+                  <div style={{ background: 'var(--bg-card)', borderRadius: 12, overflow: 'hidden', border: '1px solid var(--border)', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+                    <div style={{ background: meta.color, padding: '0.65rem 1rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <i className="bi bi-table" style={{ color: '#fff', fontSize: '0.9rem' }}></i>
+                      <span style={{ fontWeight: 700, fontSize: '0.82rem', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t('plans.durationTiers')}</span>
                     </div>
                     <div style={{ overflowX: 'auto' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -493,101 +507,112 @@ function PlanDetailModal({ plan, onClose, onApply, user, t, freqLabel }) {
                             <th style={thS}>{t('plans.durationCol')}</th>
                             <th style={thS}>{t('plans.premiumRateCol')}</th>
                             <th style={thS}>{t('plans.annualSampleCol')}</th>
-                            <th style={thS}>{freq} {t('plans.perPaymentCol')}</th>
+                            <th style={thS}>{freq || t('plans.payment')} {t('plans.perPaymentCol')}</th>
                           </tr>
                         </thead>
                         <tbody>
                           {tiers.map((tier, i) => {
                             const sample = calcPremium(10000000, tier.premiumRate, plan.paymentIntervalMonths || 1)
                             return (
-                              <tr key={i} style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'transparent' : 'var(--bg-secondary)' }}>
-                                <td style={tdS}><strong style={{ color: meta.color }}>{tier.years} {t('plans.yearsUnit')}</strong></td>
+                              <tr key={i} style={{ background: i % 2 === 0 ? 'var(--bg-card)' : 'var(--bg-secondary)' }}>
                                 <td style={tdS}>
-                                  <span style={{ fontWeight: 700, color: 'var(--primary)', fontSize: '1rem' }}>{(tier.premiumRate * 100).toFixed(2)}%</span>
-                                  <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>/year</span>
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontWeight: 700, color: meta.color, background: meta.bg, padding: '0.25rem 0.7rem', borderRadius: 20, fontSize: '0.82rem', border: `1px solid ${meta.color}30` }}>
+                                    <i className="bi bi-calendar2-check"></i>{tier.years} {t('plans.yearsUnit')}
+                                  </span>
                                 </td>
-                                <td style={tdS}>{sample ? `MMK ${fmt(sample.annual)}` : '—'}</td>
-                                <td style={tdS}><strong style={{ color: '#16a34a', fontSize: '0.95rem' }}>{sample ? `MMK ${fmt(sample.perPayment)}` : '—'}</strong></td>
+                                <td style={tdS}>
+                                  <span style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '1.05rem' }}>{(tier.premiumRate * 100).toFixed(2)}%</span>
+                                  <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem', marginLeft: 2 }}>/year</span>
+                                </td>
+                                <td style={{ ...tdS, color: 'var(--text-secondary)' }}>{sample ? `MMK ${fmt(sample.annual)}` : '—'}</td>
+                                <td style={tdS}>
+                                  <span style={{ fontWeight: 800, color: '#16a34a', fontSize: '0.98rem' }}>{sample ? `MMK ${fmt(sample.perPayment)}` : '—'}</span>
+                                </td>
                               </tr>
                             )
                           })}
                         </tbody>
                       </table>
                     </div>
-                    <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: 0 }}>
-                      {t('plans.sampleNote')}
-                    </p>
+                    <div style={{ padding: '0.5rem 1rem', borderTop: '1px solid var(--border)', background: 'var(--bg-secondary)' }}>
+                      <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: 0 }}>
+                        <i className="bi bi-info-circle me-1"></i>{t('plans.sampleNote')}
+                      </p>
+                    </div>
                   </div>
 
                   {/* Premium Calculator */}
-                  <div style={{ background: `linear-gradient(135deg, ${meta.bg}, #f0fdf4)`, borderRadius: 14, padding: '1.25rem', border: `1px solid ${meta.color}30` }}>
-                    <div style={{ fontWeight: 800, fontSize: '0.9rem', color: 'var(--text-primary)', marginBottom: '1rem' }}>
-                      <i className="bi bi-calculator me-1" style={{ color: meta.color }}></i>{t('plans.calcTitle2')}
+                  <div style={{ background: 'var(--bg-card)', borderRadius: 12, overflow: 'hidden', border: '1px solid var(--border)', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+                    <div style={{ background: '#16a34a', padding: '0.65rem 1rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <i className="bi bi-calculator" style={{ color: '#fff', fontSize: '0.9rem' }}></i>
+                      <span style={{ fontWeight: 700, fontSize: '0.82rem', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t('plans.calcTitle2')}</span>
                     </div>
-                    <div className="row g-3">
-                      <div className="col-12 col-md-5">
-                        <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4, display: 'block' }}>
-                          {t('plans.coverageAmountLabel')}
-                        </label>
-                        <input type="number" className="form-control-custom w-100"
-                          placeholder={`${fmt(plan.coverageMin)} – ${fmt(plan.coverageMax)}`}
-                          min={plan.coverageMin} max={plan.coverageMax}
-                          value={calcCoverage} onChange={e => setCalcCoverage(e.target.value)} />
+                    <div style={{ padding: '1.25rem' }}>
+                      <div className="row g-3">
+                        <div className="col-12 col-md-5">
+                          <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4, display: 'block' }}>
+                            {t('plans.coverageAmountLabel')}
+                          </label>
+                          <input type="number" className="form-control-custom w-100"
+                            placeholder={`${fmt(plan.coverageMin)} – ${fmt(plan.coverageMax)}`}
+                            min={plan.coverageMin} max={plan.coverageMax}
+                            value={calcCoverage} onChange={e => setCalcCoverage(e.target.value)} />
+                        </div>
+                        <div className="col-12 col-md-4">
+                          <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4, display: 'block' }}>
+                            {t('plans.selectDurationLabel')}
+                          </label>
+                          <select className="form-select-custom w-100" value={calcDuration} onChange={e => setCalcDuration(e.target.value)}>
+                            {tiers.map(tier => (
+                              <option key={tier.years} value={tier.years}>
+                                {tier.years} {t('plans.yearsUnit')} — {(tier.premiumRate * 100).toFixed(2)}%/yr
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="col-12 col-md-3">
+                          {calcResult ? (
+                            <div style={{ background: '#f0fdf4', borderRadius: 10, padding: '0.75rem 1rem', border: '1.5px solid #bbf7d0' }}>
+                              <div style={{ fontSize: '0.65rem', color: '#16a34a', textTransform: 'uppercase', fontWeight: 700, marginBottom: 2 }}>
+                                {freq || t('plans.payment')} {t('plans.payPer')}
+                              </div>
+                              <div style={{ fontWeight: 800, color: '#15803d', fontSize: '1.15rem', lineHeight: 1.2 }}>
+                                MMK {fmt(calcResult.perPayment)}
+                              </div>
+                              <div style={{ fontSize: '0.72rem', color: '#16a34a', marginTop: 4 }}>
+                                {t('plans.annualTotal')}: MMK {fmt(calcResult.annual)}
+                              </div>
+                            </div>
+                          ) : (
+                            <div style={{ background: 'var(--bg-secondary)', borderRadius: 10, padding: '0.75rem 1rem', border: '1.5px dashed var(--border)', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 4, minHeight: 72 }}>
+                              <i className="bi bi-calculator" style={{ fontSize: '1.2rem' }}></i>
+                              {t('plans.enterCoverage')}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div className="col-12 col-md-4">
-                        <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4, display: 'block' }}>
-                          {t('plans.selectDurationLabel')}
-                        </label>
-                        <select className="form-select-custom w-100" value={calcDuration} onChange={e => setCalcDuration(e.target.value)}>
-                          {tiers.map(tier => (
-                            <option key={tier.years} value={tier.years}>
-                              {tier.years} {t('plans.yearsUnit')} — {(tier.premiumRate * 100).toFixed(2)}%/yr
-                            </option>
+                      {calcResult && (
+                        <div className="row g-2 mt-3">
+                          {[
+                            { l: t('plans.calcCoverageRow'), v: `MMK ${fmt(calcCoverage)}`, c: '#1d4ed8' },
+                            { l: t('plans.calcDurationRow'), v: `${calcDuration} ${t('plans.yearsUnit')}`, c: meta.color },
+                            { l: t('plans.calcRateRow'),     v: `${((selectedTier?.premiumRate || 0) * 100).toFixed(2)}%/yr`, c: '#d97706' },
+                            { l: t('plans.calcTotalRow'),    v: `MMK ${fmt(calcResult.annual * calcDuration)}`, c: '#16a34a' },
+                          ].map((s, i) => (
+                            <div key={i} className="col-6 col-md-3">
+                              <div style={{ background: 'var(--bg-secondary)', borderRadius: 8, padding: '0.5rem 0.75rem', border: '1px solid var(--border)', textAlign: 'center' }}>
+                                <div style={{ fontSize: '0.62rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 3 }}>{s.l}</div>
+                                <div style={{ fontWeight: 700, color: s.c, fontSize: '0.85rem' }}>{s.v}</div>
+                              </div>
+                            </div>
                           ))}
-                        </select>
-                      </div>
-                      <div className="col-12 col-md-3">
-                        {calcResult ? (
-                          <div style={{ background: '#fff', borderRadius: 12, padding: '0.75rem 1rem', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', border: `1px solid ${meta.color}30` }}>
-                            <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700, marginBottom: 2 }}>
-                              {freq} {t('plans.payPer')}
-                            </div>
-                            <div style={{ fontWeight: 800, color: '#16a34a', fontSize: '1.15rem', lineHeight: 1.2 }}>
-                              MMK {fmt(calcResult.perPayment)}
-                            </div>
-                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 4 }}>
-                              {t('plans.annualTotal')}: MMK {fmt(calcResult.annual)}
-                            </div>
-                          </div>
-                        ) : (
-                          <div style={{ background: 'rgba(255,255,255,0.5)', borderRadius: 12, padding: '0.75rem 1rem', border: '1.5px dashed var(--border)', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 4 }}>
-                            <i className="bi bi-calculator" style={{ fontSize: '1.2rem' }}></i>
-                            {t('plans.enterCoverage')}
-                          </div>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
-                    {calcResult && (
-                      <div className="row g-2 mt-2">
-                        {[
-                          { l: t('plans.calcCoverageRow'), v: `MMK ${fmt(calcCoverage)}` },
-                          { l: t('plans.calcDurationRow'), v: `${calcDuration} ${t('plans.yearsUnit')}` },
-                          { l: t('plans.calcRateRow'),     v: `${((selectedTier?.premiumRate || 0) * 100).toFixed(2)}%/yr` },
-                          { l: t('plans.calcTotalRow'),    v: `MMK ${fmt(calcResult.annual * calcDuration)}` },
-                        ].map((s, i) => (
-                          <div key={i} className="col-6 col-md-3">
-                            <div style={{ background: 'rgba(255,255,255,0.8)', borderRadius: 8, padding: '0.4rem 0.6rem', textAlign: 'center' }}>
-                              <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>{s.l}</div>
-                              <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.82rem' }}>{s.v}</div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 </>
               ) : (
-                <div className="text-center py-4" style={{ color: 'var(--text-muted)' }}>
+                <div style={{ background: 'var(--bg-card)', borderRadius: 12, padding: '2.5rem', textAlign: 'center', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
                   {t('plans.noTiers')}
                 </div>
               )}
@@ -598,18 +623,20 @@ function PlanDetailModal({ plan, onClose, onApply, user, t, freqLabel }) {
           {activeTab === 'benefits' && (
             <div>
               {(plan.benefits || []).length > 0 ? (
-                <div className="row g-2">
+                <div className="row g-3">
                   {(plan.benefits || []).map((b, i) => (
                     <div key={i} className="col-12 col-md-6">
-                      <div style={{ display: 'flex', gap: 10, padding: '0.65rem 0.9rem', background: '#f0fdf4', borderRadius: 10, border: '1px solid #bbf7d0', alignItems: 'flex-start' }}>
-                        <i className="bi bi-check-circle-fill" style={{ color: '#16a34a', fontSize: '1rem', flexShrink: 0, marginTop: 1 }}></i>
-                        <span style={{ fontSize: '0.85rem', color: '#14532d', fontWeight: 500 }}>{b}</span>
+                      <div style={{ display: 'flex', gap: 12, padding: '0.85rem 1rem', background: 'var(--bg-card)', borderRadius: 10, border: '1px solid #bbf7d0', alignItems: 'flex-start', boxShadow: '0 1px 4px rgba(22,163,74,0.08)' }}>
+                        <div style={{ width: 30, height: 30, borderRadius: 8, background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                          <i className="bi bi-check-lg" style={{ color: '#16a34a', fontSize: '0.95rem', fontWeight: 900 }}></i>
+                        </div>
+                        <div style={{ fontSize: '0.87rem', color: 'var(--text-primary)', fontWeight: 500, lineHeight: 1.5 }}>{b}</div>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-4" style={{ color: 'var(--text-muted)' }}>
+                <div style={{ background: 'var(--bg-card)', borderRadius: 12, padding: '2.5rem', textAlign: 'center', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
                   {t('plans.benefitsEmpty')}
                 </div>
               )}
@@ -621,26 +648,26 @@ function PlanDetailModal({ plan, onClose, onApply, user, t, freqLabel }) {
             <div>
               {(plan.requiredDocuments || []).length > 0 ? (
                 <div>
-                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-                    <i className="bi bi-info-circle me-1" style={{ color: 'var(--primary)' }}></i>
-                    {t('plans.docsNote')}
-                  </p>
+                  <div style={{ background: '#eff6ff', borderRadius: 10, padding: '0.75rem 1rem', marginBottom: '1rem', border: '1px solid #bfdbfe', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                    <i className="bi bi-info-circle-fill" style={{ color: '#1d4ed8', flexShrink: 0, marginTop: 1 }}></i>
+                    <span style={{ fontSize: '0.84rem', color: '#1e40af', fontWeight: 500 }}>{t('plans.docsNote')}</span>
+                  </div>
                   <div className="d-flex flex-column gap-2">
                     {(plan.requiredDocuments || []).map((d, i) => (
-                      <div key={i} style={{ display: 'flex', gap: 12, padding: '0.75rem 1rem', background: '#fffbeb', borderRadius: 10, border: '1px solid #fde68a', alignItems: 'center' }}>
-                        <div style={{ width: 32, height: 32, borderRadius: 8, background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <i className="bi bi-file-earmark-text" style={{ color: '#d97706' }}></i>
+                      <div key={i} style={{ display: 'flex', gap: 14, padding: '0.85rem 1.1rem', background: 'var(--bg-card)', borderRadius: 10, border: '1px solid #fde68a', alignItems: 'center', boxShadow: '0 1px 4px rgba(217,119,6,0.08)' }}>
+                        <div style={{ width: 36, height: 36, borderRadius: 10, background: '#fef3c7', border: '1px solid #fde68a', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <span style={{ fontWeight: 800, color: '#d97706', fontSize: '0.82rem' }}>{i + 1}</span>
                         </div>
                         <div>
-                          <div style={{ fontWeight: 600, color: '#92400e', fontSize: '0.88rem' }}>{d}</div>
-                          <div style={{ fontSize: '0.72rem', color: '#b45309' }}>{t('plans.documentLabel')} {i + 1}</div>
+                          <div style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.9rem' }}>{d}</div>
+                          <div style={{ fontSize: '0.72rem', color: '#b45309', marginTop: 2 }}>{t('plans.documentLabel')} #{i + 1}</div>
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-4" style={{ color: 'var(--text-muted)' }}>
+                <div style={{ background: 'var(--bg-card)', borderRadius: 12, padding: '2.5rem', textAlign: 'center', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
                   {t('plans.docsEmpty')}
                 </div>
               )}
@@ -649,19 +676,19 @@ function PlanDetailModal({ plan, onClose, onApply, user, t, freqLabel }) {
 
           {/* RULES & TERMS TAB */}
           {activeTab === 'rules' && (
-            <div className="d-flex flex-column gap-3">
+            <div>
               {plan.termsAndConditions ? (
-                <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, padding: '1.25rem', border: '1px solid var(--border)' }}>
-                  <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)', marginBottom: '0.75rem' }}>
-                    <i className="bi bi-file-earmark-text me-1" style={{ color: 'var(--primary)' }}></i>
-                    {t('plans.termsTitle')}
+                <div style={{ background: 'var(--bg-card)', borderRadius: 12, overflow: 'hidden', border: '1px solid var(--border)', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+                  <div style={{ background: 'var(--primary)', padding: '0.65rem 1rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <i className="bi bi-file-earmark-text" style={{ color: '#fff', fontSize: '0.9rem' }}></i>
+                    <span style={{ fontWeight: 700, fontSize: '0.82rem', color: '#fff', textTransform: 'uppercase', letterSpacing: '0.04em' }}>{t('plans.termsTitle')}</span>
                   </div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', lineHeight: 1.9 }}>
+                  <div style={{ padding: '1.25rem 1.4rem', fontSize: '0.87rem', color: 'var(--text-primary)', whiteSpace: 'pre-wrap', lineHeight: 2, letterSpacing: '0.01em' }}>
                     {plan.termsAndConditions}
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-4" style={{ color: 'var(--text-muted)' }}>
+                <div style={{ background: 'var(--bg-card)', borderRadius: 12, padding: '2.5rem', textAlign: 'center', border: '1px solid var(--border)', color: 'var(--text-muted)' }}>
                   {t('plans.termsEmpty')}
                 </div>
               )}
@@ -670,12 +697,12 @@ function PlanDetailModal({ plan, onClose, onApply, user, t, freqLabel }) {
         </div>
 
         {/* Footer Actions */}
-        <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--border)', display: 'flex', gap: 12, justifyContent: 'flex-end', background: 'var(--bg-secondary)', borderRadius: '0 0 18px 18px' }}>
+        <div style={{ padding: '1rem 1.6rem', borderTop: '1px solid var(--border)', display: 'flex', gap: 12, justifyContent: 'flex-end', background: 'var(--bg-card)', flexShrink: 0 }}>
           <button onClick={onClose} className="btn-outline-custom" style={{ fontSize: '0.88rem' }}>
             {t('plans.closeBtn')}
           </button>
           <button onClick={onApply} className="btn-primary-custom"
-            style={{ justifyContent: 'center', background: meta.color, borderColor: meta.color, minWidth: 140 }}>
+            style={{ justifyContent: 'center', background: meta.color, borderColor: meta.color, minWidth: 150 }}>
             <i className="bi bi-check-circle me-2"></i>
             {user ? t('plans.applyBtn') : t('plans.loginToApply')}
           </button>
