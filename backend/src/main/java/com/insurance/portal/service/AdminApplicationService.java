@@ -67,4 +67,46 @@ public class AdminApplicationService {
                 NotificationType.INFO);
         return ResponseEntity.ok(ApplicationResponse.from(app));
     }
+
+    /**
+     * Send an overdue payment warning notification to the customer.
+     * Does NOT change the application status — admin can send this multiple times.
+     */
+    @Transactional
+    public ResponseEntity<?> warnOverdue(Long id) {
+        PolicyApplication app = appRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Application not found"));
+        if (app.getStatus() != ApplicationStatus.APPROVED)
+            return ResponseEntity.badRequest().body(Map.of("message", "Only APPROVED (active) applications can receive an overdue warning"));
+        String packageName = app.getInsurancePackage() != null ? app.getInsurancePackage().getName() : "your policy";
+        notifService.send(app.getCustomer(),
+                "⚠️ Premium Payment Overdue Notice",
+                "Your premium payment for \"" + packageName + "\" is overdue. "
+                        + "Please submit your payment as soon as possible to keep your policy active. "
+                        + "Failure to pay may result in policy cancellation.",
+                NotificationType.REMINDER);
+        return ResponseEntity.ok(Map.of("message", "Overdue warning notification sent to customer"));
+    }
+
+    /**
+     * Cancel (reject) an approved application due to non-payment of overdue premium.
+     */
+    @Transactional
+    public ResponseEntity<?> cancelOverdue(Long id, String note) {
+        PolicyApplication app = appRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Application not found"));
+        if (app.getStatus() != ApplicationStatus.APPROVED)
+            return ResponseEntity.badRequest().body(Map.of("message", "Only APPROVED (active) applications can be cancelled for non-payment"));
+        String packageName = app.getInsurancePackage() != null ? app.getInsurancePackage().getName() : "your policy";
+        String reason = (note != null && !note.isBlank()) ? note : "Premium payment overdue — policy cancelled due to non-payment";
+        app.setStatus(ApplicationStatus.REJECTED);
+        app.setAdminNote(reason);
+        appRepo.save(app);
+        notifService.send(app.getCustomer(),
+                "❌ Policy Cancelled — Overdue Payment",
+                "Your policy \"" + packageName + "\" has been cancelled due to non-payment of overdue premium. "
+                        + "Reason: " + reason,
+                NotificationType.REJECTION);
+        return ResponseEntity.ok(ApplicationResponse.from(app));
+    }
 }

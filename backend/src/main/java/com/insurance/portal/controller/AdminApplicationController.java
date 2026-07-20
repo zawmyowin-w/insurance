@@ -66,6 +66,17 @@ public class AdminApplicationController {
         return appService.revise(id, req.get("note"));
     }
 
+    @PostMapping("/{id}/overdue-warning")
+    public ResponseEntity<?> sendOverdueWarning(@PathVariable Long id) {
+        return appService.warnOverdue(id);
+    }
+
+    @PostMapping("/{id}/cancel-overdue")
+    public ResponseEntity<?> cancelOverdue(@PathVariable Long id, @RequestBody(required = false) Map<String, String> req) {
+        String note = req != null ? req.get("note") : null;
+        return appService.cancelOverdue(id, note);
+    }
+
     @GetMapping("/{id}/form-file/{fieldId}")
     @Transactional(readOnly = true)
     public ResponseEntity<?> getFormFile(@PathVariable Long id, @PathVariable String fieldId) {

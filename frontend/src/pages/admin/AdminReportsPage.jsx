@@ -269,35 +269,79 @@ export default function AdminReportsPage() {
       {/* ── TAB: Financial Overview ── */}
       {tab === 'overview' && (
         <div className="fade-in d-flex flex-column gap-4">
-          <div className="card-custom" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 60%, #1d4ed8 100%)', border: 'none', padding: '1.5rem' }}>
-            <div className="row align-items-center g-3">
-              <div className="col-12 col-md-5">
-                <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>
-                  စုစုပေါင်း ဝင်ငွေ (Verified Payments)
+          {/* Income vs Expenses — two clearly separate hero cards */}
+          <div className="row g-3">
+            {/* Income card */}
+            <div className="col-12 col-md-6">
+              <div className="card-custom" style={{ background: 'linear-gradient(135deg, #064e3b 0%, #065f46 60%, #047857 100%)', border: 'none', padding: '1.5rem', height: '100%' }}>
+                <div className="d-flex align-items-center gap-2 mb-3">
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <i className="bi bi-arrow-down-circle-fill" style={{ color: '#6ee7b7', fontSize: '1.1rem' }}></i>
+                  </div>
+                  <div>
+                    <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>ဝင်ငွေ စုစုပေါင်း</div>
+                    <div style={{ color: '#6ee7b7', fontSize: '0.78rem', fontWeight: 700 }}>Customer Premium ကြေးများသာ</div>
+                  </div>
                 </div>
-                <div style={{ fontSize: '2.2rem', fontWeight: 900, color: '#fff', lineHeight: 1 }}>
-                  {totalRevenue.toLocaleString()}
-                </div>
-                <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem', marginTop: 4 }}>MMK</div>
+                <div style={{ fontSize: '2rem', fontWeight: 900, color: '#fff', lineHeight: 1 }}>{totalRevenue.toLocaleString()}</div>
+                <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.82rem', marginTop: 4 }}>MMK · Verified Payments</div>
                 {revGrowth != null && (
-                  <div style={{ marginTop: 8, fontSize: '0.8rem', color: Number(revGrowth) >= 0 ? '#4ade80' : '#f87171', fontWeight: 600 }}>
+                  <div style={{ marginTop: 10, fontSize: '0.78rem', color: Number(revGrowth) >= 0 ? '#4ade80' : '#f87171', fontWeight: 600 }}>
                     <i className={`bi bi-arrow-${Number(revGrowth) >= 0 ? 'up' : 'down'} me-1`}></i>
                     {Math.abs(revGrowth)}% ယခင်လနှင့် နှိုင်းယှဉ်
                   </div>
                 )}
+                <div style={{ marginTop: 12, padding: '0.6rem 0.85rem', background: 'rgba(255,255,255,0.1)', borderRadius: 8, fontSize: '0.78rem', color: 'rgba(255,255,255,0.75)' }}>
+                  <i className="bi bi-info-circle me-1"></i>ဤပမာဏသည် Customer မှ ပေးသော Premium ကြေးများသာဖြစ်ပြီး Claim ငွေမပါဝင်ပါ
+                </div>
+              </div>
+            </div>
+            {/* Expenses card */}
+            <div className="col-12 col-md-6">
+              <div className="card-custom" style={{ background: 'linear-gradient(135deg, #7f1d1d 0%, #991b1b 60%, #b91c1c 100%)', border: 'none', padding: '1.5rem', height: '100%' }}>
+                <div className="d-flex align-items-center gap-2 mb-3">
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <i className="bi bi-arrow-up-circle-fill" style={{ color: '#fca5a5', fontSize: '1.1rem' }}></i>
+                  </div>
+                  <div>
+                    <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>ထွက်ငွေ စုစုပေါင်း</div>
+                    <div style={{ color: '#fca5a5', fontSize: '0.78rem', fontWeight: 700 }}>Admin မှ Customer ဆီ Claim လျှော်ကြေးသာ</div>
+                  </div>
+                </div>
+                <div style={{ fontSize: '2rem', fontWeight: 900, color: '#fff', lineHeight: 1 }}>{totalClaimsPaid.toLocaleString()}</div>
+                <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.82rem', marginTop: 4 }}>MMK · Approved Claim Payouts</div>
+                <div style={{ marginTop: 10, fontSize: '0.78rem', color: totalClaimsPaid > 0 ? '#f87171' : '#86efac', fontWeight: 600 }}>
+                  {totalClaimsPaid > 0
+                    ? <><i className="bi bi-dash-circle me-1"></i>Approved Claims {reports.approvedClaims} ခု ထုတ်ပေးပြီး</>
+                    : <><i className="bi bi-check-circle me-1"></i>Claim ထုတ်ပေးမှု မရှိသေးပါ</>}
+                </div>
+                <div style={{ marginTop: 12, padding: '0.6rem 0.85rem', background: 'rgba(255,255,255,0.1)', borderRadius: 8, fontSize: '0.78rem', color: 'rgba(255,255,255,0.75)' }}>
+                  <i className="bi bi-info-circle me-1"></i>ဤပမာဏသည် Admin မှ Customer ဆီ ပေးသော Claim လျှော်ကြေးသာဖြစ်ပြီး Premium ငွေမပါဝင်ပါ
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Net result card */}
+          <div className="card-custom" style={{ background: netProfit >= 0 ? 'linear-gradient(135deg, #0f172a, #1e3a8a)' : 'linear-gradient(135deg, #1c1917, #44403c)', border: 'none', padding: '1.25rem' }}>
+            <div className="row align-items-center g-3">
+              <div className="col-12 col-md-5">
+                <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>အသားတင် အမြတ် (ဝင်ငွေ − ထွက်ငွေ)</div>
+                <div style={{ fontSize: '1.8rem', fontWeight: 900, color: netProfit >= 0 ? '#86efac' : '#fca5a5', lineHeight: 1 }}>
+                  {netProfit >= 0 ? '+' : ''}{netProfit.toLocaleString()}
+                </div>
+                <div style={{ color: 'rgba(255,255,255,0.45)', fontSize: '0.8rem', marginTop: 4 }}>MMK</div>
               </div>
               <div className="col-12 col-md-7">
-                <div className="row g-3">
+                <div className="row g-2">
                   {[
-                    { label: 'လစဥ် Premium ဝင်ငွေ', value: thisMonthRev.toLocaleString() + ' MMK', color: '#93c5fd' },
-                    { label: 'Claim လျှော်ကြေး ထုတ်ပေး', value: totalClaimsPaid.toLocaleString() + ' MMK', color: '#fca5a5' },
-                    { label: 'အသားတင် အမြတ်', value: netProfit.toLocaleString() + ' MMK', color: netProfit >= 0 ? '#86efac' : '#fca5a5' },
+                    { label: 'ဤလ Premium ဝင်ငွေ', value: thisMonthRev.toLocaleString() + ' MMK', color: '#93c5fd' },
                     { label: 'Profit Margin', value: Pct(profitMargin), color: profitMargin >= 20 ? '#86efac' : profitMargin >= 0 ? '#fde68a' : '#fca5a5' },
                   ].map(c => (
                     <div key={c.label} className="col-6">
-                      <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 10, padding: '0.75rem' }}>
-                        <div style={{ fontSize: '1.1rem', fontWeight: 800, color: c.color }}>{c.value}</div>
-                        <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>{c.label}</div>
+                      <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 10, padding: '0.65rem 0.75rem' }}>
+                        <div style={{ fontSize: '1rem', fontWeight: 800, color: c.color }}>{c.value}</div>
+                        <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>{c.label}</div>
                       </div>
                     </div>
                   ))}

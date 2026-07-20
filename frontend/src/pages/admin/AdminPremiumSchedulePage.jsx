@@ -30,6 +30,8 @@ export default function AdminPremiumSchedulePage() {
   const [search, setSearch]       = useState('')
   const [expanded, setExpanded]   = useState({})       // appId → full schedule data
   const [loadingSchedule, setLoadingSchedule] = useState({}) // appId → bool
+  const [actionLoading, setActionLoading] = useState({}) // appId → 'warn'|'cancel'|null
+  const [cancelConfirm, setCancelConfirm] = useState(null) // appId to confirm cancel
 
   const fetchData = () => {
     setLoading(true)
@@ -52,6 +54,34 @@ export default function AdminPremiumSchedulePage() {
     acc[e.scheduleStatus] = (acc[e.scheduleStatus] || 0) + 1
     return acc
   }, {})
+
+  const sendOverdueWarning = async (appId) => {
+    setActionLoading(prev => ({ ...prev, [appId]: 'warn' }))
+    try {
+      await api.post(`/admin/applications/${appId}/overdue-warning`)
+      toast.success('သတိပေးစာ Customer ထံ ပေးပို့ပြီးပါပြီ')
+    } catch {
+      toast.error('သတိပေးစာ ပေးပို့၍ မရပါ')
+    } finally {
+      setActionLoading(prev => ({ ...prev, [appId]: null }))
+    }
+  }
+
+  const confirmCancelOverdue = async (appId) => {
+    setActionLoading(prev => ({ ...prev, [appId]: 'cancel' }))
+    setCancelConfirm(null)
+    try {
+      await api.post(`/admin/applications/${appId}/cancel-overdue`, {
+        note: 'Premium payment overdue — policy cancelled due to non-payment'
+      })
+      toast.success('Application ကို ပယ်ဖျက်ပြီးပါပြီ')
+      fetchData()
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'ပယ်ဖျက်၍ မရပါ')
+    } finally {
+      setActionLoading(prev => ({ ...prev, [appId]: null }))
+    }
+  }
 
   const toggleSchedule = async (appId) => {
     if (expanded[appId]) {
@@ -91,6 +121,36 @@ export default function AdminPremiumSchedulePage() {
 
   return (
     <div className="fade-in">
+      {/* Cancel Confirm Modal */}
+      {cancelConfirm && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1050, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div className="card-custom" style={{ maxWidth: 420, width: '100%', padding: '1.5rem' }}>
+            <div className="d-flex align-items-center gap-3 mb-3">
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: '#fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <i className="bi bi-exclamation-triangle-fill" style={{ color: '#dc2626', fontSize: '1.2rem' }}></i>
+              </div>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>Application ပယ်ဖျက်မည်</div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 2 }}>ဤလုပ်ဆောင်ချက်ကို ပြန်မလှန်နိုင်ပါ</div>
+              </div>
+            </div>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
+              Premium ပေးသွင်းမှု သတ်မှတ်ရက်ကျော်သောကြောင့် ဤ Application ကို ပယ်ဖျက်မည်။
+              Customer ထံ အကြောင်းကြားချက် အလိုအလျောက် ပေးပို့မည်။
+            </p>
+            <div className="d-flex gap-2 justify-content-end">
+              <button type="button" className="btn-outline-custom" style={{ padding: '0.45rem 1rem', fontSize: '0.85rem' }}
+                onClick={() => setCancelConfirm(null)}>မပယ်ဖျက်တော့</button>
+              <button type="button"
+                style={{ padding: '0.45rem 1rem', fontSize: '0.85rem', fontWeight: 700, background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer' }}
+                onClick={() => confirmCancelOverdue(cancelConfirm)}>
+                <i className="bi bi-x-circle me-1"></i>ပယ်ဖျက်မည်
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="mb-4">
         <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Premium Payment Schedule</h4>
@@ -286,6 +346,38 @@ export default function AdminPremiumSchedulePage() {
                       onClick={() => downloadPolicy(e.applicationId, e.policyNumber)}>
                       <i className="bi bi-file-earmark-pdf me-1" style={{ color: '#dc2626' }}></i>PDF
                     </button>
+                    {e.scheduleStatus === 'OVERDUE' && (
+                      <>
+                        <button
+                          type="button"
+                          title="Customer ထံ သတိပေးစာ ပေးပို့"
+                          disabled={actionLoading[e.applicationId] === 'warn'}
+                          onClick={() => sendOverdueWarning(e.applicationId)}
+                          style={{
+                            padding: '0.3rem 0.65rem', fontSize: '0.75rem', fontWeight: 700,
+                            background: '#fffbeb', color: '#d97706', border: '1px solid #fde68a',
+                            borderRadius: 7, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
+                          }}>
+                          {actionLoading[e.applicationId] === 'warn'
+                            ? <span className="spinner-border spinner-border-sm"></span>
+                            : <><i className="bi bi-envelope-exclamation-fill"></i><span className="d-none d-md-inline"> သတိပေး</span></>}
+                        </button>
+                        <button
+                          type="button"
+                          title="Application ပယ်ဖျက်"
+                          disabled={actionLoading[e.applicationId] === 'cancel'}
+                          onClick={() => setCancelConfirm(e.applicationId)}
+                          style={{
+                            padding: '0.3rem 0.65rem', fontSize: '0.75rem', fontWeight: 700,
+                            background: '#fee2e2', color: '#dc2626', border: '1px solid #fecaca',
+                            borderRadius: 7, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
+                          }}>
+                          {actionLoading[e.applicationId] === 'cancel'
+                            ? <span className="spinner-border spinner-border-sm"></span>
+                            : <><i className="bi bi-x-circle-fill"></i><span className="d-none d-md-inline"> ပယ်ဖျက်</span></>}
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
 
