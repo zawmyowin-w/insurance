@@ -753,7 +753,7 @@ function PackageDetailModal({ pkg, onClose, onEdit }) {
                 <div className="col-12 col-md-6">
                   <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 4 }}>Duration & Premium Tier</label>
                   <select className="form-select-custom w-100" value={calcDuration} onChange={e => setCalcDuration(e.target.value)}>
-                    {tiers.map(t => <option key={t.years} value={t.years}>{t.years} နှစ် — {(t.premiumRate * 100).toFixed(2)}%/yr</option>)}
+                    {tiers.map(t => <option key={t.years} value={t.years}>{t.years} နှစ် — {(t.premiumRate * 100).toFixed(2)}%/year</option>)}
                   </select>
                 </div>
               </div>

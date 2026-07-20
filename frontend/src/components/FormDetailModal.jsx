@@ -178,7 +178,7 @@ export default function FormDetailModal({ show, onClose, type, item, role }) {
             {isApp ? <>
               {item.coverageAmount && <StatPill icon="bi-shield-check" label="Coverage" value={Number(item.coverageAmount).toLocaleString() + ' MMK'} />}
               {item.premiumAmount  && <StatPill icon="bi-cash-coin"    label="Premium"  value={Number(item.premiumAmount).toLocaleString() + ' MMK'} />}
-              {item.duration       && <StatPill icon="bi-calendar3"    label="Duration" value={item.duration + ' yr'} />}
+              {item.duration       && <StatPill icon="bi-calendar3"    label="Duration" value={item.duration + ' year'} />}
               {item.riskLevel      && <StatPill icon="bi-activity"     label="Risk"     value={item.riskLevel} />}
             </> : <>
               {item.amount       && <StatPill icon="bi-cash-coin"          label="Claim Amount"  value={Number(item.amount).toLocaleString() + ' MMK'} />}

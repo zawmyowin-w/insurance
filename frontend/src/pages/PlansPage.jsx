@@ -252,7 +252,7 @@ export default function PlansPage() {
                             {t('plans.premiumRate')}
                           </div>
                           <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.92rem' }}>
-                            {minRate ? `${(minRate * 100).toFixed(1)}%` : '—'}/yr{tiers.length > 1 ? '+' : ''}
+                            {minRate ? `${(minRate * 100).toFixed(1)}%` : '—'}/year{tiers.length > 1 ? '+' : ''}
                           </div>
                         </div>
                       </div>
@@ -568,7 +568,7 @@ function PlanDetailModal({ plan, onClose, onApply, user, t, freqLabel }) {
                           <select className="form-select-custom w-100" value={calcDuration} onChange={e => setCalcDuration(e.target.value)}>
                             {tiers.map(tier => (
                               <option key={tier.years} value={tier.years}>
-                                {tier.years} {t('plans.yearsUnit')} — {(tier.premiumRate * 100).toFixed(2)}%/yr
+                                {tier.years} {t('plans.yearsUnit')} — {(tier.premiumRate * 100).toFixed(2)}%/year
                               </option>
                             ))}
                           </select>
@@ -599,7 +599,7 @@ function PlanDetailModal({ plan, onClose, onApply, user, t, freqLabel }) {
                           {[
                             { l: t('plans.calcCoverageRow'), v: `MMK ${fmt(calcCoverage)}`, c: '#1d4ed8' },
                             { l: t('plans.calcDurationRow'), v: `${calcDuration} ${t('plans.yearsUnit')}`, c: meta.color },
-                            { l: t('plans.calcRateRow'),     v: `${((selectedTier?.premiumRate || 0) * 100).toFixed(2)}%/yr`, c: '#d97706' },
+                            { l: t('plans.calcRateRow'),     v: `${((selectedTier?.premiumRate || 0) * 100).toFixed(2)}%/year`, c: '#d97706' },
                             { l: t('plans.calcTotalRow'),    v: `MMK ${fmt(calcResult.annual * calcDuration)}`, c: '#16a34a' },
                           ].map((s, i) => (
                             <div key={i} className="col-6 col-md-3">
