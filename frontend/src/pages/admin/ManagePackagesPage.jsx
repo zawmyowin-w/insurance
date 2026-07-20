@@ -630,6 +630,15 @@ export default function ManagePackagesPage() {
           })}
         </div>
       )}
+
+      <DeleteConfirmModal
+        open={deleteModal.open}
+        title="Package ကို ဖျက်မည်လား?"
+        message="ဤ Package ကို အပြီးအပိုင် ဖျက်မည်။ ဤလုပ်ဆောင်ချက်ကို ပြန်မလုပ်နိုင်ပါ။"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteModal({ open: false, id: null, loading: false })}
+        loading={deleteModal.loading}
+      />
     </div>
   )
 }
@@ -901,15 +910,6 @@ function PackageDetailModal({ pkg, onClose, onEdit }) {
           )}
         </div>
       </div>
-
-      <DeleteConfirmModal
-        open={deleteModal.open}
-        title="Package ကို ဖျက်မည်လား?"
-        message="ဤ Package ကို အပြီးအပိုင် ဖျက်မည်။ ဤလုပ်ဆောင်ချက်ကို ပြန်မလုပ်နိုင်ပါ။"
-        onConfirm={confirmDelete}
-        onCancel={() => setDeleteModal({ open: false, id: null, loading: false })}
-        loading={deleteModal.loading}
-      />
     </div>
   )
 }
