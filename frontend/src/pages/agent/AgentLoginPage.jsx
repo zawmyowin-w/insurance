@@ -2,11 +2,13 @@ import React, { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { toast } from 'react-toastify'
+import { useTranslation } from 'react-i18next'
 
 export default function AgentLoginPage() {
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+  const { t } = useTranslation()
   const [form, setForm] = useState({ email: '', password: '' })
   const [loading, setLoading] = useState(false)
   const [showPwd, setShowPwd] = useState(false)
@@ -21,14 +23,14 @@ export default function AgentLoginPage() {
       if (user.role !== 'AGENT') {
         sessionStorage.removeItem('token')
         window.location.reload()
-        toast.error('ဤ Login သည် Agent အကောင့်များအတွက်သာ ဖြစ်သည် · This login is for agent accounts only.')
+        toast.error(t('agent.login.agentOnly'))
         return
       }
-      toast.success('ဝင်ရောက်မှု အောင်မြင်ပါသည် · Welcome back!')
+      toast.success(t('agent.login.welcomeBack'))
       navigate(from, { replace: true })
     } catch (err) {
       const msg = err.response?.data?.message || ''
-      toast.error(msg || 'အီးမေးလ် သို့မဟုတ် စကားဝှက် မမှန်ကန်ပါ · Invalid email or password.')
+      toast.error(msg || t('agent.login.invalidCredentials'))
     } finally {
       setLoading(false)
     }
@@ -46,18 +48,17 @@ export default function AgentLoginPage() {
             <i className="bi bi-person-badge" style={{ color: '#fff', fontSize: '1.4rem' }}></i>
           </div>
           <h2 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.25rem', fontSize: '1.5rem' }}>
-            Agent Portal
+            {t('agent.login.title')}
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-            Agent အကောင့်ဖြင့် ဝင်ရောက်ပါ
-            <span style={{ display: 'block', opacity: 0.7, fontSize: '0.82rem' }}>Sign in with your agent account to continue</span>
+            {t('agent.login.subtitle')}
           </p>
         </div>
 
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
             <label className="form-label-custom">
-              အီးမေးလ် လိပ်စာ <span style={{ opacity: 0.6, fontWeight: 400 }}>· Email Address</span>
+              {t('agent.login.emailLabel')}
             </label>
             <div style={{ position: 'relative' }}>
               <i className="bi bi-envelope" style={{
@@ -77,7 +78,7 @@ export default function AgentLoginPage() {
 
           <div className="mb-4">
             <label className="form-label-custom">
-              စကားဝှက် <span style={{ opacity: 0.6, fontWeight: 400 }}>· Password</span>
+              {t('agent.login.passwordLabel')}
             </label>
             <div style={{ position: 'relative' }}>
               <i className="bi bi-lock" style={{
@@ -104,8 +105,8 @@ export default function AgentLoginPage() {
           <button type="submit" disabled={loading} className="btn-primary-custom w-100"
             style={{ justifyContent: 'center', background: '#1e40af', borderColor: '#1e40af' }}>
             {loading
-              ? <><span className="spinner-border spinner-border-sm me-2"></span>ဝင်ရောက်နေသည်… · Signing in…</>
-              : 'ဝင်ရောက် · Sign In'}
+              ? <><span className="spinner-border spinner-border-sm me-2"></span>{t('agent.login.signingIn')}</>
+              : t('agent.login.signIn')}
           </button>
         </form>
 
@@ -115,7 +116,7 @@ export default function AgentLoginPage() {
           gap: '0.4rem', color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.88rem'
         }}>
           <i className="bi bi-arrow-left"></i>
-          မူလစာမျက်နှာ · Back to home
+          {t('agent.login.backHome')}
         </a>
       </div>
     </div>

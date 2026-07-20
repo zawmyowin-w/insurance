@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 
 export default function AgentDashboard() {
   const { user } = useAuth()
+  const { t } = useTranslation()
   const [stats, setStats] = useState({ pending: 0, verified: 0, pendingClaims: 0, verifiedClaims: 0, unreadNotifications: 0 })
   const [recentApps, setRecentApps] = useState([])
   const [loading, setLoading] = useState(true)
@@ -19,26 +21,26 @@ export default function AgentDashboard() {
     }).finally(() => setLoading(false))
   }, [])
 
-  const statCards = [
-    { label: 'လျှောက်လွှာ ဆဲဆေးဆဲ\nPending Applications', value: stats.pending,             icon: 'bi-file-earmark-text-fill',    grad: 'linear-gradient(135deg,#f59e0b,#d97706)', link: '/agent/applications?filter=PENDING' },
-    { label: 'အတည်ပြုပြီး လျှောက်လွှာ\nVerified Applications', value: stats.verified,           icon: 'bi-check-circle-fill',          grad: 'linear-gradient(135deg,#22c55e,#16a34a)', link: '/agent/applications?filter=VERIFIED' },
-    { label: 'Claim ဆဲဆေးဆဲ\nPending Claims',        value: stats.pendingClaims,          icon: 'bi-file-earmark-medical-fill', grad: 'linear-gradient(135deg,#ef4444,#dc2626)', link: '/agent/claims?filter=PENDING' },
-    { label: 'Claim အတည်ပြုပြီး\nVerified Claims',      value: stats.verifiedClaims,         icon: 'bi-shield-fill-check',         grad: 'linear-gradient(135deg,#3b82f6,#1d4ed8)', link: '/agent/claims?filter=VERIFIED' },
-    { label: 'အကြောင်းကြားချက်\nNotifications',        value: stats.unreadNotifications,    icon: 'bi-bell-fill',                 grad: 'linear-gradient(135deg,#a855f7,#7c3aed)', link: '/agent/notifications' },
-  ]
-
   const now = new Date()
   const hour = now.getHours()
   const greeting = hour < 12
-    ? 'မင်္ဂလာနံနက်ခင်းပါ · Good Morning'
+    ? t('agent.dash.morningGreeting')
     : hour < 17
-    ? 'မင်္ဂလာနေ့ခင်းပါ · Good Afternoon'
-    : 'မင်္ဂလာညနေပါ · Good Evening'
+    ? t('agent.dash.afternoonGreeting')
+    : t('agent.dash.eveningGreeting')
+
+  const statCards = [
+    { label: t('agent.dash.pendingApps'),   value: stats.pending,             icon: 'bi-file-earmark-text-fill',    grad: 'linear-gradient(135deg,#f59e0b,#d97706)', link: '/agent/applications?filter=PENDING' },
+    { label: t('agent.dash.verifiedApps'),  value: stats.verified,            icon: 'bi-check-circle-fill',          grad: 'linear-gradient(135deg,#22c55e,#16a34a)', link: '/agent/applications?filter=VERIFIED' },
+    { label: t('agent.dash.pendingClaims'), value: stats.pendingClaims,        icon: 'bi-file-earmark-medical-fill', grad: 'linear-gradient(135deg,#ef4444,#dc2626)', link: '/agent/claims?filter=PENDING' },
+    { label: t('agent.dash.verifiedClaims'),value: stats.verifiedClaims,       icon: 'bi-shield-fill-check',         grad: 'linear-gradient(135deg,#3b82f6,#1d4ed8)', link: '/agent/claims?filter=VERIFIED' },
+    { label: t('agent.dash.notifications'), value: stats.unreadNotifications,  icon: 'bi-bell-fill',                 grad: 'linear-gradient(135deg,#a855f7,#7c3aed)', link: '/agent/notifications' },
+  ]
 
   return (
     <div className="fade-in">
 
-      {/* ── ကြိုဆိုသည့် Banner / Welcome Banner ── */}
+      {/* Welcome Banner */}
       <div className="dashboard-banner dashboard-banner-agent mb-4">
         <div className="dashboard-banner-orb dashboard-banner-orb-1" />
         <div className="dashboard-banner-orb dashboard-banner-orb-2" />
@@ -51,24 +53,23 @@ export default function AgentDashboard() {
               {user?.name}
             </h4>
             <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.85rem', marginTop: '0.3rem' }}>
-              Agent ဒက်ရှ်ဘုတ် — Customer တင်သွင်းမှုများ စစ်ဆေး အတည်ပြုရန်
-              <span style={{ opacity: 0.6 }}> · Agent Dashboard — Review and verify customer submissions</span>
+              {t('agent.dash.subtitle')}
             </div>
           </div>
           <div className="d-flex gap-2">
             <Link to="/agent/applications" className="banner-action-btn">
               <i className="bi bi-file-earmark-text me-1"></i>
-              လျှောက်လွှာ <span style={{ opacity: 0.75, fontSize: '0.8em' }}>· Applications</span>
+              {t('agent.dash.applicationsBtn')}
             </Link>
             <Link to="/agent/claims" className="banner-action-btn banner-action-btn-outline">
               <i className="bi bi-file-earmark-medical me-1"></i>
-              Claim <span style={{ opacity: 0.75, fontSize: '0.8em' }}>· Claims</span>
+              {t('agent.dash.claimsBtn')}
             </Link>
           </div>
         </div>
       </div>
 
-      {/* ── စာရင်းကဒ်များ / Stat Cards ── */}
+      {/* Stat Cards */}
       <div className="row g-3 mb-4">
         {statCards.map(card => (
           <div key={card.label} className="col-6 col-lg-4 col-xl-2-4">
@@ -82,7 +83,7 @@ export default function AgentDashboard() {
                   <div style={{ fontSize: '1.7rem', fontWeight: 900, color: 'var(--text-primary)', lineHeight: 1.1 }}>
                     {loading ? <span className="stat-loading-bar" /> : card.value}
                   </div>
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '0.2rem', fontWeight: 500, whiteSpace: 'pre-line', lineHeight: 1.4 }}>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '0.2rem', fontWeight: 500, lineHeight: 1.4 }}>
                     {card.label}
                   </div>
                 </div>
@@ -93,16 +94,15 @@ export default function AgentDashboard() {
         ))}
       </div>
 
-      {/* ── မကြာသေးမီ လျှောက်လွှာများ / Recent Applications ── */}
+      {/* Recent Applications */}
       <div className="card-custom">
         <div className="d-flex align-items-center justify-content-between mb-3">
           <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <i className="bi bi-clock-history" style={{ color: 'var(--primary)' }}></i>
-            မကြာသေးမီ လျှောက်လွှာများ
-            <span style={{ fontWeight: 400, fontSize: '0.8rem', color: 'var(--text-muted)' }}> · Recent Applications</span>
+            {t('agent.dash.recentApps')}
           </h6>
           <Link to="/agent/applications" style={{ color: 'var(--primary)', fontSize: '0.85rem', textDecoration: 'none', fontWeight: 500 }}>
-            အားလုံးကြည့် · View all <i className="bi bi-arrow-right"></i>
+            {t('agent.dash.viewAll')} <i className="bi bi-arrow-right"></i>
           </Link>
         </div>
         {loading ? (
@@ -110,8 +110,7 @@ export default function AgentDashboard() {
         ) : recentApps.length === 0 ? (
           <div className="text-center py-3">
             <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.9rem' }}>
-              စစ်ဆေးရမည့် လျှောက်လွှာ မရှိသေးပါ
-              <span style={{ opacity: 0.6 }}> · No applications to review</span>
+              {t('agent.dash.noApps')}
             </p>
           </div>
         ) : (
@@ -120,11 +119,11 @@ export default function AgentDashboard() {
               <thead>
                 <tr>
                   {[
-                    'Customer',
-                    'Plan',
-                    'အကာအကွယ် · Coverage',
-                    'အခြေအနေ · Status',
-                    'ရက်စွဲ · Date',
+                    t('agent.dash.customerCol'),
+                    t('agent.dash.planCol'),
+                    t('agent.dash.coverageCol'),
+                    t('agent.dash.statusCol'),
+                    t('agent.dash.dateCol'),
                   ].map(h => <th key={h}>{h}</th>)}
                 </tr>
               </thead>

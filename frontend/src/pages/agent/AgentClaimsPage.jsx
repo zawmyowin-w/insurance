@@ -1,19 +1,15 @@
 import React, { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import FormDetailModal from '../../components/FormDetailModal'
 import { apiError } from '../../utils/apiError'
 
-const FILTER_LABELS = {
-  ALL: 'အားလုံး · All',
-  PENDING: 'ဆဲဆေးဆဲ · Pending',
-  VERIFIED: 'အတည်ပြုပြီး · Verified',
-  REVISION_REQUESTED: 'ပြင်ဆင်ရန် · Revision',
-  REJECTED: 'ပယ်ချပြီး · Rejected',
-}
+const FILTERS = ['ALL', 'PENDING', 'VERIFIED', 'REVISION_REQUESTED', 'REJECTED']
 
 export default function AgentClaimsPage() {
+  const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const [claims, setClaims] = useState([])
   const [loading, setLoading] = useState(true)
@@ -26,8 +22,15 @@ export default function AgentClaimsPage() {
   const [submitting, setSubmitting] = useState(false)
   const [viewItem, setViewItem] = useState(null)
 
-  const FILTERS = ['ALL', 'PENDING', 'VERIFIED', 'REVISION_REQUESTED', 'REJECTED']
   const filter = (() => { const f = searchParams.get('filter'); return FILTERS.includes(f) ? f : 'ALL' })()
+
+  const FILTER_LABELS = {
+    ALL:                t('agent.apps.filterAll'),
+    PENDING:            t('agent.apps.filterPending'),
+    VERIFIED:           t('agent.apps.filterVerified'),
+    REVISION_REQUESTED: t('agent.apps.filterRevision'),
+    REJECTED:           t('agent.apps.filterRejected'),
+  }
 
   const fetchClaims = () => {
     setLoading(true)
@@ -49,17 +52,17 @@ export default function AgentClaimsPage() {
     setSubmitting(true)
     try {
       await api.put(`/agent/claims/${id}/verify`, { note })
-      toast.success('Claim အတည်ပြုပြီး Admin ထံ ပေးပို့ပြီးပါပြီ · Claim verified and sent to admin')
+      toast.success(t('agent.claims.verifySuccess'))
       clearActions(); fetchClaims()
     } catch (err) { apiError(err) } finally { setSubmitting(false) }
   }
 
   const handleReject = async (id) => {
-    if (!rejectNote.trim()) { toast.error('အကြောင်းပြချက် ဖြည့်ပါ · Provide rejection reason'); return }
+    if (!rejectNote.trim()) { toast.error(t('agent.claims.reasonRequired')); return }
     setSubmitting(true)
     try {
       await api.put(`/agent/claims/${id}/reject`, { note: rejectNote })
-      toast.success('Claim ပယ်ချပြီးပါပြီ · Claim rejected')
+      toast.success(t('agent.claims.rejectSuccess'))
       clearActions(); fetchClaims()
     } catch (err) { apiError(err) } finally { setSubmitting(false) }
   }
@@ -68,7 +71,7 @@ export default function AgentClaimsPage() {
     setSubmitting(true)
     try {
       await api.put(`/agent/claims/${id}/request-revision`, { note: forwardNote })
-      toast.success('Customer ထံ Claim ပြင်ဆင်ရန် အကြောင်းကြားပြီးပါပြီ · Customer notified to update their claim')
+      toast.success(t('agent.claims.forwardSuccess'))
       clearActions(); fetchClaims()
     } catch (err) { apiError(err) } finally { setSubmitting(false) }
   }
@@ -77,16 +80,14 @@ export default function AgentClaimsPage() {
     <div className="fade-in">
       <div className="mb-4">
         <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-          Claim များ စစ်ဆေး
-          <span style={{ fontWeight: 400, fontSize: '0.85rem', color: 'var(--text-muted)', marginLeft: 8 }}>· Check Claims</span>
+          {t('agent.claims.title')}
         </h4>
         <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>
-          Customer Claim များကို Admin ထံ မတင်မီ စစ်ဆေး အတည်ပြုရန်
-          <span style={{ opacity: 0.7 }}> · Verify customer claims before forwarding to admin</span>
+          {t('agent.claims.subtitle')}
         </p>
       </div>
 
-      {/* စစ်ထုတ်ရန် Tab / Filter tabs */}
+      {/* Filter tabs */}
       <div className="d-flex gap-2 flex-wrap mb-4">
         {FILTERS.map(f => (
           <button key={f} onClick={() => setSearchParams(f === 'ALL' ? {} : { filter: f })} style={{
@@ -104,8 +105,7 @@ export default function AgentClaimsPage() {
         <div className="card-custom text-center py-5">
           <i className="bi bi-check-circle" style={{ fontSize: '3rem', color: 'var(--secondary)' }}></i>
           <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>
-            "{FILTER_LABELS[filter] || filter}" Claim မရှိပါ
-            <span style={{ fontWeight: 400, fontSize: '0.85rem', display: 'block', marginTop: 4 }}>No claims for this filter</span>
+            {t('agent.claims.empty')}
           </h5>
         </div>
       ) : (
@@ -131,7 +131,7 @@ export default function AgentClaimsPage() {
                     <span className={`badge-status badge-${claim.status?.toLowerCase()}`}>{claim.status}</span>
                   </div>
 
-                  {/* Admin မှ ပြင်ဆင်ရန် မှတ်ချက် / Admin revision note */}
+                  {/* Admin revision note */}
                   {isRevision && claim.adminNote && (
                     <div style={{
                       padding: '0.6rem 0.875rem', borderRadius: 8, marginBottom: '0.75rem',
@@ -139,7 +139,7 @@ export default function AgentClaimsPage() {
                     }}>
                       <div style={{ fontWeight: 700, color: '#92400e', marginBottom: 2 }}>
                         <i className="bi bi-exclamation-triangle me-1"></i>
-                        Admin မှ ပြင်ဆင်ရန် တောင်းဆိုသည် · Admin requested revision:
+                        {t('agent.claims.adminRevision')}
                       </div>
                       <div style={{ color: '#78350f' }}>{claim.adminNote}</div>
                     </div>
@@ -151,7 +151,7 @@ export default function AgentClaimsPage() {
                     }}>
                       <div style={{ fontWeight: 700, color: '#1e40af', marginBottom: 2 }}>
                         <i className="bi bi-person me-1"></i>
-                        Customer ထံ သင့်မှတ်ချက် · Your note to customer:
+                        {t('agent.claims.yourNote')}
                       </div>
                       <div style={{ color: '#1d4ed8' }}>{claim.agentNote}</div>
                     </div>
@@ -159,10 +159,10 @@ export default function AgentClaimsPage() {
 
                   <div className="row g-2 mb-3">
                     {[
-                      { label: 'Policy',                              value: claim.policyName || claim.policy?.packageName },
-                      { label: 'လျှော်ကြေး · Amount',                 value: `${Number(claim.amount).toLocaleString()} MMK` },
-                      { label: 'ဖြစ်ပွားသည့်ရက် · Incident Date',      value: claim.incidentDate ? new Date(claim.incidentDate).toLocaleDateString() : '—' },
-                      { label: 'တင်သွင်းသည့်ရက် · Submitted',          value: claim.createdAt ? new Date(claim.createdAt).toLocaleDateString() : '—' },
+                      { label: t('agent.claims.policyLabel'),   value: claim.policyName || claim.policy?.packageName },
+                      { label: t('agent.claims.amountLabel'),   value: `${Number(claim.amount).toLocaleString()} MMK` },
+                      { label: t('agent.claims.incidentLabel'), value: claim.incidentDate ? new Date(claim.incidentDate).toLocaleDateString() : '—' },
+                      { label: t('agent.claims.submittedLabel'),value: claim.createdAt ? new Date(claim.createdAt).toLocaleDateString() : '—' },
                     ].map(item => (
                       <div key={item.label} className="col-6">
                         <div style={{ background: 'var(--bg-secondary)', borderRadius: 6, padding: '0.5rem 0.75rem' }}>
@@ -180,7 +180,7 @@ export default function AgentClaimsPage() {
                     fontSize: '0.82rem', fontWeight: 600, marginBottom: '0.75rem', width: '100%', justifyContent: 'center'
                   }}>
                     <i className="bi bi-eye"></i>
-                    ဖောင်အသေးစိတ်ကြည့် · View Full Form Details
+                    {t('agent.claims.viewForm')}
                   </button>
 
                   {(isPending || isRevision) && (
@@ -188,16 +188,16 @@ export default function AgentClaimsPage() {
                       {activeAction === 'verify' && (
                         <div>
                           <textarea rows={2} className="form-control-custom w-100 mb-2" style={{ resize: 'vertical' }}
-                            placeholder="အတည်ပြုမှတ်ချက် · Verification notes…"
+                            placeholder={t('agent.claims.verifyPlaceholder')}
                             value={note} onChange={e => setNote(e.target.value)} />
                           <div className="d-flex gap-2">
                             <button className="btn-success-sm flex-grow-1" onClick={() => handleVerify(claim.id)} disabled={submitting}>
                               {submitting
                                 ? <span className="spinner-border spinner-border-sm"></span>
-                                : 'အတည်ပြု · Mark Verified'}
+                                : t('agent.claims.markVerified')}
                             </button>
                             <button className="btn-outline-custom" style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem' }} onClick={clearActions}>
-                              မလုပ်တော့ · Cancel
+                              {t('agent.claims.cancel')}
                             </button>
                           </div>
                         </div>
@@ -205,14 +205,14 @@ export default function AgentClaimsPage() {
                       {activeAction === 'reject' && (
                         <div>
                           <textarea rows={2} className="form-control-custom w-100 mb-2" style={{ resize: 'vertical' }}
-                            placeholder="အကြောင်းပြချက် * · Reason *"
+                            placeholder={t('agent.claims.rejectPlaceholder')}
                             value={rejectNote} onChange={e => setRejectNote(e.target.value)} />
                           <div className="d-flex gap-2">
                             <button className="btn-danger-sm flex-grow-1" onClick={() => handleReject(claim.id)} disabled={submitting}>
-                              ပယ်ချ · Reject
+                              {t('agent.claims.reject')}
                             </button>
                             <button className="btn-outline-custom" style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem' }} onClick={clearActions}>
-                              မလုပ်တော့ · Cancel
+                              {t('agent.claims.cancel')}
                             </button>
                           </div>
                         </div>
@@ -220,7 +220,7 @@ export default function AgentClaimsPage() {
                       {activeAction === 'forward' && (
                         <div>
                           <textarea rows={2} className="form-control-custom w-100 mb-2" style={{ resize: 'vertical' }}
-                            placeholder="Customer ထံ မှတ်ချက် — ဘာပြင်ဆင်ရမည် · Note to customer — what needs to be updated…"
+                            placeholder={t('agent.claims.forwardPlaceholder')}
                             value={forwardNote} onChange={e => setForwardNote(e.target.value)} />
                           <div className="d-flex gap-2">
                             <button style={{
@@ -229,10 +229,10 @@ export default function AgentClaimsPage() {
                             }} onClick={() => handleForward(claim.id)} disabled={submitting}>
                               {submitting
                                 ? <span className="spinner-border spinner-border-sm"></span>
-                                : <><i className="bi bi-send me-1"></i>Customer ထံ အကြောင်းကြား · Notify Customer</>}
+                                : <><i className="bi bi-send me-1"></i>{t('agent.claims.notifyCustomer')}</>}
                             </button>
                             <button className="btn-outline-custom" style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem' }} onClick={clearActions}>
-                              မလုပ်တော့ · Cancel
+                              {t('agent.claims.cancel')}
                             </button>
                           </div>
                         </div>
@@ -245,7 +245,7 @@ export default function AgentClaimsPage() {
                               background: '#d97706', color: '#fff', fontWeight: 700, fontSize: '0.85rem',
                               cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
                             }}>
-                              <i className="bi bi-send"></i>Customer ထံ ပေးပို့ · Forward to Customer
+                              <i className="bi bi-send"></i>{t('agent.claims.forwardToCustomer')}
                             </button>
                           )}
                           <div className="d-flex gap-2">
@@ -254,14 +254,14 @@ export default function AgentClaimsPage() {
                               background: '#16a34a', color: '#fff', fontWeight: 700, fontSize: '0.85rem',
                               cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
                             }}>
-                              <i className="bi bi-check-circle"></i>အတည်ပြု · Verify
+                              <i className="bi bi-check-circle"></i>{t('agent.claims.verify')}
                             </button>
                             <button onClick={() => setRejectId(claim.id)} style={{
                               flex: 1, padding: '0.5rem', borderRadius: 8, border: 'none',
                               background: '#dc2626', color: '#fff', fontWeight: 700, fontSize: '0.85rem',
                               cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
                             }}>
-                              <i className="bi bi-x-circle"></i>ပယ်ချ · Reject
+                              <i className="bi bi-x-circle"></i>{t('agent.claims.reject')}
                             </button>
                           </div>
                         </div>

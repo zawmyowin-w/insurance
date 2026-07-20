@@ -1,5 +1,6 @@
 import React from 'react'
 import { useAuth } from '../../context/AuthContext'
+import { useTranslation } from 'react-i18next'
 import ProfileAvatar from '../../components/ProfileAvatar'
 
 const Field = ({ label, value }) => (
@@ -11,17 +12,16 @@ const Field = ({ label, value }) => (
 
 export default function AgentProfilePage() {
   const { user } = useAuth()
+  const { t } = useTranslation()
 
   return (
     <div className="fade-in">
       <div className="mb-4">
         <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-          ကိုယ်ရေးအချက်အလက်
-          <span style={{ fontWeight: 400, fontSize: '0.85rem', color: 'var(--text-muted)', marginLeft: 8 }}>· My Profile</span>
+          {t('agent.profile.title')}
         </h4>
         <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>
-          Admin မှ သတ်မှတ်ထားသော သင့်အကောင့် အသေးစိတ်
-          <span style={{ opacity: 0.7 }}> · Your account details as set up by the admin</span>
+          {t('agent.profile.subtitle')}
         </p>
       </div>
 
@@ -38,7 +38,7 @@ export default function AgentProfilePage() {
               <div>
                 <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{user?.name}</div>
                 <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                  Admin သာ ဓာတ်ပုံပြောင်းနိုင်သည် · Only an admin can change your photo
+                  {t('agent.profile.adminPhotoNote')}
                 </div>
               </div>
             </div>
@@ -48,18 +48,17 @@ export default function AgentProfilePage() {
             }}>
               <i className="bi bi-info-circle" style={{ color: '#1d4ed8', marginTop: 2 }}></i>
               <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                Agent ကိုယ်ရေးအချက်အလက်ကို Admin သာ ပြင်နိုင်သည်။ မည်သည့်အချက်အလက်ကိုမဆို ပြင်ဆင်ရန် Admin ထံ ဆက်သွယ်ပါ ·{' '}
-                Agent profiles can only be edited by an admin. Please contact your administrator to update any of these details.
+                {t('agent.profile.infoNote')}
               </div>
             </div>
             <div className="row g-3">
-              <Field label="အမည် · Full Name"               value={user?.name} />
-              <Field label="အီးမေးလ် · Email"              value={user?.email} />
-              <Field label="ဖုန်းနံပါတ် · Phone"           value={user?.phone} />
-              <Field label="အာမခံ အမျိုးအစား · Insurance Type" value={user?.insuranceType} />
-              <Field label="လိပ်စာ · Address"              value={user?.address} />
-              <Field label="အခြေအနေ · Status"              value={user?.active ? 'တက်ကြွဆဲ · Active' : 'တာဝန်မထမ်းဆောင်တော့ · Inactive'} />
-              <Field label="ပါဝင်ဖွဲ့စည်းသည့်ရက် · Joined"   value={user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : ''} />
+              <Field label={t('agent.profile.nameLabel')}          value={user?.name} />
+              <Field label={t('agent.profile.emailLabel')}         value={user?.email} />
+              <Field label={t('agent.profile.phoneLabel')}         value={user?.phone} />
+              <Field label={t('agent.profile.insuranceTypeLabel')} value={user?.insuranceType} />
+              <Field label={t('agent.profile.addressLabel')}       value={user?.address} />
+              <Field label={t('agent.profile.statusLabel')}        value={user?.active ? t('agent.profile.statusActive') : t('agent.profile.statusInactive')} />
+              <Field label={t('agent.profile.joinedLabel')}        value={user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : ''} />
             </div>
           </div>
         </div>
