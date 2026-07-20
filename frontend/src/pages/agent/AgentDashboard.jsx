@@ -20,21 +20,25 @@ export default function AgentDashboard() {
   }, [])
 
   const statCards = [
-    { label: 'Pending Applications', value: stats.pending,               icon: 'bi-file-earmark-text-fill',    grad: 'linear-gradient(135deg,#f59e0b,#d97706)', link: '/agent/applications?filter=PENDING' },
-    { label: 'Verified Applications',value: stats.verified,              icon: 'bi-check-circle-fill',          grad: 'linear-gradient(135deg,#22c55e,#16a34a)', link: '/agent/applications?filter=VERIFIED' },
-    { label: 'Pending Claims',        value: stats.pendingClaims,         icon: 'bi-file-earmark-medical-fill', grad: 'linear-gradient(135deg,#ef4444,#dc2626)', link: '/agent/claims?filter=PENDING' },
-    { label: 'Verified Claims',       value: stats.verifiedClaims,        icon: 'bi-shield-fill-check',         grad: 'linear-gradient(135deg,#3b82f6,#1d4ed8)', link: '/agent/claims?filter=VERIFIED' },
-    { label: 'Notifications',         value: stats.unreadNotifications,   icon: 'bi-bell-fill',                 grad: 'linear-gradient(135deg,#a855f7,#7c3aed)', link: '/agent/notifications' },
+    { label: 'လျှောက်လွှာ ဆဲဆေးဆဲ\nPending Applications', value: stats.pending,             icon: 'bi-file-earmark-text-fill',    grad: 'linear-gradient(135deg,#f59e0b,#d97706)', link: '/agent/applications?filter=PENDING' },
+    { label: 'အတည်ပြုပြီး လျှောက်လွှာ\nVerified Applications', value: stats.verified,           icon: 'bi-check-circle-fill',          grad: 'linear-gradient(135deg,#22c55e,#16a34a)', link: '/agent/applications?filter=VERIFIED' },
+    { label: 'Claim ဆဲဆေးဆဲ\nPending Claims',        value: stats.pendingClaims,          icon: 'bi-file-earmark-medical-fill', grad: 'linear-gradient(135deg,#ef4444,#dc2626)', link: '/agent/claims?filter=PENDING' },
+    { label: 'Claim အတည်ပြုပြီး\nVerified Claims',      value: stats.verifiedClaims,         icon: 'bi-shield-fill-check',         grad: 'linear-gradient(135deg,#3b82f6,#1d4ed8)', link: '/agent/claims?filter=VERIFIED' },
+    { label: 'အကြောင်းကြားချက်\nNotifications',        value: stats.unreadNotifications,    icon: 'bi-bell-fill',                 grad: 'linear-gradient(135deg,#a855f7,#7c3aed)', link: '/agent/notifications' },
   ]
 
   const now = new Date()
   const hour = now.getHours()
-  const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening'
+  const greeting = hour < 12
+    ? 'မင်္ဂလာနံနက်ခင်းပါ · Good Morning'
+    : hour < 17
+    ? 'မင်္ဂလာနေ့ခင်းပါ · Good Afternoon'
+    : 'မင်္ဂလာညနေပါ · Good Evening'
 
   return (
     <div className="fade-in">
 
-      {/* ── Dashboard Welcome Banner ── */}
+      {/* ── ကြိုဆိုသည့် Banner / Welcome Banner ── */}
       <div className="dashboard-banner dashboard-banner-agent mb-4">
         <div className="dashboard-banner-orb dashboard-banner-orb-1" />
         <div className="dashboard-banner-orb dashboard-banner-orb-2" />
@@ -47,21 +51,24 @@ export default function AgentDashboard() {
               {user?.name}
             </h4>
             <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.85rem', marginTop: '0.3rem' }}>
-              Agent Dashboard — Review and verify customer submissions
+              Agent ဒက်ရှ်ဘုတ် — Customer တင်သွင်းမှုများ စစ်ဆေး အတည်ပြုရန်
+              <span style={{ opacity: 0.6 }}> · Agent Dashboard — Review and verify customer submissions</span>
             </div>
           </div>
           <div className="d-flex gap-2">
             <Link to="/agent/applications" className="banner-action-btn">
-              <i className="bi bi-file-earmark-text me-1"></i> Applications
+              <i className="bi bi-file-earmark-text me-1"></i>
+              လျှောက်လွှာ <span style={{ opacity: 0.75, fontSize: '0.8em' }}>· Applications</span>
             </Link>
             <Link to="/agent/claims" className="banner-action-btn banner-action-btn-outline">
-              <i className="bi bi-file-earmark-medical me-1"></i> Claims
+              <i className="bi bi-file-earmark-medical me-1"></i>
+              Claim <span style={{ opacity: 0.75, fontSize: '0.8em' }}>· Claims</span>
             </Link>
           </div>
         </div>
       </div>
 
-      {/* ── Stat Cards ── */}
+      {/* ── စာရင်းကဒ်များ / Stat Cards ── */}
       <div className="row g-3 mb-4">
         {statCards.map(card => (
           <div key={card.label} className="col-6 col-lg-4 col-xl-2-4">
@@ -75,7 +82,9 @@ export default function AgentDashboard() {
                   <div style={{ fontSize: '1.7rem', fontWeight: 900, color: 'var(--text-primary)', lineHeight: 1.1 }}>
                     {loading ? <span className="stat-loading-bar" /> : card.value}
                   </div>
-                  <div style={{ fontSize: '0.76rem', color: 'var(--text-secondary)', marginTop: '0.2rem', fontWeight: 500 }}>{card.label}</div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '0.2rem', fontWeight: 500, whiteSpace: 'pre-line', lineHeight: 1.4 }}>
+                    {card.label}
+                  </div>
                 </div>
                 <i className="bi bi-arrow-right-short stat-card-arrow"></i>
               </div>
@@ -84,24 +93,41 @@ export default function AgentDashboard() {
         ))}
       </div>
 
-      {/* ── Recent Applications ── */}
+      {/* ── မကြာသေးမီ လျှောက်လွှာများ / Recent Applications ── */}
       <div className="card-custom">
         <div className="d-flex align-items-center justify-content-between mb-3">
           <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <i className="bi bi-clock-history" style={{ color: 'var(--primary)' }}></i> Recent Applications
+            <i className="bi bi-clock-history" style={{ color: 'var(--primary)' }}></i>
+            မကြာသေးမီ လျှောက်လွှာများ
+            <span style={{ fontWeight: 400, fontSize: '0.8rem', color: 'var(--text-muted)' }}> · Recent Applications</span>
           </h6>
           <Link to="/agent/applications" style={{ color: 'var(--primary)', fontSize: '0.85rem', textDecoration: 'none', fontWeight: 500 }}>
-            View all <i className="bi bi-arrow-right"></i>
+            အားလုံးကြည့် · View all <i className="bi bi-arrow-right"></i>
           </Link>
         </div>
         {loading ? (
           <div className="text-center py-3"><div className="spinner-border" style={{ color: 'var(--primary)', width: 28, height: 28 }}></div></div>
         ) : recentApps.length === 0 ? (
-          <div className="text-center py-3"><p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.9rem' }}>No applications to review</p></div>
+          <div className="text-center py-3">
+            <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.9rem' }}>
+              စစ်ဆေးရမည့် လျှောက်လွှာ မရှိသေးပါ
+              <span style={{ opacity: 0.6 }}> · No applications to review</span>
+            </p>
+          </div>
         ) : (
           <div className="table-custom">
             <table className="w-100">
-              <thead><tr>{['Customer', 'Plan', 'Coverage', 'Status', 'Date'].map(h => <th key={h}>{h}</th>)}</tr></thead>
+              <thead>
+                <tr>
+                  {[
+                    'Customer',
+                    'Plan',
+                    'အကာအကွယ် · Coverage',
+                    'အခြေအနေ · Status',
+                    'ရက်စွဲ · Date',
+                  ].map(h => <th key={h}>{h}</th>)}
+                </tr>
+              </thead>
               <tbody>
                 {recentApps.map(a => (
                   <tr key={a.id}>

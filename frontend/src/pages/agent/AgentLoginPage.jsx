@@ -19,17 +19,16 @@ export default function AgentLoginPage() {
     try {
       const user = await login(form.email, form.password)
       if (user.role !== 'AGENT') {
-        // Not an agent account — log back out immediately
         sessionStorage.removeItem('token')
         window.location.reload()
-        toast.error('This login is for agent accounts only.')
+        toast.error('ဤ Login သည် Agent အကောင့်များအတွက်သာ ဖြစ်သည် · This login is for agent accounts only.')
         return
       }
-      toast.success('Welcome back!')
+      toast.success('ဝင်ရောက်မှု အောင်မြင်ပါသည် · Welcome back!')
       navigate(from, { replace: true })
     } catch (err) {
       const msg = err.response?.data?.message || ''
-      toast.error(msg || 'Invalid email or password.')
+      toast.error(msg || 'အီးမေးလ် သို့မဟုတ် စကားဝှက် မမှန်ကန်ပါ · Invalid email or password.')
     } finally {
       setLoading(false)
     }
@@ -50,13 +49,16 @@ export default function AgentLoginPage() {
             Agent Portal
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-            Sign in with your agent account to continue
+            Agent အကောင့်ဖြင့် ဝင်ရောက်ပါ
+            <span style={{ display: 'block', opacity: 0.7, fontSize: '0.82rem' }}>Sign in with your agent account to continue</span>
           </p>
         </div>
 
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
-            <label className="form-label-custom">Email Address</label>
+            <label className="form-label-custom">
+              အီးမေးလ် လိပ်စာ <span style={{ opacity: 0.6, fontWeight: 400 }}>· Email Address</span>
+            </label>
             <div style={{ position: 'relative' }}>
               <i className="bi bi-envelope" style={{
                 position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)',
@@ -74,7 +76,9 @@ export default function AgentLoginPage() {
           </div>
 
           <div className="mb-4">
-            <label className="form-label-custom">Password</label>
+            <label className="form-label-custom">
+              စကားဝှက် <span style={{ opacity: 0.6, fontWeight: 400 }}>· Password</span>
+            </label>
             <div style={{ position: 'relative' }}>
               <i className="bi bi-lock" style={{
                 position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)',
@@ -100,8 +104,8 @@ export default function AgentLoginPage() {
           <button type="submit" disabled={loading} className="btn-primary-custom w-100"
             style={{ justifyContent: 'center', background: '#1e40af', borderColor: '#1e40af' }}>
             {loading
-              ? <><span className="spinner-border spinner-border-sm me-2"></span>Signing in…</>
-              : 'Sign In'}
+              ? <><span className="spinner-border spinner-border-sm me-2"></span>ဝင်ရောက်နေသည်… · Signing in…</>
+              : 'ဝင်ရောက် · Sign In'}
           </button>
         </form>
 
@@ -110,7 +114,8 @@ export default function AgentLoginPage() {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           gap: '0.4rem', color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.88rem'
         }}>
-          <i className="bi bi-arrow-left"></i> Back to home
+          <i className="bi bi-arrow-left"></i>
+          မူလစာမျက်နှာ · Back to home
         </a>
       </div>
     </div>

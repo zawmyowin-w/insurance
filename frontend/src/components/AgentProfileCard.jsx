@@ -11,7 +11,7 @@ import ProfileAvatar from './ProfileAvatar'
  *   style        {object}  optional extra container styles
  */
 export default function AgentProfileCard({ packageType, style }) {
-  const [agent, setAgent]   = useState(null)
+  const [agent, setAgent]     = useState(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -32,16 +32,19 @@ export default function AgentProfileCard({ packageType, style }) {
       ...style
     }}>
       <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.6rem' }}>
-        <i className="bi bi-person-badge me-1"></i>Assigned Agent
+        <i className="bi bi-person-badge me-1"></i>
+        တာဝန်ခံ Agent · Assigned Agent
       </div>
 
       {loading ? (
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-          <span className="spinner-border spinner-border-sm"></span> Loading…
+          <span className="spinner-border spinner-border-sm"></span>
+          ဆွဲယူနေသည်… · Loading…
         </div>
       ) : !agent ? (
         <div style={{ fontSize: '0.83rem', color: 'var(--text-muted)' }}>
-          <i className="bi bi-person-dash me-1"></i>No agent assigned for this type yet
+          <i className="bi bi-person-dash me-1"></i>
+          ဤ အမျိုးအစားအတွက် Agent မသတ်မှတ်ရသေးပါ · No agent assigned for this type yet
         </div>
       ) : (
         <div className="d-flex align-items-center gap-3">
