@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
+import DeleteConfirmModal from '../../components/DeleteConfirmModal'
 
 const EMPTY = { name: '', methodKey: '', color: '#1d4ed8', active: true }
 
@@ -15,6 +16,7 @@ export default function AdminPaymentMethodsPage() {
   const [logoFile, setLogoFile] = useState(null)
   const [qrFile, setQrFile] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [deleteModal, setDeleteModal] = useState({ open: false, id: null, loading: false })
   const logoRef = useRef()
   const qrRef = useRef()
 
@@ -78,10 +80,21 @@ export default function AdminPaymentMethodsPage() {
     } catch { toast.error(t('admin.paymentMethods.saveFailed')) }
   }
 
-  const handleDelete = async id => {
-    if (!window.confirm(t('admin.paymentMethods.deleteConfirm'))) return
-    try { await api.delete(`/admin/payment-methods/${id}`); toast.success(t('admin.paymentMethods.deletedSuccess')); fetch() }
-    catch { toast.error(t('admin.paymentMethods.saveFailed')) }
+  const handleDelete = id => {
+    setDeleteModal({ open: true, id, loading: false })
+  }
+
+  const confirmDelete = async () => {
+    setDeleteModal(m => ({ ...m, loading: true }))
+    try {
+      await api.delete(`/admin/payment-methods/${deleteModal.id}`)
+      toast.success(t('admin.paymentMethods.deletedSuccess'))
+      setDeleteModal({ open: false, id: null, loading: false })
+      fetch()
+    } catch {
+      toast.error(t('admin.paymentMethods.saveFailed'))
+      setDeleteModal(m => ({ ...m, loading: false }))
+    }
   }
 
   return (
@@ -291,6 +304,15 @@ export default function AdminPaymentMethodsPage() {
           <div><i className="bi bi-check2 me-2" style={{ color: '#16a34a' }}></i>{t('admin.paymentMethods.tip4')}</div>
         </div>
       </div>
+
+      <DeleteConfirmModal
+        open={deleteModal.open}
+        title="Payment Method ကို ဖျက်မည်လား?"
+        message="ဤ Payment Method ကို ဖယ်ရှားမည်။ ဤလုပ်ဆောင်ချက်ကို ပြန်မလုပ်နိုင်ပါ။"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteModal({ open: false, id: null, loading: false })}
+        loading={deleteModal.loading}
+      />
     </div>
   )
 }

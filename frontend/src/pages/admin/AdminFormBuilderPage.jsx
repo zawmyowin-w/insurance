@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import { getTypeMeta } from '../../utils/typeMeta'
+import DeleteConfirmModal from '../../components/DeleteConfirmModal'
 
 const FORM_TYPES = ['APPLICATION', 'CLAIM']
 const FIELD_TYPES = [
@@ -126,14 +127,24 @@ export default function AdminFormBuilderPage() {
     finally { setSaving(false) }
   }
 
-  const handleDelete = async () => {
-    if (!window.confirm('Delete this form? Submitted data will still be preserved, but new submissions will have no form.')) return
+  const [deleteModal, setDeleteModal] = useState({ open: false, loading: false })
+
+  const handleDelete = () => {
+    setDeleteModal({ open: true, loading: false })
+  }
+
+  const confirmDelete = async () => {
+    setDeleteModal(m => ({ ...m, loading: true }))
     try {
       await api.delete(`/admin/forms/${editing}`)
       toast.success(t('admin.formBuilder.formDeleted'))
+      setDeleteModal({ open: false, loading: false })
       loadForms(selectedPkg)
       closePanel()
-    } catch { toast.error(t('admin.formBuilder.deleteFailed')) }
+    } catch {
+      toast.error(t('admin.formBuilder.deleteFailed'))
+      setDeleteModal(m => ({ ...m, loading: false }))
+    }
   }
 
   const appForm   = forms.find(f => f.formType === 'APPLICATION')
@@ -374,6 +385,15 @@ export default function AdminFormBuilderPage() {
           </div>
         )}
       </div>
+
+      <DeleteConfirmModal
+        open={deleteModal.open}
+        title="Form ကို ဖျက်မည်လား?"
+        message="ဤ Form ကို ဖျက်မည်။ တင်သွင်းထားသော ဒေတာများ ဆက်လက်သိမ်းဆည်းသွားမည်ဖြစ်သော်လည်း လာမည့် Submission များအတွက် Form မရှိတော့ပါ။"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteModal({ open: false, loading: false })}
+        loading={deleteModal.loading}
+      />
     </div>
   )
 }

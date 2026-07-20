@@ -5,6 +5,7 @@ import api from '../../services/api'
 import { toast } from 'react-toastify'
 import FormDetailModal from '../../components/FormDetailModal'
 import RevisionFormModal from '../../components/RevisionFormModal'
+import DeleteConfirmModal from '../../components/DeleteConfirmModal'
 
 export default function MyApplicationsPage() {
   const { t } = useTranslation()
@@ -12,6 +13,7 @@ export default function MyApplicationsPage() {
   const [loading, setLoading] = useState(true)
   const [viewItem, setViewItem] = useState(null)
   const [reviseItem, setReviseItem] = useState(null)
+  const [deleteModal, setDeleteModal] = useState({ open: false, id: null, action: null, loading: false })
 
   const fetchApps = () => {
     api.get('/customer/applications')
@@ -21,25 +23,29 @@ export default function MyApplicationsPage() {
   }
   useEffect(() => { fetchApps() }, [])
 
-  const handleCancel = async (id) => {
-    if (!window.confirm(t('myApps.cancelConfirm'))) return
-    try {
-      await api.delete(`/customer/applications/${id}`)
-      toast.success(t('myApps.cancelled'))
-      fetchApps()
-    } catch (err) {
-      toast.error(err.response?.data?.message || t('myApps.cancelFailed'))
-    }
+  const handleCancel = id => {
+    setDeleteModal({ open: true, id, action: 'cancel', loading: false })
   }
 
-  const handleDelete = async (id) => {
-    if (!window.confirm(t('myApps.deleteConfirm'))) return
+  const handleDelete = id => {
+    setDeleteModal({ open: true, id, action: 'delete', loading: false })
+  }
+
+  const confirmDeleteAction = async () => {
+    setDeleteModal(m => ({ ...m, loading: true }))
     try {
-      await api.delete(`/customer/applications/${id}/permanent`)
-      toast.success(t('myApps.deletedSuccess'))
+      if (deleteModal.action === 'cancel') {
+        await api.delete(`/customer/applications/${deleteModal.id}`)
+        toast.success(t('myApps.cancelled'))
+      } else {
+        await api.delete(`/customer/applications/${deleteModal.id}/permanent`)
+        toast.success(t('myApps.deletedSuccess'))
+      }
+      setDeleteModal({ open: false, id: null, action: null, loading: false })
       fetchApps()
     } catch (err) {
-      toast.error(err.response?.data?.message || t('myApps.deleteFailed'))
+      toast.error(err.response?.data?.message || (deleteModal.action === 'cancel' ? t('myApps.cancelFailed') : t('myApps.deleteFailed')))
+      setDeleteModal(m => ({ ...m, loading: false }))
     }
   }
 
@@ -167,6 +173,18 @@ export default function MyApplicationsPage() {
         show={!!reviseItem} onClose={() => setReviseItem(null)}
         type="application" item={reviseItem}
         onRevised={fetchApps} />
+
+      <DeleteConfirmModal
+        open={deleteModal.open}
+        title={deleteModal.action === 'cancel' ? 'Application ကို ပယ်ဖျက်မည်လား?' : 'Application ကို ဖျက်မည်လား?'}
+        message={deleteModal.action === 'cancel'
+          ? 'ဤ Application ကို ပယ်ဖျက်မည်။ Agent မှ ဆောင်ရွက်မည့် Application ရပ်တန့်သွားမည်။'
+          : 'ဤ Application ကို အပြီးအပိုင် ဖျက်မည်။ ဤလုပ်ဆောင်ချက်ကို ပြန်မလုပ်နိုင်ပါ။'}
+        onConfirm={confirmDeleteAction}
+        onCancel={() => setDeleteModal({ open: false, id: null, action: null, loading: false })}
+        loading={deleteModal.loading}
+        confirmLabel={deleteModal.action === 'cancel' ? 'ပယ်ဖျက်မည်' : 'Delete'}
+      />
     </div>
   )
 }

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
+import DeleteConfirmModal from '../../components/DeleteConfirmModal'
 
 const ICON_MAP = {
   LIFE: '❤️', HEALTH: '🏥', VEHICLE: '🚗', PROPERTY: '🏠',
@@ -26,8 +27,9 @@ export default function ManageInsuranceTypesPage() {
   const [form, setForm]         = useState(emptyForm)
   const [saving, setSaving]     = useState(false)
   const [deletingId, setDeletingId] = useState(null)
-  const [editingId, setEditingId]   = useState(null)   // which row is being edited
-  const [editForm, setEditForm]     = useState({})     // inline edit form state
+  const [editingId, setEditingId]   = useState(null)
+  const [editForm, setEditForm]     = useState({})
+  const [deleteModal, setDeleteModal] = useState({ open: false, id: null, name: '', loading: false })
 
   const load = () => {
     setLoading(true)
@@ -67,15 +69,21 @@ export default function ManageInsuranceTypesPage() {
   }
 
   // ── Delete ──────────────────────────────────────────────────────
-  const handleDelete = async (id, name) => {
-    if (!window.confirm(`"${name}" ကို ဖျက်မည်လား? ၎င်းကို အသုံးပြုနေသည့် Package နှင့် Agent များ ရှိနိုင်သည်။`)) return
-    setDeletingId(id)
+  const handleDelete = (id, name) => {
+    setDeleteModal({ open: true, id, name, loading: false })
+  }
+
+  const confirmDelete = async () => {
+    setDeleteModal(m => ({ ...m, loading: true }))
+    setDeletingId(deleteModal.id)
     try {
-      await api.delete(`/admin/insurance-types/${id}`)
-      toast.success(`"${name}" ${t('admin.insuranceTypes.deletedSuccess')}`)
+      await api.delete(`/admin/insurance-types/${deleteModal.id}`)
+      toast.success(`"${deleteModal.name}" ${t('admin.insuranceTypes.deletedSuccess')}`)
+      setDeleteModal({ open: false, id: null, name: '', loading: false })
       load()
     } catch (err) {
       toast.error(err.response?.data?.message || t('admin.insuranceTypes.deleteFailed'))
+      setDeleteModal(m => ({ ...m, loading: false }))
     } finally {
       setDeletingId(null)
     }
@@ -246,6 +254,15 @@ export default function ManageInsuranceTypesPage() {
           </div>
         </div>
       </div>
+
+      <DeleteConfirmModal
+        open={deleteModal.open}
+        title={`"${deleteModal.name}" ကို ဖျက်မည်လား?`}
+        message="၎င်းကို အသုံးပြုနေသည့် Package နှင့် Agent များ ရှိနိုင်သည်။ ဤလုပ်ဆောင်ချက်ကို ပြန်မလုပ်နိုင်ပါ။"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteModal({ open: false, id: null, name: '', loading: false })}
+        loading={deleteModal.loading}
+      />
     </div>
   )
 }

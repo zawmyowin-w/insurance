@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
+import DeleteConfirmModal from '../../components/DeleteConfirmModal'
 
 const PAYMENT_FREQ_OPTIONS = [
   { value: 'MONTHLY',     label: 'တစ်လတစ်ကြိမ် (Monthly)',       months: 1  },
@@ -202,9 +203,23 @@ export default function ManagePackagesPage() {
     } catch { toast.error('Failed') }
   }
 
-  const handleDelete = async id => {
-    if (!window.confirm('ဤ Package ကို ဖျက်မည်လား? ဒီလုပ်ဆောင်ချက်ကို ပြန်မလုပ်နိုင်ပါ။')) return
-    try { await api.delete(`/admin/packages/${id}`); toast.success('Deleted'); fetchPackages() } catch { toast.error('Failed') }
+  const [deleteModal, setDeleteModal] = useState({ open: false, id: null, loading: false })
+
+  const handleDelete = id => {
+    setDeleteModal({ open: true, id, loading: false })
+  }
+
+  const confirmDelete = async () => {
+    setDeleteModal(m => ({ ...m, loading: true }))
+    try {
+      await api.delete(`/admin/packages/${deleteModal.id}`)
+      toast.success('Deleted')
+      setDeleteModal({ open: false, id: null, loading: false })
+      fetchPackages()
+    } catch {
+      toast.error('Failed')
+      setDeleteModal(m => ({ ...m, loading: false }))
+    }
   }
 
   const midCoverage = form.coverageMin && form.coverageMax
@@ -886,6 +901,15 @@ function PackageDetailModal({ pkg, onClose, onEdit }) {
           )}
         </div>
       </div>
+
+      <DeleteConfirmModal
+        open={deleteModal.open}
+        title="Package ကို ဖျက်မည်လား?"
+        message="ဤ Package ကို အပြီးအပိုင် ဖျက်မည်။ ဤလုပ်ဆောင်ချက်ကို ပြန်မလုပ်နိုင်ပါ။"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteModal({ open: false, id: null, loading: false })}
+        loading={deleteModal.loading}
+      />
     </div>
   )
 }

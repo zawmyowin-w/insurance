@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
+import DeleteConfirmModal from '../../components/DeleteConfirmModal'
 import ProfileAvatar from '../../components/ProfileAvatar'
 import PasswordStrengthWidget from '../../components/PasswordStrengthWidget'
 import {
@@ -44,6 +45,7 @@ export default function ManageUsersPage() {
   const [showEditPwd, setShowEditPwd] = useState(false)
   const [editSaving, setEditSaving] = useState(false)
   const [insuranceTypes, setInsuranceTypes] = useState(['LIFE', 'HEALTH', 'VEHICLE', 'PROPERTY'])
+  const [deleteModal, setDeleteModal] = useState({ open: false, id: null, loading: false })
 
   const fetchInsuranceTypes = () => {
     api.get('/admin/insurance-types')
@@ -114,10 +116,21 @@ export default function ManageUsersPage() {
     } catch { toast.error(t('admin.users.failed')) }
   }
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Delete this user permanently?')) return
-    try { await api.delete(`/admin/users/${id}`); toast.success(t('admin.users.deleted')); fetchUsers() }
-    catch { toast.error(t('admin.users.failedDelete')) }
+  const handleDelete = id => {
+    setDeleteModal({ open: true, id, loading: false })
+  }
+
+  const confirmDelete = async () => {
+    setDeleteModal(m => ({ ...m, loading: true }))
+    try {
+      await api.delete(`/admin/users/${deleteModal.id}`)
+      toast.success(t('admin.users.deleted'))
+      setDeleteModal({ open: false, id: null, loading: false })
+      fetchUsers()
+    } catch {
+      toast.error(t('admin.users.failedDelete'))
+      setDeleteModal(m => ({ ...m, loading: false }))
+    }
   }
 
   const openEdit = (u) => {
@@ -387,6 +400,15 @@ export default function ManageUsersPage() {
           )}
         </>
       )}
+
+      <DeleteConfirmModal
+        open={deleteModal.open}
+        title="User ကို ဖျက်မည်လား?"
+        message="ဤ user ကို အပြီးအပိုင် ဖျက်မည်။ ၎င်း၏ ဒေတာများ အားလုံး ပျောက်ဆုံးမည်ဖြစ်သည်။"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteModal({ open: false, id: null, loading: false })}
+        loading={deleteModal.loading}
+      />
 
       {/* Edit User Modal */}
       {editingUser && (
