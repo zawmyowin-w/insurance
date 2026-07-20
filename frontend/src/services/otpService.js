@@ -71,7 +71,7 @@ export async function sendOtpEmail(email, code, type) {
       await emailjs.send(
         cleanSvc,
         cleanTpl,
-        { to_email: email, otp_code: code, valid_minutes: '5' },
+        { email, passcode: code, valid_minutes: '5' },
         { publicKey: cleanKey },
       )
     } catch (ejsErr) {
