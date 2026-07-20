@@ -1,5 +1,7 @@
+import { useTranslation } from 'react-i18next'
 import NotificationsPage from '../../components/NotificationsPage'
 
 export default function CustomerNotificationsPage() {
-  return <NotificationsPage subtitle="Stay updated on your applications and claims" />
+  const { t } = useTranslation()
+  return <NotificationsPage subtitle={t('notif.customerSubtitle')} />
 }

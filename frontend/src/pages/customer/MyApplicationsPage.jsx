@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import FormDetailModal from '../../components/FormDetailModal'
 import RevisionFormModal from '../../components/RevisionFormModal'
 
 export default function MyApplicationsPage() {
+  const { t } = useTranslation()
   const [apps, setApps] = useState([])
   const [loading, setLoading] = useState(true)
   const [viewItem, setViewItem] = useState(null)
@@ -20,24 +22,24 @@ export default function MyApplicationsPage() {
   useEffect(() => { fetchApps() }, [])
 
   const handleCancel = async (id) => {
-    if (!window.confirm('Cancel this application?')) return
+    if (!window.confirm(t('myApps.cancelConfirm'))) return
     try {
       await api.delete(`/customer/applications/${id}`)
-      toast.success('Application cancelled')
+      toast.success(t('myApps.cancelled'))
       fetchApps()
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to cancel')
+      toast.error(err.response?.data?.message || t('myApps.cancelFailed'))
     }
   }
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Permanently delete this application? This cannot be undone.')) return
+    if (!window.confirm(t('myApps.deleteConfirm'))) return
     try {
       await api.delete(`/customer/applications/${id}/permanent`)
-      toast.success('Application deleted')
+      toast.success(t('myApps.deletedSuccess'))
       fetchApps()
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to delete')
+      toast.error(err.response?.data?.message || t('myApps.deleteFailed'))
     }
   }
 
@@ -45,11 +47,11 @@ export default function MyApplicationsPage() {
     <div className="fade-in">
       <div className="d-flex align-items-center justify-content-between mb-4">
         <div>
-          <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>My Applications</h4>
-          <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>Track your insurance applications</p>
+          <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('myApps.title')}</h4>
+          <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>{t('myApps.subtitle')}</p>
         </div>
         <Link to="/customer/apply" className="btn-primary-custom" style={{ fontSize: '0.88rem', padding: '0.45rem 1rem' }}>
-          <i className="bi bi-plus-circle me-1"></i>New Application
+          <i className="bi bi-plus-circle me-1"></i>{t('myApps.newApp')}
         </Link>
       </div>
 
@@ -58,8 +60,8 @@ export default function MyApplicationsPage() {
       ) : apps.length === 0 ? (
         <div className="card-custom text-center py-5">
           <i className="bi bi-file-earmark-text" style={{ fontSize: '3rem', color: 'var(--border)' }}></i>
-          <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>No applications yet</h5>
-          <Link to="/customer/apply" className="btn-primary-custom mt-3" style={{ display: 'inline-flex' }}>Apply Now</Link>
+          <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>{t('myApps.noApps')}</h5>
+          <Link to="/customer/apply" className="btn-primary-custom mt-3" style={{ display: 'inline-flex' }}>{t('dash.applyNow')}</Link>
         </div>
       ) : (
         <div className="d-flex flex-column gap-3">
@@ -74,7 +76,7 @@ export default function MyApplicationsPage() {
                     background: '#fefce8', border: '1px solid #fcd34d'
                   }}>
                     <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#92400e', marginBottom: '0.3rem' }}>
-                      <i className="bi bi-exclamation-triangle-fill me-1"></i>Your application needs to be updated
+                      <i className="bi bi-exclamation-triangle-fill me-1"></i>{t('myApps.revisionAlert')}
                     </div>
                     {app.adminNote && (
                       <div style={{ fontSize: '0.82rem', color: '#78350f', marginBottom: app.agentNote ? '0.2rem' : 0 }}>
@@ -103,53 +105,49 @@ export default function MyApplicationsPage() {
                       <span className={`badge-status badge-${app.status?.toLowerCase()}`}>{app.status}</span>
                     </div>
                     <div className="d-flex gap-3 flex-wrap" style={{ fontSize: '0.83rem' }}>
-                      <span style={{ color: 'var(--text-muted)' }}>Coverage: <strong style={{ color: 'var(--text-primary)' }}>{Number(app.coverageAmount).toLocaleString()} MMK</strong></span>
-                      <span style={{ color: 'var(--text-muted)' }}>Duration: <strong style={{ color: 'var(--text-primary)' }}>{app.duration} year</strong></span>
-                      {app.premiumAmount && <span style={{ color: 'var(--text-muted)' }}>Premium: <strong style={{ color: 'var(--primary)' }}>{Number(app.premiumAmount).toLocaleString()} MMK</strong></span>}
-                      {app.riskLevel && <span style={{ color: 'var(--text-muted)' }}>Risk: <strong style={{ color: app.riskLevel === 'HIGH' ? '#dc2626' : app.riskLevel === 'MEDIUM' ? '#d97706' : '#16a34a' }}>{app.riskLevel}</strong></span>}
-                      {app.agentName && <span style={{ color: 'var(--text-muted)' }}><i className="bi bi-person-badge me-1" style={{ color: '#1d4ed8' }}></i>Agent: <strong style={{ color: '#1d4ed8' }}>{app.agentName}</strong></span>}
+                      <span style={{ color: 'var(--text-muted)' }}>{t('myApps.coverageLabel')}: <strong style={{ color: 'var(--text-primary)' }}>{Number(app.coverageAmount).toLocaleString()} MMK</strong></span>
+                      <span style={{ color: 'var(--text-muted)' }}>{t('myApps.durationLabel')}: <strong style={{ color: 'var(--text-primary)' }}>{app.duration} {t('myApps.year')}</strong></span>
+                      {app.premiumAmount && <span style={{ color: 'var(--text-muted)' }}>{t('myApps.premiumLabel')}: <strong style={{ color: 'var(--primary)' }}>{Number(app.premiumAmount).toLocaleString()} MMK</strong></span>}
+                      {app.riskLevel && <span style={{ color: 'var(--text-muted)' }}>{t('myApps.riskLabel')}: <strong style={{ color: app.riskLevel === 'HIGH' ? '#dc2626' : app.riskLevel === 'MEDIUM' ? '#d97706' : '#16a34a' }}>{app.riskLevel}</strong></span>}
+                      {app.agentName && <span style={{ color: 'var(--text-muted)' }}><i className="bi bi-person-badge me-1" style={{ color: '#1d4ed8' }}></i>{t('myApps.agentLabel')}: <strong style={{ color: '#1d4ed8' }}>{app.agentName}</strong></span>}
                     </div>
                     {!isRevision && app.adminNote && <p style={{ color: '#16a34a', fontSize: '0.82rem', margin: '0.4rem 0 0' }}><i className="bi bi-check-circle me-1"></i>{app.adminNote}</p>}
                     {!isRevision && app.agentNote && <p style={{ color: '#1d4ed8', fontSize: '0.82rem', margin: '0.25rem 0 0' }}><i className="bi bi-person me-1"></i>Agent: {app.agentNote}</p>}
                   </div>
                   <div className="col-12 col-md-5">
                     <div className="d-flex gap-2 justify-content-md-end flex-wrap">
-                      {/* View — always visible */}
                       <button onClick={() => setViewItem(app)} style={{
                         padding: '0.4rem 0.9rem', borderRadius: 8, border: '1.5px solid var(--primary)',
                         background: 'transparent', color: 'var(--primary)', cursor: 'pointer',
                         fontWeight: 600, fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: 4
                       }}>
-                        <i className="bi bi-eye"></i> View
+                        <i className="bi bi-eye"></i> {t('myApps.viewBtn')}
                       </button>
-                      {/* Edit — for PENDING, REVISION_REQUESTED, and REJECTED */}
                       {(app.status === 'PENDING' || app.status === 'REVISION_REQUESTED' || app.status === 'REJECTED') && (
                         <button onClick={() => setReviseItem(app)} style={{
                           padding: '0.4rem 0.9rem', borderRadius: 8, border: '1.5px solid #d97706',
                           background: 'transparent', color: '#d97706', cursor: 'pointer',
                           fontWeight: 600, fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: 4
                         }}>
-                          <i className="bi bi-pencil"></i> Edit
+                          <i className="bi bi-pencil"></i> {t('myApps.editBtn')}
                         </button>
                       )}
-                      {/* Cancel — only for PENDING */}
                       {app.status === 'PENDING' && (
                         <button onClick={() => handleCancel(app.id)} style={{
                           padding: '0.4rem 0.9rem', borderRadius: 8, border: '1.5px solid #dc2626',
                           background: 'transparent', color: '#dc2626', cursor: 'pointer',
                           fontWeight: 600, fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: 4
                         }}>
-                          <i className="bi bi-x-circle"></i> Cancel
+                          <i className="bi bi-x-circle"></i> {t('myApps.cancelBtn')}
                         </button>
                       )}
-                      {/* Delete — only after CANCELLED */}
                       {app.status === 'CANCELLED' && (
                         <button onClick={() => handleDelete(app.id)} style={{
                           padding: '0.4rem 0.9rem', borderRadius: 8, border: 'none',
                           background: '#dc2626', color: '#fff', cursor: 'pointer',
                           fontWeight: 600, fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: 4
                         }}>
-                          <i className="bi bi-trash"></i> Delete
+                          <i className="bi bi-trash"></i> {t('myApps.deleteBtn')}
                         </button>
                       )}
                     </div>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import PaymentMethodIcon, { PAYMENT_METHODS as FALLBACK_METHODS } from '../../components/PaymentMethodIcon'
@@ -8,17 +9,17 @@ const BASE = import.meta.env.VITE_API_BASE_URL || '/api'
 
 const STATUS_COLOR  = { PAID: '#16a34a', OVERDUE: '#dc2626', DUE: '#d97706', PENDING_VERIFICATION: '#7c3aed', UPCOMING: '#64748b' }
 const STATUS_BG     = { PAID: '#dcfce7', OVERDUE: '#fee2e2', DUE: '#fef3c7', PENDING_VERIFICATION: '#ede9fe', UPCOMING: '#f1f5f9' }
-const STATUS_LABEL  = { PAID: 'ပေးပြီး', OVERDUE: 'သတ်မှတ်ရက်ကျော်', DUE: 'ဤလပေးရမည်', PENDING_VERIFICATION: 'စစ်ဆေးဆဲ', UPCOMING: 'လာမည်' }
 const PAY_STATUS_COLOR = s => ({ PENDING: '#d97706', VERIFIED: '#16a34a', REJECTED: '#dc2626' }[s] || '#64748b')
 const PAY_STATUS_BG    = s => ({ PENDING: '#fef3c7', VERIFIED: '#dcfce7', REJECTED: '#fee2e2' }[s] || '#f1f5f9')
 
-const FREQ_LABEL = {
+const FREQ_LABEL_KEYS = {
   MONTHLY: 'လစဥ်', QUARTERLY: 'သုံးလတစ်ကြိမ်',
   HALF_YEARLY: 'ခြောက်လတစ်ကြိမ်', YEARLY: 'နှစ်စဥ်',
 }
 
 export default function MyPaymentsPage() {
-  const [activeTab, setActiveTab] = useState('schedule') // 'schedule' | 'pending' | 'history'
+  const { t } = useTranslation()
+  const [activeTab, setActiveTab] = useState('schedule')
   const [payments, setPayments]   = useState([])
   const [schedules, setSchedules] = useState([])
   const [payMethods, setPayMethods] = useState([])
@@ -64,10 +65,10 @@ export default function MyPaymentsPage() {
 
   const handleSubmitPayment = async e => {
     e.preventDefault()
-    if (!payForm.applicationId) { toast.error('Policy ရွေးချယ်ပါ'); return }
-    if (!payForm.paymentMethod) { toast.error('ငွေပေးချေနည်း ရွေးချယ်ပါ'); return }
-    if (!payForm.screenshot)    { toast.error('ငွေပေးချေမှု screenshot upload လုပ်ပါ'); return }
-    if (!paySignature)          { toast.error('လက်မှတ်ရေးထိုးပါ — Digital Signature လိုအပ်သည်'); return }
+    if (!payForm.applicationId) { toast.error(t('payments.policyMissing')); return }
+    if (!payForm.paymentMethod) { toast.error(t('payments.methodMissing')); return }
+    if (!payForm.screenshot)    { toast.error(t('payments.screenshotMissing')); return }
+    if (!paySignature)          { toast.error(t('payments.sigMissing')); return }
     setSubmitting(true)
     try {
       const fd = new FormData()
@@ -79,7 +80,7 @@ export default function MyPaymentsPage() {
       if (payForm.periodNumber != null) fd.append('periodNumber', payForm.periodNumber)
       if (payForm.periodLabel)          fd.append('periodLabel',  payForm.periodLabel)
       await api.post('/customer/payments', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
-      toast.success('ငွေပေးချေမှု တင်ပြပြီးပါပြီ! Admin မှ စစ်ဆေးပေးမည်ဖြစ်သည်')
+      toast.success(t('payments.submitSuccess'))
       closeModal()
       fetchData()
     } catch (err) {
@@ -89,29 +90,33 @@ export default function MyPaymentsPage() {
 
   const selectedMethod = payMethods.find(m => (m.methodKey || m.id) === payForm.paymentMethod)
 
-  // ── Derive "pending" policies for legacy tab (policies with no paid/pending payment at all) ──
   const paidOrPendingAppIds = new Set(
     payments.filter(p => p.status === 'PENDING' || p.status === 'VERIFIED')
             .map(p => p.applicationId).filter(Boolean)
   )
-  const unpaidPolicies = schedules.filter(s => !paidOrPendingAppIds.has(s.applicationId) && s.totalInstallments === 1)
 
-  // Count overdue/due across all schedules
   const urgentCount = schedules.reduce((sum, s) =>
     sum + s.schedule.filter(e => e.status === 'OVERDUE' || e.status === 'DUE').length, 0)
 
   const tabs = [
-    { key: 'schedule', label: 'ငွေပေးချေမှု အချိန်ဇယား', icon: 'bi-calendar2-check', count: urgentCount, badgeColor: '#dc2626', badgeBg: '#fee2e2' },
-    { key: 'history',  label: 'Payment History',            icon: 'bi-receipt',          count: payments.length, badgeColor: 'var(--primary)', badgeBg: '#eff6ff' },
+    { key: 'schedule', label: t('payments.scheduleTab'), icon: 'bi-calendar2-check', count: urgentCount, badgeColor: '#dc2626', badgeBg: '#fee2e2' },
+    { key: 'history',  label: t('payments.historyTab'),  icon: 'bi-receipt', count: payments.length, badgeColor: 'var(--primary)', badgeBg: '#eff6ff' },
   ]
+
+  const STATUS_LABEL = {
+    PAID: t('payments.statusPaid'),
+    OVERDUE: t('payments.statusOverdue'),
+    DUE: t('payments.statusDue'),
+    PENDING_VERIFICATION: t('payments.statusPendingVerification'),
+    UPCOMING: t('payments.statusUpcoming'),
+  }
 
   return (
     <div className="fade-in">
-      {/* Header */}
       <div className="d-flex align-items-center justify-content-between mb-4">
         <div>
-          <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Payments</h4>
-          <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>Premium ငွေပေးချေမှုများ စီမံပါ</p>
+          <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('payments.title')}</h4>
+          <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>{t('payments.subtitle')}</p>
         </div>
       </div>
 
@@ -152,8 +157,8 @@ export default function MyPaymentsPage() {
               {schedules.length === 0 ? (
                 <div className="card-custom text-center py-5">
                   <i className="bi bi-calendar2" style={{ fontSize: '3rem', color: 'var(--border)' }}></i>
-                  <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>Approved Policy မရှိသေးပါ</h5>
-                  <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Policy အတည်ပြုပြီးမှ ငွေပေးချေမှု အချိန်ဇယား ပေါ်လာမည်</p>
+                  <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>{t('payments.noSchedule')}</h5>
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{t('payments.noScheduleDesc')}</p>
                 </div>
               ) : (
                 <div className="d-flex flex-column gap-4">
@@ -161,6 +166,7 @@ export default function MyPaymentsPage() {
                     <PolicyScheduleCard
                       key={sched.applicationId}
                       sched={sched}
+                      statusLabel={STATUS_LABEL}
                       onPay={({ periodNumber, periodLabel, installmentAmount }) =>
                         openModal({ appId: sched.applicationId, periodNumber, periodLabel, installmentAmount })}
                     />
@@ -176,7 +182,7 @@ export default function MyPaymentsPage() {
               {payments.length === 0 ? (
                 <div className="card-custom text-center py-5">
                   <i className="bi bi-receipt" style={{ fontSize: '3rem', color: 'var(--border)' }}></i>
-                  <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>ငွေပေးချေမှု မှတ်တမ်းမရှိသေးပါ</h5>
+                  <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>{t('payments.noHistory')}</h5>
                 </div>
               ) : (
                 <div className="card-custom p-0">
@@ -184,7 +190,7 @@ export default function MyPaymentsPage() {
                     <table className="w-100">
                       <thead>
                         <tr>
-                          {['#', 'Policy', 'ကာလ', 'ပေးသွင်းငွေ (MMK)', 'Method', 'Status', 'ရက်စွဲ', 'စစ်ဆေးသူ'].map(h => <th key={h}>{h}</th>)}
+                          {[t('payments.historyId'), t('payments.historyPolicy'), t('payments.historyPeriod'), t('payments.historyAmount'), t('payments.historyMethod'), t('payments.historyStatus'), t('payments.historyDate'), t('payments.historyVerifiedBy')].map(h => <th key={h}>{h}</th>)}
                         </tr>
                       </thead>
                       <tbody>
@@ -258,7 +264,8 @@ export default function MyPaymentsPage() {
 
 // ── Policy Schedule Card ────────────────────────────────────────────────────
 
-function PolicyScheduleCard({ sched, onPay }) {
+function PolicyScheduleCard({ sched, onPay, statusLabel }) {
+  const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
 
   const urgentEntries = sched.schedule.filter(e => e.status === 'OVERDUE' || e.status === 'DUE')
@@ -267,7 +274,6 @@ function PolicyScheduleCard({ sched, onPay }) {
 
   return (
     <div className="card-custom">
-      {/* Policy header */}
       <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
         <div className="d-flex align-items-center gap-3">
           <div style={{ width: 48, height: 48, borderRadius: 12, background: 'var(--bg-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -283,22 +289,21 @@ function PolicyScheduleCard({ sched, onPay }) {
               )}
             </div>
             <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 2 }}>
-              {sched.policyNumber} · {FREQ_LABEL[sched.paymentFrequency] || sched.paymentFrequency || 'တစ်ကြိမ်'}
+              {sched.policyNumber} · {FREQ_LABEL_KEYS[sched.paymentFrequency] || sched.paymentFrequency || t('payments.onceFreq')}
             </div>
           </div>
         </div>
 
-        {/* Summary badges */}
         <div className="d-flex align-items-center gap-3">
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>တစ်ကြိမ်ပေးသွင်းရမည့်ငွေ</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t('payments.installmentLabel')}</div>
             <div style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--primary)' }}>
               {Number(sched.installmentAmount).toLocaleString()} MMK
             </div>
           </div>
           {!isOneTime && (
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>ပေးပြီး/စုစုပေါင်း</div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t('payments.paidOutOf')}</div>
               <div style={{ fontWeight: 700, fontSize: '0.9rem', color: paidAll ? '#16a34a' : 'var(--text-primary)' }}>
                 {sched.paidCount}/{sched.totalInstallments}
               </div>
@@ -313,11 +318,10 @@ function PolicyScheduleCard({ sched, onPay }) {
         </div>
       </div>
 
-      {/* Urgent entries (always shown) */}
       {urgentEntries.length > 0 && (
         <div className="d-flex flex-column gap-2 mb-2">
           {urgentEntries.map(entry => (
-            <InstallmentRow key={entry.periodNumber} entry={entry} onPay={() => onPay({
+            <InstallmentRow key={entry.periodNumber} entry={entry} statusLabel={statusLabel} onPay={() => onPay({
               periodNumber: entry.periodNumber,
               periodLabel: entry.periodLabel,
               installmentAmount: sched.installmentAmount,
@@ -326,12 +330,11 @@ function PolicyScheduleCard({ sched, onPay }) {
         </div>
       )}
 
-      {/* Full schedule (expanded) */}
       {(expanded || isOneTime) && (
         <div className="fade-in">
           {isOneTime ? (
             sched.schedule.map(entry => (
-              <InstallmentRow key={entry.periodNumber} entry={entry} onPay={() => onPay({
+              <InstallmentRow key={entry.periodNumber} entry={entry} statusLabel={statusLabel} onPay={() => onPay({
                 periodNumber: entry.periodNumber,
                 periodLabel: entry.periodLabel,
                 installmentAmount: sched.installmentAmount,
@@ -340,7 +343,7 @@ function PolicyScheduleCard({ sched, onPay }) {
           ) : (
             <div style={{ maxHeight: 320, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 4 }}>
               {sched.schedule.filter(e => e.status !== 'OVERDUE' && e.status !== 'DUE').map(entry => (
-                <InstallmentRow key={entry.periodNumber} entry={entry} onPay={() => onPay({
+                <InstallmentRow key={entry.periodNumber} entry={entry} statusLabel={statusLabel} onPay={() => onPay({
                   periodNumber: entry.periodNumber,
                   periodLabel: entry.periodLabel,
                   installmentAmount: sched.installmentAmount,
@@ -353,14 +356,15 @@ function PolicyScheduleCard({ sched, onPay }) {
 
       {!isOneTime && !expanded && urgentEntries.length === 0 && paidAll && (
         <div style={{ textAlign: 'center', padding: '0.5rem', color: '#16a34a', fontSize: '0.85rem', fontWeight: 600 }}>
-          <i className="bi bi-check-circle-fill me-1"></i>ငွေပေးချေမှုအားလုံး ပြည့်စုံပြီးပါပြီ
+          <i className="bi bi-check-circle-fill me-1"></i>{t('payments.allPaid')}
         </div>
       )}
     </div>
   )
 }
 
-function InstallmentRow({ entry, onPay, highlight }) {
+function InstallmentRow({ entry, onPay, highlight, statusLabel }) {
+  const { t } = useTranslation()
   const canPay = entry.status === 'DUE' || entry.status === 'OVERDUE'
   return (
     <div style={{
@@ -384,7 +388,7 @@ function InstallmentRow({ entry, onPay, highlight }) {
           fontSize: '0.7rem', fontWeight: 700, padding: '0.15rem 0.5rem', borderRadius: 99,
           background: STATUS_BG[entry.status] || '#f1f5f9',
           color: STATUS_COLOR[entry.status] || '#64748b',
-        }}>{STATUS_LABEL[entry.status] || entry.status}</span>
+        }}>{statusLabel[entry.status] || entry.status}</span>
         {canPay && (
           <button type="button" onClick={onPay}
             style={{
@@ -392,7 +396,7 @@ function InstallmentRow({ entry, onPay, highlight }) {
               background: entry.status === 'OVERDUE' ? '#dc2626' : 'var(--primary)',
               color: '#fff', fontSize: '0.75rem', fontWeight: 700,
             }}>
-            <i className="bi bi-credit-card me-1"></i>Pay
+            <i className="bi bi-credit-card me-1"></i>{t('payments.payBtn')}
           </button>
         )}
       </div>
@@ -404,13 +408,14 @@ function InstallmentRow({ entry, onPay, highlight }) {
 
 function PaymentModal({ payForm, setPayForm, payMethods, selectedMethod, paySignatureRef,
   paySignature, setPaySignature, submitting, onSubmit, onClose, BASE }) {
+  const { t } = useTranslation()
   return (
     <div className="modal show d-block modal-custom" tabIndex="-1" style={{ background: 'rgba(0,0,0,0.55)' }}>
       <div className="modal-dialog modal-dialog-centered modal-lg">
         <div className="modal-content">
           <div className="modal-header">
             <h5 className="modal-title" style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
-              <i className="bi bi-credit-card me-2" style={{ color: 'var(--primary)' }}></i>Premium ငွေပေးချေမည်
+              <i className="bi bi-credit-card me-2" style={{ color: 'var(--primary)' }}></i>{t('payments.modalTitle')}
             </h5>
             <button className="icon-btn" onClick={onClose}><i className="bi bi-x-lg"></i></button>
           </div>
@@ -428,10 +433,10 @@ function PaymentModal({ payForm, setPayForm, payMethods, selectedMethod, paySign
                   <div>
                     <div style={{ fontSize: '0.8rem', color: '#1e40af', fontWeight: 600 }}>
                       <i className="bi bi-info-circle me-1"></i>
-                      {payForm.periodLabel ? `ကာလ: ${payForm.periodLabel}` : 'ပေးသွင်းရမည့်ငွေ'}
+                      {payForm.periodLabel ? `${t('payments.periodPrefix')}${payForm.periodLabel}` : t('payments.amountDueLabel')}
                     </div>
                     <div style={{ fontSize: '0.78rem', color: '#3b82f6', marginTop: 2 }}>
-                      သင်ပေးသွင်းရမည့်ငွေ
+                      {t('payments.amountDueLabel')}
                     </div>
                   </div>
                   <div style={{ fontWeight: 900, fontSize: '1.5rem', color: '#1d4ed8' }}>
@@ -442,7 +447,7 @@ function PaymentModal({ payForm, setPayForm, payMethods, selectedMethod, paySign
 
               {/* Payment Method select */}
               <div className="mb-4">
-                <label className="form-label-custom">ငွေပေးချေနည်း ရွေးချယ်မည် *</label>
+                <label className="form-label-custom">{t('payments.selectMethod')}</label>
                 <div className="row g-2">
                   {payMethods.map(m => {
                     const key = m.methodKey || m.id
@@ -478,7 +483,7 @@ function PaymentModal({ payForm, setPayForm, payMethods, selectedMethod, paySign
                   })}
                 </div>
 
-                {/* QR Code + amount reminder after method selection */}
+                {/* QR Code + amount reminder */}
                 {selectedMethod && (
                   <div className="fade-in mt-3" style={{
                     borderRadius: 12, padding: '1rem',
@@ -489,9 +494,7 @@ function PaymentModal({ payForm, setPayForm, payMethods, selectedMethod, paySign
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: '0.75rem' }}>
                       <i className="bi bi-exclamation-circle-fill" style={{ color: selectedMethod.color, fontSize: '1rem' }}></i>
                       <span style={{ fontWeight: 700, color: selectedMethod.color, fontSize: '0.88rem' }}>
-                        {selectedMethod.name} သို့ {payForm.installmentAmount != null
-                          ? `${Number(payForm.installmentAmount).toLocaleString()} MMK`
-                          : 'Premium ငွေ'} ပေးချေပါ
+                        {t('payments.payTo', { method: selectedMethod.name })} {payForm.installmentAmount != null ? `${Number(payForm.installmentAmount).toLocaleString()} MMK` : ''}
                       </span>
                     </div>
 
@@ -503,13 +506,13 @@ function PaymentModal({ payForm, setPayForm, payMethods, selectedMethod, paySign
                           style={{ maxWidth: 220, maxHeight: 220, borderRadius: 12, border: `2px solid ${selectedMethod.color}40`, background: '#fff', padding: 8 }}
                         />
                         <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: '0.5rem', marginBottom: 0 }}>
-                          QR Code ကိုဖတ်၍ ငွေပေးချေပြီး screenshot ကို အောက်တွင် upload လုပ်ပါ
+                          {t('payments.scanQr')}
                         </p>
                       </div>
                     ) : (
                       <div style={{ padding: '1rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                         <i className="bi bi-qr-code" style={{ fontSize: '2rem', display: 'block', marginBottom: '0.5rem', opacity: 0.3 }}></i>
-                        QR Code မရှိသေးပါ — Admin မှ မကြာမီ ထည့်သွင်းပေးမည်
+                        {t('payments.noQr')}
                       </div>
                     )}
                   </div>
@@ -519,32 +522,32 @@ function PaymentModal({ payForm, setPayForm, payMethods, selectedMethod, paySign
               {/* Screenshot upload */}
               <div className="mb-3">
                 <label className="form-label-custom">
-                  <i className="bi bi-image me-1"></i>ငွေပေးချေမှု Screenshot *
+                  <i className="bi bi-image me-1"></i>{t('payments.screenshotLabel')}
                 </label>
                 <input type="file" accept="image/*" required className="form-control-custom w-100"
                   onChange={e => setPayForm(f => ({ ...f, screenshot: e.target.files[0] }))} />
                 <small style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>
-                  ငွေပေးချေပြီးသော {selectedMethod?.name || 'ငွေပေးချေနည်း'} transaction ၏ screenshot ကို upload လုပ်ပါ
+                  {t('payments.screenshotHint', { method: selectedMethod?.name || '' })}
                 </small>
               </div>
 
               {/* Notes */}
               <div className="mb-3">
-                <label className="form-label-custom">မှတ်ချက် (optional)</label>
+                <label className="form-label-custom">{t('payments.notes')}</label>
                 <textarea rows={2} className="form-control-custom w-100" style={{ resize: 'vertical' }}
                   value={payForm.notes} onChange={e => setPayForm(f => ({ ...f, notes: e.target.value }))}
-                  placeholder="Transaction reference, မှတ်ချက် စသည်..." />
+                  placeholder={t('payments.notesPlaceholder')} />
               </div>
 
               {/* Digital Signature */}
               <div className="mb-2">
                 <div className="info-box-blue-sm mb-2">
                   <i className="bi bi-pen me-2"></i>
-                  <strong>Digital Signature</strong> — ငွေပေးချေမှုကို တရားဝင်အတည်ပြုရန် လက်မှတ်ရေးထိုးပါ
+                  <strong>Digital Signature</strong> — {t('payments.sigRequired').replace('Digital Signature — ', '')}
                 </div>
                 <DigitalSignatureCanvas
                   ref={paySignatureRef}
-                  label="ငွေပေးသူ လက်မှတ်"
+                  label={t('payments.sigLabel')}
                   required
                   onChange={data => setPaySignature(data)}
                   height={140}
@@ -553,11 +556,11 @@ function PaymentModal({ payForm, setPayForm, payMethods, selectedMethod, paySign
             </div>
 
             <div className="modal-footer">
-              <button type="button" className="btn-outline-custom" onClick={onClose}>Cancel</button>
+              <button type="button" className="btn-outline-custom" onClick={onClose}>{t('payments.cancel')}</button>
               <button type="submit" disabled={submitting} className="btn-primary-custom" style={{ justifyContent: 'center' }}>
                 {submitting
-                  ? <><span className="spinner-border spinner-border-sm me-2"></span>Submitting...</>
-                  : <><i className="bi bi-send me-2"></i>Submit Payment</>}
+                  ? <><span className="spinner-border spinner-border-sm me-2"></span>{t('payments.submitting')}</>
+                  : <><i className="bi bi-send me-2"></i>{t('payments.submitBtn')}</>}
               </button>
             </div>
           </form>

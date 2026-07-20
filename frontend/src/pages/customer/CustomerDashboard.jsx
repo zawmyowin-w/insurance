@@ -74,7 +74,7 @@ export default function CustomerDashboard() {
             <i className="bi bi-file-earmark-plus me-2"></i>{t('dash.submitClaim')}
           </Link>
           <Link to="/customer/payments" className="btn-primary-sm" style={{ fontSize: '0.88rem', padding: '0.45rem 1rem', background: '#0891b2' }}>
-            <i className="bi bi-credit-card me-2"></i>Payments
+            <i className="bi bi-credit-card me-2"></i>{t('dash.payments')}
           </Link>
           <Link to="/plans" style={{ padding: '0.45rem 1rem', borderRadius: 6, border: '1px solid var(--border)', color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <i className="bi bi-search"></i>{t('dash.browsePlans')}
@@ -103,7 +103,7 @@ export default function CustomerDashboard() {
             <table className="w-100">
               <thead>
                 <tr>
-                  {['Plan', 'Coverage (MMK)', 'Duration', 'Status', 'Date'].map(h => (
+                  {[t('dash.planCol'), t('dash.coverageCol'), t('dash.durationCol'), t('dash.statusCol'), t('dash.dateCol')].map(h => (
                     <th key={h}>{h}</th>
                   ))}
                 </tr>
@@ -113,7 +113,7 @@ export default function CustomerDashboard() {
                   <tr key={app.id}>
                     <td style={{ fontWeight: 500 }}>{app.packageName || app.package?.name}</td>
                     <td>{Number(app.coverageAmount).toLocaleString()}</td>
-                    <td>{app.duration} year{app.duration > 1 ? 's' : ''}</td>
+                    <td>{app.duration} {app.duration > 1 ? t('dash.years') : t('dash.year')}</td>
                     <td><span className={`badge-status badge-${app.status?.toLowerCase()}`}>{app.status}</span></td>
                     <td>{app.createdAt ? new Date(app.createdAt).toLocaleDateString() : '—'}</td>
                   </tr>

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 
@@ -20,36 +21,36 @@ const RISK_META = {
 }
 
 function PolicyCertificate({ policy, onClose }) {
+  const { t } = useTranslation()
   return (
     <div className="modal show d-block" tabIndex="-1" style={{ background: 'rgba(0,0,0,0.5)' }}>
       <div className="modal-dialog modal-dialog-centered modal-lg">
         <div className="modal-content certificate-modal-content">
           <div className="modal-header" style={{ background: 'linear-gradient(135deg, #1d4ed8, #4338ca)', borderRadius: '16px 16px 0 0' }}>
             <div>
-              <h5 className="modal-title" style={{ color: '#fff', fontWeight: 700 }}>Insurance Policy Certificate</h5>
-              <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.82rem' }}>Print or save this document for your records</div>
+              <h5 className="modal-title" style={{ color: '#fff', fontWeight: 700 }}>{t('policies.certTitle')}</h5>
+              <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.82rem' }}>{t('policies.certSubtitle')}</div>
             </div>
             <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: 6, padding: '0.3rem 0.6rem', color: '#fff', cursor: 'pointer' }}><i className="bi bi-x-lg"></i></button>
           </div>
           <div className="modal-body" style={{ padding: '2rem' }}>
-            {/* Certificate body */}
             <div className="certificate-body">
               <div className="text-center mb-4">
                 <i className="bi bi-shield-fill-check" style={{ fontSize: '2.5rem', color: '#1d4ed8' }}></i>
-                <div style={{ fontWeight: 800, fontSize: '1.3rem', color: '#1d4ed8', marginTop: 8 }}>INSURANCE POLICY CERTIFICATE</div>
-                <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>This certifies that the following insurance policy is active</div>
+                <div style={{ fontWeight: 800, fontSize: '1.3rem', color: '#1d4ed8', marginTop: 8 }}>{t('policies.certHeader')}</div>
+                <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{t('policies.certActive')}</div>
               </div>
               <div className="row g-3">
                 {[
-                  ['Policy Number', policy.policyNumber || 'Pending'],
-                  ['Policy Type', policy.packageType],
-                  ['Plan Name', policy.packageName],
-                  ['Coverage Amount', `${Number(policy.coverageAmount).toLocaleString()} MMK`],
-                  ['Policy Duration', `${policy.duration} Year${policy.duration > 1 ? 's' : ''}`],
-                  ['Risk Level', policy.riskLevel || '—'],
-                  ['Total Premium', policy.premiumAmount ? `${Number(policy.premiumAmount).toLocaleString()} MMK` : '—'],
-                  ['Issue Date', policy.createdAt ? new Date(policy.createdAt).toLocaleDateString() : '—'],
-                  ['Status', 'ACTIVE'],
+                  [t('policies.certPolicyNumber'), policy.policyNumber || t('policies.certPending')],
+                  [t('policies.certType'), policy.packageType],
+                  [t('policies.certPlan'), policy.packageName],
+                  [t('policies.certCoverage'), `${Number(policy.coverageAmount).toLocaleString()} MMK`],
+                  [t('policies.certDuration'), `${policy.duration} ${policy.duration > 1 ? t('policies.years') : t('policies.year')}`],
+                  [t('policies.certRisk'), policy.riskLevel || '—'],
+                  [t('policies.certPremium'), policy.premiumAmount ? `${Number(policy.premiumAmount).toLocaleString()} MMK` : '—'],
+                  [t('policies.certIssue'), policy.createdAt ? new Date(policy.createdAt).toLocaleDateString() : '—'],
+                  [t('policies.certStatus'), t('policies.active')],
                 ].map(([label, value]) => (
                   <div key={label} className="col-6">
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>
@@ -60,9 +61,9 @@ function PolicyCertificate({ policy, onClose }) {
             </div>
           </div>
           <div className="modal-footer">
-            <button className="btn-outline-custom" onClick={onClose}>Close</button>
+            <button className="btn-outline-custom" onClick={onClose}>{t('policies.close')}</button>
             <button className="btn-primary-custom" style={{ justifyContent: 'center' }} onClick={() => window.print()}>
-              <i className="bi bi-printer me-2"></i>Print / Download
+              <i className="bi bi-printer me-2"></i>{t('policies.printDownload')}
             </button>
           </div>
         </div>
@@ -72,6 +73,7 @@ function PolicyCertificate({ policy, onClose }) {
 }
 
 export default function CustomerPoliciesPage() {
+  const { t } = useTranslation()
   const [policies, setPolicies] = useState([])
   const [loading, setLoading] = useState(true)
   const [certPolicy, setCertPolicy] = useState(null)
@@ -86,13 +88,13 @@ export default function CustomerPoliciesPage() {
   useEffect(() => { fetchPolicies() }, [])
 
   const handleRenew = async (id) => {
-    if (!window.confirm('Submit a renewal application for this policy?')) return
+    if (!window.confirm(t('policies.renewConfirm'))) return
     setRenewing(id)
     try {
       await api.post(`/customer/applications/${id}/renew`)
-      toast.success('Renewal application submitted! Check Applications for status.')
+      toast.success(t('policies.renewSuccess'))
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Renewal failed')
+      toast.error(err.response?.data?.message || t('policies.renewFailed'))
     } finally { setRenewing(null) }
   }
 
@@ -100,11 +102,11 @@ export default function CustomerPoliciesPage() {
     <div className="fade-in">
       <div className="d-flex align-items-center justify-content-between mb-4">
         <div>
-          <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>My Policies</h4>
-          <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>View and manage your active insurance policies</p>
+          <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('policies.title')}</h4>
+          <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>{t('policies.subtitle')}</p>
         </div>
         <Link to="/customer/apply" className="btn-primary-custom" style={{ fontSize: '0.88rem', padding: '0.45rem 1rem' }}>
-          <i className="bi bi-plus-circle me-1"></i>New Policy
+          <i className="bi bi-plus-circle me-1"></i>{t('policies.newPolicy')}
         </Link>
       </div>
 
@@ -113,9 +115,9 @@ export default function CustomerPoliciesPage() {
       ) : policies.length === 0 ? (
         <div className="card-custom text-center py-5">
           <i className="bi bi-shield-check" style={{ fontSize: '3rem', color: 'var(--border)' }}></i>
-          <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>No active policies</h5>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Apply for a plan to get started. Policies activate after payment is verified.</p>
-          <Link to="/customer/apply" className="btn-primary-custom mt-2" style={{ display: 'inline-flex' }}>Apply Now</Link>
+          <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>{t('policies.noPolicies')}</h5>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>{t('policies.noPoliciesDesc')}</p>
+          <Link to="/customer/apply" className="btn-primary-custom mt-2" style={{ display: 'inline-flex' }}>{t('policies.applyNow')}</Link>
         </div>
       ) : (
         <div className="row g-4">
@@ -136,38 +138,38 @@ export default function CustomerPoliciesPage() {
                         <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{policy.packageName}</div>
                       </div>
                     </div>
-                    <span style={{ padding: '0.25rem 0.65rem', borderRadius: 99, background: '#dcfce7', color: '#16a34a', fontSize: '0.75rem', fontWeight: 700, flexShrink: 0 }}>ACTIVE</span>
+                    <span style={{ padding: '0.25rem 0.65rem', borderRadius: 99, background: '#dcfce7', color: '#16a34a', fontSize: '0.75rem', fontWeight: 700, flexShrink: 0 }}>{t('policies.active')}</span>
                   </div>
 
                   {/* Policy Number */}
                   <div className="mb-3 p-2" style={{ background: 'var(--bg-secondary)', borderRadius: 8 }}>
-                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Policy Number</div>
-                    <div style={{ fontWeight: 700, fontFamily: 'monospace', color: 'var(--primary)', fontSize: '0.95rem' }}>{policy.policyNumber || 'Pending Assignment'}</div>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('policies.policyNumber')}</div>
+                    <div style={{ fontWeight: 700, fontFamily: 'monospace', color: 'var(--primary)', fontSize: '0.95rem' }}>{policy.policyNumber || t('policies.pendingAssignment')}</div>
                   </div>
 
                   {/* Stats grid */}
                   <div className="row g-2 mb-3">
                     <div className="col-6">
                       <div style={{ background: 'var(--bg-secondary)', borderRadius: 8, padding: '0.45rem 0.65rem' }}>
-                        <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)' }}>Coverage</div>
+                        <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)' }}>{t('policies.coverage')}</div>
                         <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)' }}>{Number(policy.coverageAmount).toLocaleString()} MMK</div>
                       </div>
                     </div>
                     <div className="col-6">
                       <div style={{ background: 'var(--bg-secondary)', borderRadius: 8, padding: '0.45rem 0.65rem' }}>
-                        <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)' }}>Total Premium</div>
+                        <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)' }}>{t('policies.totalPremium')}</div>
                         <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)' }}>{policy.premiumAmount ? Number(policy.premiumAmount).toLocaleString() : '—'} MMK</div>
                       </div>
                     </div>
                     <div className="col-6">
                       <div style={{ background: 'var(--bg-secondary)', borderRadius: 8, padding: '0.45rem 0.65rem' }}>
-                        <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)' }}>Duration</div>
-                        <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)' }}>{policy.duration} Year{policy.duration > 1 ? 's' : ''}</div>
+                        <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)' }}>{t('policies.duration')}</div>
+                        <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)' }}>{policy.duration} {policy.duration > 1 ? t('policies.years') : t('policies.year')}</div>
                       </div>
                     </div>
                     <div className="col-6">
                       <div style={{ background: riskMeta.bg, borderRadius: 8, padding: '0.45rem 0.65rem' }}>
-                        <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)' }}>Risk Level</div>
+                        <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)' }}>{t('policies.riskLevel')}</div>
                         <div style={{ fontWeight: 700, fontSize: '0.88rem', color: riskMeta.color }}>
                           <i className={`bi ${riskMeta.icon} me-1`}></i>{policy.riskLevel || '—'}
                         </div>
@@ -177,20 +179,20 @@ export default function CustomerPoliciesPage() {
 
                   {policy.agentName && (
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-                      <i className="bi bi-person-badge me-1"></i>Agent: {policy.agentName}
+                      <i className="bi bi-person-badge me-1"></i>{t('policies.agent')}: {policy.agentName}
                     </div>
                   )}
 
                   {/* Actions */}
                   <div className="d-flex gap-2 mt-auto">
                     <button onClick={() => setCertPolicy(policy)} className="btn-primary-sm flex-grow-1">
-                      <i className="bi bi-file-earmark-text me-1"></i>Certificate
+                      <i className="bi bi-file-earmark-text me-1"></i>{t('policies.certificate')}
                     </button>
                     <Link to="/customer/submit-claim" className="btn-outline-custom" style={{ textDecoration: 'none', padding: '0.4rem 0.85rem', fontSize: '0.85rem' }}>
-                      <i className="bi bi-file-earmark-plus me-1"></i>Claim
+                      <i className="bi bi-file-earmark-plus me-1"></i>{t('policies.claim')}
                     </Link>
                     <button onClick={() => handleRenew(policy.id)} disabled={renewing === policy.id} style={{ padding: '0.4rem 0.85rem', borderRadius: 8, border: '1.5px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600 }}>
-                      {renewing === policy.id ? <span className="spinner-border spinner-border-sm"></span> : <><i className="bi bi-arrow-repeat me-1"></i>Renew</>}
+                      {renewing === policy.id ? <span className="spinner-border spinner-border-sm"></span> : <><i className="bi bi-arrow-repeat me-1"></i>{t('policies.renew')}</>}
                     </button>
                   </div>
                 </div>

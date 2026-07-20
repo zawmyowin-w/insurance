@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
@@ -8,13 +9,8 @@ import { getTypeMeta } from '../../utils/typeMeta'
 import AgentProfileCard from '../../components/AgentProfileCard'
 import DigitalSignatureCanvas from '../../components/DigitalSignatureCanvas'
 
-const STEPS = [
-  { id: 1, title: 'Select Plan',   icon: 'bi-grid-3x3-gap' },
-  { id: 2, title: 'Fill Form',     icon: 'bi-ui-checks' },
-  { id: 3, title: 'Review',        icon: 'bi-check2-circle' },
-]
-
 export default function ApplyPolicyPage() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -31,27 +27,30 @@ export default function ApplyPolicyPage() {
   const [duration, setDuration] = useState(1)
   const [notes, setNotes] = useState('')
 
-  // Dynamic form state
   const [template, setTemplate] = useState(null)
   const [templateLoading, setTemplateLoading] = useState(false)
-  const [fieldValues, setFieldValues] = useState({})   // fieldId -> value (text/checkbox)
-  const [fieldFiles, setFieldFiles]   = useState({})   // fieldId -> File
+  const [fieldValues, setFieldValues] = useState({})
+  const [fieldFiles, setFieldFiles]   = useState({})
 
   const [submitting, setSubmitting] = useState(false)
 
-  // Load plans
+  const STEPS = [
+    { id: 1, title: t('applyPolicy.step1'), icon: 'bi-grid-3x3-gap' },
+    { id: 2, title: t('applyPolicy.step2'), icon: 'bi-ui-checks' },
+    { id: 3, title: t('applyPolicy.step3'), icon: 'bi-check2-circle' },
+  ]
+
   useEffect(() => {
     api.get('/packages/public').then(res => {
       const pkgs = Array.isArray(res.data) ? res.data : []
       setPlans(pkgs)
       if (preselectedId) {
         const p = pkgs.find(x => x.id === Number(preselectedId))
-        if (p) { selectPlan(p); }
+        if (p) { selectPlan(p) }
       }
     }).catch(() => {})
   }, [])
 
-  // Load form template when plan is selected
   useEffect(() => {
     if (!selectedPlan) { setTemplate(null); return }
     setTemplateLoading(true)
@@ -61,7 +60,6 @@ export default function ApplyPolicyPage() {
       .then(res => {
         const tmpl = res.data
         setTemplate(tmpl)
-        // Auto-fill NAME / EMAIL / PHONE fields from user profile
         if (tmpl?.fields && user) {
           const prefill = {}
           tmpl.fields.forEach(f => {
@@ -92,22 +90,16 @@ export default function ApplyPolicyPage() {
     })
   }
 
-  const validateForm = () => {
-    return true
-  }
-
   const handleSubmit = async () => {
-    if (!validateForm()) return
     setSubmitting(true)
     try {
-      // Build formData JSON (non-file values)
       const formDataObj = {}
       Object.entries(fieldValues).forEach(([k, v]) => {
         formDataObj[k] = Array.isArray(v) ? JSON.stringify(v) : v
       })
 
       if (!signatureData) {
-        toast.error('လက်မှတ်ရေးထိုးပါ — Digital Signature လိုအပ်သည်')
+        toast.error(t('applyPolicy.sigMissing'))
         setSubmitting(false)
         return
       }
@@ -126,16 +118,15 @@ export default function ApplyPolicyPage() {
       fd.append('notes', notes)
       fd.append('formData', JSON.stringify(mergedFormData))
 
-      // Append file fields
       Object.entries(fieldFiles).forEach(([fieldId, file]) => {
         if (file) fd.append(`file_${fieldId}`, file)
       })
 
       await api.post('/customer/applications', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
-      toast.success('Application submitted successfully!')
+      toast.success(t('applyPolicy.submitSuccess'))
       navigate('/customer/applications')
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to submit application')
+      toast.error(err.response?.data?.message || t('applyPolicy.submitFailed'))
     } finally {
       setSubmitting(false)
     }
@@ -151,8 +142,8 @@ export default function ApplyPolicyPage() {
   return (
     <div className="fade-in">
       <div className="mb-4">
-        <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Apply for Insurance</h4>
-        <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>Select a plan and fill in the required details</p>
+        <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('applyPolicy.title')}</h4>
+        <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>{t('applyPolicy.subtitle')}</p>
       </div>
 
       {/* Step indicator */}
@@ -182,16 +173,16 @@ export default function ApplyPolicyPage() {
       {step === 1 && (
         <>
           <div className="d-flex gap-2 mb-4 flex-wrap">
-            {['ALL', ...[...new Set(plans.map(p => p.type))]].map(t => {
-              const meta = t === 'ALL' ? null : getTypeMeta(t)
+            {['ALL', ...[...new Set(plans.map(p => p.type))]].map(tp => {
+              const meta = tp === 'ALL' ? null : getTypeMeta(tp)
               return (
-                <button key={t} onClick={() => setTypeFilter(t)} style={{
-                  padding: '0.4rem 1rem', borderRadius: 20, border: `2px solid ${typeFilter === t ? (meta?.color || 'var(--primary)') : 'transparent'}`,
+                <button key={tp} onClick={() => setTypeFilter(tp)} style={{
+                  padding: '0.4rem 1rem', borderRadius: 20, border: `2px solid ${typeFilter === tp ? (meta?.color || 'var(--primary)') : 'transparent'}`,
                   cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem',
-                  background: typeFilter === t ? (meta?.bg || 'var(--bg-secondary)') : 'var(--bg-secondary)',
-                  color: typeFilter === t ? (meta?.color || 'var(--primary)') : 'var(--text-secondary)',
+                  background: typeFilter === tp ? (meta?.bg || 'var(--bg-secondary)') : 'var(--bg-secondary)',
+                  color: typeFilter === tp ? (meta?.color || 'var(--primary)') : 'var(--text-secondary)',
                 }}>
-                  {meta && <i className={`bi ${meta.icon} me-1`}></i>}{t === 'ALL' ? 'All' : meta?.label || t}
+                  {meta && <i className={`bi ${meta.icon} me-1`}></i>}{tp === 'ALL' ? t('applyPolicy.allFilter') : meta?.label || tp}
                 </button>
               )
             })}
@@ -199,7 +190,7 @@ export default function ApplyPolicyPage() {
           {filteredPlans.length === 0 ? (
             <div className="card-custom text-center py-5">
               <i className="bi bi-box-seam" style={{ fontSize: '3rem', color: 'var(--border)' }}></i>
-              <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>No plans available</h5>
+              <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>{t('applyPolicy.noPlans')}</h5>
             </div>
           ) : (
             <div className="row g-3">
@@ -223,18 +214,22 @@ export default function ApplyPolicyPage() {
                       <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 0.75rem' }}>{plan.description}</p>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
                         <span style={{ color: 'var(--text-muted)' }}>{Number(plan.coverageMin).toLocaleString()} – {Number(plan.coverageMax).toLocaleString()} MMK</span>
-                        <span style={{ fontWeight: 700, color: meta.color }}>{(plan.premiumRate * 100).toFixed(1)}%/year</span>
+                        <span style={{ fontWeight: 700, color: meta.color }}>{(plan.premiumRate * 100).toFixed(1)}%/{t('applyPolicy.year')}</span>
                       </div>
                       {(plan.minPolicyTerm || plan.policyTerm) && (
                         <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>
                           <i className="bi bi-clock me-1"></i>
-                          Policy Term: {plan.minPolicyTerm && plan.policyTerm ? `${plan.minPolicyTerm} – ${plan.policyTerm} yrs` : plan.policyTerm ? `Up to ${plan.policyTerm} yrs` : `From ${plan.minPolicyTerm} yrs`}
+                          {t('applyPolicy.policyTermLabel')}: {plan.minPolicyTerm && plan.policyTerm
+                            ? `${plan.minPolicyTerm} – ${plan.policyTerm} ${t('applyPolicy.yrs')}`
+                            : plan.policyTerm
+                              ? `${t('applyPolicy.upTo')} ${plan.policyTerm} ${t('applyPolicy.yrs')}`
+                              : `${t('applyPolicy.from')} ${plan.minPolicyTerm} ${t('applyPolicy.yrs')}`}
                         </div>
                       )}
                       {plan.eligibility && (
                         <div style={{ marginTop: '0.6rem', padding: '0.5rem 0.65rem', borderRadius: 8, background: 'rgba(255,255,255,0.6)', border: `1px solid ${meta.color}22` }}>
                           <div style={{ fontSize: '0.7rem', fontWeight: 700, color: meta.color, textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.2rem' }}>
-                            <i className="bi bi-person-check me-1"></i>Eligibility
+                            <i className="bi bi-person-check me-1"></i>{t('applyPolicy.eligibility')}
                           </div>
                           <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>{plan.eligibility}</div>
                         </div>
@@ -243,7 +238,7 @@ export default function ApplyPolicyPage() {
                         marginTop: '0.75rem', width: '100%', padding: '0.5rem', borderRadius: 8,
                         border: 'none', background: meta.color, color: '#fff',
                         fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer'
-                      }}>Select This Plan →</button>
+                      }}>{t('applyPolicy.selectPlanBtn')}</button>
                     </div>
                   </div>
                 )
@@ -264,7 +259,6 @@ export default function ApplyPolicyPage() {
               padding: '1.75rem 1.75rem 2.5rem',
               position: 'relative', overflow: 'hidden',
             }}>
-              {/* decorative circles */}
               <div style={{ position: 'absolute', top: -30, right: -30, width: 130, height: 130, borderRadius: '50%', background: 'rgba(255,255,255,0.08)' }} />
               <div style={{ position: 'absolute', bottom: -20, right: 60, width: 80, height: 80, borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
 
@@ -276,7 +270,7 @@ export default function ApplyPolicyPage() {
                   <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{selectedPlan.type}</div>
                   <div style={{ color: '#fff', fontWeight: 800, fontSize: '1.15rem', lineHeight: 1.2 }}>{selectedPlan.name}</div>
                   <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.8rem', marginTop: 3 }}>
-                    {(selectedPlan.premiumRate * 100).toFixed(1)}% premium rate &nbsp;·&nbsp; {Number(selectedPlan.coverageMin).toLocaleString()} – {Number(selectedPlan.coverageMax).toLocaleString()} MMK
+                    {(selectedPlan.premiumRate * 100).toFixed(1)}% {t('applyPolicy.premiumRate')} &nbsp;·&nbsp; {Number(selectedPlan.coverageMin).toLocaleString()} – {Number(selectedPlan.coverageMax).toLocaleString()} MMK
                   </div>
                 </div>
                 <button onClick={() => { setStep(1); setSelectedPlan(null) }} style={{
@@ -285,35 +279,34 @@ export default function ApplyPolicyPage() {
                   cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, backdropFilter: 'blur(4px)',
                   flexShrink: 0,
                 }}>
-                  <i className="bi bi-arrow-left me-1"></i>Change
+                  <i className="bi bi-arrow-left me-1"></i>{t('applyPolicy.changeLabel')}
                 </button>
               </div>
             </div>
 
-            {/* Form card — attached below hero */}
             <div className="card-custom" style={{ borderRadius: '0 0 16px 16px', marginTop: 0, borderTop: 'none', paddingTop: '1.5rem' }}>
 
               {/* Coverage & duration */}
               <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, padding: '1rem 1.25rem', marginBottom: '1.25rem' }}>
                 <div style={{ fontSize: '0.78rem', fontWeight: 700, color: meta2.color, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
-                  <i className="bi bi-sliders me-1"></i>Coverage Details
+                  <i className="bi bi-sliders me-1"></i>{t('applyPolicy.coverageDetails')}
                 </div>
                 <div className="row g-3">
                   <div className="col-12 col-sm-6">
-                    <label className="form-label-custom">Coverage Amount (MMK)</label>
+                    <label className="form-label-custom">{t('applyPolicy.coverageAmount')}</label>
                     <input type="number" className="form-control-custom w-100"
                       value={coverage}
                       min={selectedPlan.coverageMin} max={selectedPlan.coverageMax}
                       onChange={e => setCoverage(e.target.value)} />
                     <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
-                      Range: {Number(selectedPlan.coverageMin).toLocaleString()} – {Number(selectedPlan.coverageMax).toLocaleString()} MMK
+                      {t('applyPolicy.rangeLabel')}: {Number(selectedPlan.coverageMin).toLocaleString()} – {Number(selectedPlan.coverageMax).toLocaleString()} MMK
                     </small>
                   </div>
                   <div className="col-12 col-sm-6">
-                    <label className="form-label-custom">Duration (years)</label>
+                    <label className="form-label-custom">{t('applyPolicy.durationYears')}</label>
                     <select className="form-select-custom w-100" value={duration} onChange={e => setDuration(Number(e.target.value))}>
                       {(Array.isArray(durations) ? durations : String(durations).split(',').map(Number)).map(d => (
-                        <option key={d} value={d}>{d} year{d > 1 ? 's' : ''}</option>
+                        <option key={d} value={d}>{d} {d > 1 ? t('applyPolicy.years') : t('applyPolicy.year')}</option>
                       ))}
                     </select>
                   </div>
@@ -324,7 +317,7 @@ export default function ApplyPolicyPage() {
               {templateLoading && (
                 <div className="text-center py-3">
                   <span className="spinner-border spinner-border-sm me-2" style={{ color: meta2.color }}></span>
-                  <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Loading form fields...</span>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{t('applyPolicy.loadingForm')}</span>
                 </div>
               )}
 
@@ -341,6 +334,7 @@ export default function ApplyPolicyPage() {
                     onFile={handleFieldFile}
                     onCheckboxOption={handleCheckboxOption}
                     user={user}
+                    autoFilledLabel={t('applyPolicy.autoFilled')}
                   />
                 </div>
               )}
@@ -348,15 +342,15 @@ export default function ApplyPolicyPage() {
               {!templateLoading && !template && (
                 <div style={{ padding: '0.75rem 1rem', borderRadius: 8, background: '#fef3c7', border: '1px solid #fcd34d', marginBottom: '1rem', fontSize: '0.85rem', color: '#92400e' }}>
                   <i className="bi bi-exclamation-triangle me-2"></i>
-                  No application form has been configured for this plan yet. Contact the administrator.
+                  {t('applyPolicy.noFormNote')}
                 </div>
               )}
 
               {/* Additional notes */}
               <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '0.75rem' }}>
-                <label className="form-label-custom">Additional Notes (optional)</label>
+                <label className="form-label-custom">{t('applyPolicy.additionalNotes')}</label>
                 <textarea rows={2} className="form-control-custom w-100" style={{ resize: 'vertical' }}
-                  placeholder="Any additional information..."
+                  placeholder={t('applyPolicy.notesPlaceholder')}
                   value={notes} onChange={e => setNotes(e.target.value)} />
               </div>
 
@@ -364,11 +358,11 @@ export default function ApplyPolicyPage() {
               <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '0.75rem' }}>
                 <div className="info-box-blue-sm mb-3">
                   <i className="bi bi-pen me-2"></i>
-                  <strong>Digital Signature</strong> — Insurance Application ကို တရားဝင်ဖြစ်စေသောအတွက် လက်မှတ်ရေးထိုးပါ
+                  <strong>Digital Signature</strong> — {t('applyPolicy.sigRequired').replace('Digital Signature — ', '')}
                 </div>
                 <DigitalSignatureCanvas
                   ref={signatureRef}
-                  label="Applicant လက်မှတ်"
+                  label={t('applyPolicy.sigLabel')}
                   required
                   onChange={data => setSignatureData(data)}
                   height={160}
@@ -379,7 +373,7 @@ export default function ApplyPolicyPage() {
                 <button
                   onClick={() => {
                     if (!signatureData) {
-                      toast.error('လက်မှတ်ရေးထိုးပါ — Digital Signature လိုအပ်သည်')
+                      toast.error(t('applyPolicy.sigMissing'))
                       return
                     }
                     setStep(3)
@@ -388,28 +382,28 @@ export default function ApplyPolicyPage() {
                   style={{ justifyContent: 'center', background: meta2.color, borderColor: meta2.color }}
                   disabled={templateLoading}
                 >
-                  Review Application →
+                  {t('applyPolicy.reviewBtn')}
                 </button>
                 <button onClick={() => { setStep(1); setSelectedPlan(null) }} className="btn-outline-custom">
-                  Back
+                  {t('applyPolicy.backBtn')}
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Side panel: agent card + premium estimate */}
+          {/* Side panel */}
           <div className="col-12 col-lg-4">
             <AgentProfileCard packageType={selectedPlan?.type} style={{ marginBottom: '1rem' }} />
             <div className="card-custom">
-              <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>Premium Estimate</h6>
+              <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>{t('applyPolicy.premiumEstimate')}</h6>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.88rem' }}>
                 {[
-                  ['Plan', selectedPlan.name],
-                  ['Type', selectedPlan.type],
-                  ['Coverage', coverage ? Number(coverage).toLocaleString() + ' MMK' : '—'],
-                  ['Duration', duration + ' year(s)'],
-                  ['Rate', (selectedPlan.premiumRate * 100).toFixed(1) + '%/year'],
-                  ...(selectedPlan.minPolicyTerm || selectedPlan.policyTerm ? [['Policy Term', selectedPlan.minPolicyTerm && selectedPlan.policyTerm ? `${selectedPlan.minPolicyTerm} – ${selectedPlan.policyTerm} yrs` : selectedPlan.policyTerm ? `Up to ${selectedPlan.policyTerm} yrs` : `From ${selectedPlan.minPolicyTerm} yrs`]] : []),
+                  [t('applyPolicy.plan'), selectedPlan.name],
+                  [t('applyPolicy.type'), selectedPlan.type],
+                  [t('applyPolicy.coverage'), coverage ? Number(coverage).toLocaleString() + ' MMK' : '—'],
+                  [t('applyPolicy.duration'), `${duration} ${duration > 1 ? t('applyPolicy.years') : t('applyPolicy.year')}`],
+                  [t('applyPolicy.rate'), `${(selectedPlan.premiumRate * 100).toFixed(1)}%/${t('applyPolicy.year')}`],
+                  ...(selectedPlan.minPolicyTerm || selectedPlan.policyTerm ? [[t('applyPolicy.policyTerm'), selectedPlan.minPolicyTerm && selectedPlan.policyTerm ? `${selectedPlan.minPolicyTerm} – ${selectedPlan.policyTerm} ${t('applyPolicy.yrs')}` : selectedPlan.policyTerm ? `${t('applyPolicy.upTo')} ${selectedPlan.policyTerm} ${t('applyPolicy.yrs')}` : `${t('applyPolicy.from')} ${selectedPlan.minPolicyTerm} ${t('applyPolicy.yrs')}`]] : []),
                 ].map(([l, v]) => (
                   <div key={l} style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: 'var(--text-muted)' }}>{l}</span>
@@ -418,13 +412,13 @@ export default function ApplyPolicyPage() {
                 ))}
                 <div style={{ borderTop: '1px solid var(--border)', paddingTop: '0.6rem', marginTop: '0.25rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '1rem' }}>
-                    <span>Est. Premium</span>
+                    <span>{t('applyPolicy.estPremium')}</span>
                     <span style={{ color: 'var(--primary)' }}>
                       {premium ? Number(premium).toLocaleString() + ' MMK' : '—'}
                     </span>
                   </div>
                   <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)', marginTop: 4 }}>
-                    Final amount determined at approval
+                    {t('applyPolicy.finalNote')}
                   </div>
                 </div>
               </div>
@@ -438,23 +432,22 @@ export default function ApplyPolicyPage() {
         <div className="row g-4">
           <div className="col-12 col-lg-8">
             <div className="card-custom">
-              <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1.25rem' }}>Review Your Application</h6>
+              <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1.25rem' }}>{t('applyPolicy.reviewTitle')}</h6>
 
-              {/* Plan info */}
-              <ReviewRow label="Plan" value={selectedPlan.name} />
-              <ReviewRow label="Type" value={selectedPlan.type} />
-              <ReviewRow label="Coverage" value={Number(coverage).toLocaleString() + ' MMK'} />
-              <ReviewRow label="Duration" value={duration + ' year(s)'} />
-              <ReviewRow label="Est. Premium" value={premium ? Number(premium).toLocaleString() + ' MMK' : '—'} />
-              {notes && <ReviewRow label="Notes" value={notes} />}
+              <ReviewRow label={t('applyPolicy.plan')} value={selectedPlan.name} />
+              <ReviewRow label={t('applyPolicy.type')} value={selectedPlan.type} />
+              <ReviewRow label={t('applyPolicy.coverage')} value={Number(coverage).toLocaleString() + ' MMK'} />
+              <ReviewRow label={t('applyPolicy.duration')} value={`${duration} ${duration > 1 ? t('applyPolicy.years') : t('applyPolicy.year')}`} />
+              <ReviewRow label={t('applyPolicy.estPremium')} value={premium ? Number(premium).toLocaleString() + ' MMK' : '—'} />
+              {notes && <ReviewRow label={t('applyPolicy.notes')} value={notes} />}
               {signatureData && (
                 <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border)' }}>
                   <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.4rem' }}>
-                    <i className="bi bi-pen me-1"></i>Digital Signature
+                    <i className="bi bi-pen me-1"></i>{t('applyPolicy.sigSection')}
                   </div>
                   <img src={signatureData} alt="Signature" style={{ maxHeight: 80, border: '1px solid var(--border)', borderRadius: 8, background: '#fff', padding: 4 }} />
                   <div style={{ fontSize: '0.7rem', color: '#16a34a', marginTop: 4 }}>
-                    <i className="bi bi-check-circle me-1"></i>လက်မှတ်ရေးထိုးပြီးပါပြီ
+                    <i className="bi bi-check-circle me-1"></i>{t('applyPolicy.sigDone')}
                   </div>
                 </div>
               )}
@@ -463,7 +456,7 @@ export default function ApplyPolicyPage() {
               {template?.fields && template.fields.filter(f => f.fieldType !== 'LABEL').length > 0 && (
                 <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '1rem' }}>
                   <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
-                    Form Details
+                    {t('applyPolicy.formDetails')}
                   </div>
                   {template.fields.filter(f => f.fieldType !== 'LABEL').map(field => {
                     const val = fieldValues[String(field.id)]
@@ -483,21 +476,23 @@ export default function ApplyPolicyPage() {
 
               <div className="d-flex gap-2 mt-4">
                 <button onClick={handleSubmit} disabled={submitting} className="btn-primary-custom flex-grow-1" style={{ justifyContent: 'center' }}>
-                  {submitting ? <><span className="spinner-border spinner-border-sm me-2"></span>Submitting...</> : <><i className="bi bi-send me-2"></i>Submit Application</>}
+                  {submitting
+                    ? <><span className="spinner-border spinner-border-sm me-2"></span>{t('applyPolicy.submitting')}</>
+                    : <><i className="bi bi-send me-2"></i>{t('applyPolicy.submitBtn')}</>}
                 </button>
-                <button onClick={() => setStep(2)} className="btn-outline-custom" disabled={submitting}>Back</button>
+                <button onClick={() => setStep(2)} className="btn-outline-custom" disabled={submitting}>{t('applyPolicy.backBtn')}</button>
               </div>
             </div>
           </div>
           <div className="col-12 col-lg-4">
             <div className="card-custom">
-              <h6 style={{ fontWeight: 600, marginBottom: '0.75rem', color: 'var(--text-primary)' }}>📋 What Happens Next</h6>
+              <h6 style={{ fontWeight: 600, marginBottom: '0.75rem', color: 'var(--text-primary)' }}>📋 {t('applyPolicy.whatNext')}</h6>
               {[
-                'Application submitted and assigned to an agent',
-                'Agent verifies your information',
-                'Admin makes final approval decision',
-                'You receive a notification with the outcome',
-                'Approved: make your premium payment',
+                t('applyPolicy.next1'),
+                t('applyPolicy.next2'),
+                t('applyPolicy.next3'),
+                t('applyPolicy.next4'),
+                t('applyPolicy.next5'),
               ].map((s, i) => (
                 <div key={i} className="d-flex align-items-start gap-2 mb-2">
                   <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', flexShrink: 0, marginTop: 1 }}>{i + 1}</div>
@@ -521,7 +516,7 @@ function ReviewRow({ label, value }) {
   )
 }
 
-function DynamicFormFields({ fields, fieldValues, fieldFiles, onValue, onFile, onCheckboxOption, user }) {
+function DynamicFormFields({ fields, fieldValues, fieldFiles, onValue, onFile, onCheckboxOption, user, autoFilledLabel }) {
   if (!fields || fields.length === 0) return null
   return (
     <div className="d-flex flex-column gap-3">
@@ -532,13 +527,14 @@ function DynamicFormFields({ fields, fieldValues, fieldFiles, onValue, onFile, o
           onValue={v => onValue(field.id, v)}
           onFile={f => onFile(field.id, f)}
           onCheckboxOption={(opt, checked) => onCheckboxOption(field.id, opt, checked)}
-          user={user} />
+          user={user}
+          autoFilledLabel={autoFilledLabel} />
       ))}
     </div>
   )
 }
 
-function DynamicField({ field, value, file, onValue, onFile, onCheckboxOption, user }) {
+function DynamicField({ field, value, file, onValue, onFile, onCheckboxOption, user, autoFilledLabel }) {
   if (field.fieldType === 'LABEL') {
     return (
       <div style={{
@@ -565,7 +561,7 @@ function DynamicField({ field, value, file, onValue, onFile, onCheckboxOption, u
         {field.fieldLabel}
         {isAutoFilled && (
           <span style={{ fontSize: '0.7rem', color: '#16a34a', marginLeft: 6, fontWeight: 400 }}>
-            <i className="bi bi-lock-fill me-1"></i>ပရိုဖိုင်မှ အလိုလျှောက်ထည့်သည်
+            <i className="bi bi-lock-fill me-1"></i>{autoFilledLabel}
           </span>
         )}
       </label>

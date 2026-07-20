@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
@@ -10,14 +11,15 @@ import DigitalSignatureCanvas from '../../components/DigitalSignatureCanvas'
 const CLAIM_TYPES = ['Accident', 'Hospitalization', 'Death Benefit', 'Property Damage', 'Vehicle Damage', 'Critical Illness', 'Other']
 
 export default function SubmitClaimPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [activePolicies, setActivePolicies] = useState([])
   const [claimedIds, setClaimedIds] = useState(new Set())
   const [form, setForm] = useState({ applicationId: '', claimType: '', amount: '', description: '', incidentDate: '' })
   const [claimTemplate, setClaimTemplate] = useState(null)
   const [templateLoading, setTemplateLoading] = useState(false)
-  const [fieldValues, setFieldValues] = useState({})  // fieldId -> value
-  const [fieldFiles, setFieldFiles] = useState({})     // fieldId -> File
+  const [fieldValues, setFieldValues] = useState({})
+  const [fieldFiles, setFieldFiles] = useState({})
   const [loading, setLoading] = useState(false)
   const [signatureData, setSignatureData] = useState(null)
   const signatureRef = useRef()
@@ -39,7 +41,6 @@ export default function SubmitClaimPage() {
   const selectedPolicy = activePolicies.find(p => String(p.id) === String(form.applicationId))
   const maxClaimAmount = selectedPolicy?.coverageAmount ? Number(selectedPolicy.coverageAmount) : null
 
-  // Fetch claim form template when policy is selected
   useEffect(() => {
     if (!form.applicationId) { setClaimTemplate(null); return }
     const selectedPolicy = activePolicies.find(p => String(p.id) === String(form.applicationId))
@@ -51,7 +52,6 @@ export default function SubmitClaimPage() {
       .then(res => {
         const tmpl = res.data
         setClaimTemplate(tmpl)
-        // Auto-fill NAME / EMAIL fields from user profile
         if (tmpl?.fields && user) {
           const prefill = {}
           tmpl.fields.forEach(f => {
@@ -66,7 +66,6 @@ export default function SubmitClaimPage() {
   }, [form.applicationId])
 
   const handleChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }))
-
   const handleFieldValue = (fieldId, value) => setFieldValues(v => ({ ...v, [String(fieldId)]: value }))
   const handleFieldFile  = (fieldId, file)  => setFieldFiles(v => ({ ...v, [String(fieldId)]: file }))
 
@@ -80,18 +79,16 @@ export default function SubmitClaimPage() {
 
   const handleSubmit = async e => {
     e.preventDefault()
-    if (!form.applicationId) { toast.error('Please select a policy'); return }
+    if (!form.applicationId) { toast.error(t('submitClaim.selectPolicyError')); return }
 
-    // Validate claim amount
     const enteredAmount = parseFloat(form.amount)
     if (!form.amount || isNaN(enteredAmount) || enteredAmount <= 0) {
-      toast.error('ကောင်းမွန်သော ငွေပမာဏ ထည့်သွင်းပါ'); return
+      toast.error(t('submitClaim.amountError')); return
     }
     if (maxClaimAmount !== null && enteredAmount > maxClaimAmount) {
-      toast.error(`Claim amount သည် coverage ငွေပမာဏ ${maxClaimAmount.toLocaleString()} MMK ထက် မကျော်လွန်ရ`); return
+      toast.error(t('submitClaim.coverageExceeded', { amount: maxClaimAmount.toLocaleString() })); return
     }
 
-    // Validate required dynamic fields
     if (claimTemplate?.fields) {
       for (const field of claimTemplate.fields) {
         if (field.fieldType === 'LABEL') continue
@@ -110,7 +107,7 @@ export default function SubmitClaimPage() {
     }
 
     if (!signatureData) {
-      toast.error('လက်မှတ်ရေးထိုးပါ — Digital Signature လိုအပ်သည်')
+      toast.error(t('submitClaim.sigError'))
       return
     }
 
@@ -138,7 +135,7 @@ export default function SubmitClaimPage() {
       })
 
       await api.post('/customer/claims', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
-      toast.success('Claim submitted successfully!')
+      toast.success(t('submitClaim.submitSuccess'))
       navigate('/customer/claims')
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to submit claim')
@@ -150,8 +147,8 @@ export default function SubmitClaimPage() {
   return (
     <div className="fade-in">
       <div className="mb-4">
-        <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Submit a Claim</h4>
-        <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>File an insurance claim for an approved policy</p>
+        <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('submitClaim.title')}</h4>
+        <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>{t('submitClaim.subtitle')}</p>
       </div>
 
       <div className="row g-4">
@@ -162,10 +159,10 @@ export default function SubmitClaimPage() {
               {/* Policy selection */}
               <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, padding: '1rem 1.25rem', marginBottom: '1.25rem' }}>
                 <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
-                  <i className="bi bi-shield-check me-1"></i>Select Policy
+                  <i className="bi bi-shield-check me-1"></i>{t('submitClaim.selectPolicyLabel')}
                 </div>
                 <select name="applicationId" required className="form-select-custom w-100" value={form.applicationId} onChange={handleChange}>
-                  <option value="">Choose an approved policy...</option>
+                  <option value="">{t('submitClaim.choosePolicy')}</option>
                   {availablePolicies.map(p => (
                     <option key={p.id} value={p.id}>
                       {p.packageName || p.package?.name} — {Number(p.coverageAmount).toLocaleString()} MMK
@@ -173,14 +170,14 @@ export default function SubmitClaimPage() {
                   ))}
                 </select>
                 {activePolicies.length === 0 && (
-                  <small style={{ color: 'var(--danger)', fontSize: '0.8rem', marginTop: 4, display: 'block' }}>No approved policies. Apply for a policy first.</small>
+                  <small style={{ color: 'var(--danger)', fontSize: '0.8rem', marginTop: 4, display: 'block' }}>{t('submitClaim.noPolicies')}</small>
                 )}
                 {activePolicies.length > 0 && availablePolicies.length === 0 && (
-                  <small style={{ color: 'var(--danger)', fontSize: '0.8rem', marginTop: 4, display: 'block' }}>All policies already have a claim. Only one claim per policy.</small>
+                  <small style={{ color: 'var(--danger)', fontSize: '0.8rem', marginTop: 4, display: 'block' }}>{t('submitClaim.allClaimed')}</small>
                 )}
               </div>
 
-              {/* Agent card — shown once a policy is selected */}
+              {/* Agent card */}
               {form.applicationId && (() => {
                 const sel = activePolicies.find(p => String(p.id) === String(form.applicationId))
                 return sel?.packageType ? (
@@ -188,16 +185,16 @@ export default function SubmitClaimPage() {
                 ) : null
               })()}
 
-              {/* Claim Amount — always visible when a policy is selected */}
+              {/* Claim Amount */}
               {form.applicationId && (
                 <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, padding: '1rem 1.25rem', marginBottom: '1.25rem' }}>
                   <div style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.75rem' }}>
-                    <i className="bi bi-currency-exchange me-1"></i>Claim Amount
+                    <i className="bi bi-currency-exchange me-1"></i>{t('submitClaim.claimAmountLabel')}
                   </div>
                   {maxClaimAmount !== null && (
                     <div className="info-box-blue-sm mb-3">
                       <i className="bi bi-info-circle me-1"></i>
-                      ကျော်လွန်၍မရသော အများဆုံး ငွေပမာဏ: <strong>{maxClaimAmount.toLocaleString()} MMK</strong>
+                      {t('submitClaim.maxAmountNote')}: <strong>{maxClaimAmount.toLocaleString()} MMK</strong>
                     </div>
                   )}
                   <input
@@ -208,13 +205,13 @@ export default function SubmitClaimPage() {
                     max={maxClaimAmount !== null ? maxClaimAmount : undefined}
                     step="1"
                     className="form-control-custom w-100"
-                    placeholder="တောင်းဆိုသော ငွေပမာဏ ရေးထည့်ပါ (MMK)"
+                    placeholder={t('submitClaim.amountPlaceholder')}
                     value={form.amount}
                     onChange={e => {
                       handleChange(e)
                       const v = parseFloat(e.target.value)
                       if (maxClaimAmount !== null && !isNaN(v) && v > maxClaimAmount) {
-                        e.target.setCustomValidity(`Coverage ငွေပမာဏ ${maxClaimAmount.toLocaleString()} MMK ထက် မကျော်လွန်ရ`)
+                        e.target.setCustomValidity(t('submitClaim.maxLabel', { amount: maxClaimAmount.toLocaleString() }))
                       } else {
                         e.target.setCustomValidity('')
                       }
@@ -227,7 +224,7 @@ export default function SubmitClaimPage() {
                   )}
                   {form.amount && maxClaimAmount !== null && parseFloat(form.amount) > maxClaimAmount && (
                     <small style={{ color: '#dc2626', fontSize: '0.78rem', marginTop: 4, display: 'block' }}>
-                      ✗ Coverage ငွေပမာဏ {maxClaimAmount.toLocaleString()} MMK ထက် မကျော်လွန်ရ
+                      ✗ {t('submitClaim.coverageExceeded', { amount: maxClaimAmount.toLocaleString() })}
                     </small>
                   )}
                 </div>
@@ -237,7 +234,7 @@ export default function SubmitClaimPage() {
               {templateLoading && (
                 <div className="text-center py-3">
                   <span className="spinner-border spinner-border-sm me-2" style={{ color: 'var(--primary)' }}></span>
-                  <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Loading claim form...</span>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{t('submitClaim.loadingForm')}</span>
                 </div>
               )}
 
@@ -255,6 +252,7 @@ export default function SubmitClaimPage() {
                     onFile={handleFieldFile}
                     onCheckboxOption={handleCheckboxOption}
                     user={user}
+                    autoFilledLabel={t('submitClaim.autoFilled')}
                   />
                 </div>
               )}
@@ -264,40 +262,40 @@ export default function SubmitClaimPage() {
                 <>
                   <div style={{ padding: '0.75rem 1rem', borderRadius: 8, background: '#fef3c7', border: '1px solid #fcd34d', marginBottom: '1rem', fontSize: '0.85rem', color: '#92400e' }}>
                     <i className="bi bi-info-circle me-2"></i>
-                    No claim form configured for this plan yet. Using standard fields.
+                    {t('submitClaim.noFormNote')}
                   </div>
                   <div className="row g-3">
                     <div className="col-12 col-sm-6">
-                      <label className="form-label-custom">Claim Type *</label>
+                      <label className="form-label-custom">{t('submitClaim.claimType')}</label>
                       <select name="claimType" required className="form-select-custom w-100" value={form.claimType} onChange={handleChange}>
-                        <option value="">Select type...</option>
-                        {CLAIM_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                        <option value="">{t('submitClaim.selectType')}</option>
+                        {CLAIM_TYPES.map(ct => <option key={ct} value={ct}>{ct}</option>)}
                       </select>
                     </div>
                     <div className="col-12">
-                      <label className="form-label-custom">Incident Date *</label>
+                      <label className="form-label-custom">{t('submitClaim.incidentDate')}</label>
                       <input name="incidentDate" type="date" required className="form-control-custom w-100"
                         max={new Date().toISOString().split('T')[0]} value={form.incidentDate} onChange={handleChange} />
                     </div>
                     <div className="col-12">
-                      <label className="form-label-custom">Description *</label>
+                      <label className="form-label-custom">{t('submitClaim.description')}</label>
                       <textarea name="description" required rows={4} className="form-control-custom w-100"
-                        placeholder="Describe the incident..." value={form.description} onChange={handleChange} style={{ resize: 'vertical' }} />
+                        placeholder={t('submitClaim.descPlaceholder')} value={form.description} onChange={handleChange} style={{ resize: 'vertical' }} />
                     </div>
                   </div>
                 </>
               )}
 
-              {/* Digital Signature — shown once a policy is selected */}
+              {/* Digital Signature */}
               {form.applicationId && (
                 <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '0.75rem' }}>
                   <div style={{ padding: '0.6rem 0.9rem', borderRadius: 8, background: '#fef3c7', border: '1px solid #fcd34d', marginBottom: '0.75rem', fontSize: '0.82rem', color: '#92400e' }}>
                     <i className="bi bi-pen me-2"></i>
-                    <strong>Digital Signature</strong> — Claim Form တင်သွင်းခြင်းကို တရားဝင်ဖြစ်စေသောအတွက် လက်မှတ်ရေးထိုးပါ
+                    <strong>Digital Signature</strong> — {t('submitClaim.sigRequired').replace('Digital Signature — ', '')}
                   </div>
                   <DigitalSignatureCanvas
                     ref={signatureRef}
-                    label="Claimant လက်မှတ်"
+                    label={t('submitClaim.sigLabel')}
                     required
                     onChange={data => setSignatureData(data)}
                     height={160}
@@ -307,7 +305,9 @@ export default function SubmitClaimPage() {
 
               {form.applicationId && (
                 <button type="submit" disabled={loading || templateLoading} className="btn-primary-custom mt-4 w-100" style={{ justifyContent: 'center' }}>
-                  {loading ? <><span className="spinner-border spinner-border-sm me-2"></span>Submitting...</> : <><i className="bi bi-send me-2"></i>Submit Claim</>}
+                  {loading
+                    ? <><span className="spinner-border spinner-border-sm me-2"></span>{t('submitClaim.submitting')}</>
+                    : <><i className="bi bi-send me-2"></i>{t('submitClaim.submitBtn')}</>}
                 </button>
               )}
             </form>
@@ -316,13 +316,13 @@ export default function SubmitClaimPage() {
 
         <div className="col-12 col-lg-4">
           <div className="card-custom">
-            <h6 style={{ fontWeight: 600, marginBottom: '0.75rem', color: 'var(--text-primary)' }}>📋 Claim Process</h6>
+            <h6 style={{ fontWeight: 600, marginBottom: '0.75rem', color: 'var(--text-primary)' }}>📋 {t('submitClaim.processTitle')}</h6>
             {[
-              'Submit your claim with required details',
-              'Agent reviews and verifies the claim',
-              'Admin makes final approval decision',
-              'Receive notification of outcome',
-              'Approved claims are paid out promptly',
+              t('submitClaim.step1'),
+              t('submitClaim.step2'),
+              t('submitClaim.step3'),
+              t('submitClaim.step4'),
+              t('submitClaim.step5'),
             ].map((s, i) => (
               <div key={i} className="d-flex align-items-start gap-2 mb-2">
                 <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--primary)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', flexShrink: 0, marginTop: 1 }}>{i + 1}</div>
@@ -336,10 +336,9 @@ export default function SubmitClaimPage() {
   )
 }
 
-// Field types already covered by system — skip to avoid duplication
 const SYSTEM_FIELD_TYPES = new Set(['NAME', 'EMAIL', 'NRC'])
 
-function DynamicFormFields({ fields, fieldValues, fieldFiles, onValue, onFile, onCheckboxOption, user }) {
+function DynamicFormFields({ fields, fieldValues, fieldFiles, onValue, onFile, onCheckboxOption, user, autoFilledLabel }) {
   if (!fields || fields.length === 0) return null
   return (
     <div className="d-flex flex-column gap-3 mb-3">
@@ -353,13 +352,14 @@ function DynamicFormFields({ fields, fieldValues, fieldFiles, onValue, onFile, o
           onFile={f => onFile(field.id, f)}
           onCheckboxOption={(opt, checked) => onCheckboxOption(field.id, opt, checked)}
           user={user}
+          autoFilledLabel={autoFilledLabel}
         />
       ))}
     </div>
   )
 }
 
-function DynamicField({ field, value, file, onValue, onFile, onCheckboxOption, user }) {
+function DynamicField({ field, value, file, onValue, onFile, onCheckboxOption, user, autoFilledLabel }) {
   if (field.fieldType === 'LABEL') {
     return (
       <div style={{
@@ -387,7 +387,7 @@ function DynamicField({ field, value, file, onValue, onFile, onCheckboxOption, u
         {field.required && <span style={{ color: '#dc2626' }}> *</span>}
         {isAutoFilled && (
           <span style={{ fontSize: '0.7rem', color: '#16a34a', marginLeft: 6, fontWeight: 400 }}>
-            <i className="bi bi-lock-fill me-1"></i>ပရိုဖိုင်မှ အလိုလျှောက်ထည့်သည်
+            <i className="bi bi-lock-fill me-1"></i>{autoFilledLabel}
           </span>
         )}
       </label>

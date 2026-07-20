@@ -1,21 +1,24 @@
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 import DashboardLayout from '../../components/DashboardLayout'
 import { useNotifCount } from '../../context/NotifCountContext'
 
-const links = [
-  { to: '/customer/dashboard',     icon: 'bi-speedometer2',         label: 'Dashboard'        },
-  { to: '/customer/policies',      icon: 'bi-shield-check',          label: 'My Policies'      },
-  { to: '/customer/applications',  icon: 'bi-file-earmark-text',    label: 'My Applications'  },
-  { to: '/customer/apply',         icon: 'bi-plus-circle',           label: 'Apply for Policy' },
-  { to: '/customer/claims',        icon: 'bi-file-earmark-medical', label: 'My Claims'        },
-  { to: '/customer/submit-claim',  icon: 'bi-plus-circle-dotted',   label: 'Submit Claim'     },
-  { to: '/customer/payments',      icon: 'bi-credit-card',           label: 'Payments'         },
-  { to: '/customer/notifications', icon: 'bi-bell',                  label: 'Notifications', badge: true },
-  { to: '/customer/feedback',      icon: 'bi-chat-heart',            label: 'Send Feedback'    },
-  { to: '/customer/profile',       icon: 'bi-person-circle',         label: 'My Profile'       },
-]
-
 export default function CustomerLayout() {
+  const { t } = useTranslation()
   const { unreadCount } = useNotifCount()
-  return <DashboardLayout title="Customer Portal" links={links} externalBadge={unreadCount} />
+
+  const links = [
+    { to: '/customer/dashboard',     icon: 'bi-speedometer2',         label: t('sidebar.dashboard')    },
+    { to: '/customer/policies',      icon: 'bi-shield-check',          label: t('sidebar.policies')     },
+    { to: '/customer/applications',  icon: 'bi-file-earmark-text',    label: t('sidebar.applications') },
+    { to: '/customer/apply',         icon: 'bi-plus-circle',           label: t('sidebar.apply')        },
+    { to: '/customer/claims',        icon: 'bi-file-earmark-medical', label: t('sidebar.claims')       },
+    { to: '/customer/submit-claim',  icon: 'bi-plus-circle-dotted',   label: t('sidebar.submitClaim')  },
+    { to: '/customer/payments',      icon: 'bi-credit-card',           label: t('sidebar.payments')     },
+    { to: '/customer/notifications', icon: 'bi-bell',                  label: t('sidebar.notifications'), badge: true },
+    { to: '/customer/feedback',      icon: 'bi-chat-heart',            label: t('sidebar.feedback')     },
+    { to: '/customer/profile',       icon: 'bi-person-circle',         label: t('sidebar.profile')      },
+  ]
+
+  return <DashboardLayout title={t('layout.customerPortal')} links={links} externalBadge={unreadCount} />
 }

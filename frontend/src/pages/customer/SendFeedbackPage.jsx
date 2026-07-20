@@ -1,24 +1,28 @@
 import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 
 const CATEGORIES = ['General', 'Claims', 'Payments', 'Policies', 'Applications', 'Support', 'Other']
 
 export default function SendFeedbackPage() {
+  const { t } = useTranslation()
   const [form, setForm] = useState({ rating: 5, category: 'General', message: '' })
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
 
+  const RATING_LABELS = ['', t('feedback.ratePoor'), t('feedback.rateFair'), t('feedback.rateGood'), t('feedback.rateVeryGood'), t('feedback.rateExcellent')]
+
   const handleSubmit = async e => {
     e.preventDefault()
-    if (!form.message.trim()) { toast.error('Please enter your message'); return }
+    if (!form.message.trim()) { toast.error(t('feedback.validationError')); return }
     setSubmitting(true)
     try {
       await api.post('/customer/feedback', form)
       setSubmitted(true)
-      toast.success('Feedback sent to admin successfully!')
+      toast.success(t('feedback.submitSuccess'))
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to send feedback')
+      toast.error(err.response?.data?.message || t('feedback.submitFailed'))
     } finally {
       setSubmitting(false)
     }
@@ -36,12 +40,12 @@ export default function SendFeedbackPage() {
           <div style={{ width: 64, height: 64, borderRadius: '50%', background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
             <i className="bi bi-check-circle-fill" style={{ fontSize: '2rem', color: '#16a34a' }}></i>
           </div>
-          <h5 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Thank you for your feedback!</h5>
+          <h5 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>{t('feedback.successTitle')}</h5>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-            Your message has been sent to our admin team. We appreciate your input and will use it to improve our services.
+            {t('feedback.successDesc')}
           </p>
           <button className="btn-primary-custom" onClick={handleNew}>
-            <i className="bi bi-plus-circle me-2"></i>Send Another Feedback
+            <i className="bi bi-plus-circle me-2"></i>{t('feedback.sendAnother')}
           </button>
         </div>
       </div>
@@ -51,9 +55,9 @@ export default function SendFeedbackPage() {
   return (
     <div className="fade-in" style={{ maxWidth: 600, margin: '0 auto' }}>
       <div className="mb-4">
-        <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Send Feedback</h4>
+        <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('feedback.title')}</h4>
         <p style={{ color: 'var(--text-secondary)', margin: '0.25rem 0 0', fontSize: '0.9rem' }}>
-          Share your experience and help us improve our services
+          {t('feedback.subtitle')}
         </p>
       </div>
 
@@ -62,7 +66,7 @@ export default function SendFeedbackPage() {
 
           {/* Rating */}
           <div className="mb-4">
-            <label className="form-label-custom mb-2">Your Rating *</label>
+            <label className="form-label-custom mb-2">{t('feedback.ratingLabel')}</label>
             <div className="d-flex gap-2">
               {[1, 2, 3, 4, 5].map(star => (
                 <button
@@ -81,14 +85,14 @@ export default function SendFeedbackPage() {
                 </button>
               ))}
               <span style={{ marginLeft: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.88rem', alignSelf: 'center' }}>
-                {['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'][form.rating]}
+                {RATING_LABELS[form.rating]}
               </span>
             </div>
           </div>
 
           {/* Category */}
           <div className="mb-3">
-            <label className="form-label-custom">Category *</label>
+            <label className="form-label-custom">{t('feedback.categoryLabel')}</label>
             <select
               className="form-select-custom w-100"
               value={form.category}
@@ -101,9 +105,9 @@ export default function SendFeedbackPage() {
           {/* Message */}
           <div className="mb-4">
             <label className="form-label-custom">
-              Your Message *
+              {t('feedback.messageLabel')}
               <span style={{ float: 'right', color: 'var(--text-muted)', fontWeight: 400 }}>
-                {form.message.length}/1000
+                {t('feedback.charCount', { count: form.message.length })}
               </span>
             </label>
             <textarea
@@ -112,7 +116,7 @@ export default function SendFeedbackPage() {
               maxLength={1000}
               className="form-control-custom w-100"
               style={{ resize: 'vertical' }}
-              placeholder="Tell us about your experience, suggestions, or any issues you've encountered..."
+              placeholder={t('feedback.messagePlaceholder')}
               value={form.message}
               onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
             />
@@ -125,8 +129,8 @@ export default function SendFeedbackPage() {
             style={{ justifyContent: 'center' }}
           >
             {submitting
-              ? <><span className="spinner-border spinner-border-sm me-2"></span>Sending...</>
-              : <><i className="bi bi-send me-2"></i>Send Feedback</>}
+              ? <><span className="spinner-border spinner-border-sm me-2"></span>{t('feedback.submitting')}</>
+              : <><i className="bi bi-send me-2"></i>{t('feedback.submitBtn')}</>}
           </button>
         </form>
       </div>
