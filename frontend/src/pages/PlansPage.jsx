@@ -318,13 +318,16 @@ export default function PlansPage() {
                         padding: '0.5rem 0.85rem', borderRadius: 8,
                         border: `1.5px solid ${meta.color}`, background: 'transparent',
                         color: meta.color, cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem',
+                        flex: user?.role === 'ADMIN' ? '1 1 auto' : '0 0 auto',
                       }}>
                         <i className="bi bi-eye me-1"></i>{t('plans.detailBtn')}
                       </button>
-                      <button onClick={() => handleApply(plan)} className="btn-primary-custom flex-grow-1"
-                        style={{ justifyContent: 'center', background: meta.color, borderColor: meta.color }}>
-                        <i className="bi bi-check-circle me-2"></i>{t('plans.applyBtn')}
-                      </button>
+                      {user?.role !== 'ADMIN' && (
+                        <button onClick={() => handleApply(plan)} className="btn-primary-custom flex-grow-1"
+                          style={{ justifyContent: 'center', background: meta.color, borderColor: meta.color }}>
+                          <i className="bi bi-check-circle me-2"></i>{t('plans.applyBtn')}
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
