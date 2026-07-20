@@ -75,8 +75,11 @@ export async function sendOtpEmail(email, code, type) {
         { publicKey: cleanKey },
       )
     } catch (ejsErr) {
-      console.error('[EmailJS send error]', JSON.stringify(ejsErr))
-      throw ejsErr
+      const detail = ejsErr?.text || ejsErr?.message || JSON.stringify(ejsErr)
+      console.error('[EmailJS send error]', detail)
+      const enriched = new Error(`EmailJS: ${detail}`)
+      enriched.emailjsDetail = detail
+      throw enriched
     }
   } else {
     throw new Error('EmailJS is not configured. Please set VITE_EMAILJS_SERVICE_ID and VITE_EMAILJS_PUBLIC_KEY.')

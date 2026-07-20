@@ -22,8 +22,8 @@ export default function ForgotPasswordPage() {
       await issueOtp(email, 'reset')
       toast.success(t('otp.sent'))
     } catch (err) {
-      console.error('[EmailJS error]', err)
-      toast.warn(t('otp.sendError'))
+      const detail = err?.emailjsDetail || err?.message || ''
+      toast.warn(`${t('otp.sendError')} — ${detail}`, { autoClose: false })
     }
     setLoading(false)
     navigate(`/reset-password?email=${encodeURIComponent(email)}`)

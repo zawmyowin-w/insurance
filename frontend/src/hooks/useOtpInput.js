@@ -55,8 +55,8 @@ export function useOtpInput(email, purpose, t) {
       focus(0)
       toast.success(t('otp.resent'))
     } catch (err) {
-      console.error('[OTP resend error]', err)
-      toast.error(t('otp.sendError'))
+      const detail = err?.emailjsDetail || err?.message || ''
+      toast.error(`${t('otp.sendError')} — ${detail}`, { autoClose: false })
     } finally {
       setResending(false)
     }

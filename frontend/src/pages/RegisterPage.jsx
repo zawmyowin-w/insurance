@@ -50,8 +50,9 @@ export default function RegisterPage() {
     try {
       await issueOtp(payload.email, 'verify')
       toast.success(t('otp.sent') || 'Verification code sent!')
-    } catch {
-      toast.warn(t('otp.sendError') || 'Could not send code — check your email later.')
+    } catch (err) {
+      const detail = err?.emailjsDetail || err?.message || ''
+      toast.warn(`${t('otp.sendError') || 'Could not send code'} — ${detail}`, { autoClose: false })
     }
     setLoading(false)
     navigate(`/verify-email?email=${encodeURIComponent(payload.email)}`)
