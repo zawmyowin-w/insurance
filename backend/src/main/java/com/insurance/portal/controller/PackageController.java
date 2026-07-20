@@ -91,40 +91,18 @@ public class PackageController {
         if (req.containsKey("coverageMax"))  pkg.setCoverageMax(toBD(req.get("coverageMax")));
         if (req.containsKey("active"))       pkg.setActive(Boolean.TRUE.equals(req.get("active")));
 
-        // Legacy premiumRate (kept for backward compat; auto-derived from first durationTier if not set)
-        if (req.containsKey("premiumRate") && req.get("premiumRate") != null) {
-            pkg.setPremiumRate(toBD(req.get("premiumRate")));
-        }
-
-        // Duration tiers JSON array [{years, premiumRate}]
+        // Duration tiers JSON array [{years, premiumRate}] — also derives premiumRate from first tier
         if (req.containsKey("durationTiers")) {
             Object dt = req.get("durationTiers");
             try {
-                String json = MAPPER.writeValueAsString(dt);
-                pkg.setDurationTiersJson(json);
-                // Derive legacy premiumRate from first tier
+                pkg.setDurationTiersJson(MAPPER.writeValueAsString(dt));
                 if (dt instanceof List<?> list && !list.isEmpty()) {
                     Object first = list.get(0);
                     if (first instanceof Map<?, ?> m && m.containsKey("premiumRate")) {
                         pkg.setPremiumRate(toBD(m.get("premiumRate")));
                     }
                 }
-                // Also keep legacy durations field in sync
-                if (dt instanceof List<?> list) {
-                    String durationsStr = list.stream()
-                            .filter(t -> t instanceof Map<?,?>)
-                            .map(t -> String.valueOf(((Map<?,?>) t).get("years")))
-                            .reduce((a, b) -> a + "," + b).orElse("1");
-                    pkg.setDurationsJson(durationsStr);
-                }
             } catch (Exception ignored) {}
-        }
-
-        // Legacy durations field (kept for backward compat)
-        if (req.containsKey("durations") && !req.containsKey("durationTiers")) {
-            Object d = req.get("durations");
-            if (d instanceof List<?> list) pkg.setDurationsJson(list.stream().map(Object::toString).reduce((a, b) -> a + "," + b).orElse("1"));
-            else pkg.setDurationsJson(d.toString());
         }
 
         if (req.containsKey("benefits")) {
@@ -133,8 +111,6 @@ public class PackageController {
             else pkg.setBenefitsJson(b.toString());
         }
 
-        if (req.containsKey("policyTerm"))    pkg.setPolicyTerm(req.get("policyTerm") != null ? ((Number) req.get("policyTerm")).intValue() : null);
-        if (req.containsKey("minPolicyTerm")) pkg.setMinPolicyTerm(req.get("minPolicyTerm") != null ? ((Number) req.get("minPolicyTerm")).intValue() : null);
         if (req.containsKey("eligibility"))   pkg.setEligibility((String) req.get("eligibility"));
         if (req.containsKey("exclusions"))    pkg.setExclusions((String) req.get("exclusions"));
 

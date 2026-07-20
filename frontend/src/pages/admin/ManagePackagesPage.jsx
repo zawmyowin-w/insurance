@@ -167,7 +167,7 @@ export default function ManagePackagesPage() {
     setEditing(pkg.id)
     const tiers = Array.isArray(pkg.durationTiers) && pkg.durationTiers.length > 0
       ? pkg.durationTiers.map(t => ({ years: t.years, premiumRate: t.premiumRate }))
-      : (pkg.durations || [1]).map(y => ({ years: y, premiumRate: pkg.premiumRate || '' }))
+      : [{ years: 1, premiumRate: '' }]
     const freqOpt = PAYMENT_FREQ_OPTIONS.find(o => o.value === pkg.paymentFrequency)
     setForm({
       name: pkg.name || '',

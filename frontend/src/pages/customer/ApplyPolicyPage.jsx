@@ -76,7 +76,7 @@ export default function ApplyPolicyPage() {
   const selectPlan = (plan) => {
     setSelectedPlan(plan)
     setCoverage(String(plan.coverageMin || ''))
-    setDuration((plan.durations?.[0]) || 1)
+    setDuration((plan.durationTiers?.[0]?.years) || 1)
     setStep(2)
   }
 
@@ -133,9 +133,10 @@ export default function ApplyPolicyPage() {
   }
 
   const filteredPlans = typeFilter === 'ALL' ? plans : plans.filter(p => p.type === typeFilter)
-  const durations = selectedPlan?.durations || [1, 2, 3, 5]
-  const premium = selectedPlan && coverage
-    ? Math.round(Number(coverage) * selectedPlan.premiumRate * duration)
+  const durations = selectedPlan?.durationTiers?.map(t => t.years) || []
+  const selectedTier = selectedPlan?.durationTiers?.find(t => t.years === duration)
+  const premium = selectedTier && coverage
+    ? Math.round(Number(coverage) * selectedTier.premiumRate * duration)
     : null
   const meta2 = selectedPlan ? getTypeMeta(selectedPlan.type) : {}
 
@@ -214,7 +215,7 @@ export default function ApplyPolicyPage() {
                       <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 0.75rem' }}>{plan.description}</p>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
                         <span style={{ color: 'var(--text-muted)' }}>{Number(plan.coverageMin).toLocaleString()} – {Number(plan.coverageMax).toLocaleString()} MMK</span>
-                        <span style={{ fontWeight: 700, color: meta.color }}>{(plan.premiumRate * 100).toFixed(1)}%/{t('applyPolicy.year')}</span>
+                        <span style={{ fontWeight: 700, color: meta.color }}>{plan.durationTiers?.length > 0 ? `${(Math.min(...plan.durationTiers.map(t => t.premiumRate)) * 100).toFixed(1)}%` : '—'}/{t('applyPolicy.year')}</span>
                       </div>
                       {(plan.minPolicyTerm || plan.policyTerm) && (
                         <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>

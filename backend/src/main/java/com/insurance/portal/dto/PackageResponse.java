@@ -58,16 +58,6 @@ public class PackageResponse {
         dto.setBeneficiaryInfo(pkg.getBeneficiaryInfo());
         dto.setTermsAndConditions(pkg.getTermsAndConditions());
 
-        // Parse legacy durations (comma-separated)
-        try {
-            if (pkg.getDurationsJson() != null) {
-                dto.setDurations(Arrays.stream(pkg.getDurationsJson().split(","))
-                        .map(String::trim).map(Integer::parseInt).toList());
-            }
-        } catch (Exception e) {
-            dto.setDurations(List.of(1, 2, 3));
-        }
-
         // Parse benefits (newline-separated)
         try {
             if (pkg.getBenefitsJson() != null) {
@@ -78,14 +68,23 @@ public class PackageResponse {
             dto.setBenefits(List.of());
         }
 
-        // Parse duration tiers JSON
+        // Parse duration tiers JSON and derive durations list from them
         try {
             if (pkg.getDurationTiersJson() != null && !pkg.getDurationTiersJson().isBlank()) {
-                dto.setDurationTiers(MAPPER.readValue(pkg.getDurationTiersJson(),
-                        new TypeReference<List<Map<String, Object>>>() {}));
+                List<Map<String, Object>> tiers = MAPPER.readValue(pkg.getDurationTiersJson(),
+                        new TypeReference<List<Map<String, Object>>>() {});
+                dto.setDurationTiers(tiers);
+                dto.setDurations(tiers.stream()
+                        .map(t -> t.get("years") instanceof Number n ? n.intValue() : 0)
+                        .filter(y -> y > 0)
+                        .toList());
+            } else {
+                dto.setDurationTiers(List.of());
+                dto.setDurations(List.of());
             }
         } catch (Exception e) {
             dto.setDurationTiers(List.of());
+            dto.setDurations(List.of());
         }
 
         // Parse required documents JSON

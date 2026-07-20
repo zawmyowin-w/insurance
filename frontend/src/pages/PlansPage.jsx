@@ -223,7 +223,7 @@ export default function PlansPage() {
             {filtered.map(plan => {
               const meta = getTypeMeta(plan.type)
               const tiers = Array.isArray(plan.durationTiers) && plan.durationTiers.length > 0 ? plan.durationTiers : []
-              const minRate = tiers.length > 0 ? Math.min(...tiers.map(tier => tier.premiumRate)) : plan.premiumRate
+              const minRate = tiers.length > 0 ? Math.min(...tiers.map(tier => tier.premiumRate)) : 0
               return (
                 <div key={plan.id} className="col-12 col-md-6 col-xl-4">
                   <div className="card-custom h-100"
