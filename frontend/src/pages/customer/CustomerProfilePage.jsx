@@ -67,14 +67,10 @@ export default function CustomerProfilePage() {
   const handleSendOtp = async () => {
     setSendingOtp(true)
     try {
-      const code = await issueOtp(user.email, OTP_TYPE)
+      await issueOtp(user.email, OTP_TYPE)
       setOtpSent(true)
       setOtpSeconds(otpSecondsLeft(user.email, OTP_TYPE))
-      if (!import.meta.env.VITE_EMAILJS_SERVICE_ID) {
-        toast.info(`Demo code: ${code}`, { autoClose: 15000 })
-      } else {
-        toast.success(t('profile.codeSent'))
-      }
+      toast.success(t('profile.codeSent'))
     } catch {
       toast.error(t('profile.codeSendFail'))
     } finally { setSendingOtp(false) }
@@ -125,15 +121,11 @@ export default function CustomerProfilePage() {
   const handleResendOtp = async () => {
     setSendingOtp(true)
     try {
-      const code = await issueOtp(user.email, OTP_TYPE)
+      await issueOtp(user.email, OTP_TYPE)
       setOtpSeconds(otpSecondsLeft(user.email, OTP_TYPE))
       setOtpDigits(Array(OTP_BOX_COUNT).fill(''))
       otpInputs.current[0]?.focus()
-      if (!import.meta.env.VITE_EMAILJS_SERVICE_ID) {
-        toast.info(`Demo code: ${code}`, { autoClose: 15000 })
-      } else {
-        toast.success(t('profile.codeResent'))
-      }
+      toast.success(t('profile.codeResent'))
     } catch { toast.error(t('profile.codeResendFail')) }
     finally { setSendingOtp(false) }
   }

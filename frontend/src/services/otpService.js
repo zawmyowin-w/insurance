@@ -74,10 +74,8 @@ export async function sendOtpEmail(email, code, type) {
       { publicKey: cleanKey },
     )
   } else {
-    // Demo mode — return code so UI can display it
-    console.info(`[OTP Demo] Code for ${email}: ${code}`)
+    throw new Error('EmailJS is not configured. Please set VITE_EMAILJS_SERVICE_ID and VITE_EMAILJS_PUBLIC_KEY.')
   }
-  return code
 }
 
 /** All-in-one: generate → store → send. Returns code (for demo mode). */

@@ -19,12 +19,8 @@ export default function ForgotPasswordPage() {
     // server-side and send the reset code.
 
     try {
-      const code = await issueOtp(email, 'reset')
-      if (!import.meta.env.VITE_EMAILJS_SERVICE_ID) {
-        toast.info(`Demo OTP: ${code}`, { autoClose: 15000 })
-      } else {
-        toast.success(t('otp.sent'))
-      }
+      await issueOtp(email, 'reset')
+      toast.success(t('otp.sent'))
     } catch (err) {
       console.error('[EmailJS error]', err)
       toast.warn(t('otp.sendError'))

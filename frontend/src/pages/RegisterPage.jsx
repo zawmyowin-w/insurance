@@ -48,12 +48,8 @@ export default function RegisterPage() {
     }
     // Step 2: issue OTP for email verification
     try {
-      const code = await issueOtp(payload.email, 'verify')
-      if (!import.meta.env.VITE_EMAILJS_SERVICE_ID) {
-        toast.info(`Demo OTP: ${code}`, { autoClose: 15000 })
-      } else {
-        toast.success(t('otp.sent') || 'Verification code sent!')
-      }
+      await issueOtp(payload.email, 'verify')
+      toast.success(t('otp.sent') || 'Verification code sent!')
     } catch {
       toast.warn(t('otp.sendError') || 'Could not send code — check your email later.')
     }
