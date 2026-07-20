@@ -45,7 +45,7 @@ export default function ManageInsuranceTypesPage() {
     const name = form.name.trim().toUpperCase()
     if (!name) return
     if (types.some(t => t.name.toUpperCase() === name)) {
-      toast.error(`"${name}" သည် ရှိပြီးသားဖြစ်သည်`)
+      toast.error(`"${name}" ${t('admin.insuranceTypes.alreadyExists')}`)
       return
     }
     setSaving(true)
@@ -112,7 +112,7 @@ export default function ManageInsuranceTypesPage() {
         <div>
           <h5 style={{ fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>{t('admin.insuranceTypes.title')}</h5>
           <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-            Type များကို ဖန်တီးပြီး Home Page နှင့် Package တွင် ဖော်ပြမည်
+            {t('admin.insuranceTypes.subtitleText')}
           </p>
         </div>
       </div>
@@ -122,14 +122,14 @@ export default function ManageInsuranceTypesPage() {
         <div className="col-12 col-xl-5">
           <div className="card-custom h-100">
             <h6 style={{ fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>
-              <i className="bi bi-plus-circle me-2" style={{ color: 'var(--primary)' }}></i>Type အသစ်ထည့်ရန်
+              <i className="bi bi-plus-circle me-2" style={{ color: 'var(--primary)' }}></i>{t('admin.insuranceTypes.addFormTitle')}
             </h6>
             <form onSubmit={handleAdd} className="d-flex flex-column gap-3">
 
               {/* Name */}
               <div>
                 <label style={{ fontWeight: 600, fontSize: '0.83rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.35rem' }}>
-                  Type အမည် *
+                  {t('admin.insuranceTypes.typeName')}
                 </label>
                 <input
                   className="form-control-custom w-100"

@@ -100,24 +100,24 @@ export default function ManageUsersPage() {
     setSaving(true)
     try {
       await api.post('/admin/users/agents', { ...createForm, phone: phoneVal })
-      toast.success('Agent account created')
+      toast.success(t('admin.users.agentCreated'))
       setShowCreatePanel(false); setCreateForm(EMPTY_FORM); fetchUsers()
-    } catch (err) { toast.error(err.response?.data?.message || 'Failed to create') }
+    } catch (err) { toast.error(err.response?.data?.message || t('admin.users.failedCreate')) }
     finally { setSaving(false) }
   }
 
   const handleToggle = async (id, active) => {
     try {
       await api.put(`/admin/users/${id}/toggle`, { active: !active })
-      toast.success(active ? 'User deactivated' : 'User activated')
+      toast.success(active ? t('admin.users.deactivated') : t('admin.users.activated'))
       fetchUsers()
-    } catch { toast.error('Failed') }
+    } catch { toast.error(t('admin.users.failed')) }
   }
 
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this user permanently?')) return
-    try { await api.delete(`/admin/users/${id}`); toast.success('User deleted'); fetchUsers() }
-    catch { toast.error('Failed to delete') }
+    try { await api.delete(`/admin/users/${id}`); toast.success(t('admin.users.deleted')); fetchUsers() }
+    catch { toast.error(t('admin.users.failedDelete')) }
   }
 
   const openEdit = (u) => {
@@ -141,9 +141,9 @@ export default function ManageUsersPage() {
       if (editingUser.role === 'AGENT') payload.insuranceType = editForm.insuranceType
       if (editForm.newPassword) payload.newPassword = editForm.newPassword
       await api.put(`/admin/users/${editingUser.id}`, payload)
-      toast.success('Profile updated')
+      toast.success(t('admin.users.profileUpdated'))
       closeEdit(); fetchUsers()
-    } catch (err) { toast.error(err.response?.data?.message || 'Failed') }
+    } catch (err) { toast.error(err.response?.data?.message || t('admin.users.failed')) }
     finally { setEditSaving(false) }
   }
 
@@ -157,7 +157,7 @@ export default function ManageUsersPage() {
       <div className="d-flex align-items-center justify-content-between mb-4">
         <div>
           <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('admin.users.title')}</h4>
-          <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>Manage customers and agents</p>
+          <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>{t('admin.users.subtitle')}</p>
         </div>
         {activeTab === 'AGENT' && !showCreatePanel && (
           <button className="btn-primary-custom" style={{ fontSize: '0.88rem', padding: '0.45rem 1rem' }}
@@ -267,9 +267,9 @@ export default function ManageUsersPage() {
             </div>
             <div className="d-flex gap-2 mt-3">
               <button type="submit" disabled={saving} className="btn-primary-custom" style={{ justifyContent: 'center' }}>
-                {saving ? <><span className="spinner-border spinner-border-sm me-2"></span>Creating…</> : `Create ${activeTab === 'AGENT' ? 'Agent' : 'Admin'}`}
+                {saving ? <><span className="spinner-border spinner-border-sm me-2"></span>{t('admin.users.creatingBtn')}</> : (activeTab === 'AGENT' ? t('admin.users.createAgent') : t('admin.users.createAdminBtn'))}
               </button>
-              <button type="button" className="btn-outline-custom" onClick={() => setShowCreatePanel(false)}>Cancel</button>
+              <button type="button" className="btn-outline-custom" onClick={() => setShowCreatePanel(false)}>{t('admin.users.cancelBtn')}</button>
             </div>
           </form>
         </div>
@@ -297,8 +297,8 @@ export default function ManageUsersPage() {
                 <thead>
                   <tr>
                     {['Name', 'Email', 'Phone', 'Address',
-                      ...(activeTab === 'AGENT' ? ['Type'] : []),
-                      'Status', 'Joined', 'Actions'].map(h => <th key={h}>{h}</th>)}
+                      ...(activeTab === 'AGENT' ? [t('admin.users.typeHeader')] : []),
+                      t('admin.common.status'), t('admin.users.joinedDate'), t('admin.common.actions')].map(h => <th key={h}>{h}</th>)}
                   </tr>
                 </thead>
                 <tbody>
@@ -345,7 +345,7 @@ export default function ManageUsersPage() {
                           <>
                             <button className="btn-outline-custom" style={{ padding: '0.3rem 0.65rem', fontSize: '0.78rem' }}
                               onClick={() => handleToggle(u.id, u.active)}>
-                              {u.active ? 'Disable' : 'Enable'}
+                              {u.active ? t('admin.users.disableBtn') : t('admin.users.enableBtn')}
                             </button>
                             <button className="btn-danger-sm" style={{ padding: '0.3rem 0.6rem' }}
                               onClick={() => handleDelete(u.id)}>
@@ -365,7 +365,7 @@ export default function ManageUsersPage() {
           {totalPages > 1 && (
             <div className="d-flex align-items-center justify-content-between mt-3">
               <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length} {tabMeta[activeTab].label.toLowerCase()}
+                {t('admin.users.paginationShowing')} {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} {t('admin.users.paginationOf')} {filtered.length} {tabMeta[activeTab].label.toLowerCase()}
               </span>
               <div className="d-flex gap-1">
                 <button disabled={page === 1} onClick={() => setPage(1)} style={pageBtn(page === 1)}><i className="bi bi-chevron-double-left"></i></button>
@@ -398,7 +398,7 @@ export default function ManageUsersPage() {
             onClick={e => e.stopPropagation()}>
             <div className="d-flex align-items-center justify-content-between mb-3">
               <h6 style={{ fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>
-                Edit {editingUser.role.charAt(0) + editingUser.role.slice(1).toLowerCase()} Profile
+                {t('admin.users.editModalTitle')}
               </h6>
               <button className="icon-btn" onClick={closeEdit}><i className="bi bi-x-lg"></i></button>
             </div>
@@ -411,7 +411,7 @@ export default function ManageUsersPage() {
                   hasPicture={editingUser.hasProfilePicture}
                   name={editingUser.name} size={68} editable
                   onUploaded={(updated) => { setEditingUser(updated); fetchUsers() }} />
-                <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Click the camera to update photo</div>
+                <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>{t('admin.users.clickCameraHint')}</div>
               </div>
             )}
 

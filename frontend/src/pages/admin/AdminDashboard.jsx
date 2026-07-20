@@ -34,7 +34,7 @@ export default function AdminDashboard() {
 
   const now = new Date()
   const hour = now.getHours()
-  const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening'
+  const greeting = hour < 12 ? t('admin.dashboard.greetingMorning') : hour < 17 ? t('admin.dashboard.greetingAfternoon') : t('admin.dashboard.greetingEvening')
 
   return (
     <div className="fade-in">
@@ -49,7 +49,7 @@ export default function AdminDashboard() {
               {greeting}
             </div>
             <h4 style={{ fontWeight: 800, color: '#fff', margin: 0, fontSize: '1.4rem' }}>
-              {user?.name} &nbsp;<span style={{ opacity: 0.7, fontWeight: 400, fontSize: '1rem' }}>— System Overview</span>
+              {user?.name} &nbsp;<span style={{ opacity: 0.7, fontWeight: 400, fontSize: '1rem' }}>— {t('admin.dashboard.systemOverview')}</span>
             </h4>
             <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.82rem', marginTop: '0.25rem' }}>
               {now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
@@ -57,7 +57,7 @@ export default function AdminDashboard() {
           </div>
           <div className="d-flex gap-2 align-items-center">
             <div className="dashboard-banner-badge">
-              <i className="bi bi-shield-fill-check me-1"></i> Admin
+              <i className="bi bi-shield-fill-check me-1"></i> {t('admin.dashboard.adminBadge')}
             </div>
           </div>
         </div>

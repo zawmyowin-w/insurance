@@ -128,7 +128,7 @@ export default function ManagePackagesPage() {
         .map(t => ({ years: Number(t.years), premiumRate: Number(t.premiumRate) }))
 
       if (validTiers.length === 0) {
-        toast.error('အနည်းဆုံး Duration Tier တစ်ခုထည့်ပါ')
+        toast.error(t('admin.packages.minDurationTier'))
         setSaving(false)
         return
       }
@@ -154,14 +154,14 @@ export default function ManagePackagesPage() {
 
       if (editing) {
         await api.put(`/admin/packages/${editing}`, payload)
-        toast.success('Package updated')
+        toast.success(t('admin.packages.updatedSuccess'))
       } else {
         await api.post('/admin/packages', payload)
-        toast.success('Package created')
+        toast.success(t('admin.packages.createdSuccess'))
       }
       setShowForm(false); setEditing(null); setForm(EMPTY); fetchPackages()
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to save')
+      toast.error(err.response?.data?.message || t('admin.packages.saveFailed'))
     } finally { setSaving(false) }
   }
 
@@ -258,7 +258,7 @@ export default function ManagePackagesPage() {
           setEditing(null); setForm({ ...EMPTY }); setShowForm(true); setOpenSection('basic')
         }}>
           <i className={`bi bi-${showForm ? 'arrow-left' : 'plus-circle'} me-1`}></i>
-          {showForm ? 'Back' : 'New Package'}
+          {showForm ? t('admin.packages.backBtn') : t('admin.packages.newBtn')}
         </button>
       </div>
 
@@ -536,7 +536,7 @@ export default function ManagePackagesPage() {
 
             <div className="d-flex gap-2 mt-4">
               <button type="submit" disabled={saving} className="btn-primary-custom" style={{ justifyContent: 'center', minWidth: 160 }}>
-                {saving ? <><span className="spinner-border spinner-border-sm me-2"></span>Saving...</> : (editing ? <><i className="bi bi-check-lg me-1"></i>Update Package</> : <><i className="bi bi-plus-circle me-1"></i>Create Package</>)}
+                {saving ? <><span className="spinner-border spinner-border-sm me-2"></span>{t('admin.common.saving')}</> : (editing ? <><i className="bi bi-check-lg me-1"></i>{t('admin.common.update')} Package</> : <><i className="bi bi-plus-circle me-1"></i>{t('admin.common.create')} Package</>)}
               </button>
               <button type="button" className="btn-outline-custom" onClick={() => { setShowForm(false); setEditing(null); setForm({ ...EMPTY }) }}>
                 <i className="bi bi-x-lg me-1"></i>Cancel

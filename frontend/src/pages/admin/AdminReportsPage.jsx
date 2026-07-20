@@ -216,7 +216,7 @@ export default function AdminReportsPage() {
   }, [tab])
 
   if (loading) return <div className="text-center py-5"><div className="spinner-border" style={{ color: 'var(--primary)' }}></div></div>
-  if (!reports) return <div className="card-custom text-center py-5"><p style={{ color: 'var(--text-muted)' }}>Failed to load reports</p></div>
+  if (!reports) return <div className="card-custom text-center py-5"><p style={{ color: 'var(--text-muted)' }}>{t('admin.reports.loadFailed')}</p></div>
 
   const byType    = reports.policiesByType    || {}
   const revByType = reports.revenueByType     || {}
@@ -247,7 +247,7 @@ export default function AdminReportsPage() {
       {/* Header */}
       <div className="mb-4">
         <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('admin.reports.title')}</h4>
-        <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>မြန်မာအာမခံလုပ်ငန်း ဘဏ္ဍာရေးခွဲခြမ်းစိတ်ဖြာမှု</p>
+        <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>{t('admin.reports.subtitle')}</p>
       </div>
 
       {/* Tabs */}

@@ -35,7 +35,7 @@ export default function AdminPaymentsPage() {
     setSubmitting(true)
     try {
       await api.put(`/admin/payments/${id}/${action}`, { note: actionNote })
-      toast.success(`Payment ${action === 'verify' ? 'verified' : 'rejected'}`)
+      toast.success(action === 'verify' ? t('admin.payments.verifiedSuccess') : t('admin.payments.rejectedSuccess'))
       setActionId(null); setActionNote(''); fetchPayments()
     } catch (err) {
       apiError(err)
@@ -96,7 +96,7 @@ export default function AdminPaymentsPage() {
             <table className="w-100">
               <thead>
                 <tr>
-                  {['#', 'Customer', 'Policy', 'Amount (MMK)', 'Method', 'Proof', 'Status', 'Submitted', 'Actions'].map(h => <th key={h}>{h}</th>)}
+                  {[t('admin.payments.tableId'), t('admin.payments.tableCustomer'), t('admin.payments.tablePolicy'), t('admin.payments.tableAmount'), t('admin.payments.tableMethod'), t('admin.payments.tableProof'), t('admin.payments.tableStatus'), t('admin.payments.tableSubmitted'), t('admin.payments.tableActions')].map(h => <th key={h}>{h}</th>)}
                 </tr>
               </thead>
               <tbody>
@@ -131,17 +131,17 @@ export default function AdminPaymentsPage() {
                         actionId === p.id ? (
                           <div style={{ minWidth: 200 }}>
                             <textarea rows={2} className="form-control-custom w-100 mb-2" style={{ resize: 'vertical', fontSize: '0.8rem' }}
-                              placeholder="Note (required to reject)"
+                              placeholder={t('admin.payments.notePlaceholder')}
                               value={actionNote} onChange={e => setActionNote(e.target.value)} />
                             <div className="d-flex gap-1">
                               <button className="btn-success-sm" disabled={submitting} onClick={() => handleAction(p.id, 'verify')}>{t('admin.payments.verify')}</button>
                               <button className="btn-danger-sm" disabled={submitting} onClick={() => handleAction(p.id, 'reject')}>{t('admin.payments.reject')}</button>
-                              <button className="btn-outline-custom" style={{ padding: '0.3rem 0.6rem', fontSize: '0.78rem' }} onClick={() => { setActionId(null); setActionNote('') }}>Cancel</button>
+                              <button className="btn-outline-custom" style={{ padding: '0.3rem 0.6rem', fontSize: '0.78rem' }} onClick={() => { setActionId(null); setActionNote('') }}>{t('admin.common.cancel')}</button>
                             </div>
                           </div>
                         ) : (
                           <button className="btn-outline-custom" style={{ padding: '0.3rem 0.7rem', fontSize: '0.78rem' }} onClick={() => setActionId(p.id)}>
-                            Review
+                            {t('admin.payments.reviewBtn')}
                           </button>
                         )
                       ) : (
@@ -162,7 +162,7 @@ export default function AdminPaymentsPage() {
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title" style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
-                  Payment Proof — #{screenshotFor.id}
+                  {t('admin.payments.proofModalTitle')} — #{screenshotFor.id}
                 </h5>
                 <button className="icon-btn" onClick={closeScreenshot}><i className="bi bi-x-lg"></i></button>
               </div>

@@ -43,7 +43,7 @@ export default function AdminFeedbackPage() {
       await api.put(`/admin/feedback/${id}/read`)
       setFeedbacks(prev => prev.map(f => f.id === id ? { ...f, read: true } : f))
       if (selected?.id === id) setSelected(s => ({ ...s, read: true }))
-    } catch { toast.error('Failed to mark as read') }
+    } catch { toast.error(t('admin.feedback.markReadFailed')) }
   }
 
   const markAllRead = async () => {
@@ -53,7 +53,7 @@ export default function AdminFeedbackPage() {
       setFeedbacks(prev => prev.map(f => ({ ...f, read: true })))
       if (selected) setSelected(s => ({ ...s, read: true }))
       toast.success(t('admin.feedback.markAllReadSuccess'))
-    } catch { toast.error('Failed to mark all as read') } finally { setMarkingAll(false) }
+    } catch { toast.error(t('admin.feedback.markAllReadFailed')) } finally { setMarkingAll(false) }
   }
 
   const openDetail = (fb) => {
@@ -102,7 +102,7 @@ export default function AdminFeedbackPage() {
             <button onClick={markAllRead} disabled={markingAll}
               className="btn-outline-custom"
               style={{ fontSize: '0.82rem', padding: '0.35rem 0.9rem' }}>
-              {markingAll ? <span className="spinner-border spinner-border-sm"></span> : <><i className="bi bi-check2-all me-1"></i>Mark all read</>}
+              {markingAll ? <span className="spinner-border spinner-border-sm"></span> : <><i className="bi bi-check2-all me-1"></i>{t('admin.feedback.markAllRead')}</>}
             </button>
           )}
         </div>
@@ -204,14 +204,14 @@ export default function AdminFeedbackPage() {
               <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
                 <div className="row g-3 mb-3">
                   <div className="col-6">
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Rating</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>{t('admin.feedback.rating')}</div>
                     <div className="d-flex align-items-center gap-2">
                       <StarDisplay rating={selected.rating} />
                       <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.88rem' }}>{ratingLabel(selected.rating)}</span>
                     </div>
                   </div>
                   <div className="col-6">
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Category</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>{t('admin.feedback.category')}</div>
                     <span style={{
                       fontSize: '0.82rem', padding: '0.2rem 0.75rem', borderRadius: 20, fontWeight: 600,
                       background: (CATEGORY_COLORS[selected.category] || '#6b7280') + '18',
@@ -219,7 +219,7 @@ export default function AdminFeedbackPage() {
                     }}>{selected.category}</span>
                   </div>
                   <div className="col-12">
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>Received</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>{t('admin.feedback.submittedAt')}</div>
                     <div style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
                       {selected.createdAt ? new Date(selected.createdAt).toLocaleString() : ''}
                     </div>
@@ -227,7 +227,7 @@ export default function AdminFeedbackPage() {
                 </div>
 
                 <div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>Message</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>{t('admin.feedback.messageHeader')}</div>
                   <div style={{
                     background: 'var(--bg-secondary)', borderRadius: 10, padding: '1rem 1.25rem',
                     color: 'var(--text-primary)', fontSize: '0.92rem', lineHeight: 1.65,

@@ -29,11 +29,11 @@ export default function AdminApplicationsPage() {
   useEffect(() => { setLoading(true); fetchApps() }, [filter])
 
   const handleAction = async (id, action) => {
-    if ((action === 'reject' || action === 'revise') && !actionNote.trim()) { toast.error('Please provide a reason/note'); return }
+    if ((action === 'reject' || action === 'revise') && !actionNote.trim()) { toast.error(t('admin.applications.reasonRequired')); return }
     setSubmitting(true)
     try {
       await api.put(`/admin/applications/${id}/${action}`, { note: actionNote })
-      toast.success(`Application ${action}d successfully`)
+      toast.success(action === 'approve' ? t('admin.applications.approvedSuccess') : action === 'reject' ? t('admin.applications.rejectedSuccess') : t('admin.applications.revisedSuccess'))
       setSelected(null); setActionNote(''); fetchApps()
     } catch (err) { apiError(err) } finally { setSubmitting(false) }
   }

@@ -72,7 +72,7 @@ export default function AdminFormBuilderPage() {
     setFormsLoading(true)
     api.get(`/admin/packages/${pkg.id}/forms`)
       .then(res => setForms(Array.isArray(res.data) ? res.data : []))
-      .catch(() => { toast.error('Failed to load forms'); setForms([]) })
+      .catch(() => { toast.error(t('admin.formBuilder.loadFormsFailed')); setForms([]) })
       .finally(() => setFormsLoading(false))
   }
 
@@ -104,8 +104,8 @@ export default function AdminFormBuilderPage() {
 
   const handleSave = async e => {
     e.preventDefault()
-    if (!form.name.trim()) { toast.error('Template name is required'); return }
-    if (form.fields.some(f => !f.fieldLabel.trim())) { toast.error('Every field must have a label'); return }
+    if (!form.name.trim()) { toast.error(t('admin.formBuilder.templateRequired')); return }
+    if (form.fields.some(f => !f.fieldLabel.trim())) { toast.error(t('admin.formBuilder.fieldLabelRequired')); return }
     setSaving(true)
     const payload = {
       ...form,
@@ -115,14 +115,14 @@ export default function AdminFormBuilderPage() {
     try {
       if (typeof editing === 'string' && editing.startsWith('new-')) {
         await api.post(`/admin/packages/${selectedPkg.id}/forms`, payload)
-        toast.success('Form created!')
+        toast.success(t('admin.formBuilder.formCreated'))
       } else {
         await api.put(`/admin/forms/${editing}`, payload)
-        toast.success('Form updated!')
+        toast.success(t('admin.formBuilder.formUpdated'))
       }
       loadForms(selectedPkg)
       closePanel()
-    } catch (err) { toast.error(err.response?.data?.message || 'Save failed') }
+    } catch (err) { toast.error(err.response?.data?.message || t('admin.formBuilder.saveFailed')) }
     finally { setSaving(false) }
   }
 
@@ -130,10 +130,10 @@ export default function AdminFormBuilderPage() {
     if (!window.confirm('Delete this form? Submitted data will still be preserved, but new submissions will have no form.')) return
     try {
       await api.delete(`/admin/forms/${editing}`)
-      toast.success('Form deleted')
+      toast.success(t('admin.formBuilder.formDeleted'))
       loadForms(selectedPkg)
       closePanel()
-    } catch { toast.error('Delete failed') }
+    } catch { toast.error(t('admin.formBuilder.deleteFailed')) }
   }
 
   const appForm   = forms.find(f => f.formType === 'APPLICATION')
@@ -143,9 +143,9 @@ export default function AdminFormBuilderPage() {
     <div className="fade-in">
       <div className="d-flex align-items-center justify-content-between mb-4" style={{ flexWrap: 'wrap', gap: '0.75rem' }}>
         <div>
-          <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Form Builder</h4>
+          <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('admin.formBuilder.title')}</h4>
           <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>
-            Build application & claim forms for each insurance plan
+            {t('admin.formBuilder.pageSubtitle')}
           </p>
         </div>
       </div>
@@ -155,8 +155,8 @@ export default function AdminFormBuilderPage() {
         <div className={editing ? 'col-12 col-lg-4' : 'col-12 col-lg-5'}>
           <div className="card-custom p-0">
             <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border)' }}>
-              <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>Insurance Plans</span>
-              <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginLeft: 8 }}>{packages.length} plans</span>
+              <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>{t('admin.formBuilder.plansHeader')}</span>
+              <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginLeft: 8 }}>{packages.length} {t('admin.formBuilder.plansCount')}</span>
             </div>
             {pkgLoading ? (
               <div className="text-center py-4"><div className="spinner-border" style={{ color: 'var(--primary)' }}></div></div>
@@ -255,7 +255,7 @@ export default function AdminFormBuilderPage() {
                                 padding: '0.4rem 0.9rem', borderRadius: 8, border: 'none',
                                 background: meta.color, color: '#fff', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem'
                               }}>
-                                <i className="bi bi-plus me-1"></i>Build
+                                <i className="bi bi-plus me-1"></i>{t('admin.formBuilder.buildBtn')}
                               </button>
                             )}
                           </div>

@@ -45,8 +45,8 @@ export default function AdminPaymentMethodsPage() {
 
   const handleSubmit = async e => {
     e.preventDefault()
-    if (!form.name.trim()) { toast.error('Name လိုအပ်သည်'); return }
-    if (!editing && !form.methodKey.trim()) { toast.error('Method Key လိုအပ်သည်'); return }
+    if (!form.name.trim()) { toast.error(t('admin.paymentMethods.nameRequired')); return }
+    if (!editing && !form.methodKey.trim()) { toast.error(t('admin.paymentMethods.keyRequired')); return }
     setSaving(true)
     try {
       const fd = new FormData()
@@ -59,14 +59,14 @@ export default function AdminPaymentMethodsPage() {
 
       if (editing) {
         await api.put(`/admin/payment-methods/${editing}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } })
-        toast.success('Payment method updated')
+        toast.success(t('admin.paymentMethods.updatedSuccess'))
       } else {
         await api.post('/admin/payment-methods', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
-        toast.success('Payment method created')
+        toast.success(t('admin.paymentMethods.createdSuccess'))
       }
       setShowForm(false); resetForm(); fetch()
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to save')
+      toast.error(err.response?.data?.message || t('admin.paymentMethods.saveFailed'))
     } finally { setSaving(false) }
   }
 
@@ -75,13 +75,13 @@ export default function AdminPaymentMethodsPage() {
       await api.put(`/admin/payment-methods/${m.id}/toggle`)
       toast.success(m.active ? t('admin.common.deactivate') : t('admin.common.activate'))
       fetch()
-    } catch { toast.error('Failed') }
+    } catch { toast.error(t('admin.paymentMethods.saveFailed')) }
   }
 
   const handleDelete = async id => {
-    if (!window.confirm('ဤ payment method ကို ဖျက်မည်လား?')) return
-    try { await api.delete(`/admin/payment-methods/${id}`); toast.success('Deleted'); fetch() }
-    catch { toast.error('Failed') }
+    if (!window.confirm(t('admin.paymentMethods.deleteConfirm'))) return
+    try { await api.delete(`/admin/payment-methods/${id}`); toast.success(t('admin.paymentMethods.deletedSuccess')); fetch() }
+    catch { toast.error(t('admin.paymentMethods.saveFailed')) }
   }
 
   return (
@@ -90,7 +90,7 @@ export default function AdminPaymentMethodsPage() {
         <div>
           <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('admin.paymentMethods.title')}</h4>
           <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>
-            ငွေပေးချေနည်းများ၊ Logo နှင့် QR Code စီမံပါ
+            {t('admin.paymentMethods.descLabel')}
           </p>
         </div>
         <button className="btn-primary-custom" style={{ fontSize: '0.88rem', padding: '0.45rem 1rem' }}
@@ -246,14 +246,14 @@ export default function AdminPaymentMethodsPage() {
                     ) : (
                       <div style={{ width: 80, height: 80, borderRadius: 8, border: '1.5px dashed var(--border)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, background: 'var(--bg-secondary)' }}>
                         <i className="bi bi-qr-code" style={{ fontSize: '1.5rem', color: 'var(--text-muted)', opacity: 0.4 }}></i>
-                        <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>QR မရှိ</span>
+                        <span style={{ fontSize: '0.6rem', color: 'var(--text-muted)' }}>{t('admin.paymentMethods.noQr')}</span>
                       </div>
                     )}
                     <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
                       <div><i className="bi bi-image me-1" style={{ color: 'var(--text-muted)' }}></i>Logo: {m.hasLogo ? <span style={{ color: '#16a34a' }}>✓</span> : <span style={{ color: '#dc2626' }}>✗</span>}</div>
                       <div><i className="bi bi-qr-code me-1" style={{ color: 'var(--text-muted)' }}></i>QR Code: {m.hasQr ? <span style={{ color: '#16a34a' }}>✓</span> : <span style={{ color: '#dc2626' }}>✗</span>}</div>
                       <div style={{ marginTop: 4 }}>
-                        <span className={`badge-status ${m.active ? 'badge-active' : 'badge-cancelled'}`}>{m.active ? 'Active' : 'Inactive'}</span>
+                        <span className={`badge-status ${m.active ? 'badge-active' : 'badge-cancelled'}`}>{m.active ? t('admin.paymentMethods.activeStatus') : t('admin.paymentMethods.inactiveStatus')}</span>
                       </div>
                     </div>
                   </div>
@@ -282,13 +282,13 @@ export default function AdminPaymentMethodsPage() {
       {/* Tips */}
       <div className="card-custom mt-4" style={{ background: 'var(--bg-secondary)' }}>
         <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.75rem', fontSize: '0.88rem' }}>
-          <i className="bi bi-lightbulb me-2" style={{ color: '#d97706' }}></i>အကြံပြုချက်
+          <i className="bi bi-lightbulb me-2" style={{ color: '#d97706' }}></i>{t('admin.paymentMethods.tips')}
         </h6>
         <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-          <div><i className="bi bi-check2 me-2" style={{ color: '#16a34a' }}></i>QR Code ကို Upload လုပ်ပါ — Customer များ ငွေပေးချေသောအခါ QR ကိုပြသမည်</div>
-          <div><i className="bi bi-check2 me-2" style={{ color: '#16a34a' }}></i>Logo ကို Upload လုပ်ပါ — Payment method button တွင် Logo ကိုပြသမည်</div>
-          <div><i className="bi bi-check2 me-2" style={{ color: '#16a34a' }}></i>Method Key သည် UNIQUE ဖြစ်ရမည် — e.g. KBZ_PAY, WAVE_PAY, MY_BANK_PAY</div>
-          <div><i className="bi bi-check2 me-2" style={{ color: '#16a34a' }}></i>Inactive ပြုလုပ်ထားသော method များကို Customer မြင်မရပါ</div>
+          <div><i className="bi bi-check2 me-2" style={{ color: '#16a34a' }}></i>{t('admin.paymentMethods.tip1')}</div>
+          <div><i className="bi bi-check2 me-2" style={{ color: '#16a34a' }}></i>{t('admin.paymentMethods.tip2')}</div>
+          <div><i className="bi bi-check2 me-2" style={{ color: '#16a34a' }}></i>{t('admin.paymentMethods.tip3')}</div>
+          <div><i className="bi bi-check2 me-2" style={{ color: '#16a34a' }}></i>{t('admin.paymentMethods.tip4')}</div>
         </div>
       </div>
     </div>

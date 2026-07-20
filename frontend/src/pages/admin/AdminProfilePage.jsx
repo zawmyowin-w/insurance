@@ -175,7 +175,7 @@ export default function AdminProfilePage() {
                   )}
                   {editMode && (
                     <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '0.2rem 0 0' }}>
-                      e.g. +9591234567 (8–10 digits after +95, starting with 9)
+                      {t('admin.profile.phoneHint')}
                     </p>
                   )}
                 </div>
@@ -200,7 +200,7 @@ export default function AdminProfilePage() {
                       {savingProfile ? <><span className="spinner-border spinner-border-sm me-2"></span>{t('admin.profile.saving')}</> : t('admin.profile.saveChanges')}
                     </button>
                     <button type="button" onClick={handleCancelEdit} className="btn-outline-custom" style={{ justifyContent: 'center' }}>
-                      Cancel
+                      {t('admin.profile.cancelBtn')}
                     </button>
                   </React.Fragment>
                 ) : (

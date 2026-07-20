@@ -29,11 +29,11 @@ export default function AdminClaimsPage() {
   useEffect(() => { setLoading(true); fetchClaims() }, [filter])
 
   const handleAction = async (id, action) => {
-    if ((action === 'reject' || action === 'revise') && !actionNote.trim()) { toast.error('Provide a note'); return }
+    if ((action === 'reject' || action === 'revise') && !actionNote.trim()) { toast.error(t('admin.claims.reasonRequired')); return }
     setSubmitting(true)
     try {
       await api.put(`/admin/claims/${id}/${action}`, { note: actionNote })
-      toast.success(`Claim ${action}d`)
+      toast.success(action === 'approve' ? t('admin.claims.approvedSuccess') : action === 'reject' ? t('admin.claims.rejectedSuccess') : t('admin.claims.revisedSuccess'))
       setSelected(null); setActionNote(''); fetchClaims()
     } catch (err) { apiError(err) } finally { setSubmitting(false) }
   }
@@ -99,13 +99,13 @@ export default function AdminClaimsPage() {
                       background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer',
                       fontSize: '0.8rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4
                     }}>
-                      <i className="bi bi-eye"></i> View Details
+                      <i className="bi bi-eye"></i> {t('admin.claims.viewDetails')}
                     </button>
                     {claim.agentNote && <p style={{ color: '#1d4ed8', fontSize: '0.85rem', margin: '0.5rem 0 0' }}>{t('admin.claims.agentNote')}: {claim.agentNote}</p>}
                     {claim.status === 'APPROVED' && (
                       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: '0.5rem', padding: '0.35rem 0.75rem', borderRadius: 8, background: '#f0fdf4', border: '1px solid #86efac', fontSize: '0.82rem', color: '#15803d', fontWeight: 600 }}>
                         <i className="bi bi-arrow-up-right-circle-fill"></i>
-                        Payout: {Number(claim.amount).toLocaleString()} MMK — ထွက်ငွေတွင် မှတ်တမ်းတင်ပြီး
+                        {t('admin.claims.payout')}: {Number(claim.amount).toLocaleString()} MMK — {t('admin.claims.recorded')}
                       </div>
                     )}
                   </div>

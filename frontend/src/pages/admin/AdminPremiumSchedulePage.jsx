@@ -63,7 +63,7 @@ export default function AdminPremiumSchedulePage() {
       await api.post(`/admin/applications/${appId}/overdue-warning`)
       toast.success(t('admin.premiumSchedule.warningSent'))
     } catch {
-      toast.error('သတိပေးစာ ပေးပို့၍ မရပါ')
+      toast.error(t('admin.premiumSchedule.warningFailed'))
     } finally {
       setActionLoading(prev => ({ ...prev, [appId]: null }))
     }
@@ -95,7 +95,7 @@ export default function AdminPremiumSchedulePage() {
       const res = await api.get(`/admin/applications/${appId}/schedule`)
       setExpanded(prev => ({ ...prev, [appId]: res.data }))
     } catch {
-      toast.error('ဇယားဆွဲယူမရပါ')
+      toast.error(t('admin.premiumSchedule.cancelFailed'))
     } finally {
       setLoadingSchedule(prev => ({ ...prev, [appId]: false }))
     }
@@ -111,7 +111,7 @@ export default function AdminPremiumSchedulePage() {
       a.click()
       window.URL.revokeObjectURL(url)
     } catch {
-      toast.error('PDF ဒေါင်းလုဒ်မရပါ')
+      toast.error(t('admin.premiumSchedule.pdfFailed'))
     }
   }
 
@@ -142,11 +142,11 @@ export default function AdminPremiumSchedulePage() {
             </p>
             <div className="d-flex gap-2 justify-content-end">
               <button type="button" className="btn-outline-custom" style={{ padding: '0.45rem 1rem', fontSize: '0.85rem' }}
-                onClick={() => setCancelConfirm(null)}>မပယ်ဖျက်တော့</button>
+                onClick={() => setCancelConfirm(null)}>{t('admin.premiumSchedule.cancelConfirmNo')}</button>
               <button type="button"
                 style={{ padding: '0.45rem 1rem', fontSize: '0.85rem', fontWeight: 700, background: '#dc2626', color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer' }}
                 onClick={() => confirmCancelOverdue(cancelConfirm)}>
-                <i className="bi bi-x-circle me-1"></i>ပယ်ဖျက်မည်
+                <i className="bi bi-x-circle me-1"></i>{t('admin.premiumSchedule.cancelConfirmYes')}
               </button>
             </div>
           </div>
@@ -157,7 +157,7 @@ export default function AdminPremiumSchedulePage() {
       <div className="mb-4">
         <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('admin.premiumSchedule.title')}</h4>
         <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>
-          Customer များ၏ လစဥ်/နှစ်စဥ် Premium ပေးသွင်းမှု အပြည့်အစုံ စီမံခန့်ခွဲမှု
+          {t('admin.premiumSchedule.subtitle')}
         </p>
       </div>
 
@@ -204,10 +204,10 @@ export default function AdminPremiumSchedulePage() {
             <div style={{ height: '100%', width: `${Math.round(totalPaid / totalInstallments * 100)}%`, background: 'linear-gradient(90deg, #16a34a, #22c55e)', borderRadius: 99, transition: 'width 0.5s' }}></div>
           </div>
           <div className="d-flex gap-4 mt-2" style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-            <span><i className="bi bi-check-circle-fill me-1" style={{ color: '#16a34a' }}></i>Paid: {totalPaid}</span>
+            <span><i className="bi bi-check-circle-fill me-1" style={{ color: '#16a34a' }}></i>{t('admin.premiumSchedule.paidLabel')}: {totalPaid}</span>
             <span><i className="bi bi-exclamation-triangle-fill me-1" style={{ color: '#dc2626' }}></i>{t('admin.premiumSchedule.overdue')}: {totalOverdue}</span>
-            <span><i className="bi bi-clock-fill me-1" style={{ color: '#d97706' }}></i>Due: {totalDue}</span>
-            <span><i className="bi bi-calendar me-1" style={{ color: '#64748b' }}></i>Total: {totalInstallments}</span>
+            <span><i className="bi bi-clock-fill me-1" style={{ color: '#d97706' }}></i>{t('admin.premiumSchedule.dueLabel')}: {totalDue}</span>
+            <span><i className="bi bi-calendar me-1" style={{ color: '#64748b' }}></i>{t('admin.premiumSchedule.totalLabel')}: {totalInstallments}</span>
           </div>
         </div>
       )}

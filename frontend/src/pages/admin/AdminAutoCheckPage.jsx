@@ -400,7 +400,7 @@ export default function AdminAutoCheckPage() {
             borderRadius: 8, padding: '0.35rem 0.85rem', fontWeight: 600, fontSize: '0.8rem',
           }}>
             <i className="bi bi-stars"></i>
-            {status?.aiEnabled ? 'Spring AI ✓' : 'Spring AI (key missing)'}
+            {status?.aiEnabled ? t('admin.autoCheck.aiEnabledBadge') : t('admin.autoCheck.aiMissingBadge')}
           </span>
           {/* ← Edit settings button */}
           <button type="button" onClick={() => setShowEdit(true)}
