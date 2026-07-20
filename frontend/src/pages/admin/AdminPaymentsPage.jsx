@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import { apiError } from '../../utils/apiError'
 import PaymentMethodIcon, { PAYMENT_METHODS } from '../../components/PaymentMethodIcon'
 
 export default function AdminPaymentsPage() {
+  const { t } = useTranslation()
   const [searchParams] = useSearchParams()
   const [payments, setPayments] = useState([])
   const [loading, setLoading] = useState(true)
@@ -29,7 +31,7 @@ export default function AdminPaymentsPage() {
   useEffect(() => { setLoading(true); fetchPayments() }, [filter])
 
   const handleAction = async (id, action) => {
-    if (action === 'reject' && !actionNote.trim()) { toast.error('Provide a reason for rejection'); return }
+    if (action === 'reject' && !actionNote.trim()) { toast.error(t('admin.payments.rejectionReason')); return }
     setSubmitting(true)
     try {
       await api.put(`/admin/payments/${id}/${action}`, { note: actionNote })
@@ -49,7 +51,7 @@ export default function AdminPaymentsPage() {
       const res = await api.get(`/admin/payments/${payment.id}/screenshot`, { responseType: 'blob' })
       setScreenshotUrl(URL.createObjectURL(res.data))
     } catch {
-      toast.error('Failed to load screenshot')
+      toast.error(t('admin.payments.screenshotFailed'))
       setScreenshotFor(null)
     } finally {
       setScreenshotLoading(false)
@@ -65,8 +67,8 @@ export default function AdminPaymentsPage() {
   return (
     <div className="fade-in">
       <div className="mb-4">
-        <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Payments Management</h4>
-        <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>Review mobile payment proofs and verify premium payments</p>
+        <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('admin.payments.title')}</h4>
+        <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>{t('admin.payments.subtitle')}</p>
       </div>
 
       <div className="d-flex gap-2 mb-4 flex-wrap">
@@ -86,7 +88,7 @@ export default function AdminPaymentsPage() {
       ) : payments.length === 0 ? (
         <div className="card-custom text-center py-5">
           <i className="bi bi-credit-card" style={{ fontSize: '3rem', color: 'var(--border)' }}></i>
-          <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>No payments found for "{filter}"</h5>
+          <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>{t('admin.payments.noFound')} "{filter}"</h5>
         </div>
       ) : (
         <div className="card-custom p-0">
@@ -132,8 +134,8 @@ export default function AdminPaymentsPage() {
                               placeholder="Note (required to reject)"
                               value={actionNote} onChange={e => setActionNote(e.target.value)} />
                             <div className="d-flex gap-1">
-                              <button className="btn-success-sm" disabled={submitting} onClick={() => handleAction(p.id, 'verify')}>Verify</button>
-                              <button className="btn-danger-sm" disabled={submitting} onClick={() => handleAction(p.id, 'reject')}>Reject</button>
+                              <button className="btn-success-sm" disabled={submitting} onClick={() => handleAction(p.id, 'verify')}>{t('admin.payments.verify')}</button>
+                              <button className="btn-danger-sm" disabled={submitting} onClick={() => handleAction(p.id, 'reject')}>{t('admin.payments.reject')}</button>
                               <button className="btn-outline-custom" style={{ padding: '0.3rem 0.6rem', fontSize: '0.78rem' }} onClick={() => { setActionId(null); setActionNote('') }}>Cancel</button>
                             </div>
                           </div>

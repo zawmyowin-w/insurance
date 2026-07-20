@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../services/api'
 
 export default function AdminDashboard() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const [stats, setStats] = useState({ totalCustomers: 0, totalAgents: 0, pendingApplications: 0, pendingClaims: 0, verifiedApplications: 0, verifiedClaims: 0, totalPackages: 0, monthlyRevenue: 0 })
   const [recentActivities, setRecentActivities] = useState([])
@@ -20,14 +22,14 @@ export default function AdminDashboard() {
   }, [])
 
   const statCards = [
-    { label: 'Total Customers',          value: stats.totalCustomers,                                          icon: 'bi-people-fill',          grad: 'linear-gradient(135deg,#3b82f6,#1d4ed8)', link: '/admin/users?tab=CUSTOMER' },
-    { label: 'Total Agents',             value: stats.totalAgents,                                             icon: 'bi-person-badge-fill',    grad: 'linear-gradient(135deg,#a855f7,#7c3aed)', link: '/admin/users?tab=AGENT' },
-    { label: 'Pending Applications',     value: stats.pendingApplications,                                     icon: 'bi-file-earmark-text-fill',grad: 'linear-gradient(135deg,#f59e0b,#d97706)', link: '/admin/applications?filter=PENDING' },
-    { label: 'Pending Claims',           value: stats.pendingClaims,                                           icon: 'bi-file-earmark-medical-fill', grad: 'linear-gradient(135deg,#ef4444,#dc2626)', link: '/admin/claims?filter=PENDING' },
-    { label: 'Verified Applications',    value: stats.verifiedApplications,                                    icon: 'bi-file-earmark-check-fill',grad: 'linear-gradient(135deg,#22c55e,#16a34a)', link: '/admin/applications?filter=VERIFIED' },
-    { label: 'Verified Claims',          value: stats.verifiedClaims,                                          icon: 'bi-shield-fill-check',    grad: 'linear-gradient(135deg,#06b6d4,#0891b2)', link: '/admin/claims?filter=VERIFIED' },
-    { label: 'Insurance Packages',       value: stats.totalPackages,                                           icon: 'bi-box-seam-fill',        grad: 'linear-gradient(135deg,#8b5cf6,#6d28d9)', link: '/admin/packages' },
-    { label: 'Monthly Revenue (MMK)',    value: stats.monthlyRevenue ? Number(stats.monthlyRevenue).toLocaleString() : '0', icon: 'bi-cash-coin', grad: 'linear-gradient(135deg,#f59e0b,#b45309)', link: '#' },
+    { label: t('admin.dashboard.totalCustomers'),       value: stats.totalCustomers,       icon: 'bi-people-fill',               grad: 'linear-gradient(135deg,#3b82f6,#1d4ed8)', link: '/admin/users?tab=CUSTOMER' },
+    { label: t('admin.dashboard.totalAgents'),          value: stats.totalAgents,          icon: 'bi-person-badge-fill',         grad: 'linear-gradient(135deg,#a855f7,#7c3aed)', link: '/admin/users?tab=AGENT' },
+    { label: t('admin.dashboard.pendingApplications'),  value: stats.pendingApplications,  icon: 'bi-file-earmark-text-fill',    grad: 'linear-gradient(135deg,#f59e0b,#d97706)', link: '/admin/applications?filter=PENDING' },
+    { label: t('admin.dashboard.pendingClaims'),        value: stats.pendingClaims,        icon: 'bi-file-earmark-medical-fill', grad: 'linear-gradient(135deg,#ef4444,#dc2626)', link: '/admin/claims?filter=PENDING' },
+    { label: t('admin.dashboard.verifiedApplications'), value: stats.verifiedApplications, icon: 'bi-file-earmark-check-fill',   grad: 'linear-gradient(135deg,#22c55e,#16a34a)', link: '/admin/applications?filter=VERIFIED' },
+    { label: t('admin.dashboard.verifiedClaims'), value: stats.verifiedClaims, icon: 'bi-shield-fill-check', grad: 'linear-gradient(135deg,#06b6d4,#0891b2)', link: '/admin/claims?filter=VERIFIED' },
+    { label: t('admin.dashboard.totalPackages'),  value: stats.totalPackages,  icon: 'bi-box-seam-fill', grad: 'linear-gradient(135deg,#8b5cf6,#6d28d9)', link: '/admin/packages' },
+    { label: t('admin.dashboard.monthlyRevenue'), value: stats.monthlyRevenue ? Number(stats.monthlyRevenue).toLocaleString() : '0', icon: 'bi-cash-coin', grad: 'linear-gradient(135deg,#f59e0b,#b45309)', link: '#' },
   ]
 
   const now = new Date()
@@ -87,23 +89,23 @@ export default function AdminDashboard() {
       {/* ── Quick Actions ── */}
       <div className="card-custom mb-4">
         <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <i className="bi bi-lightning-fill" style={{ color: '#f59e0b' }}></i> Quick Actions
+          <i className="bi bi-lightning-fill" style={{ color: '#f59e0b' }}></i> {t('admin.dashboard.quickActions')}
         </h6>
         <div className="d-flex gap-2 flex-wrap">
           <Link to="/admin/packages?action=new" className="btn-primary-custom" style={{ fontSize: '0.85rem', padding: '0.4rem 0.9rem' }}>
-            <i className="bi bi-plus-circle me-1"></i>Add Package
+            <i className="bi bi-plus-circle me-1"></i>{t('admin.dashboard.addPackage')}
           </Link>
           <Link to="/admin/users?tab=AGENT&action=create" className="btn-primary-sm" style={{ fontSize: '0.85rem', padding: '0.4rem 0.9rem' }}>
-            <i className="bi bi-person-plus me-1"></i>Add Agent
+            <i className="bi bi-person-plus me-1"></i>{t('admin.dashboard.addAgent')}
           </Link>
           <Link to="/admin/applications?filter=ALL" className="btn-primary-sm" style={{ fontSize: '0.85rem', padding: '0.4rem 0.9rem', background: '#f59e0b' }}>
-            <i className="bi bi-file-earmark-check me-1"></i>Review Applications
+            <i className="bi bi-file-earmark-check me-1"></i>{t('admin.dashboard.reviewApplications')}
           </Link>
           <Link to="/admin/claims?filter=ALL" className="btn-danger-sm" style={{ fontSize: '0.85rem', padding: '0.4rem 0.9rem' }}>
-            <i className="bi bi-file-earmark-medical me-1"></i>Review Claims
+            <i className="bi bi-file-earmark-medical me-1"></i>{t('admin.dashboard.reviewClaims')}
           </Link>
           <Link to="/admin/payments?filter=ALL" className="btn-primary-sm" style={{ fontSize: '0.85rem', padding: '0.4rem 0.9rem', background: '#0891b2' }}>
-            <i className="bi bi-credit-card me-1"></i>Review Payments
+            <i className="bi bi-credit-card me-1"></i>{t('admin.dashboard.reviewPayments')}
           </Link>
         </div>
       </div>
@@ -111,12 +113,12 @@ export default function AdminDashboard() {
       {/* ── Recent Activity ── */}
       <div className="card-custom">
         <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <i className="bi bi-activity" style={{ color: 'var(--primary)' }}></i> Recent Activity
+          <i className="bi bi-activity" style={{ color: 'var(--primary)' }}></i> {t('admin.dashboard.recentActivity')}
         </h6>
         {loading ? (
           <div className="text-center py-3"><div className="spinner-border" style={{ color: 'var(--primary)', width: 28, height: 28 }}></div></div>
         ) : recentActivities.length === 0 ? (
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center', padding: '1rem 0' }}>No recent activity</p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', textAlign: 'center', padding: '1rem 0' }}>{t('admin.dashboard.noRecentActivity')}</p>
         ) : (
           <div>
             {recentActivities.map((act, i) => (

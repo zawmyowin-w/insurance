@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import FormDetailModal from '../../components/FormDetailModal'
 import { apiError } from '../../utils/apiError'
 
 export default function AdminApplicationsPage() {
+  const { t } = useTranslation()
   const [searchParams] = useSearchParams()
   const [apps, setApps] = useState([])
   const [loading, setLoading] = useState(true)
@@ -39,8 +41,8 @@ export default function AdminApplicationsPage() {
   return (
     <div className="fade-in">
       <div className="mb-4">
-        <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Policy Applications</h4>
-        <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>Review and approve/reject policy applications</p>
+        <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('admin.applications.title')}</h4>
+        <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>{t('admin.applications.subtitle')}</p>
       </div>
 
       <div className="d-flex gap-2 mb-4 flex-wrap">
@@ -60,7 +62,7 @@ export default function AdminApplicationsPage() {
       ) : apps.length === 0 ? (
         <div className="card-custom text-center py-5">
           <i className="bi bi-file-earmark-check" style={{ fontSize: '3rem', color: 'var(--border)' }}></i>
-          <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>No applications found for "{filter}"</h5>
+          <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>{t('admin.applications.noFound')} "{filter}"</h5>
         </div>
       ) : (
         <div className="row g-4">
@@ -99,31 +101,31 @@ export default function AdminApplicationsPage() {
                       background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer',
                       fontSize: '0.8rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4
                     }}>
-                      <i className="bi bi-eye"></i> View Details
+                      <i className="bi bi-eye"></i> {t('admin.applications.viewDetails')}
                     </button>
-                    {app.agentNote && <p style={{ color: '#1d4ed8', fontSize: '0.85rem', margin: '0.5rem 0 0' }}>Agent: {app.agentNote}</p>}
+                    {app.agentNote && <p style={{ color: '#1d4ed8', fontSize: '0.85rem', margin: '0.5rem 0 0' }}>{t('admin.applications.agentNote')}: {app.agentNote}</p>}
                   </div>
                   {(app.status === 'VERIFIED') && (
                     <div className="col-12 col-md-4 mt-3 mt-md-0">
                       {selected === app.id ? (
                         <div>
                           <textarea rows={2} className="form-control-custom w-100 mb-2" style={{ resize: 'vertical' }}
-                            placeholder="Note for approve/reject/revise..."
+                            placeholder={t('admin.applications.notePlaceholder')}
                             value={actionNote} onChange={e => setActionNote(e.target.value)} />
                           <div className="d-flex gap-1 flex-wrap">
                             <button className="btn-success-sm" onClick={() => handleAction(app.id, 'approve')} disabled={submitting}>
-                              {submitting ? <span className="spinner-border spinner-border-sm"></span> : '✓ Approve'}
+                              {submitting ? <span className="spinner-border spinner-border-sm"></span> : `✓ ${t('admin.common.approve')}`}
                             </button>
-                            <button className="btn-danger-sm" onClick={() => handleAction(app.id, 'reject')} disabled={submitting}>✗ Reject</button>
+                            <button className="btn-danger-sm" onClick={() => handleAction(app.id, 'reject')} disabled={submitting}>✗ {t('admin.common.reject')}</button>
                             <button style={{ background: '#f59e0b', color: '#fff', border: 'none', borderRadius: 6, padding: '0.4rem 0.7rem', fontSize: '0.82rem', cursor: 'pointer' }}
-                              onClick={() => handleAction(app.id, 'revise')} disabled={submitting}>↩ Revise</button>
-                            <button className="btn-outline-custom" style={{ padding: '0.3rem 0.6rem', fontSize: '0.82rem' }} onClick={() => setSelected(null)}>Cancel</button>
+                              onClick={() => handleAction(app.id, 'revise')} disabled={submitting}>↩ {t('admin.common.revise')}</button>
+                            <button className="btn-outline-custom" style={{ padding: '0.3rem 0.6rem', fontSize: '0.82rem' }} onClick={() => setSelected(null)}>{t('admin.common.cancel')}</button>
                           </div>
                         </div>
                       ) : (
                         <button className="btn-primary-custom" style={{ fontSize: '0.85rem', padding: '0.45rem 1rem' }}
                           onClick={() => { setSelected(app.id); setActionNote('') }}>
-                          Review Application
+                          {t('admin.applications.reviewApplication')}
                         </button>
                       )}
                     </div>

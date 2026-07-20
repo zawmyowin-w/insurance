@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import { getTypeMeta } from '../../utils/typeMeta'
@@ -37,6 +38,7 @@ const emptyForm  = (pkgId, formType) => ({
 })
 
 export default function AdminFormBuilderPage() {
+  const { t } = useTranslation()
   const location = useLocation()
   const [packages, setPackages] = useState([])
   const [pkgLoading, setPkgLoading] = useState(true)
@@ -59,7 +61,7 @@ export default function AdminFormBuilderPage() {
           if (wanted) loadForms(wanted)
         }
       })
-      .catch(() => toast.error('Failed to load packages'))
+      .catch(() => toast.error(t('admin.formBuilder.loadFailed')))
       .finally(() => setPkgLoading(false))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -330,13 +332,13 @@ export default function AdminFormBuilderPage() {
                       border: '1.5px dashed var(--primary)', background: 'transparent',
                       color: 'var(--primary)', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600
                     }}>
-                      <i className="bi bi-plus me-1"></i>Add Field
+                      {t('admin.formBuilder.addField')}
                     </button>
                   </div>
 
                   {form.fields.length === 0 ? (
                     <div style={{ padding: '1.5rem', border: '1.5px dashed var(--border)', borderRadius: 10, textAlign: 'center' }}>
-                      <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.85rem' }}>Click Add Field to start building the form</p>
+                      <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.85rem' }}>{t('admin.formBuilder.emptyHint')}</p>
                     </div>
                   ) : (
                     <div className="d-flex flex-column gap-2">
@@ -355,8 +357,8 @@ export default function AdminFormBuilderPage() {
                 <div className="d-flex gap-2 mt-4">
                   <button type="submit" disabled={saving} className="btn-primary-custom flex-grow-1" style={{ justifyContent: 'center' }}>
                     {saving
-                      ? <><span className="spinner-border spinner-border-sm me-2"></span>Saving...</>
-                      : <><i className="bi bi-floppy me-2"></i>Save Form</>}
+                      ? <><span className="spinner-border spinner-border-sm me-2"></span>{t('admin.formBuilder.saving')}</>
+                      : <><i className="bi bi-floppy me-2"></i>{t('admin.formBuilder.saveForm')}</>}
                   </button>
                   {typeof editing !== 'string' && (
                     <button type="button" onClick={handleDelete} title="Delete form" style={{

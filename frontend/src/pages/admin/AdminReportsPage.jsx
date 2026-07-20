@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 
 // ── Colour palette by insurance type ────────────────────────────────────────
@@ -191,6 +192,7 @@ const TABS = [
 ]
 
 export default function AdminReportsPage() {
+  const { t } = useTranslation()
   const [reports, setReports]   = useState(null)
   const [wallet,  setWallet]    = useState(null)
   const [loading, setLoading]   = useState(true)
@@ -244,7 +246,7 @@ export default function AdminReportsPage() {
     <div className="fade-in">
       {/* Header */}
       <div className="mb-4">
-        <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Reports & Analytics</h4>
+        <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('admin.reports.title')}</h4>
         <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>မြန်မာအာမခံလုပ်ငန်း ဘဏ္ဍာရေးခွဲခြမ်းစိတ်ဖြာမှု</p>
       </div>
 

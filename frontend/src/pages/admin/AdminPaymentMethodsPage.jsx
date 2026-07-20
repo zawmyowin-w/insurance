@@ -1,10 +1,12 @@
 import React, { useEffect, useState, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 
 const EMPTY = { name: '', methodKey: '', color: '#1d4ed8', active: true }
 
 export default function AdminPaymentMethodsPage() {
+  const { t } = useTranslation()
   const [methods, setMethods] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -71,7 +73,7 @@ export default function AdminPaymentMethodsPage() {
   const handleToggle = async m => {
     try {
       await api.put(`/admin/payment-methods/${m.id}/toggle`)
-      toast.success(m.active ? 'Deactivated' : 'Activated')
+      toast.success(m.active ? t('admin.common.deactivate') : t('admin.common.activate'))
       fetch()
     } catch { toast.error('Failed') }
   }
@@ -86,7 +88,7 @@ export default function AdminPaymentMethodsPage() {
     <div className="fade-in">
       <div className="d-flex align-items-center justify-content-between mb-4">
         <div>
-          <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Payment Methods</h4>
+          <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('admin.paymentMethods.title')}</h4>
           <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>
             ငွေပေးချေနည်းများ၊ Logo နှင့် QR Code စီမံပါ
           </p>
@@ -264,7 +266,7 @@ export default function AdminPaymentMethodsPage() {
                       <i className="bi bi-pencil"></i>
                     </button>
                     <button className="btn-outline-custom" style={{ padding: '0.3rem 0.7rem', fontSize: '0.78rem' }} onClick={() => handleToggle(m)}>
-                      {m.active ? 'Deactivate' : 'Activate'}
+                      {m.active ? t('admin.common.deactivate') : t('admin.common.activate')}
                     </button>
                     <button className="btn-danger-sm" onClick={() => handleDelete(m.id)} style={{ padding: '0.3rem 0.6rem' }} title="Delete">
                       <i className="bi bi-trash"></i>

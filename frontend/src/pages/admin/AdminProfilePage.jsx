@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import { useAuth } from '../../context/AuthContext'
@@ -15,6 +16,7 @@ function handlePhoneChange(val, setter) {
 }
 
 export default function AdminProfilePage() {
+  const { t } = useTranslation()
   const { user, setUser } = useAuth()
   const [editMode, setEditMode] = useState(false)
   const [form, setForm] = useState({
@@ -62,10 +64,10 @@ export default function AdminProfilePage() {
       })
       setUser(data)
       clearPendingPhoto()
-      toast.success('Profile updated')
+      toast.success(t('admin.profile.updateSuccess'))
       setEditMode(false)
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to update profile')
+      toast.error(err.response?.data?.message || t('admin.profile.updateFailed'))
     } finally { setSavingProfile(false) }
   }
 
@@ -87,9 +89,9 @@ export default function AdminProfilePage() {
   return (
     <div className="fade-in">
       <div className="mb-4">
-        <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>My Profile</h4>
+        <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('admin.profile.title')}</h4>
         <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>
-          Manage your own admin account details
+          {t('admin.profile.subtitle')}
         </p>
       </div>
 
@@ -122,7 +124,7 @@ export default function AdminProfilePage() {
             <form onSubmit={handleProfileSubmit}>
               <div className="row g-3">
                 <div className="col-12 col-md-6">
-                  <label className="form-label-custom">Full Name</label>
+                  <label className="form-label-custom">{t('admin.profile.nameLabel')}</label>
                   <input
                     disabled={!editMode}
                     className="form-control-custom w-100"
@@ -178,7 +180,7 @@ export default function AdminProfilePage() {
                   )}
                 </div>
                 <div className="col-12 col-md-6">
-                  <label className="form-label-custom">Address</label>
+                  <label className="form-label-custom">{t('admin.profile.addressLabel')}</label>
                   <input
                     disabled={!editMode}
                     className="form-control-custom w-100"
@@ -195,7 +197,7 @@ export default function AdminProfilePage() {
                 {editMode ? (
                   <React.Fragment key="edit-actions">
                     <button type="submit" disabled={savingProfile} className="btn-primary-custom" style={{ justifyContent: 'center' }}>
-                      {savingProfile ? <><span className="spinner-border spinner-border-sm me-2"></span>Saving...</> : 'Save Changes'}
+                      {savingProfile ? <><span className="spinner-border spinner-border-sm me-2"></span>{t('admin.profile.saving')}</> : t('admin.profile.saveChanges')}
                     </button>
                     <button type="button" onClick={handleCancelEdit} className="btn-outline-custom" style={{ justifyContent: 'center' }}>
                       Cancel
@@ -204,7 +206,7 @@ export default function AdminProfilePage() {
                 ) : (
                   <React.Fragment key="view-actions">
                     <button type="button" onClick={() => setEditMode(true)} className="btn-primary-custom" style={{ justifyContent: 'center' }}>
-                      <i className="bi bi-pencil me-2"></i>Update
+                      <i className="bi bi-pencil me-2"></i>{t('admin.profile.editProfile')}
                     </button>
                   </React.Fragment>
                 )}

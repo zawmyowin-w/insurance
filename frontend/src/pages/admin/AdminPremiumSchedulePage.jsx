@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 
@@ -24,6 +25,7 @@ const TABS = [
 ]
 
 export default function AdminPremiumSchedulePage() {
+  const { t } = useTranslation()
   const [entries, setEntries]     = useState([])
   const [loading, setLoading]     = useState(true)
   const [activeTab, setActiveTab] = useState('ALL')
@@ -59,7 +61,7 @@ export default function AdminPremiumSchedulePage() {
     setActionLoading(prev => ({ ...prev, [appId]: 'warn' }))
     try {
       await api.post(`/admin/applications/${appId}/overdue-warning`)
-      toast.success('သတိပေးစာ Customer ထံ ပေးပို့ပြီးပါပြီ')
+      toast.success(t('admin.premiumSchedule.warningSent'))
     } catch {
       toast.error('သတိပေးစာ ပေးပို့၍ မရပါ')
     } finally {
@@ -74,10 +76,10 @@ export default function AdminPremiumSchedulePage() {
       await api.post(`/admin/applications/${appId}/cancel-overdue`, {
         note: 'Premium payment overdue — policy cancelled due to non-payment'
       })
-      toast.success('Application ကို ပယ်ဖျက်ပြီးပါပြီ')
+      toast.success(t('admin.premiumSchedule.cancelSuccess'))
       fetchData()
     } catch (err) {
-      toast.error(err?.response?.data?.message || 'ပယ်ဖျက်၍ မရပါ')
+      toast.error(err?.response?.data?.message || t('admin.premiumSchedule.cancelFailed'))
     } finally {
       setActionLoading(prev => ({ ...prev, [appId]: null }))
     }
@@ -153,7 +155,7 @@ export default function AdminPremiumSchedulePage() {
 
       {/* Header */}
       <div className="mb-4">
-        <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Premium Payment Schedule</h4>
+        <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('admin.premiumSchedule.title')}</h4>
         <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>
           Customer များ၏ လစဥ်/နှစ်စဥ် Premium ပေးသွင်းမှု အပြည့်အစုံ စီမံခန့်ခွဲမှု
         </p>
@@ -203,7 +205,7 @@ export default function AdminPremiumSchedulePage() {
           </div>
           <div className="d-flex gap-4 mt-2" style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
             <span><i className="bi bi-check-circle-fill me-1" style={{ color: '#16a34a' }}></i>Paid: {totalPaid}</span>
-            <span><i className="bi bi-exclamation-triangle-fill me-1" style={{ color: '#dc2626' }}></i>Overdue: {totalOverdue}</span>
+            <span><i className="bi bi-exclamation-triangle-fill me-1" style={{ color: '#dc2626' }}></i>{t('admin.premiumSchedule.overdue')}: {totalOverdue}</span>
             <span><i className="bi bi-clock-fill me-1" style={{ color: '#d97706' }}></i>Due: {totalDue}</span>
             <span><i className="bi bi-calendar me-1" style={{ color: '#64748b' }}></i>Total: {totalInstallments}</span>
           </div>

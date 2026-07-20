@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 
@@ -43,6 +44,7 @@ function calcPremium(coverage, rate, paymentIntervalMonths) {
 }
 
 export default function ManagePackagesPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const fromDashboard = searchParams.get('action') === 'new'
@@ -235,7 +237,7 @@ export default function ManagePackagesPage() {
               <button onClick={() => setTermsModal(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1.2rem' }}><i className="bi bi-x-lg"></i></button>
             </div>
             <div style={{ padding: '1.25rem 1.5rem', overflowY: 'auto', whiteSpace: 'pre-wrap', fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.8 }}>
-              {termsModal.termsAndConditions || 'Terms and Conditions မထည့်ထားသေးပါ။'}
+              {termsModal.termsAndConditions || t('admin.packages.termsNotAdded')}
             </div>
           </div>
         </div>
@@ -248,7 +250,7 @@ export default function ManagePackagesPage() {
 
       <div className="d-flex align-items-center justify-content-between mb-4">
         <div>
-          <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Insurance Packages</h4>
+          <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('admin.packages.title')}</h4>
           <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>Insurance Plan များ ဖန်တီးစီမံပါ</p>
         </div>
         <button className="btn-primary-custom" style={{ fontSize: '0.88rem', padding: '0.45rem 1rem' }} onClick={() => {

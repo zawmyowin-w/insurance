@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import FormDetailModal from '../../components/FormDetailModal'
 import { apiError } from '../../utils/apiError'
 
 export default function AdminClaimsPage() {
+  const { t } = useTranslation()
   const [searchParams] = useSearchParams()
   const [claims, setClaims] = useState([])
   const [loading, setLoading] = useState(true)
@@ -39,8 +41,8 @@ export default function AdminClaimsPage() {
   return (
     <div className="fade-in">
       <div className="mb-4">
-        <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Claims Management</h4>
-        <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>Review and process insurance claims</p>
+        <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('admin.claims.title')}</h4>
+        <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>{t('admin.claims.subtitle')}</p>
       </div>
       <div className="d-flex gap-2 mb-4 flex-wrap">
         {['ALL', 'PENDING', 'VERIFIED', 'APPROVED', 'REJECTED'].map(f => (
@@ -59,7 +61,7 @@ export default function AdminClaimsPage() {
       ) : claims.length === 0 ? (
         <div className="card-custom text-center py-5">
           <i className="bi bi-file-earmark-medical" style={{ fontSize: '3rem', color: 'var(--border)' }}></i>
-          <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>No claims found for "{filter}"</h5>
+          <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>{t('admin.claims.noFound')} "{filter}"</h5>
         </div>
       ) : (
         <div className="row g-4">
@@ -99,7 +101,7 @@ export default function AdminClaimsPage() {
                     }}>
                       <i className="bi bi-eye"></i> View Details
                     </button>
-                    {claim.agentNote && <p style={{ color: '#1d4ed8', fontSize: '0.85rem', margin: '0.5rem 0 0' }}>Agent: {claim.agentNote}</p>}
+                    {claim.agentNote && <p style={{ color: '#1d4ed8', fontSize: '0.85rem', margin: '0.5rem 0 0' }}>{t('admin.claims.agentNote')}: {claim.agentNote}</p>}
                     {claim.status === 'APPROVED' && (
                       <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: '0.5rem', padding: '0.35rem 0.75rem', borderRadius: 8, background: '#f0fdf4', border: '1px solid #86efac', fontSize: '0.82rem', color: '#15803d', fontWeight: 600 }}>
                         <i className="bi bi-arrow-up-right-circle-fill"></i>
@@ -112,21 +114,21 @@ export default function AdminClaimsPage() {
                       {selected === claim.id ? (
                         <div>
                           <textarea rows={2} className="form-control-custom w-100 mb-2" style={{ resize: 'vertical' }}
-                            placeholder="Decision note..." value={actionNote} onChange={e => setActionNote(e.target.value)} />
+                            placeholder={t('admin.claims.notePlaceholder')} value={actionNote} onChange={e => setActionNote(e.target.value)} />
                           <div className="d-flex gap-1 flex-wrap">
                             <button className="btn-success-sm" onClick={() => handleAction(claim.id, 'approve')} disabled={submitting}>
-                              {submitting ? <span className="spinner-border spinner-border-sm"></span> : '✓ Approve'}
+                              {submitting ? <span className="spinner-border spinner-border-sm"></span> : `✓ ${t('admin.common.approve')}`}
                             </button>
-                            <button className="btn-danger-sm" onClick={() => handleAction(claim.id, 'reject')} disabled={submitting}>✗ Reject</button>
+                            <button className="btn-danger-sm" onClick={() => handleAction(claim.id, 'reject')} disabled={submitting}>✗ {t('admin.common.reject')}</button>
                             <button style={{ background: '#f59e0b', color: '#fff', border: 'none', borderRadius: 6, padding: '0.4rem 0.7rem', fontSize: '0.82rem', cursor: 'pointer' }}
-                              onClick={() => handleAction(claim.id, 'revise')} disabled={submitting}>↩ Revise</button>
-                            <button className="btn-outline-custom" style={{ padding: '0.3rem 0.6rem', fontSize: '0.82rem' }} onClick={() => setSelected(null)}>Cancel</button>
+                              onClick={() => handleAction(claim.id, 'revise')} disabled={submitting}>↩ {t('admin.common.revise')}</button>
+                            <button className="btn-outline-custom" style={{ padding: '0.3rem 0.6rem', fontSize: '0.82rem' }} onClick={() => setSelected(null)}>{t('admin.common.cancel')}</button>
                           </div>
                         </div>
                       ) : (
                         <button className="btn-primary-custom" style={{ fontSize: '0.85rem', padding: '0.45rem 1rem' }}
                           onClick={() => { setSelected(claim.id); setActionNote('') }}>
-                          Review Claim
+                          {t('admin.claims.reviewClaim')}
                         </button>
                       )}
                     </div>

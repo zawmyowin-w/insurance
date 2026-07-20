@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 
@@ -19,6 +20,7 @@ const typeColor = name => COLOR_MAP[name?.toUpperCase()] || COLOR_MAP.DEFAULT
 const emptyForm = { name: '', description: '', benefits: '', rules: '' }
 
 export default function ManageInsuranceTypesPage() {
+  const { t } = useTranslation()
   const [types, setTypes]       = useState([])
   const [loading, setLoading]   = useState(true)
   const [form, setForm]         = useState(emptyForm)
@@ -54,11 +56,11 @@ export default function ManageInsuranceTypesPage() {
         benefits:    form.benefits.trim(),
         rules:       form.rules.trim(),
       })
-      toast.success(`"${name}" ထည့်သွင်းပြီး`)
+      toast.success(`"${name}" ${t('admin.insuranceTypes.addedSuccess')}`)
       setForm(emptyForm)
       load()
     } catch (err) {
-      toast.error(err.response?.data?.message || 'ထည့်သွင်းမရပါ')
+      toast.error(err.response?.data?.message || t('admin.insuranceTypes.addFailed'))
     } finally {
       setSaving(false)
     }
@@ -70,10 +72,10 @@ export default function ManageInsuranceTypesPage() {
     setDeletingId(id)
     try {
       await api.delete(`/admin/insurance-types/${id}`)
-      toast.success(`"${name}" ဖျက်ပြီး`)
+      toast.success(`"${name}" ${t('admin.insuranceTypes.deletedSuccess')}`)
       load()
     } catch (err) {
-      toast.error(err.response?.data?.message || 'ဖျက်မရပါ')
+      toast.error(err.response?.data?.message || t('admin.insuranceTypes.deleteFailed'))
     } finally {
       setDeletingId(null)
     }
@@ -90,11 +92,11 @@ export default function ManageInsuranceTypesPage() {
     setSaving(true)
     try {
       await api.put(`/admin/insurance-types/${id}`, editForm)
-      toast.success(`"${name}" အချက်အလက်များ သိမ်းပြီး`)
+      toast.success(`"${name}" ${t('admin.insuranceTypes.savedSuccess')}`)
       setEditingId(null)
       load()
     } catch (err) {
-      toast.error(err.response?.data?.message || 'သိမ်းမရပါ')
+      toast.error(err.response?.data?.message || t('admin.insuranceTypes.saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -108,7 +110,7 @@ export default function ManageInsuranceTypesPage() {
           <i className="bi bi-tags-fill" style={{ color: '#fff', fontSize: '1.1rem' }}></i>
         </div>
         <div>
-          <h5 style={{ fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>Insurance Types</h5>
+          <h5 style={{ fontWeight: 800, margin: 0, color: 'var(--text-primary)' }}>{t('admin.insuranceTypes.title')}</h5>
           <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--text-muted)' }}>
             Type များကို ဖန်တီးပြီး Home Page နှင့် Package တွင် ဖော်ပြမည်
           </p>

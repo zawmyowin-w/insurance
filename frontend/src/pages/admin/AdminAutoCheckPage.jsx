@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 
 const STATUS_STYLE = {
@@ -70,6 +71,7 @@ function StatCard({ icon, label, value, color, bg, sub }) {
 
 // ─── Settings Edit Modal ───────────────────────────────────────────────────
 function SettingsModal({ status, onClose, onSaved }) {
+  const { t } = useTranslation()
   const [form, setForm] = useState({
     enabled:             status?.enabled ?? true,
     verifyCron:          status?.verifyCron          ?? '0 30 2 * * *',
@@ -144,10 +146,10 @@ function SettingsModal({ status, onClose, onSaved }) {
             style={{ background: 'var(--bg-secondary)', borderRadius: 12, padding: '0.85rem 1.1rem' }}>
             <div>
               <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)' }}>
-                Auto-Check System
+                {t('admin.autoCheck.title')}
               </div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 1 }}>
-                {form.enabled ? 'ဖွင့်ထားသည် — Scheduler လုပ်ဆောင်နေသည်' : 'ပိတ်ထားသည် — အချိန်မရောက်ဘဲ run လုပ်မည်မဟုတ်'}
+                {form.enabled ? t('admin.autoCheck.enabled') : t('admin.autoCheck.disabled')}
               </div>
             </div>
             <label style={{ position: 'relative', width: 48, height: 26, cursor: 'pointer', flexShrink: 0 }}>
@@ -247,7 +249,7 @@ function SettingsModal({ status, onClose, onSaved }) {
             <button type="button" onClick={onClose}
               style={{ padding: '0.5rem 1.25rem', borderRadius: 8, border: '1.5px solid var(--border)',
                 background: 'transparent', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}>
-              ပယ်ဖျက်ရန်
+              {t('admin.common.cancel')}
             </button>
             <button type="button" onClick={save} disabled={saving}
               style={{ padding: '0.5rem 1.5rem', borderRadius: 8, border: 'none', cursor: 'pointer',
@@ -255,8 +257,8 @@ function SettingsModal({ status, onClose, onSaved }) {
                 color: saving ? '#64748b' : '#fff', fontWeight: 700, fontSize: '0.85rem',
                 display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               {saving
-                ? <><span className="spinner-border spinner-border-sm"></span> သိမ်းဆည်းနေသည်...</>
-                : <><i className="bi bi-floppy-fill"></i> သိမ်းဆည်းရန်</>}
+                ? <><span className="spinner-border spinner-border-sm"></span> {t('admin.common.saving')}</>
+                : <><i className="bi bi-floppy-fill"></i> {t('admin.autoCheck.saveSettings')}</>}
             </button>
           </div>
         </div>
@@ -267,6 +269,7 @@ function SettingsModal({ status, onClose, onSaved }) {
 
 // ─── Main Page ──────────────────────────────────────────────────────────────
 export default function AdminAutoCheckPage() {
+  const { t } = useTranslation()
   const [status,    setStatus]    = useState(null)
   const [logs,      setLogs]      = useState([])
   const [loading,   setLoading]   = useState(true)
@@ -370,10 +373,10 @@ export default function AdminAutoCheckPage() {
         <div>
           <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
             <i className="bi bi-robot me-2" style={{ color: 'var(--primary)' }}></i>
-            Auto-Check System
+            {t('admin.autoCheck.title')}
           </h4>
           <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.88rem' }}>
-            Spring AI ဖြင့် လုပ်ဆောင်သည့် အလိုအလျောက် စစ်ဆေး / သတိပေးစနစ်
+            {t('admin.autoCheck.subtitle')}
           </p>
         </div>
         <div className="d-flex align-items-center gap-2 flex-wrap">
@@ -387,7 +390,7 @@ export default function AdminAutoCheckPage() {
             <span style={{ width: 8, height: 8, borderRadius: '50%',
               background: status?.enabled ? '#16a34a' : '#dc2626',
               display: 'inline-block', animation: status?.enabled ? 'pulse 2s infinite' : 'none' }}></span>
-            {status?.enabled ? 'Active' : 'Disabled'}
+            {status?.enabled ? t('admin.autoCheck.statusActive') : t('admin.autoCheck.statusDisabled')}
           </span>
           <span style={{
             display: 'inline-flex', alignItems: 'center', gap: 5,
@@ -397,7 +400,7 @@ export default function AdminAutoCheckPage() {
             borderRadius: 8, padding: '0.35rem 0.85rem', fontWeight: 600, fontSize: '0.8rem',
           }}>
             <i className="bi bi-stars"></i>
-            {status?.aiEnabled ? 'Spring AI ✓' : 'Spring AI (key မပါ)'}
+            {status?.aiEnabled ? 'Spring AI ✓' : 'Spring AI (key missing)'}
           </span>
           {/* ← Edit settings button */}
           <button type="button" onClick={() => setShowEdit(true)}
@@ -435,7 +438,7 @@ export default function AdminAutoCheckPage() {
             color="#1d4ed8" bg="#eff6ff" sub="ငွေပေးချေမှု အတည်ပြုပြီး" />
         </div>
         <div className="col-6 col-md-3">
-          <StatCard icon="bi-bell-fill" label="ယနေ့ Reminders" value={status?.todayReminders ?? 0}
+          <StatCard icon="bi-bell-fill" label={t('admin.autoCheck.todayReminders')} value={status?.todayReminders ?? 0}
             color="#d97706" bg="#fffbeb" sub="သတိပေးချက် ပေးပို့ပြီး" />
         </div>
         <div className="col-6 col-md-3">
@@ -592,7 +595,7 @@ export default function AdminAutoCheckPage() {
             }}>
             {running === 'verify'
               ? <><span className="spinner-border spinner-border-sm"></span> စစ်ဆေးနေသည်...</>
-              : <><i className="bi bi-shield-check"></i> ငွေပေးချေ စစ်ဆေး (Run Now)</>}
+              : <><i className="bi bi-shield-check"></i> {t('admin.autoCheck.runNow')}</>}
           </button>
           <button type="button" onClick={() => trigger('reminder')} disabled={running !== null}
             style={{
@@ -604,7 +607,7 @@ export default function AdminAutoCheckPage() {
             }}>
             {running === 'reminder'
               ? <><span className="spinner-border spinner-border-sm"></span> ပေးပို့နေသည်...</>
-              : <><i className="bi bi-bell"></i> Premium Reminder ပေးပို့ (Run Now)</>}
+              : <><i className="bi bi-bell"></i> {t('admin.autoCheck.runNow')}</>}
           </button>
         </div>
       </div>

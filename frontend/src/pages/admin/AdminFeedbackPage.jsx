@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 
@@ -20,6 +21,7 @@ function StarDisplay({ rating }) {
 }
 
 export default function AdminFeedbackPage() {
+  const { t } = useTranslation()
   const [feedbacks, setFeedbacks] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('ALL') // ALL | UNREAD | READ
@@ -30,7 +32,7 @@ export default function AdminFeedbackPage() {
     setLoading(true)
     api.get('/admin/feedback')
       .then(res => setFeedbacks(Array.isArray(res.data) ? res.data : []))
-      .catch(() => toast.error('Failed to load feedback'))
+      .catch(() => toast.error(t('admin.feedback.loadFailed')))
       .finally(() => setLoading(false))
   }, [])
 
@@ -50,7 +52,7 @@ export default function AdminFeedbackPage() {
       await api.put('/admin/feedback/read-all')
       setFeedbacks(prev => prev.map(f => ({ ...f, read: true })))
       if (selected) setSelected(s => ({ ...s, read: true }))
-      toast.success('All feedback marked as read')
+      toast.success(t('admin.feedback.markAllReadSuccess'))
     } catch { toast.error('Failed to mark all as read') } finally { setMarkingAll(false) }
   }
 
@@ -73,7 +75,7 @@ export default function AdminFeedbackPage() {
       <div className="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
         <div>
           <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-            Customer Feedback
+            {t('admin.feedback.title')}
             {unreadCount > 0 && (
               <span style={{
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -84,7 +86,7 @@ export default function AdminFeedbackPage() {
             )}
           </h4>
           <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>
-            {feedbacks.length} total · {unreadCount} unread
+            {feedbacks.length} {t('admin.feedback.total')} · {unreadCount} {t('admin.feedback.unread')}
           </p>
         </div>
         <div className="d-flex gap-2 align-items-center flex-wrap">
@@ -93,7 +95,7 @@ export default function AdminFeedbackPage() {
             <button key={tab} onClick={() => setFilter(tab)}
               className={filter === tab ? 'btn-primary-sm' : 'btn-outline-custom'}
               style={{ fontSize: '0.82rem', padding: '0.35rem 0.9rem' }}>
-              {tab === 'ALL' ? 'All' : tab === 'UNREAD' ? `Unread (${unreadCount})` : 'Read'}
+              {tab === 'ALL' ? t('admin.feedback.allTab') : tab === 'UNREAD' ? `${t('admin.feedback.unreadTab')} (${unreadCount})` : t('admin.feedback.readTab')}
             </button>
           ))}
           {unreadCount > 0 && (
@@ -115,7 +117,7 @@ export default function AdminFeedbackPage() {
             ) : filtered.length === 0 ? (
               <div className="text-center py-5">
                 <i className="bi bi-chat-square-text" style={{ fontSize: '2rem', color: 'var(--text-muted)' }}></i>
-                <p style={{ color: 'var(--text-muted)', marginTop: '0.5rem' }}>No feedback found</p>
+                <p style={{ color: 'var(--text-muted)', marginTop: '0.5rem' }}>{t('admin.feedback.noFeedback')}</p>
               </div>
             ) : filtered.map(fb => (
               <div
@@ -195,7 +197,7 @@ export default function AdminFeedbackPage() {
                   background: selected.read ? '#f0fdf4' : '#fff0f0',
                   color: selected.read ? '#16a34a' : '#dc2626', fontWeight: 600
                 }}>
-                  {selected.read ? 'Read' : 'Unread'}
+                  {selected.read ? t('admin.feedback.alreadyRead') : t('admin.feedback.unread')}
                 </span>
               </div>
 
@@ -239,7 +241,7 @@ export default function AdminFeedbackPage() {
           ) : (
             <div className="card-custom text-center py-5" style={{ color: 'var(--text-muted)' }}>
               <i className="bi bi-chat-left-quote" style={{ fontSize: '2.5rem', opacity: 0.4 }}></i>
-              <p style={{ marginTop: '0.75rem', fontSize: '0.9rem' }}>Select a feedback to read it</p>
+              <p style={{ marginTop: '0.75rem', fontSize: '0.9rem' }}>{t('admin.feedback.selectToView')}</p>
             </div>
           )}
         </div>

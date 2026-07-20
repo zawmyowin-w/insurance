@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import ProfileAvatar from '../../components/ProfileAvatar'
@@ -20,14 +21,15 @@ function handlePhoneChange(val, setter) {
 }
 
 export default function ManageUsersPage() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const fromDashboard = searchParams.get('action') === 'create'
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState(() => {
-    const t = searchParams.get('tab')
-    return t && ['CUSTOMER', 'AGENT'].includes(t) ? t : 'CUSTOMER'
+    const tabParam = searchParams.get('tab')
+    return tabParam && ['CUSTOMER', 'AGENT'].includes(tabParam) ? tabParam : 'CUSTOMER'
   })
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
@@ -146,22 +148,22 @@ export default function ManageUsersPage() {
   }
 
   const tabMeta = {
-    CUSTOMER: { label: 'Customers', icon: 'bi-people', color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0' },
-    AGENT:    { label: 'Agents',    icon: 'bi-person-badge', color: '#1d4ed8', bg: '#eff6ff', border: '#bfdbfe' },
+    CUSTOMER: { label: t('admin.users.customers'), icon: 'bi-people', color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0' },
+    AGENT:    { label: t('admin.users.agents'),    icon: 'bi-person-badge', color: '#1d4ed8', bg: '#eff6ff', border: '#bfdbfe' },
   }
 
   return (
     <div className="fade-in">
       <div className="d-flex align-items-center justify-content-between mb-4">
         <div>
-          <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>Manage Users</h4>
+          <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('admin.users.title')}</h4>
           <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>Manage customers and agents</p>
         </div>
         {activeTab === 'AGENT' && !showCreatePanel && (
           <button className="btn-primary-custom" style={{ fontSize: '0.88rem', padding: '0.45rem 1rem' }}
             onClick={() => setShowCreatePanel(true)}>
             <i className="bi bi-person-plus me-1"></i>
-            Create Agent
+            {t('admin.users.createAgent')}
           </button>
         )}
       </div>
@@ -196,7 +198,7 @@ export default function ManageUsersPage() {
         <div className="card-custom mb-4 fade-in" style={{ borderLeft: `3px solid ${tabMeta[activeTab].color}` }}>
           <h6 style={{ fontWeight: 700, marginBottom: '1.25rem', color: tabMeta[activeTab].color }}>
             <i className={`bi ${tabMeta[activeTab].icon} me-2`}></i>
-            Create Agent Account
+            {t('admin.users.createAgent')}
           </h6>
           <form onSubmit={handleCreate}>
             <div className="row g-3">
@@ -485,7 +487,7 @@ export default function ManageUsersPage() {
               </div>
               <div className="d-flex gap-2 mt-3">
                 <button type="submit" disabled={editSaving} className="btn-primary-custom" style={{ justifyContent: 'center' }}>
-                  {editSaving ? <><span className="spinner-border spinner-border-sm me-2"></span>Saving…</> : 'Save Changes'}
+                  {editSaving ? <><span className="spinner-border spinner-border-sm me-2"></span>{t('admin.common.saving')}</> : t('admin.users.saveChanges')}
                 </button>
                 <button type="button" className="btn-outline-custom" onClick={closeEdit}>Cancel</button>
               </div>
