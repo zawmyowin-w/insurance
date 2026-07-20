@@ -1,57 +1,53 @@
 # Digital Insurance Claim and Premiums Portal
 
-A full-stack insurance portal for Myanmar, featuring policy applications, claims management, premium scheduling, and an AI chat assistant.
+A full-stack digital insurance portal for Myanmar, with role-based portals (Admin, Agent, Customer), AI chat, a dynamic form builder, multi-language support (English + Myanmar), and PDF generation for reports and claims.
 
 ## Stack
 
-| Layer    | Technology                        | Port |
-|----------|-----------------------------------|------|
-| Frontend | React 18 + Vite                   | 5000 |
-| Backend  | Spring Boot 3.2 (Java 19)         | 8080 |
-| Database | MySQL 8 (self-managed in workflow) | 3306 |
+- **Frontend**: React 18 + Vite (port 5000), React Router v6, Bootstrap 5, Axios, i18next
+- **Backend**: Spring Boot 3.2 (Java 17), Spring Security, Hibernate/JPA, Maven (port 8080)
+- **Database**: MySQL 8.0 (self-managed, data persisted under `.mysql/`)
+- **Other**: JWT auth, iText7 (PDF), Swagger/OpenAPI at `/api/swagger-ui.html`
 
-## Running on Replit
+## How to run
 
-Two workflows must both be running:
+Two workflows are configured and should both be started:
 
-1. **Backend** — starts MySQL, waits for it, creates the `insurance_portal` database, then runs the Spring Boot API on port 8080. First startup takes ~60 s while Maven downloads dependencies.
-2. **Start application** — runs `cd frontend && npm run dev` on port 5000. Frontend proxies `/api` requests to the backend, so CORS is not an issue.
+1. **Backend** — `cd backend && bash start-backend.sh`
+   - Initializes and starts a local MySQL instance (first run takes ~30s)
+   - Starts Spring Boot on port 8080
+   - Auto-creates the admin account and seeds default insurance types/packages on first run
 
-Both workflows start automatically. If you restart them, start **Backend** first and wait for "Started InsurancePortalApplication" in the logs before the frontend matters.
+2. **Start application** (Frontend) — `cd frontend && npm run dev`
+   - Serves the React app on port 5000
+   - Proxies `/api` requests to the backend at `localhost:8080`
 
-## Default Login
+## Environment variables
 
-| Role  | Email              | Password  |
-|-------|--------------------|-----------|
-| Admin | admin@dicp.com.mm  | Admin@123 |
+All backend variables have safe defaults for local development. No `.env` file is required to run. Optional overrides:
 
-The admin account is seeded automatically on first backend startup.
+| Variable | Default | Purpose |
+|---|---|---|
+| `DB_PASSWORD` | _(empty)_ | MySQL root password |
+| `JWT_SECRET` | built-in dev key | JWT signing key |
+| `ADMIN_EMAIL` | `admin@dicp.com.mm` | Bootstrap admin email |
+| `ADMIN_PASSWORD` | `Admin@123` | Bootstrap admin password |
+| `XAI_API_KEY` | _(empty)_ | Enables AI chat via xAI Grok |
 
-## Environment Variables
+Set via Replit Secrets or by creating `backend/.env`.
 
-All backend defaults are built into `application.properties`. Optional overrides:
+## Default login
 
-| Variable         | Purpose                                  |
-|------------------|------------------------------------------|
-| `DB_PASSWORD`    | MySQL root password (empty = no password)|
-| `JWT_SECRET`     | JWT signing key (has a built-in default) |
-| `ADMIN_EMAIL`    | Bootstrap admin email                    |
-| `ADMIN_PASSWORD` | Bootstrap admin password                 |
-| `XAI_API_KEY`    | xAI Grok key for AI chat (optional)      |
+- **Admin**: `admin@dicp.com.mm` / `Admin@123`
 
-## Project Structure
+## Project structure
 
 ```
-frontend/          React 18 + Vite (port 5000)
-backend/           Spring Boot 3.2 REST API (port 8080)
-  start-backend.sh Replit workflow entry point (starts MySQL + Spring Boot)
-  run-local.sh     Local Mac/Linux startup (loads .env, assumes MySQL running)
-  src/main/resources/
-    application.properties       Main config with all defaults
-database/
-  local_mysql.sql  Full schema for local import (Replit uses Hibernate ddl-auto)
+/frontend    — React application
+/backend     — Spring Boot application
+/database    — SQL schema reference (local_mysql.sql)
 ```
 
-## User Preferences
+## User preferences
 
-- Keep existing project structure and stack — do not restructure or migrate.
+_None recorded yet._
