@@ -4,21 +4,24 @@
 
 | Tool | Version | Download |
 |------|---------|----------|
-| Java JDK | 17+ | https://adoptium.net |
-| Apache Maven | 3.8+ | https://maven.apache.org |
+| Java JDK | 17 or 21 | https://adoptium.net |
+| Apache Maven | 3.8+ | https://maven.apache.org/download.cgi |
 | MySQL Server | 8.0+ | https://dev.mysql.com/downloads/mysql |
 | Node.js | 18+ | https://nodejs.org |
 
 ---
 
-## Step 1 — Import the Database
+## Step 1 — Import the Database Schema
+
+Run this **once** on a fresh machine to create the database and all tables:
 
 ```bash
 mysql -u root -p < database/local_mysql.sql
 ```
 
-This creates the `insurance_portal` database and all tables.  
-You only need to do this **once**. After that, Hibernate keeps the schema up to date automatically.
+> **No password?** Use `mysql -u root` (no `-p` flag).
+
+After this, Hibernate keeps the schema up to date automatically on every backend restart — you never need to import again.
 
 ---
 
@@ -32,30 +35,39 @@ Open `backend/.env` and set your values:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `DB_PASSWORD` | MySQL root password | *(empty — skip if no password)* |
-| `JWT_SECRET` | JWT signing key | auto-set (safe for local dev) |
+| `DB_PASSWORD` | MySQL root password | *(empty — no password)* |
+| `JWT_SECRET` | JWT signing key | built-in dev key |
 | `ADMIN_EMAIL` | Admin login email | `admin@dicp.com.mm` |
 | `ADMIN_PASSWORD` | Admin login password | `Admin@123` |
+| `XAI_API_KEY` | xAI Grok key for AI chat | *(optional — falls back to rule-based)* |
 
-> If your MySQL root account has **no password**, skip this step entirely.
+> If your MySQL root account has **no password**, leave `DB_PASSWORD=` blank and skip the rest.
 
 ---
 
 ## Step 3 — Start the Backend
 
+**Mac / Linux:**
 ```bash
 cd backend
 bash run-local.sh
 ```
 
-This loads `backend/.env` and starts Spring Boot with the `local` profile.  
+**Windows:**
+```bat
+cd backend
+run-local.bat
+```
+
 API will be available at **http://localhost:8080/api**
+
+> First startup takes ~30 seconds while Maven downloads dependencies and Hibernate creates the tables.
 
 ---
 
 ## Step 4 — Start the Frontend
 
-Open a **new terminal**:
+Open a **new terminal** (keep the backend running in the first one):
 
 ```bash
 cd frontend
@@ -73,43 +85,55 @@ App will be available at **http://localhost:5000**
 |------|-------|----------|
 | Admin | admin@dicp.com.mm | Admin@123 |
 
+The admin account is created automatically on first backend startup.
+
 ---
 
 ## Project Structure
 
 ```
-frontend/          React 18 + Vite SPA (port 5000)
+frontend/          React 18 + Vite (port 5000)
 backend/           Spring Boot 3.2 REST API (port 8080)
-  run-local.sh     Local startup script (loads .env, runs with local profile)
+  run-local.sh     Mac/Linux startup script
+  run-local.bat    Windows startup script
   .env.example     Template for environment variables
   src/main/resources/
-    application.properties         Main config
-    application-local.properties   Local overrides (CORS, debug logging)
+    application.properties          Main config (all defaults)
+    application-local.properties    Local dev overrides (debug logging)
 database/
-  local_mysql.sql  Initial schema — import once with mysql -u root -p < ...
+  local_mysql.sql  Full schema — import once with mysql -u root -p < ...
 ```
 
 ---
 
 ## Troubleshooting
 
-**`Access denied for user 'root'@'localhost'`**  
-→ Your MySQL root account has a password. Create `backend/.env` from `.env.example` and set `DB_PASSWORD=your_password`.
+**`Access denied for user 'root'@'localhost'`**
+→ Set `DB_PASSWORD=your_password` in `backend/.env`.
 
-**`Unknown database 'insurance_portal'`**  
+**`Unknown database 'insurance_portal'`**
 → Run Step 1 first: `mysql -u root -p < database/local_mysql.sql`
 
-**`Communications link failure` / can't connect to MySQL**  
-→ Make sure MySQL server is running: `sudo systemctl start mysql` (Linux) or start it from MySQL Workbench/System Preferences (Mac/Windows).
+**`Communications link failure` / can't connect to MySQL**
+→ Make sure MySQL is running:
+- Linux: `sudo systemctl start mysql`
+- Mac (Homebrew): `brew services start mysql`
+- Windows: Start MySQL from Services or MySQL Workbench
 
-**Port 8080 already in use**  
+**Port 8080 already in use**
 → Stop the other process, or add `server.port=9090` to `backend/src/main/resources/application-local.properties`.
 
-**Frontend shows blank page or "Network Error"**  
+**Port 5000 already in use**
+→ Change `"dev": "vite --port 5001 --host"` in `frontend/package.json`.
+
+**Frontend shows "Network Error" or blank data**
 → Make sure the backend is running on port 8080 before starting the frontend.
 
-**`NoSuchMethodError` for Lombok methods**  
-→ Run `mvn clean` inside the `backend` folder, then re-run `bash run-local.sh`.
+**`NoSuchMethodError` for Lombok methods**
+→ Run `mvn clean` inside the `backend` folder, then re-run the startup script.
 
-**Scheduler settings page shows error on first load**  
-→ Normal on the very first run — the `scheduler_settings` row is created automatically when the backend starts.
+**Scheduler settings page shows error on first load**
+→ Normal on the very first run — the `scheduler_settings` row is created automatically on backend startup.
+
+**AI chat replies with generic answers (not using Grok)**
+→ Set `XAI_API_KEY=your_key` in `backend/.env` and restart the backend. Get a key at https://console.x.ai

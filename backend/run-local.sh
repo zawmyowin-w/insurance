@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────────────
-# Run the backend locally.
-# Automatically loads backend/.env so you don't have to export env vars by hand.
-# Usage:  cd backend && bash run-local.sh
+# Start the backend locally (assumes MySQL is already running as a service).
+# Loads backend/.env automatically — no need to export variables by hand.
+#
+# Usage:
+#   cd backend
+#   bash run-local.sh
 # ─────────────────────────────────────────────────────────────────────────────
 set -e
 
@@ -16,7 +19,7 @@ if [ -f "$ENV_FILE" ]; then
     source "$ENV_FILE"
     set +a
 else
-    echo "[run-local] No .env found — using built-in defaults (DB_PASSWORD empty, default JWT secret)."
+    echo "[run-local] No .env found — using built-in defaults."
     echo "[run-local] Copy backend/.env.example to backend/.env if you need to override anything."
 fi
 
