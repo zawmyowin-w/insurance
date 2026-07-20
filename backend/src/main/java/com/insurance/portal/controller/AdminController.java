@@ -180,28 +180,19 @@ public class AdminController {
                 .reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
         r.put("totalClaimsPaid", totalClaimsPaid);
 
-        // ── Profit metrics (Myanmar insurance industry standards) ──────
-        // Operating expense: ~15% of gross premium (agent commissions, admin, overhead)
-        double opExpensePct = 15.0;
-        java.math.BigDecimal opExpense = totalRevenue.multiply(
-                java.math.BigDecimal.valueOf(opExpensePct / 100.0))
-                .setScale(2, java.math.RoundingMode.HALF_UP);
-        java.math.BigDecimal netProfit = totalRevenue.subtract(totalClaimsPaid).subtract(opExpense);
+        // ── Profit metrics ────────────────────────────────────────────
+        // Income = customer premium payments only; Outflow = approved claim payouts only
+        java.math.BigDecimal netProfit = totalRevenue.subtract(totalClaimsPaid);
         double lossRatio = totalRevenue.compareTo(java.math.BigDecimal.ZERO) > 0
                 ? totalClaimsPaid.multiply(java.math.BigDecimal.valueOf(100))
                         .divide(totalRevenue, 2, java.math.RoundingMode.HALF_UP).doubleValue() : 0.0;
-        double expenseRatio = opExpensePct;
-        double combinedRatio = lossRatio + expenseRatio;
         double profitMarginPct = totalRevenue.compareTo(java.math.BigDecimal.ZERO) > 0
                 ? netProfit.multiply(java.math.BigDecimal.valueOf(100))
                         .divide(totalRevenue, 2, java.math.RoundingMode.HALF_UP).doubleValue() : 0.0;
 
-        r.put("netProfit",         netProfit);
-        r.put("operatingExpense",  opExpense);
-        r.put("lossRatioPct",      lossRatio);
-        r.put("expenseRatioPct",   expenseRatio);
-        r.put("combinedRatioPct",  combinedRatio);
-        r.put("profitMarginPct",   profitMarginPct);
+        r.put("netProfit",       netProfit);
+        r.put("lossRatioPct",    lossRatio);
+        r.put("profitMarginPct", profitMarginPct);
 
         // ── Revenue by insurance type ─────────────────────────────────
         Map<String, java.math.BigDecimal> revenueByType = new java.util.TreeMap<>();
@@ -212,6 +203,33 @@ public class AdminController {
             }
         }
         r.put("revenueByType", revenueByType);
+
+        // ── Claims total by type (all-time approved) ──────────────────
+        Map<String, java.math.BigDecimal> claimsTotalByType = new java.util.TreeMap<>();
+        for (Claim c : allClaims) {
+            if (c.getStatus() != ClaimStatus.APPROVED || c.getAmount() == null) continue;
+            String type = c.getApplication() != null && c.getApplication().getInsurancePackage() != null
+                    ? c.getApplication().getInsurancePackage().getType() : "OTHER";
+            claimsTotalByType.merge(type, c.getAmount(), java.math.BigDecimal::add);
+        }
+        r.put("claimsTotalByType", claimsTotalByType);
+
+        // ── Profit/Loss by insurance type ─────────────────────────────
+        java.util.Set<String> allTypeKeys = new java.util.TreeSet<>();
+        allTypeKeys.addAll(revenueByType.keySet());
+        allTypeKeys.addAll(claimsTotalByType.keySet());
+        Map<String, Map<String, Object>> profitByType = new java.util.LinkedHashMap<>();
+        for (String type : allTypeKeys) {
+            java.math.BigDecimal income  = revenueByType.getOrDefault(type, java.math.BigDecimal.ZERO);
+            java.math.BigDecimal outflow = claimsTotalByType.getOrDefault(type, java.math.BigDecimal.ZERO);
+            java.math.BigDecimal profit  = income.subtract(outflow);
+            Map<String, Object> tm = new LinkedHashMap<>();
+            tm.put("income",  income);
+            tm.put("outflow", outflow);
+            tm.put("profit",  profit);
+            profitByType.put(type, tm);
+        }
+        r.put("profitByType", profitByType);
 
         // ── Active policies by type ───────────────────────────────────
         Map<String, Long> byType = allApps.stream()
@@ -421,18 +439,13 @@ public class AdminController {
                 .filter(c -> c.getStatus() == ClaimStatus.APPROVED && c.getAmount() != null)
                 .map(Claim::getAmount).reduce(java.math.BigDecimal.ZERO, java.math.BigDecimal::add);
 
-        java.math.BigDecimal opExpense = totalInflow
-                .multiply(java.math.BigDecimal.valueOf(0.15))
-                .setScale(2, java.math.RoundingMode.HALF_UP);
+        // Wallet: income = customer premiums only; outflow = approved claims only
+        java.math.BigDecimal walletBalance = totalInflow.subtract(totalClaims);
 
-        java.math.BigDecimal totalOutflow = totalClaims.add(opExpense);
-        java.math.BigDecimal walletBalance = totalInflow.subtract(totalOutflow);
-
-        w.put("totalInflow",    totalInflow);
-        w.put("totalOutflow",   totalOutflow);
+        w.put("totalInflow",     totalInflow);
+        w.put("totalOutflow",    totalClaims);
         w.put("totalClaimsPaid", totalClaims);
-        w.put("operatingExpense", opExpense);
-        w.put("walletBalance",  walletBalance);
+        w.put("walletBalance",   walletBalance);
 
         // ── Monthly inflow/outflow — last 12 months ───────────────────
         Map<String, java.math.BigDecimal> monthlyIn  = new java.util.LinkedHashMap<>();

@@ -225,10 +225,10 @@ export default function AdminReportsPage() {
   const totalRevenue    = Number(reports.totalRevenue    || 0)
   const totalClaimsPaid = Number(reports.totalClaimsPaid || 0)
   const netProfit       = Number(reports.netProfit       || 0)
-  const opExpense       = Number(reports.operatingExpense|| 0)
   const lossRatio       = Number(reports.lossRatioPct    || 0)
   const profitMargin    = Number(reports.profitMarginPct || 0)
-  const combinedRatio   = Number(reports.combinedRatioPct|| 0)
+  const profitByType      = reports.profitByType      || {}
+  const claimsTotalByType = reports.claimsTotalByType || {}
 
   const thisMonthKey = Object.keys(monRev).at(-1)
   const thisMonthRev = Number(monRev[thisMonthKey] || 0)
@@ -289,9 +289,9 @@ export default function AdminReportsPage() {
               <div className="col-12 col-md-7">
                 <div className="row g-3">
                   {[
-                    { label: 'လစဥ်ဝင်ငွေ', value: thisMonthRev.toLocaleString() + ' MMK', color: '#93c5fd' },
-                    { label: 'ထုတ်ပေးသည့် Claim', value: totalClaimsPaid.toLocaleString() + ' MMK', color: '#fca5a5' },
-                    { label: 'အမြတ် (Net Profit)', value: netProfit.toLocaleString() + ' MMK', color: netProfit >= 0 ? '#86efac' : '#fca5a5' },
+                    { label: 'လစဥ် Premium ဝင်ငွေ', value: thisMonthRev.toLocaleString() + ' MMK', color: '#93c5fd' },
+                    { label: 'Claim လျှော်ကြေး ထုတ်ပေး', value: totalClaimsPaid.toLocaleString() + ' MMK', color: '#fca5a5' },
+                    { label: 'အသားတင် အမြတ်', value: netProfit.toLocaleString() + ' MMK', color: netProfit >= 0 ? '#86efac' : '#fca5a5' },
                     { label: 'Profit Margin', value: Pct(profitMargin), color: profitMargin >= 20 ? '#86efac' : profitMargin >= 0 ? '#fde68a' : '#fca5a5' },
                   ].map(c => (
                     <div key={c.label} className="col-6">
@@ -313,15 +313,13 @@ export default function AdminReportsPage() {
             </h6>
             <div className="row g-3 align-items-center">
               {[
-                { label: 'Loss Ratio', desc: 'Claim / Premium', value: lossRatio, max: 100, color: lossRatio < 60 ? '#16a34a' : lossRatio < 80 ? '#d97706' : '#dc2626', note: lossRatio < 60 ? '✅ ကောင်းမွန်' : lossRatio < 80 ? '⚠️ သတိပြု' : '🔴 အန္တရာယ်' },
-                { label: 'Expense Ratio', desc: 'ကုန်ကျစရိတ် / Premium', value: 15, max: 100, color: '#7c3aed', note: 'မြန်မာ standard: ~15%' },
-                { label: 'Combined Ratio', desc: 'Loss + Expense', value: Math.min(combinedRatio, 100), max: 100, color: combinedRatio < 90 ? '#16a34a' : combinedRatio < 100 ? '#d97706' : '#dc2626', note: combinedRatio < 100 ? '✅ အမြတ်ရ' : '🔴 အရှုံးပေါ်' },
-                { label: 'Profit Margin', desc: 'Net Profit / Revenue', value: Math.max(0, Math.min(profitMargin, 100)), max: 100, color: profitMargin >= 15 ? '#16a34a' : profitMargin >= 0 ? '#d97706' : '#dc2626', note: profitMargin >= 15 ? '✅ ကောင်းသည်' : profitMargin >= 0 ? '⚠️ နည်းသည်' : '🔴 အရှုံး' },
+                { label: 'Loss Ratio', desc: 'Claim ထုတ် / Premium ဝင်', value: lossRatio, max: 100, color: lossRatio < 60 ? '#16a34a' : lossRatio < 80 ? '#d97706' : '#dc2626', note: lossRatio < 60 ? '✅ ကောင်းမွန်' : lossRatio < 80 ? '⚠️ သတိပြု' : '🔴 အန္တရာယ်' },
+                { label: 'Profit Margin', desc: 'အမြတ် / Premium ဝင်', value: Math.max(0, Math.min(profitMargin, 100)), max: 100, color: profitMargin >= 20 ? '#16a34a' : profitMargin >= 0 ? '#d97706' : '#dc2626', note: profitMargin >= 20 ? '✅ ကောင်းသည်' : profitMargin >= 0 ? '⚠️ နည်းသည်' : '🔴 အရှုံး' },
               ].map(g => (
-                <div key={g.label} className="col-6 col-md-3 text-center">
-                  <DonutGauge value={g.value} max={g.max} color={g.color} size={120} label={g.label} />
-                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 4 }}>{g.desc}</div>
-                  <div style={{ fontSize: '0.7rem', fontWeight: 600, marginTop: 2, color: g.color }}>{g.note}</div>
+                <div key={g.label} className="col-6 text-center">
+                  <DonutGauge value={g.value} max={g.max} color={g.color} size={130} label={g.label} />
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 6 }}>{g.desc}</div>
+                  <div style={{ fontSize: '0.72rem', fontWeight: 600, marginTop: 3, color: g.color }}>{g.note}</div>
                 </div>
               ))}
             </div>
@@ -329,12 +327,11 @@ export default function AdminReportsPage() {
 
           <div className="row g-3">
             {[
-              { label: 'စုစုပေါင်း Premium ဝင်ငွေ', value: MMK(totalRevenue), icon: 'bi-arrow-down-circle-fill', color: '#16a34a', bg: '#dcfce7' },
-              { label: 'ထုတ်ပေးသည့် Claim ပမာဏ',    value: MMK(totalClaimsPaid), icon: 'bi-arrow-up-circle-fill', color: '#dc2626', bg: '#fee2e2' },
-              { label: 'ကုန်ကျစရိတ် (15%)',          value: MMK(opExpense), icon: 'bi-briefcase', color: '#7c3aed', bg: '#ede9fe' },
-              { label: 'အသားတင် အမြတ်',              value: MMK(netProfit), icon: 'bi-graph-up', color: netProfit >= 0 ? '#16a34a' : '#dc2626', bg: netProfit >= 0 ? '#dcfce7' : '#fee2e2' },
+              { label: 'Customer Premium ဝင်ငွေ (စုစုပေါင်း)', value: MMK(totalRevenue),    icon: 'bi-arrow-down-circle-fill', color: '#16a34a', bg: '#dcfce7' },
+              { label: 'Claim လျှော်ကြေး ထုတ်ပေး (စုစုပေါင်း)', value: MMK(totalClaimsPaid), icon: 'bi-arrow-up-circle-fill',   color: '#dc2626', bg: '#fee2e2' },
+              { label: 'အသားတင် အမြတ် (Premium − Claim)',        value: MMK(netProfit),       icon: 'bi-graph-up',               color: netProfit >= 0 ? '#16a34a' : '#dc2626', bg: netProfit >= 0 ? '#dcfce7' : '#fee2e2' },
             ].map(c => (
-              <div key={c.label} className="col-6 col-md-3">
+              <div key={c.label} className="col-12 col-md-4">
                 <StatCard {...c} />
               </div>
             ))}
@@ -343,10 +340,86 @@ export default function AdminReportsPage() {
           <div className="card-custom">
             <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
               <i className="bi bi-bar-chart me-2" style={{ color: 'var(--primary)' }}></i>
-              လစဥ် ဝင်ငွေနှင့် Claim ထုတ်ပေးမှု (MMK)
+              လစဥ် Premium ဝင်ငွေ vs Claim ထုတ်ပေး (MMK)
             </h6>
-            <GroupedBarChart data1={monRev} data2={monClaims} label1="ဝင်ငွေ" label2="Claim ထုတ်" height={200} />
+            <GroupedBarChart data1={monRev} data2={monClaims} label1="Premium ဝင်ငွေ" label2="Claim ထုတ်ပေး" height={200} />
           </div>
+
+          {/* Insurance Type financial summary */}
+          {Object.keys(profitByType).length > 0 && (
+            <div className="card-custom p-0">
+              <div style={{ padding: '1rem 1.25rem 0.75rem', borderBottom: '1px solid var(--border)' }}>
+                <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>
+                  <i className="bi bi-table me-2" style={{ color: 'var(--primary)' }}></i>
+                  ဘဏ္ဍာရေးအနှစ်ချုပ် — Insurance Type အလိုက်
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                  ဝင်ငွေ = Customer Premium ကြေးများ &nbsp;|&nbsp; ထွက်ငွေ = Admin မှ Claim လျှော်ကြေးပေးသော ပမာဏ
+                </div>
+              </div>
+              <div className="table-custom">
+                <table className="w-100">
+                  <thead>
+                    <tr>
+                      {['Insurance Type', 'ဝင်ငွေ (Customer Premium)', 'ထွက်ငွေ (Claim လျှော်ကြေး)', 'အမြတ် / အရှုံး', 'Loss Ratio'].map(h => <th key={h}>{h}</th>)}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Object.entries(profitByType).sort((a, b) => Number(b[1].income) - Number(a[1].income)).map(([type, d]) => {
+                      const income  = Number(d.income  || 0)
+                      const outflow = Number(d.outflow || 0)
+                      const profit  = Number(d.profit  || 0)
+                      const lr      = income > 0 ? (outflow / income * 100).toFixed(1) : '—'
+                      return (
+                        <tr key={type}>
+                          <td>
+                            <div className="d-flex align-items-center gap-2">
+                              <div style={{ width: 10, height: 10, borderRadius: 2, background: typeColor(type), flexShrink: 0 }}></div>
+                              <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>{type}</span>
+                            </div>
+                          </td>
+                          <td style={{ fontWeight: 700, color: '#16a34a' }}>{income.toLocaleString()} <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>MMK</span></td>
+                          <td style={{ fontWeight: 700, color: outflow > 0 ? '#dc2626' : 'var(--text-muted)' }}>{outflow > 0 ? outflow.toLocaleString() + ' MMK' : '—'}</td>
+                          <td>
+                            <span style={{ fontWeight: 800, fontSize: '0.9rem', color: profit >= 0 ? '#16a34a' : '#dc2626' }}>
+                              {profit >= 0 ? '+' : ''}{profit.toLocaleString()} MMK
+                            </span>
+                            <div style={{ fontSize: '0.68rem', color: profit >= 0 ? '#16a34a' : '#dc2626', marginTop: 1 }}>
+                              {profit >= 0 ? '✅ အမြတ်ရ' : '🔴 အရှုံး'}
+                            </div>
+                          </td>
+                          <td>
+                            {lr === '—' ? <span style={{ color: 'var(--text-muted)' }}>—</span> : (
+                              <div className="d-flex align-items-center gap-2">
+                                <div style={{ flex: 1, height: 7, background: 'var(--bg-secondary)', borderRadius: 99, overflow: 'hidden', minWidth: 60 }}>
+                                  <div style={{ height: '100%', width: `${Math.min(Number(lr), 100)}%`, background: Number(lr) < 60 ? '#16a34a' : Number(lr) < 90 ? '#d97706' : '#dc2626', borderRadius: 99 }}></div>
+                                </div>
+                                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: Number(lr) < 60 ? '#16a34a' : Number(lr) < 90 ? '#d97706' : '#dc2626', minWidth: 40 }}>{lr}%</span>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                    {/* Totals row */}
+                    <tr style={{ background: 'var(--bg-secondary)', fontWeight: 800 }}>
+                      <td style={{ fontWeight: 800, fontSize: '0.88rem', color: 'var(--text-primary)' }}>
+                        <i className="bi bi-calculator me-1" style={{ color: 'var(--primary)' }}></i>စုစုပေါင်း
+                      </td>
+                      <td style={{ fontWeight: 800, color: '#16a34a' }}>{totalRevenue.toLocaleString()} MMK</td>
+                      <td style={{ fontWeight: 800, color: totalClaimsPaid > 0 ? '#dc2626' : 'var(--text-muted)' }}>{totalClaimsPaid > 0 ? totalClaimsPaid.toLocaleString() + ' MMK' : '—'}</td>
+                      <td>
+                        <span style={{ fontWeight: 900, fontSize: '0.95rem', color: netProfit >= 0 ? '#16a34a' : '#dc2626' }}>
+                          {netProfit >= 0 ? '+' : ''}{netProfit.toLocaleString()} MMK
+                        </span>
+                      </td>
+                      <td style={{ fontWeight: 800, color: lossRatio < 60 ? '#16a34a' : lossRatio < 90 ? '#d97706' : '#dc2626' }}>{Pct(lossRatio)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -431,7 +504,7 @@ export default function AdminReportsPage() {
                 <tbody>
                   {Object.entries(byType).sort((a, b) => Number(revByType[b[0]] || 0) - Number(revByType[a[0]] || 0)).map(([type, count]) => {
                     const rev = Number(revByType[type] || 0)
-                    const claimsPaid = Object.values(claimsByType[type] || {}).reduce((s, v) => s + Number(v), 0)
+                    const claimsPaid = Number(claimsTotalByType[type] || 0)
                     const profit = rev - claimsPaid
                     const totalRev = Object.values(revByType).reduce((s, v) => s + Number(v), 0)
                     const pct = totalRev > 0 ? (rev / totalRev * 100).toFixed(1) : 0
@@ -950,9 +1023,7 @@ function WalletTab({ wallet, walletLoaded }) {
 
   const balance   = Number(wallet.walletBalance   || 0)
   const inflow    = Number(wallet.totalInflow     || 0)
-  const outflow   = Number(wallet.totalOutflow    || 0)
   const claims    = Number(wallet.totalClaimsPaid || 0)
-  const opExp     = Number(wallet.operatingExpense|| 0)
   const customers = wallet.customers || []
   const monIn     = wallet.monthlyInflow  || {}
   const monOut    = wallet.monthlyOutflow || {}
@@ -973,10 +1044,9 @@ function WalletTab({ wallet, walletLoaded }) {
           <div className="col-12 col-md-7">
             <div className="row g-2">
               {[
-                { l: 'Premium ဝင်ငွေ', v: inflow,  icon: 'bi-arrow-down-circle', c: '#6ee7b7' },
-                { l: 'Claim ထုတ်ပေး',  v: claims,  icon: 'bi-arrow-up-circle',   c: '#fca5a5' },
-                { l: 'ကုန်ကျစရိတ်',    v: opExp,   icon: 'bi-briefcase',         c: '#fde68a' },
-                { l: 'ထွက်ငွေ စုစုပေါင်', v: outflow, icon: 'bi-dash-circle',    c: '#f9a8d4' },
+                { l: 'Customer Premium ဝင်ငွေ', v: inflow,  icon: 'bi-arrow-down-circle', c: '#6ee7b7' },
+                { l: 'Claim လျှော်ကြေး ထုတ်ပေး', v: claims,  icon: 'bi-arrow-up-circle',   c: '#fca5a5' },
+                { l: 'လက်ကျန် (ဝင် − ထွက်)',     v: balance, icon: 'bi-wallet2',            c: balance >= 0 ? '#86efac' : '#fca5a5' },
               ].map(x => (
                 <div key={x.l} className="col-6">
                   <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 10, padding: '0.65rem 0.75rem' }}>
