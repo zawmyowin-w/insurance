@@ -585,6 +585,13 @@
     "rateVeryGood": "Very Good",
     "rateExcellent": "Excellent"
   },
+  "signature": {
+    "placeholder": "Sign here",
+    "baseline": "Signature",
+    "requiredHint": "You must sign before submitting",
+    "done": "Signature completed",
+    "clear": "Clear"
+  },
   "applyPolicy": {
     "title": "Apply for Insurance",
     "subtitle": "Select a plan and fill in the required details",

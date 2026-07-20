@@ -1,4 +1,5 @@
 import React, { useRef, useState, useImperativeHandle, forwardRef } from 'react'
+import { useTranslation } from 'react-i18next'
 
 /**
  * Reusable digital signature canvas.
@@ -18,6 +19,7 @@ const DigitalSignatureCanvas = forwardRef(function DigitalSignatureCanvas(
   { label, required, onChange, height = 160 },
   ref
 ) {
+  const { t } = useTranslation()
   const canvasRef = useRef(null)
   const [isDrawing, setIsDrawing] = useState(false)
   const [isEmpty, setIsEmpty] = useState(true)
@@ -97,7 +99,7 @@ const DigitalSignatureCanvas = forwardRef(function DigitalSignatureCanvas(
               padding: '0.12rem 0.5rem', cursor: 'pointer', fontWeight: 600,
             }}
           >
-            <i className="bi bi-eraser me-1"></i>ဖျက်မည်
+            <i className="bi bi-eraser me-1"></i>{t('signature.clear')}
           </button>
         )}
       </div>
@@ -140,7 +142,7 @@ const DigitalSignatureCanvas = forwardRef(function DigitalSignatureCanvas(
           }}>
             <i className="bi bi-pen" style={{ fontSize: '1.6rem', color: 'var(--text-muted)', opacity: 0.4 }}></i>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-              ဤနေရာတွင် လက်မှတ်ရေးထိုးပါ
+              {t('signature.placeholder')}
             </span>
           </div>
         )}
@@ -154,7 +156,7 @@ const DigitalSignatureCanvas = forwardRef(function DigitalSignatureCanvas(
           position: 'absolute', bottom: 8, left: '10%',
           fontSize: '0.65rem', color: '#94a3b8', pointerEvents: 'none',
         }}>
-          လက်မှတ်
+          {t('signature.baseline')}
         </div>
       </div>
 
@@ -162,13 +164,13 @@ const DigitalSignatureCanvas = forwardRef(function DigitalSignatureCanvas(
       {isEmpty && required && (
         <small style={{ fontSize: '0.73rem', color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
           <i className="bi bi-info-circle me-1"></i>
-          လက်မှတ်ရေးထိုးပြီးမှသာ တင်သွင်းနိုင်မည်
+          {t('signature.requiredHint')}
         </small>
       )}
       {!isEmpty && (
         <small style={{ fontSize: '0.73rem', color: '#16a34a', marginTop: 4, display: 'block' }}>
           <i className="bi bi-check-circle me-1"></i>
-          လက်မှတ်ရေးထိုးပြီးပါပြီ
+          {t('signature.done')}
         </small>
       )}
     </div>
