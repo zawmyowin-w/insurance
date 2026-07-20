@@ -1,55 +1,44 @@
 # Digital Insurance Claim and Premiums Portal
 
-A full-stack digital insurance portal for Myanmar, supporting policy applications, premium payments, claims management, and an AI chat assistant.
+A full-stack digital insurance management system designed for the Myanmar market.
 
-## Stack
+## Tech Stack
 
-- **Frontend**: React 18 + Vite (port 5000)
-- **Backend**: Spring Boot 3.2 REST API (port 8080), context path `/api`
-- **Database**: MySQL 8.0 (self-managed, data in `.mysql/`)
+- **Frontend**: React 18, Vite, Bootstrap 5, React Router 6, i18next (EN/Myanmar)
+- **Backend**: Java 17, Spring Boot 3.2, Spring Security (JWT), Spring Data JPA
+- **Database**: MySQL 8.0 (self-managed, data persisted in `.mysql/`)
+- **PDF**: iText7 | **AI Chat**: xAI Grok (optional)
 
 ## How to Run
 
-Two workflows run in parallel (both start automatically):
+Two workflows must both be running:
 
-| Workflow | Command | What it does |
-|----------|---------|--------------|
-| `Backend` | `cd backend && bash start-backend.sh` | Starts MySQL, creates DB, then runs Spring Boot via Maven |
-| `Start application` | `cd frontend && npm run dev` | Starts Vite dev server |
+| Workflow | Command | Port |
+|---|---|---|
+| **Backend** | `cd backend && bash start-backend.sh` | 8080 |
+| **Start application** | `cd frontend && npm run dev` | 5000 |
 
-On first backend start, Hibernate creates all tables and seeds default insurance types and an admin account.
+The frontend proxies all `/api/*` requests to the backend, so open the app on **port 5000**.
 
-## Default Login
+The backend workflow starts MySQL automatically (data stored in `.mysql/`), creates the `insurance_portal` database, and runs the Spring Boot app. Hibernate manages schema migrations on startup.
 
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | admin@dicp.com.mm | Admin@123 |
+## Default Credentials
 
-## Environment Variables
+On first run, a seeded admin account is created:
+- **Email**: `admin@dicp.com.mm`
+- **Password**: `Admin@123`
 
-Set in Replit's environment (shared):
+## Environment Variables / Secrets
 
-| Variable | Purpose |
-|----------|---------|
-| `CORS_ALLOWED_ORIGINS` | Comma-separated list of allowed origins for the backend CORS policy |
-| `VITE_GOOGLE_CLIENT_ID` | Google OAuth client ID for social login |
-
-Backend also reads from `backend/.env` (created from `backend/.env.example`):
-
-| Variable | Purpose | Default |
-|----------|---------|---------|
-| `DB_PASSWORD` | MySQL root password | *(empty)* |
-| `JWT_SECRET` | JWT signing key | built-in dev key |
-| `ADMIN_EMAIL` | Bootstrap admin email | `admin@dicp.com.mm` |
-| `ADMIN_PASSWORD` | Bootstrap admin password | `Admin@123` |
-| `XAI_API_KEY` | xAI Grok key for AI chat | *(optional)* |
-
-## Notes
-
-- `CORS_ALLOWED_ORIGINS` must include the current Replit dev domain (update if the domain changes after a repl restart with a new domain).
-- The backend's MySQL data is stored in `.mysql/` at the repo root — this directory is gitignored.
-- See `LOCAL_SETUP.md` for the original local development setup guide.
+| Variable | Required | Purpose |
+|---|---|---|
+| `DB_PASSWORD` | No (defaults to empty) | MySQL root password |
+| `JWT_SECRET` | No (has a dev default) | JWT signing key — change for production |
+| `ADMIN_EMAIL` | No | Override bootstrap admin email |
+| `ADMIN_PASSWORD` | No | Override bootstrap admin password |
+| `XAI_API_KEY` | No | Enables AI chat assistant (xAI Grok) |
+| `CORS_ALLOWED_ORIGINS` | No | Comma-separated allowed origins (defaults to localhost) |
 
 ## User Preferences
 
-*(none recorded yet)*
+<!-- Add user preferences here when requested -->
