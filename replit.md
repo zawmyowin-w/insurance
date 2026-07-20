@@ -1,44 +1,57 @@
 # Digital Insurance Claim and Premiums Portal
 
-A full-stack digital insurance management system designed for the Myanmar market.
+A full-stack insurance portal for Myanmar, featuring policy applications, claims management, premium scheduling, and an AI chat assistant.
 
-## Tech Stack
+## Stack
 
-- **Frontend**: React 18, Vite, Bootstrap 5, React Router 6, i18next (EN/Myanmar)
-- **Backend**: Java 17, Spring Boot 3.2, Spring Security (JWT), Spring Data JPA
-- **Database**: MySQL 8.0 (self-managed, data persisted in `.mysql/`)
-- **PDF**: iText7 | **AI Chat**: xAI Grok (optional)
+| Layer    | Technology                        | Port |
+|----------|-----------------------------------|------|
+| Frontend | React 18 + Vite                   | 5000 |
+| Backend  | Spring Boot 3.2 (Java 19)         | 8080 |
+| Database | MySQL 8 (self-managed in workflow) | 3306 |
 
-## How to Run
+## Running on Replit
 
 Two workflows must both be running:
 
-| Workflow | Command | Port |
-|---|---|---|
-| **Backend** | `cd backend && bash start-backend.sh` | 8080 |
-| **Start application** | `cd frontend && npm run dev` | 5000 |
+1. **Backend** — starts MySQL, waits for it, creates the `insurance_portal` database, then runs the Spring Boot API on port 8080. First startup takes ~60 s while Maven downloads dependencies.
+2. **Start application** — runs `cd frontend && npm run dev` on port 5000. Frontend proxies `/api` requests to the backend, so CORS is not an issue.
 
-The frontend proxies all `/api/*` requests to the backend, so open the app on **port 5000**.
+Both workflows start automatically. If you restart them, start **Backend** first and wait for "Started InsurancePortalApplication" in the logs before the frontend matters.
 
-The backend workflow starts MySQL automatically (data stored in `.mysql/`), creates the `insurance_portal` database, and runs the Spring Boot app. Hibernate manages schema migrations on startup.
+## Default Login
 
-## Default Credentials
+| Role  | Email              | Password  |
+|-------|--------------------|-----------|
+| Admin | admin@dicp.com.mm  | Admin@123 |
 
-On first run, a seeded admin account is created:
-- **Email**: `admin@dicp.com.mm`
-- **Password**: `Admin@123`
+The admin account is seeded automatically on first backend startup.
 
-## Environment Variables / Secrets
+## Environment Variables
 
-| Variable | Required | Purpose |
-|---|---|---|
-| `DB_PASSWORD` | No (defaults to empty) | MySQL root password |
-| `JWT_SECRET` | No (has a dev default) | JWT signing key — change for production |
-| `ADMIN_EMAIL` | No | Override bootstrap admin email |
-| `ADMIN_PASSWORD` | No | Override bootstrap admin password |
-| `XAI_API_KEY` | No | Enables AI chat assistant (xAI Grok) |
-| `CORS_ALLOWED_ORIGINS` | No | Comma-separated allowed origins (defaults to localhost) |
+All backend defaults are built into `application.properties`. Optional overrides:
+
+| Variable         | Purpose                                  |
+|------------------|------------------------------------------|
+| `DB_PASSWORD`    | MySQL root password (empty = no password)|
+| `JWT_SECRET`     | JWT signing key (has a built-in default) |
+| `ADMIN_EMAIL`    | Bootstrap admin email                    |
+| `ADMIN_PASSWORD` | Bootstrap admin password                 |
+| `XAI_API_KEY`    | xAI Grok key for AI chat (optional)      |
+
+## Project Structure
+
+```
+frontend/          React 18 + Vite (port 5000)
+backend/           Spring Boot 3.2 REST API (port 8080)
+  start-backend.sh Replit workflow entry point (starts MySQL + Spring Boot)
+  run-local.sh     Local Mac/Linux startup (loads .env, assumes MySQL running)
+  src/main/resources/
+    application.properties       Main config with all defaults
+database/
+  local_mysql.sql  Full schema for local import (Replit uses Hibernate ddl-auto)
+```
 
 ## User Preferences
 
-<!-- Add user preferences here when requested -->
+- Keep existing project structure and stack — do not restructure or migrate.
