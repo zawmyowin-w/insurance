@@ -17,4 +17,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     boolean existsByApplication_IdAndPeriodNumberAndStatusNot(Long applicationId, Integer periodNumber, PaymentStatus status);
 
     void deleteAllByCustomer(User customer);
+
+    /** Duplicate-transaction check: same last-6 digits already submitted and not rejected */
+    boolean existsByTransactionLastSixDigitsAndStatusNot(String transactionLastSixDigits, PaymentStatus status);
 }

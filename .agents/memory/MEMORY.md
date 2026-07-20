@@ -7,3 +7,4 @@
 - [React button type mutation triggers phantom submit](react-button-type-mutation-submit.md) — toggle button changing type button→submit at same JSX position can self-submit on the toggling click; fix with distinct Fragment keys
 - [Premium installment schedule system](premium-schedule-system.md) — dynamic schedule from app+package data; Payment.periodNumber tracks which installment is paid; PremiumScheduleUtil shared by both endpoints
 - [iText7 bilingual PDF without Myanmar font](itext7-bilingual-pdf.md) — StandardFonts (Helvetica) are Latin-only; Myanmar Unicode must be embedded TTF; pragmatic fallback: English primary + Myanmar romanized labels in parentheses
+- [Insurance type details + AI chat architecture](insurance-type-details-and-chat.md) — InsuranceType has description/benefits/rules; AI chat at /ai/chat needs XAI_API_KEY; payment needs last-6-digits + amount

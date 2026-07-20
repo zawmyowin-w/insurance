@@ -43,8 +43,16 @@ public class AdminController {
     @Transactional(readOnly = true)
     public ResponseEntity<?> listInsuranceTypes() {
         return ResponseEntity.ok(insuranceTypeRepo.findAllByOrderByNameAsc().stream()
-            .map(t -> Map.of("id", t.getId(), "name", t.getName(),
-                             "createdAt", t.getCreatedAt() != null ? t.getCreatedAt().toString() : ""))
+            .map(t -> {
+                Map<String, Object> m = new HashMap<>();
+                m.put("id", t.getId());
+                m.put("name", t.getName());
+                m.put("description", t.getDescription() != null ? t.getDescription() : "");
+                m.put("benefits", t.getBenefits() != null ? t.getBenefits() : "");
+                m.put("rules", t.getRules() != null ? t.getRules() : "");
+                m.put("createdAt", t.getCreatedAt() != null ? t.getCreatedAt().toString() : "");
+                return m;
+            })
             .toList());
     }
 
@@ -55,8 +63,38 @@ public class AdminController {
         if (name.isBlank()) return ResponseEntity.badRequest().body(Map.of("message", "Name is required"));
         if (insuranceTypeRepo.findByNameIgnoreCase(name).isPresent())
             return ResponseEntity.status(409).body(Map.of("message", "\"" + name + "\" သည် ရှိပြီးသားဖြစ်သည်"));
-        var saved = insuranceTypeRepo.save(com.insurance.portal.model.InsuranceType.builder().name(name).build());
-        return ResponseEntity.ok(Map.of("id", saved.getId(), "name", saved.getName()));
+        String description = body.getOrDefault("description", "").toString().trim();
+        String benefits    = body.getOrDefault("benefits",    "").toString().trim();
+        String rules       = body.getOrDefault("rules",       "").toString().trim();
+        var saved = insuranceTypeRepo.save(com.insurance.portal.model.InsuranceType.builder()
+            .name(name)
+            .description(description.isBlank() ? null : description)
+            .benefits(benefits.isBlank() ? null : benefits)
+            .rules(rules.isBlank() ? null : rules)
+            .build());
+        Map<String, Object> resp = new HashMap<>();
+        resp.put("id", saved.getId()); resp.put("name", saved.getName());
+        resp.put("description", saved.getDescription() != null ? saved.getDescription() : "");
+        resp.put("benefits", saved.getBenefits() != null ? saved.getBenefits() : "");
+        resp.put("rules", saved.getRules() != null ? saved.getRules() : "");
+        return ResponseEntity.ok(resp);
+    }
+
+    @PutMapping("/insurance-types/{id}")
+    @Transactional
+    public ResponseEntity<?> updateInsuranceType(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        var type = insuranceTypeRepo.findById(id).orElse(null);
+        if (type == null) return ResponseEntity.notFound().build();
+        if (body.containsKey("description")) type.setDescription(body.get("description").toString().trim());
+        if (body.containsKey("benefits"))    type.setBenefits(body.get("benefits").toString().trim());
+        if (body.containsKey("rules"))       type.setRules(body.get("rules").toString().trim());
+        var saved = insuranceTypeRepo.save(type);
+        Map<String, Object> resp = new HashMap<>();
+        resp.put("id", saved.getId()); resp.put("name", saved.getName());
+        resp.put("description", saved.getDescription() != null ? saved.getDescription() : "");
+        resp.put("benefits", saved.getBenefits() != null ? saved.getBenefits() : "");
+        resp.put("rules", saved.getRules() != null ? saved.getRules() : "");
+        return ResponseEntity.ok(resp);
     }
 
     @DeleteMapping("/insurance-types/{id}")

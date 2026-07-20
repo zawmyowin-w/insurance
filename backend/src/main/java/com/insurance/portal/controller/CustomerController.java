@@ -390,7 +390,9 @@ public class CustomerController {
                                            @RequestParam(required = false) String notes,
                                            @RequestParam(required = false) String signature,
                                            @RequestParam(required = false) Integer periodNumber,
-                                           @RequestParam(required = false) String periodLabel) {
+                                           @RequestParam(required = false) String periodLabel,
+                                           @RequestParam(required = false) String transactionLastSixDigits,
+                                           @RequestParam(required = false) java.math.BigDecimal transactionAmount) {
         User user = getUser(principal);
         PolicyApplication app = appRepo.findById(Long.valueOf(applicationId))
                 .orElseThrow(() -> new RuntimeException("Application not found"));
@@ -429,6 +431,20 @@ public class CustomerController {
         if (screenshot == null || screenshot.isEmpty())
             return ResponseEntity.badRequest().body(Map.of("message", "A payment proof screenshot is required"));
 
+        // Validate transaction last 6 digits
+        if (transactionLastSixDigits == null || transactionLastSixDigits.isBlank())
+            return ResponseEntity.badRequest().body(Map.of("message", "Transaction number (last 6 digits) is required"));
+        String last6 = transactionLastSixDigits.trim().replaceAll("[^0-9]", "");
+        if (last6.length() != 6)
+            return ResponseEntity.badRequest().body(Map.of("message", "Transaction number must be exactly 6 digits"));
+        if (transactionAmount == null || transactionAmount.compareTo(java.math.BigDecimal.ZERO) <= 0)
+            return ResponseEntity.badRequest().body(Map.of("message", "Transfer amount is required and must be greater than 0"));
+
+        // Duplicate transaction check — same last-6 digits already used in any non-rejected payment
+        if (paymentRepo.existsByTransactionLastSixDigitsAndStatusNot(last6, PaymentStatus.REJECTED))
+            return ResponseEntity.status(409).body(Map.of("message",
+                "ဤ Transaction (" + last6 + ") သည် တင်ပြပြီးသားဖြစ်သည်။ Duplicate ဖြစ်နေသောကြောင့် ထပ်မံတင်ပြ၍မရပါ"));
+
         String screenshotPath;
         try {
             screenshotPath = FileStorageUtil.saveDocument(screenshot, "payments", "payment");
@@ -457,6 +473,8 @@ public class CustomerController {
                 .paymentType("PREMIUM").paymentMethod(paymentMethod)
                 .screenshotPath(screenshotPath).notes(notes)
                 .periodNumber(periodNumber).periodLabel(periodLabel)
+                .transactionLastSixDigits(last6)
+                .transactionAmount(transactionAmount)
                 .status(PaymentStatus.PENDING).build();
         return ResponseEntity.ok(PaymentResponse.from(paymentRepo.save(payment)));
     }

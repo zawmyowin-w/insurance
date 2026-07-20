@@ -526,7 +526,14 @@
     "statusDue": "Due this month",
     "statusPendingVerification": "Verifying",
     "statusUpcoming": "Upcoming",
-    "screenshotHint": "Upload screenshot of your {{method}} transaction"
+    "screenshotHint": "Upload screenshot of your {{method}} transaction",
+    "transactionDetails": "Transaction Verification",
+    "transactionDigits": "Last 6 Digits of Transaction No. *",
+    "transactionDigitsHint": "Enter the last 6 digits of your transaction reference number",
+    "transactionDigitsMissing": "Please enter the last 6 digits of your transaction number",
+    "transactionAmount": "Amount Transferred (MMK) *",
+    "transactionAmountHint": "Enter the exact amount you transferred",
+    "transactionAmountMissing": "Please enter the transferred amount"
   },
   "submitClaim": {
     "title": "Submit a Claim",

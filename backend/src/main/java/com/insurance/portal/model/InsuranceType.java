@@ -19,6 +19,18 @@ public class InsuranceType {
     @Column(unique = true, nullable = false, length = 100)
     private String name;
 
+    /** Short explanation shown on the home page and plans page */
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    /** Key benefits, one per line or comma-separated */
+    @Column(columnDefinition = "TEXT")
+    private String benefits;
+
+    /** Rules and regulations / terms */
+    @Column(columnDefinition = "TEXT")
+    private String rules;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

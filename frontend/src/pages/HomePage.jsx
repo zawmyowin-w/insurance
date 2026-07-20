@@ -1,17 +1,203 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useEffect, useState, useRef } from 'react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import api from '../services/api'
 
-const insuranceTypes = [
-  { icon: '❤️', bg: 'linear-gradient(135deg,#fff0f0,#ffe4e4)', color: '#dc2626', key: 'life',     accent: '#dc2626' },
-  { icon: '🏥', bg: 'linear-gradient(135deg,#f0fdf4,#dcfce7)', color: '#16a34a', key: 'health',   accent: '#16a34a' },
-  { icon: '🚗', bg: 'linear-gradient(135deg,#eff6ff,#dbeafe)', color: '#1d4ed8', key: 'vehicle',  accent: '#1d4ed8' },
-  { icon: '🏠', bg: 'linear-gradient(135deg,#fefce8,#fef08a)', color: '#ca8a04', key: 'property', accent: '#ca8a04' },
-]
+// Icon/color mapping for known insurance type names
+const TYPE_META = {
+  LIFE:     { icon: '❤️', bg: 'linear-gradient(135deg,#fff0f0,#ffe4e4)', color: '#dc2626', accent: '#dc2626' },
+  HEALTH:   { icon: '🏥', bg: 'linear-gradient(135deg,#f0fdf4,#dcfce7)', color: '#16a34a', accent: '#16a34a' },
+  VEHICLE:  { icon: '🚗', bg: 'linear-gradient(135deg,#eff6ff,#dbeafe)', color: '#1d4ed8', accent: '#1d4ed8' },
+  PROPERTY: { icon: '🏠', bg: 'linear-gradient(135deg,#fefce8,#fef08a)', color: '#ca8a04', accent: '#ca8a04' },
+  FIRE:     { icon: '🔥', bg: 'linear-gradient(135deg,#fff7ed,#ffedd5)', color: '#ea580c', accent: '#ea580c' },
+  MARINE:   { icon: '⚓', bg: 'linear-gradient(135deg,#ecfeff,#cffafe)', color: '#0891b2', accent: '#0891b2' },
+  TRAVEL:   { icon: '✈️', bg: 'linear-gradient(135deg,#f5f3ff,#ede9fe)', color: '#7c3aed', accent: '#7c3aed' },
+  ACCIDENT: { icon: '🩺', bg: 'linear-gradient(135deg,#fff1f2,#ffe4e6)', color: '#be123c', accent: '#be123c' },
+  BUSINESS: { icon: '🏢', bg: 'linear-gradient(135deg,#eff6ff,#dbeafe)', color: '#1e40af', accent: '#1e40af' },
+  CROP:     { icon: '🌾', bg: 'linear-gradient(135deg,#f0fdf4,#dcfce7)', color: '#15803d', accent: '#15803d' },
+}
+const DEFAULT_META = { icon: '🛡️', bg: 'linear-gradient(135deg,#f5f3ff,#ede9fe)', color: '#6366f1', accent: '#6366f1' }
+const getMeta = name => TYPE_META[(name || '').toUpperCase()] || DEFAULT_META
+
+// ── AI Chat Widget ──────────────────────────────────────────────────────────
+
+function AiChatWidget() {
+  const [open, setOpen]       = useState(false)
+  const [input, setInput]     = useState('')
+  const [messages, setMessages] = useState([
+    { from: 'ai', text: 'မင်္ဂလာပါ! ကျွန်ုပ်သည် DICP Insurance Assistant ဖြစ်ပါသည်။ အာမခံအမျိုးအစားများ၊ Plan များ၊ Benefits နှင့်ပတ်သက်၍ မေးမြန်းနိုင်ပါသည်။' }
+  ])
+  const [loading, setLoading] = useState(false)
+  const bottomRef = useRef()
+
+  useEffect(() => {
+    if (open && bottomRef.current)
+      bottomRef.current.scrollIntoView({ behavior: 'smooth' })
+  }, [messages, open])
+
+  const send = async () => {
+    const msg = input.trim()
+    if (!msg || loading) return
+    setInput('')
+    setMessages(prev => [...prev, { from: 'user', text: msg }])
+    setLoading(true)
+    try {
+      const res = await api.post('/ai/chat', { message: msg })
+      setMessages(prev => [...prev, { from: 'ai', text: res.data.reply }])
+    } catch {
+      setMessages(prev => [...prev, { from: 'ai', text: 'Sorry, something went wrong. Please try again.' }])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleKey = e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send() }
+  }
+
+  return (
+    <>
+      {/* Chat Panel */}
+      {open && (
+        <div style={{
+          position: 'fixed', bottom: 90, right: 24, zIndex: 1200,
+          width: 340, maxWidth: 'calc(100vw - 48px)',
+          background: 'var(--bg)', border: '1.5px solid var(--border)',
+          borderRadius: 18, boxShadow: '0 12px 48px rgba(0,0,0,0.18)',
+          display: 'flex', flexDirection: 'column', overflow: 'hidden',
+          animation: 'fadeInUp .25s ease',
+        }}>
+          {/* Header */}
+          <div style={{
+            background: 'linear-gradient(135deg, var(--primary), #7c3aed)',
+            padding: '0.9rem 1rem', display: 'flex', alignItems: 'center', gap: 10,
+          }}>
+            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>
+              🤖
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ color: '#fff', fontWeight: 700, fontSize: '0.9rem' }}>Insurance AI Assistant</div>
+              <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.72rem' }}>Ask about plans, benefits & more</div>
+            </div>
+            <button onClick={() => setOpen(false)}
+              style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '1.1rem', opacity: 0.8, padding: '0.2rem' }}>
+              <i className="bi bi-x-lg"></i>
+            </button>
+          </div>
+
+          {/* Messages */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '0.85rem 0.9rem', display: 'flex', flexDirection: 'column', gap: 10, minHeight: 240, maxHeight: 340 }}>
+            {messages.map((m, i) => (
+              <div key={i} style={{ display: 'flex', justifyContent: m.from === 'user' ? 'flex-end' : 'flex-start' }}>
+                {m.from === 'ai' && (
+                  <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), #7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem', marginRight: 6, flexShrink: 0, marginTop: 2 }}>
+                    🤖
+                  </div>
+                )}
+                <div style={{
+                  maxWidth: '78%', padding: '0.55rem 0.8rem', borderRadius: m.from === 'user' ? '14px 14px 4px 14px' : '14px 14px 14px 4px',
+                  background: m.from === 'user' ? 'var(--primary)' : 'var(--bg-secondary)',
+                  color: m.from === 'user' ? '#fff' : 'var(--text-primary)',
+                  fontSize: '0.83rem', lineHeight: 1.55, whiteSpace: 'pre-wrap',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.07)',
+                }}>
+                  {m.text}
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary), #7c3aed)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.8rem' }}>🤖</div>
+                <div style={{ background: 'var(--bg-secondary)', borderRadius: '14px 14px 14px 4px', padding: '0.55rem 0.9rem', fontSize: '0.83rem', color: 'var(--text-muted)' }}>
+                  <span style={{ display: 'inline-flex', gap: 3 }}>
+                    <span style={{ animation: 'bounce 1.2s infinite 0s', display: 'inline-block' }}>●</span>
+                    <span style={{ animation: 'bounce 1.2s infinite .2s', display: 'inline-block' }}>●</span>
+                    <span style={{ animation: 'bounce 1.2s infinite .4s', display: 'inline-block' }}>●</span>
+                  </span>
+                </div>
+              </div>
+            )}
+            <div ref={bottomRef} />
+          </div>
+
+          {/* Input */}
+          <div style={{ padding: '0.6rem 0.75rem', borderTop: '1px solid var(--border)', display: 'flex', gap: 8 }}>
+            <textarea
+              rows={1}
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={handleKey}
+              placeholder="မေးလိုသည့် မေးခွန်းကို ရိုက်ပါ..."
+              style={{
+                flex: 1, resize: 'none', border: '1.5px solid var(--border)', borderRadius: 10,
+                padding: '0.5rem 0.7rem', fontSize: '0.83rem', background: 'var(--bg-secondary)',
+                color: 'var(--text-primary)', outline: 'none', fontFamily: 'inherit',
+                transition: 'border-color .15s',
+              }}
+              onFocus={e => e.target.style.borderColor = 'var(--primary)'}
+              onBlur={e => e.target.style.borderColor = 'var(--border)'}
+            />
+            <button onClick={send} disabled={!input.trim() || loading}
+              style={{
+                width: 36, height: 36, borderRadius: '50%', border: 'none', cursor: 'pointer',
+                background: input.trim() && !loading ? 'var(--primary)' : 'var(--border)',
+                color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '0.95rem', flexShrink: 0, transition: 'background .15s', alignSelf: 'flex-end',
+              }}>
+              <i className="bi bi-send-fill" style={{ fontSize: '0.8rem' }}></i>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Bubble Toggle */}
+      <button
+        onClick={() => setOpen(v => !v)}
+        style={{
+          position: 'fixed', bottom: 24, right: 24, zIndex: 1200,
+          width: 56, height: 56, borderRadius: '50%', border: 'none', cursor: 'pointer',
+          background: 'linear-gradient(135deg, var(--primary), #7c3aed)',
+          boxShadow: '0 6px 24px rgba(99,102,241,0.45)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: '1.4rem', transition: 'transform .2s, box-shadow .2s',
+        }}
+        title="Ask AI about insurance"
+        onMouseOver={e => e.currentTarget.style.transform = 'scale(1.08)'}
+        onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
+      >
+        {open ? '✕' : '🤖'}
+      </button>
+
+      <style>{`
+        @keyframes bounce {
+          0%, 80%, 100% { transform: translateY(0); }
+          40% { transform: translateY(-4px); }
+        }
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(16px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
+    </>
+  )
+}
+
+// ── Main HomePage ───────────────────────────────────────────────────────────
 
 export default function HomePage() {
   const { t } = useTranslation()
+  const [insuranceTypes, setInsuranceTypes] = useState([])
+  const [typesLoading, setTypesLoading]     = useState(true)
+  const [expandedType, setExpandedType]     = useState(null)
+
+  useEffect(() => {
+    api.get('/insurance-types/public')
+      .then(res => setInsuranceTypes(Array.isArray(res.data) ? res.data : []))
+      .catch(() => setInsuranceTypes([]))
+      .finally(() => setTypesLoading(false))
+  }, [])
 
   const stats = [
     { value: '1M+', labelKey: 'home.stat1', icon: 'bi-people-fill' },
@@ -33,16 +219,13 @@ export default function HomePage() {
 
       {/* ─── Hero ─── */}
       <section className="hero-section-new">
-        {/* Animated orbs */}
         <div className="hero-orb hero-orb-1" />
         <div className="hero-orb hero-orb-2" />
         <div className="hero-orb hero-orb-3" />
-        {/* Mesh grid overlay */}
         <div className="hero-mesh" />
 
         <div className="container position-relative" style={{ zIndex: 2 }}>
           <div className="row align-items-center" style={{ minHeight: 'calc(100vh - 70px)' }}>
-            {/* Left – text */}
             <div className="col-12 col-lg-6 py-5">
               <div className="fade-in">
                 <div className="hero-badge-new">
@@ -59,7 +242,6 @@ export default function HomePage() {
                     {t('hero.cta2')}
                   </Link>
                 </div>
-                {/* Trust row */}
                 <div className="d-flex align-items-center gap-3 mt-5 flex-wrap">
                   {['SSL Secured','ISO Certified','Bank-grade Encryption'].map(label => (
                     <div key={label} className="hero-trust-pill">
@@ -70,15 +252,9 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
-
-            {/* Right – Hero illustration */}
             <div className="col-12 col-lg-6 d-flex justify-content-center align-items-center py-4 py-lg-0">
               <div className="hero-img-scene fade-in">
-                <img
-                  src="/hero-illustration.jpg"
-                  alt="Insurance illustration"
-                  className="hero-img-main"
-                />
+                <img src="/hero-illustration.jpg" alt="Insurance illustration" className="hero-img-main" />
               </div>
             </div>
           </div>
@@ -102,7 +278,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ─── Insurance Types ─── */}
+      {/* ─── Insurance Types (dynamic from API) ─── */}
       <section style={{ padding: '5rem 0', background: 'var(--bg)' }}>
         <div className="container">
           <div className="text-center mb-5">
@@ -110,30 +286,96 @@ export default function HomePage() {
             <h2 className="section-title">{t('home.typesTitle')}</h2>
             <p className="section-subtitle">{t('home.typesSubtitle')}</p>
           </div>
-          <div className="row g-4">
-            {insuranceTypes.map(type => (
-              <div key={type.key} className="col-12 col-sm-6 col-lg-3">
-                <div className="insurance-card-3d">
-                  <div className="insurance-card-3d-icon" style={{ background: type.bg }}>
-                    <span style={{ fontSize: '2rem' }}>{type.icon}</span>
-                    <div className="insurance-card-3d-glow" style={{ background: type.accent }} />
+
+          {typesLoading ? (
+            <div className="text-center py-4">
+              <span className="spinner-border" style={{ color: 'var(--primary)' }}></span>
+            </div>
+          ) : insuranceTypes.length === 0 ? (
+            <div className="text-center py-5" style={{ color: 'var(--text-muted)' }}>
+              <i className="bi bi-shield" style={{ fontSize: '2.5rem', display: 'block', marginBottom: 10 }}></i>
+              <p>Insurance types are being configured. Please check back soon.</p>
+            </div>
+          ) : (
+            <div className="row g-4">
+              {insuranceTypes.map(type => {
+                const meta = getMeta(type.name)
+                const isOpen = expandedType === type.id
+                const hasDetails = type.description || type.benefits || type.rules
+                return (
+                  <div key={type.id} className="col-12 col-sm-6 col-lg-3">
+                    <div
+                      className="insurance-card-3d"
+                      style={{ cursor: hasDetails ? 'pointer' : 'default', transition: 'box-shadow .2s' }}
+                      onClick={() => hasDetails && setExpandedType(isOpen ? null : type.id)}
+                    >
+                      <div className="insurance-card-3d-icon" style={{ background: meta.bg }}>
+                        <span style={{ fontSize: '2rem' }}>{meta.icon}</span>
+                        <div className="insurance-card-3d-glow" style={{ background: meta.accent }} />
+                      </div>
+                      <div style={{ padding: '0 0.25rem' }}>
+                        <h5 style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '0.4rem' }}>
+                          {type.name.charAt(0) + type.name.slice(1).toLowerCase().replace(/_/g, ' ')}
+                          {' '}Insurance
+                        </h5>
+                        {type.description ? (
+                          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '0.85rem', lineHeight: 1.55 }}>
+                            {type.description}
+                          </p>
+                        ) : (
+                          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '0.85rem' }}>
+                            {t(`insuranceTypes.${type.name.toLowerCase()}.desc`, { defaultValue: 'Comprehensive insurance coverage tailored for you.' })}
+                          </p>
+                        )}
+
+                        {/* Expandable Details */}
+                        {isOpen && hasDetails && (
+                          <div className="fade-in" style={{ marginBottom: '0.85rem' }}>
+                            {type.benefits && (
+                              <div style={{ marginBottom: '0.6rem' }}>
+                                <div style={{ fontWeight: 700, fontSize: '0.74rem', color: '#16a34a', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                  <i className="bi bi-check2-circle me-1"></i>Benefits
+                                </div>
+                                <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.6, whiteSpace: 'pre-wrap', background: '#f0fdf4', borderRadius: 8, padding: '0.5rem 0.6rem', border: '1px solid #bbf7d0' }}>
+                                  {type.benefits}
+                                </div>
+                              </div>
+                            )}
+                            {type.rules && (
+                              <div>
+                                <div style={{ fontWeight: 700, fontSize: '0.74rem', color: '#f59e0b', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                                  <i className="bi bi-file-text me-1"></i>Rules & Conditions
+                                </div>
+                                <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.6, whiteSpace: 'pre-wrap', background: '#fffbeb', borderRadius: 8, padding: '0.5rem 0.6rem', border: '1px solid #fde68a' }}>
+                                  {type.rules}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        <div className="d-flex align-items-center gap-2">
+                          <Link to="/plans" className="insurance-card-3d-link" style={{ color: meta.accent }}>
+                            {t('home.learnMore')} <i className="bi bi-arrow-right ms-1"></i>
+                          </Link>
+                          {hasDetails && (
+                            <button
+                              type="button"
+                              onClick={e => { e.stopPropagation(); setExpandedType(isOpen ? null : type.id) }}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.76rem', color: meta.accent, fontWeight: 600, padding: 0 }}
+                            >
+                              {isOpen ? 'ပိတ်မည်' : 'အသေးစိတ် ▾'}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <div className="insurance-card-3d-accent" style={{ background: meta.accent }} />
+                    </div>
                   </div>
-                  <div style={{ padding: '0 0.25rem' }}>
-                    <h5 style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '0.4rem' }}>
-                      {t(`insuranceTypes.${type.key}.title`)}
-                    </h5>
-                    <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', marginBottom: '1rem' }}>
-                      {t(`insuranceTypes.${type.key}.desc`)}
-                    </p>
-                    <Link to="/plans" className="insurance-card-3d-link" style={{ color: type.accent }}>
-                      {t('home.learnMore')} <i className="bi bi-arrow-right ms-1"></i>
-                    </Link>
-                  </div>
-                  <div className="insurance-card-3d-accent" style={{ background: type.accent }} />
-                </div>
-              </div>
-            ))}
-          </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       </section>
 
@@ -219,6 +461,9 @@ export default function HomePage() {
       </section>
 
       <Footer />
+
+      {/* ─── AI Chat Widget (floating) ─── */}
+      <AiChatWidget />
     </div>
   )
 }

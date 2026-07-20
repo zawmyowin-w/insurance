@@ -28,6 +28,7 @@ export default function MyPaymentsPage() {
   const [payForm, setPayForm]     = useState({
     applicationId: '', paymentMethod: '', screenshot: null,
     notes: '', periodNumber: null, periodLabel: '', installmentAmount: null,
+    transactionLastSixDigits: '', transactionAmount: '',
   })
   const [paySignature, setPaySignature] = useState(null)
   const paySignatureRef = useRef()
@@ -52,7 +53,7 @@ export default function MyPaymentsPage() {
   useEffect(() => { fetchData() }, [])
 
   const openModal = ({ appId = '', periodNumber = null, periodLabel = '', installmentAmount = null } = {}) => {
-    setPayForm({ applicationId: String(appId), paymentMethod: '', screenshot: null, notes: '', periodNumber, periodLabel, installmentAmount })
+    setPayForm({ applicationId: String(appId), paymentMethod: '', screenshot: null, notes: '', periodNumber, periodLabel, installmentAmount, transactionLastSixDigits: '', transactionAmount: '' })
     setPaySignature(null)
     setShowModal(true)
   }
@@ -69,6 +70,11 @@ export default function MyPaymentsPage() {
     if (!payForm.paymentMethod) { toast.error(t('payments.methodMissing')); return }
     if (!payForm.screenshot)    { toast.error(t('payments.screenshotMissing')); return }
     if (!paySignature)          { toast.error(t('payments.sigMissing')); return }
+    const last6 = (payForm.transactionLastSixDigits || '').replace(/[^0-9]/g, '')
+    if (last6.length !== 6)     { toast.error(t('payments.transactionDigitsMissing')); return }
+    if (!payForm.transactionAmount || Number(payForm.transactionAmount) <= 0) {
+      toast.error(t('payments.transactionAmountMissing')); return
+    }
     setSubmitting(true)
     try {
       const fd = new FormData()
@@ -77,6 +83,8 @@ export default function MyPaymentsPage() {
       fd.append('screenshot',    payForm.screenshot)
       fd.append('notes',         payForm.notes)
       fd.append('signature',     paySignature)
+      fd.append('transactionLastSixDigits', last6)
+      fd.append('transactionAmount', payForm.transactionAmount)
       if (payForm.periodNumber != null) fd.append('periodNumber', payForm.periodNumber)
       if (payForm.periodLabel)          fd.append('periodLabel',  payForm.periodLabel)
       await api.post('/customer/payments', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
@@ -517,6 +525,49 @@ function PaymentModal({ payForm, setPayForm, payMethods, selectedMethod, paySign
                     )}
                   </div>
                 )}
+              </div>
+
+              {/* Transaction details */}
+              <div className="mb-3" style={{ background: 'var(--bg-secondary)', borderRadius: 12, padding: '1rem', border: '1.5px solid var(--border)' }}>
+                <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '0.75rem' }}>
+                  <i className="bi bi-hash me-1" style={{ color: 'var(--primary)' }}></i>
+                  {t('payments.transactionDetails')}
+                </div>
+                <div className="row g-2">
+                  <div className="col-12 col-sm-6">
+                    <label className="form-label-custom">{t('payments.transactionDigits')}</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      className="form-control-custom w-100"
+                      placeholder="123456"
+                      value={payForm.transactionLastSixDigits}
+                      onChange={e => setPayForm(f => ({ ...f, transactionLastSixDigits: e.target.value.replace(/[^0-9]/g, '').slice(0,6) }))}
+                      style={{ letterSpacing: '0.15em', fontWeight: 700, fontSize: '1.1rem', textAlign: 'center' }}
+                      required
+                    />
+                    <small style={{ color: 'var(--text-muted)', fontSize: '0.76rem' }}>
+                      {t('payments.transactionDigitsHint')}
+                    </small>
+                  </div>
+                  <div className="col-12 col-sm-6">
+                    <label className="form-label-custom">{t('payments.transactionAmount')}</label>
+                    <input
+                      type="number"
+                      min="1"
+                      className="form-control-custom w-100"
+                      placeholder="50000"
+                      value={payForm.transactionAmount}
+                      onChange={e => setPayForm(f => ({ ...f, transactionAmount: e.target.value }))}
+                      style={{ fontWeight: 700 }}
+                      required
+                    />
+                    <small style={{ color: 'var(--text-muted)', fontSize: '0.76rem' }}>
+                      {t('payments.transactionAmountHint')}
+                    </small>
+                  </div>
+                </div>
               </div>
 
               {/* Screenshot upload */}

@@ -60,6 +60,14 @@ public class Payment {
     @Column(name = "period_label", length = 30)
     private String periodLabel;
 
+    /** Last 6 digits of the transaction reference number — used for duplicate detection */
+    @Column(name = "transaction_last_six_digits", length = 6)
+    private String transactionLastSixDigits;
+
+    /** Amount the customer actually transferred — must match the expected installment amount */
+    @Column(name = "transaction_amount", precision = 20, scale = 2)
+    private BigDecimal transactionAmount;
+
     @Column(name = "verified_by")
     private String verifiedBy;
 

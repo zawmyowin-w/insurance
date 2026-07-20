@@ -4,12 +4,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.insurance.portal.dto.PackageResponse;
 import com.insurance.portal.model.InsurancePackage;
 import com.insurance.portal.repository.InsurancePackageRepository;
+import com.insurance.portal.repository.InsuranceTypeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -18,13 +20,28 @@ import java.util.Map;
 public class PackageController {
 
     private final InsurancePackageRepository packageRepository;
+    private final InsuranceTypeRepository insuranceTypeRepository;
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
-    // Public endpoint - no auth required
+    // Public endpoints - no auth required
     @GetMapping("/packages/public")
     public List<PackageResponse> getPublicPackages() {
         return packageRepository.findAllByActive(true).stream()
                 .map(PackageResponse::from).toList();
+    }
+
+    @GetMapping("/insurance-types/public")
+    public List<Map<String, Object>> getPublicInsuranceTypes() {
+        return insuranceTypeRepository.findAllByOrderByNameAsc().stream()
+            .map(t -> {
+                Map<String, Object> m = new HashMap<>();
+                m.put("id", t.getId());
+                m.put("name", t.getName());
+                m.put("description", t.getDescription() != null ? t.getDescription() : "");
+                m.put("benefits", t.getBenefits() != null ? t.getBenefits() : "");
+                m.put("rules", t.getRules() != null ? t.getRules() : "");
+                return m;
+            }).toList();
     }
 
     // Admin endpoints

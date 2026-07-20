@@ -90,6 +90,8 @@ public class SecurityConfig {
                 .requestMatchers("/auth/login", "/auth/register", "/auth/google").permitAll()
                 .requestMatchers("/forms/public").permitAll()
                 .requestMatchers(HttpMethod.GET, "/packages/public").permitAll()
+                .requestMatchers(HttpMethod.GET, "/insurance-types/public").permitAll()
+                .requestMatchers(HttpMethod.POST, "/ai/chat").permitAll()
                 .requestMatchers(HttpMethod.GET, "/payment-methods/public").permitAll()
                 .requestMatchers(HttpMethod.GET, "/payment-methods/*/qr").permitAll()
                 .requestMatchers(HttpMethod.GET, "/payment-methods/*/logo").permitAll()

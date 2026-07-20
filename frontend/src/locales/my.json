@@ -527,7 +527,14 @@
     "statusDue": "ဤလပေးရမည်",
     "statusPendingVerification": "စစ်ဆေးဆဲ",
     "statusUpcoming": "လာမည်",
-    "screenshotHint": "ပေးချေပြီးသော {{method}} transaction ၏ screenshot ကို upload လုပ်ပါ"
+    "screenshotHint": "ပေးချေပြီးသော {{method}} transaction ၏ screenshot ကို upload လုပ်ပါ",
+    "transactionDetails": "Transaction အတည်ပြုခြင်း",
+    "transactionDigits": "Transaction နံပါတ်၏ နောက်ဆုံးဂဏန်း ၆ လုံး *",
+    "transactionDigitsHint": "Transaction reference နံပါတ်၏ နောက်ဆုံးဂဏန်း ၆ လုံး ထည့်ပါ",
+    "transactionDigitsMissing": "Transaction နံပါတ်၏ နောက်ဆုံးဂဏန်း ၆ လုံး ထည့်ပါ",
+    "transactionAmount": "လွှဲပို့သောငွေ (ကျပ်) *",
+    "transactionAmountHint": "လွှဲပို့သော ငွေပမာဏ အတိအကျ ထည့်ပါ",
+    "transactionAmountMissing": "လွှဲပို့သောငွေ ထည့်ပါ"
   },
   "submitClaim": {
     "title": "တောင်းဆိုမှု တင်ပြရန်",
