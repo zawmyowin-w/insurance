@@ -589,7 +589,7 @@ export default function ManagePackagesPage() {
                           <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--primary)' }}>{pkg.type}</span>
                           {tiers.length > 0 && (
                             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                              · {tiers.map(t => `${t.years}yr/${(t.premiumRate * 100).toFixed(1)}%`).join(', ')}
+                              · {tiers.map(t => `${t.years}year/${(t.premiumRate * 100).toFixed(1)}%`).join(', ')}
                             </span>
                           )}
                         </div>
@@ -714,7 +714,7 @@ function PackageDetailModal({ pkg, onClose, onEdit }) {
                   <thead>
                     <tr style={{ background: 'var(--bg-secondary)' }}>
                       <th style={thStyle}>Duration</th>
-                      <th style={thStyle}>Rate / yr</th>
+                      <th style={thStyle}>Rate / year</th>
                       <th style={thStyle}>Annual Premium (midpoint)</th>
                       <th style={thStyle}>{freqLabel.split('(')[0].trim()} Amount</th>
                     </tr>
