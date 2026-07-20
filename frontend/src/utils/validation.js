@@ -32,9 +32,9 @@ export function isEmailValid(email) {
 //   - auto-prefix: +95
 //   - after +95, must start with 9
 //   - total digits after +95: 8–10 (i.e. 9 + 7–9 more digits)
-export const PHONE_PATTERN = /^\+959\d{7,9}$/
+export const PHONE_PATTERN = /^\+959\d{7,10}$/
 export const PHONE_ERROR =
-  'Phone must start with +959 followed by 7–9 more digits (e.g. +9591234567)'
+  'Phone must start with +959 followed by 7–10 more digits (e.g. +9591234567)'
 
 // ── Password ──────────────────────────────────────────────────────────────
 // Rules: min 8 chars, 1 uppercase, 1 lowercase, 1 digit, 1 special character
