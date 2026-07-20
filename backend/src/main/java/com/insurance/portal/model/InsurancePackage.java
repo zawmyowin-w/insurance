@@ -36,8 +36,8 @@ public class InsurancePackage {
     @Column(name = "coverage_max", nullable = false, precision = 20, scale = 2)
     private BigDecimal coverageMax;
 
-    @Column(name = "premium_rate", nullable = false, precision = 8, scale = 4)
-    private BigDecimal premiumRate; // e.g. 0.0200 = 2%
+    @Column(name = "premium_rate", precision = 8, scale = 4)
+    private BigDecimal premiumRate; // e.g. 0.0200 = 2% — legacy field; derived from first durationTier
 
     @Column(name = "durations")
     private String durationsJson; // e.g. "[1,2,3,5]"
