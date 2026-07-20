@@ -266,5 +266,15 @@ CREATE TABLE `notifications` (
   `recipient_id` bigint      NOT NULL,
   PRIMARY KEY (`id`),
   KEY `FKqqnsjxlwleyjbxlmm213jaj3f` (`recipient_id`),
+  KEY `idx_notifications_recipient_read` (`recipient_id`, `is_read`),
   CONSTRAINT `FKqqnsjxlwleyjbxlmm213jaj3f` FOREIGN KEY (`recipient_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ── Supplemental performance indexes ─────────────────────────────────────────
+-- MySQL 8 does not support CREATE INDEX IF NOT EXISTS.
+-- These are added via start-backend.sh on fresh installs; see that script for the idempotent form.
+CREATE INDEX `idx_applications_status`          ON `policy_applications` (`status`);
+CREATE INDEX `idx_claims_status`                ON `claims` (`status`);
+CREATE INDEX `idx_payments_status`              ON `payments` (`status`);
+CREATE INDEX `idx_feedbacks_is_read`            ON `feedbacks` (`is_read`);
+CREATE INDEX `idx_notifications_recipient_read` ON `notifications` (`recipient_id`, `is_read`);
