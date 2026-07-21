@@ -5,7 +5,7 @@ import { useAuth } from '../../context/AuthContext'
 import api from '../../services/api'
 
 export default function AdminDashboard() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { user } = useAuth()
   const [stats, setStats] = useState({ totalCustomers: 0, totalAgents: 0, pendingApplications: 0, pendingClaims: 0, verifiedApplications: 0, verifiedClaims: 0, totalPackages: 0, monthlyRevenue: 0 })
   const [recentActivities, setRecentActivities] = useState([])
@@ -52,7 +52,7 @@ export default function AdminDashboard() {
               {user?.name} &nbsp;<span style={{ opacity: 0.7, fontWeight: 400, fontSize: '1rem' }}>— {t('admin.dashboard.systemOverview')}</span>
             </h4>
             <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.82rem', marginTop: '0.25rem' }}>
-              {now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              {now.toLocaleDateString(i18n.language === 'my' ? 'my-MM' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </div>
           </div>
           <div className="d-flex gap-2 align-items-center">
