@@ -11,15 +11,22 @@
 
 ---
 
-## Step 1 — Import the Database Schema
+## Step 1 — Import the Database Schema + Seed Data
 
-Run this **once** on a fresh machine to create the database and all tables:
+Run this **once** on a fresh machine to create the database, all tables, and seed data:
 
 ```bash
-mysql -u root -p < database/local_mysql.sql
+mysql -u root < database/local_mysql.sql
 ```
 
-> **No password?** Use `mysql -u root` (no `-p` flag).
+> **Has a password?** Use `mysql -u root -p < database/local_mysql.sql` instead.
+
+This imports:
+- All table definitions
+- 4 insurance types (LIFE, HEALTH, VEHICLE, PROPERTY)
+- 6 default insurance packages
+- Admin account (`admin@dicp.com.mm` / `Admin@123`)
+- Default scheduler settings
 
 After this, Hibernate keeps the schema up to date automatically on every backend restart — you never need to import again.
 
