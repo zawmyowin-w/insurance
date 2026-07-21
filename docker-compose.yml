@@ -1,0 +1,40 @@
+version: '3.8'
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Optional: spin up MySQL with Docker so you don't need to install it.
+#
+# Usage:
+#   docker compose up -d          # start MySQL in background
+#   docker compose down           # stop (data is preserved in the volume)
+#   docker compose down -v        # stop AND wipe all data
+#
+# After starting, import the seed data once:
+#   mysql -h 127.0.0.1 -P 3306 -u root < database/local_mysql.sql
+#
+# Then start the backend and frontend as normal (see LOCAL_SETUP.md).
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: insurance_portal_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ""
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      MYSQL_DATABASE: insurance_portal
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  mysql_data:
+    driver: local
