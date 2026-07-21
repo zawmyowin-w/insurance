@@ -1,4 +1,3 @@
-import React from 'react'
 import { NRC_DATA, NRC_CITIZEN_TYPES, getTownships, resolveToCode } from '../data/nrcData'
 
 /**

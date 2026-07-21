@@ -44,13 +44,8 @@ public class AdminController {
     public ResponseEntity<?> listInsuranceTypes() {
         return ResponseEntity.ok(insuranceTypeRepo.findAllByOrderByNameAsc().stream()
             .map(t -> {
-                Map<String, Object> m = new HashMap<>();
-                m.put("id",          t.getId());
-                m.put("name",        t.getName());
-                m.put("description", t.getDescription() != null ? t.getDescription() : "");
-                m.put("benefits",    t.getBenefits()    != null ? t.getBenefits()    : "");
-                m.put("rules",       t.getRules()       != null ? t.getRules()       : "");
-                m.put("createdAt",   t.getCreatedAt()   != null ? t.getCreatedAt().toString() : "");
+                Map<String, Object> m = new HashMap<>(typeToMap(t));
+                m.put("createdAt", t.getCreatedAt() != null ? t.getCreatedAt().toString() : "");
                 return m;
             })
             .toList());

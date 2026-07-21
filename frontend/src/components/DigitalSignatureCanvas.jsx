@@ -1,4 +1,4 @@
-import React, { useRef, useState, useImperativeHandle, forwardRef } from 'react'
+import { useRef, useState, useImperativeHandle, forwardRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
 /**

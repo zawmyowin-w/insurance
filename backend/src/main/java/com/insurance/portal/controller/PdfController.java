@@ -53,7 +53,7 @@ public class PdfController {
     private final FormTemplateRepository templateRepo;
     private final UserRepository userRepo;
     private final PaymentRepository paymentRepo;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     // ── Application PDF (admin) ────────────────────────────────────────
     @GetMapping("/admin/applications/{id}/pdf")
@@ -324,7 +324,7 @@ public class PdfController {
                 if (pkg.getBenefitsJson() != null && !pkg.getBenefitsJson().isBlank()) {
                     try {
                         @SuppressWarnings("unchecked")
-                        java.util.List<String> benefits = objectMapper.readValue(pkg.getBenefitsJson(), java.util.List.class);
+                        java.util.List<String> benefits = MAPPER.readValue(pkg.getBenefitsJson(), java.util.List.class);
                         StringBuilder bsb = new StringBuilder();
                         for (int i = 0; i < benefits.size(); i++) bsb.append((i + 1) + ". " + benefits.get(i) + "\n");
                         doc.add(new Paragraph(bsb.toString().trim()).setFont(regular).setFontSize(9).setFontColor(gray).setMarginBottom(6));
@@ -569,7 +569,7 @@ public class PdfController {
 
         Map<String, Object> dataMap = new HashMap<>();
         if (formDataJson != null && !formDataJson.isBlank()) {
-            try { dataMap = objectMapper.readValue(formDataJson, Map.class); } catch (Exception ignored) {}
+            try { dataMap = MAPPER.readValue(formDataJson, Map.class); } catch (Exception ignored) {}
         }
 
         doc.add(new Paragraph(title).setFont(boldFont).setFontSize(13).setMarginTop(16).setMarginBottom(6));
@@ -594,7 +594,7 @@ public class PdfController {
                 // value may be JSON array ["A","B"] or "true"/"false"
                 if (value.startsWith("[")) {
                     try {
-                        List<String> selected = objectMapper.readValue(value, List.class);
+                        List<String> selected = MAPPER.readValue(value, List.class);
                         displayValue = selected.isEmpty() ? "—" : String.join(", ", selected);
                     } catch (Exception e) { displayValue = value; }
                 } else {

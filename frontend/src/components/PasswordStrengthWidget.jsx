@@ -1,4 +1,3 @@
-import React from 'react'
 import { PWD_RULES } from '../utils/validation'
 
 /**

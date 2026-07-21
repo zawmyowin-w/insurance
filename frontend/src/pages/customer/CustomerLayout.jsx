@@ -1,4 +1,3 @@
-import React from 'react'
 import { useTranslation } from 'react-i18next'
 import DashboardLayout from '../../components/DashboardLayout'
 import { useNotifCount } from '../../context/NotifCountContext'

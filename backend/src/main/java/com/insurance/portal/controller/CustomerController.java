@@ -36,6 +36,8 @@ public class CustomerController {
     private final NotificationRepository notifRepo;
     private final com.insurance.portal.repository.PaymentMethodConfigRepository paymentMethodConfigRepo;
 
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
     private User getUser(UserDetails principal) {
         return userRepo.findByEmail(principal.getUsername()).orElseThrow();
     }
@@ -189,14 +191,13 @@ public class CustomerController {
 
         if (formData != null) {
             try {
-                ObjectMapper mapper = new ObjectMapper();
                 @SuppressWarnings("unchecked")
                 Map<String, Object> existingData = app.getFormData() != null
-                        ? mapper.readValue(app.getFormData(), Map.class) : new HashMap<>();
+                        ? MAPPER.readValue(app.getFormData(), Map.class) : new HashMap<>();
                 @SuppressWarnings("unchecked")
-                Map<String, Object> newData = mapper.readValue(formData, Map.class);
+                Map<String, Object> newData = MAPPER.readValue(formData, Map.class);
                 existingData.putAll(newData);
-                String merged = mapper.writeValueAsString(existingData);
+                String merged = MAPPER.writeValueAsString(existingData);
                 if (request instanceof MultipartHttpServletRequest mpr) {
                     Map<String, MultipartFile> fileMap = mpr.getFileMap();
                     if (!fileMap.isEmpty()) {
@@ -250,14 +251,13 @@ public class CustomerController {
 
         if (formData != null) {
             try {
-                ObjectMapper mapper = new ObjectMapper();
                 @SuppressWarnings("unchecked")
                 Map<String, Object> existingData = claim.getFormData() != null
-                        ? mapper.readValue(claim.getFormData(), Map.class) : new HashMap<>();
+                        ? MAPPER.readValue(claim.getFormData(), Map.class) : new HashMap<>();
                 @SuppressWarnings("unchecked")
-                Map<String, Object> newData = mapper.readValue(formData, Map.class);
+                Map<String, Object> newData = MAPPER.readValue(formData, Map.class);
                 existingData.putAll(newData);
-                String merged = mapper.writeValueAsString(existingData);
+                String merged = MAPPER.writeValueAsString(existingData);
                 if (request instanceof MultipartHttpServletRequest mpr) {
                     Map<String, MultipartFile> fileMap = mpr.getFileMap();
                     if (!fileMap.isEmpty()) {

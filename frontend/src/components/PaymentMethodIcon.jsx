@@ -1,4 +1,3 @@
-import React from 'react'
 
 // Static fallback methods — used only when the API has no configured methods
 export const PAYMENT_METHODS = [

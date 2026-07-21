@@ -24,6 +24,8 @@ public final class FileStorageUtil {
             "image/gif",  ".gif"
     );
 
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
     private FileStorageUtil() {}
 
     // ── Internal helper — shared path-traversal-safe write logic ─────────────
@@ -84,7 +86,7 @@ public final class FileStorageUtil {
     /** Serialises a list of file paths to a JSON array string for storage in a TEXT column. */
     public static String toJsonArray(List<String> paths) {
         if (paths == null || paths.isEmpty()) return null;
-        try { return new ObjectMapper().writeValueAsString(paths); }
+        try { return MAPPER.writeValueAsString(paths); }
         catch (Exception e) { return null; }
     }
 
@@ -92,7 +94,7 @@ public final class FileStorageUtil {
     @SuppressWarnings("unchecked")
     public static List<String> fromJsonArray(String json) {
         if (json == null || json.isBlank()) return List.of();
-        try { return new ObjectMapper().readValue(json, List.class); }
+        try { return MAPPER.readValue(json, List.class); }
         catch (Exception e) { return List.of(); }
     }
 
@@ -124,7 +126,7 @@ public final class FileStorageUtil {
     public static ResponseEntity<?> serveFormFile(String formDataJson, String fieldId) {
         if (formDataJson == null) return ResponseEntity.notFound().build();
         try {
-            Map<String, Object> data = new ObjectMapper().readValue(formDataJson, Map.class);
+            Map<String, Object> data = MAPPER.readValue(formDataJson, Map.class);
             Object val = data.get(fieldId);
             if (val == null) return ResponseEntity.notFound().build();
             return streamFile(val.toString());
