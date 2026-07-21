@@ -11,7 +11,17 @@
 
 ---
 
-## Step 1 — Import the Database
+## Step 1 — Start MySQL
+
+| OS | Command |
+|----|---------|
+| Windows | Open *Services* → start **MySQL80** |
+| Mac (Homebrew) | `brew services start mysql` |
+| Linux | `sudo systemctl start mysql` |
+
+---
+
+## Step 2 — Import the Database
 
 ```bash
 mysql -u root < database/local_mysql.sql
@@ -20,23 +30,28 @@ mysql -u root < database/local_mysql.sql
 > Root has a password? → `mysql -u root -p < database/local_mysql.sql`
 
 This creates the `insurance_portal` database with all tables and seed data:
-- 4 insurance types (LIFE, HEALTH, VEHICLE, PROPERTY)
-- 6 default insurance packages
-- Admin account: `admin@dicp.com.mm` / `Admin@123`
+- 4 insurance types · 6 insurance packages
+- Admin: `admin@dicp.com.mm` / `Admin@123`
 
 ---
 
-## Step 2 — Configure the Backend
+## Step 3 — Set MySQL Password (if needed)
 
-```bash
-cp backend/.env.example backend/.env
+If your MySQL root has a password, open this file and set it:
+
+```
+backend/src/main/resources/application-local.properties
 ```
 
-Open `backend/.env` — set `DB_PASSWORD` if your MySQL root has a password. Leave blank otherwise.
+```properties
+spring.datasource.password=your_password_here
+```
+
+Leave blank if your MySQL root has no password.
 
 ---
 
-## Step 3 — Start the Backend
+## Step 4 — Start the Backend
 
 ```bash
 cd backend
@@ -45,11 +60,13 @@ mvn spring-boot:run -Dspring-boot.run.profiles=local
 
 API → **http://localhost:8080/api**
 
+> First run takes ~60 s while Maven downloads dependencies.
+
 ---
 
-## Step 4 — Start the Frontend
+## Step 5 — Start the Frontend
 
-Open a new terminal:
+Open a **new terminal**:
 
 ```bash
 cd frontend
@@ -73,9 +90,9 @@ App → **http://localhost:5000**
 
 | Error | Fix |
 |-------|-----|
-| `Access denied for user 'root'` | Set `DB_PASSWORD=yourpassword` in `backend/.env` |
-| `Unknown database 'insurance_portal'` | Run Step 1 first |
-| `Communications link failure` | Start MySQL service first |
-| Port 8080 in use | Add `server.port=9090` to `backend/src/main/resources/application-local.properties` |
+| `Access denied for user 'root'` | Set password in `application-local.properties` |
+| `Unknown database 'insurance_portal'` | Run Step 2 first |
+| `Communications link failure` | Start MySQL — see Step 1 |
+| Port 8080 in use | Add `server.port=9090` to `application-local.properties` |
 | Port 5000 in use | Change port in `frontend/package.json` dev script |
-| Frontend shows "Network Error" | Make sure backend is running before starting frontend |
+| Frontend "Network Error" | Start the backend first, then the frontend |
