@@ -5,9 +5,10 @@
 | Tool | Version | Download |
 |------|---------|----------|
 | Java JDK | 17 or 21 | https://adoptium.net |
-| Apache Maven | 3.8+ | https://maven.apache.org/download.cgi |
 | MySQL Server | 8.0+ | https://dev.mysql.com/downloads/mysql |
 | Node.js | 18+ | https://nodejs.org |
+
+> **Maven is not required.** The project includes Maven Wrapper (`mvnw` / `mvnw.cmd`) — the startup scripts use it automatically to download the right Maven version for you.
 
 ---
 
@@ -101,14 +102,17 @@ The admin account is created automatically on first backend startup.
 ```
 frontend/          React 18 + Vite (port 5000)
 backend/           Spring Boot 3.2 REST API (port 8080)
-  run-local.sh     Mac/Linux startup script
-  run-local.bat    Windows startup script
+  mvnw             Maven Wrapper — Mac/Linux (no Maven install needed)
+  mvnw.cmd         Maven Wrapper — Windows
+  run-local.sh     Mac/Linux startup script (uses mvnw automatically)
+  run-local.bat    Windows startup script   (uses mvnw.cmd automatically)
   .env.example     Template for environment variables
   src/main/resources/
     application.properties          Main config (all defaults)
     application-local.properties    Local dev overrides (debug logging)
 database/
-  local_mysql.sql  Full schema — import once with mysql -u root -p < ...
+  local_mysql.sql  Full schema + seed data — import once with:
+                   mysql -u root < database/local_mysql.sql
 ```
 
 ---

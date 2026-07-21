@@ -24,4 +24,10 @@ else
 fi
 
 cd "$SCRIPT_DIR"
-exec mvn spring-boot:run -Dspring-boot.run.profiles=local
+MVNW="$SCRIPT_DIR/mvnw"
+if [ -f "$MVNW" ]; then
+    chmod +x "$MVNW"
+    exec "$MVNW" spring-boot:run -Dspring-boot.run.profiles=local
+else
+    exec mvn spring-boot:run -Dspring-boot.run.profiles=local
+fi

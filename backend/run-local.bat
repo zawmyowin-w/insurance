@@ -20,4 +20,8 @@ IF EXIST ".env" (
     echo [run-local] Copy backend\.env.example to backend\.env if needed.
 )
 
-mvn spring-boot:run -Dspring-boot.run.profiles=local
+IF EXIST "mvnw.cmd" (
+    mvnw.cmd spring-boot:run -Dspring-boot.run.profiles=local
+) ELSE (
+    mvn spring-boot:run -Dspring-boot.run.profiles=local
+)
