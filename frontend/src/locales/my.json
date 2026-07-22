@@ -932,7 +932,12 @@
       "reasonRequired": "မှတ်ချက် ဖြည့်ပါ",
       "approvedSuccess": "တောင်းဆိုမှု အတည်ပြုပြီး",
       "rejectedSuccess": "တောင်းဆိုမှု ငြင်းပယ်ပြီး",
-      "revisedSuccess": "တောင်းဆိုမှု ပြင်ဆင်ရန် ပေးပို့ပြီး"
+      "revisedSuccess": "တောင်းဆိုမှု ပြင်ဆင်ရန် ပေးပို့ပြီး",
+      "status_ALL": "အားလုံး",
+      "status_PENDING": "စောင့်ဆိုင်းဆဲ",
+      "status_VERIFIED": "စစ်ဆေးပြီး",
+      "status_APPROVED": "ခွင့်ပြုပြီး",
+      "status_REJECTED": "ငြင်းပယ်ပြီး"
     },
     "payments": {
       "title": "ငွေပေးချေမှု စီမံရန်",
@@ -1570,5 +1575,37 @@
       "overdueWarningFailed": "သတိပေးစာ ပေးပို့၍ မရပါ",
       "pdfFailed": "PDF ထုတ်လုပ်၍ မရပါ"
     }
+  },
+  "formModal": {
+    "applicationForm": "လျှောက်လွှာ ဖောင်",
+    "claimForm": "တောင်းဆိုမှု ဖောင်",
+    "coverage": "ကာကွယ်မှု",
+    "premium": "ပရီမီယံ",
+    "duration": "သက်တမ်း",
+    "risk": "အန္တရာယ်ဆန်းစစ်ချက်",
+    "claimAmount": "တောင်းဆိုငွေ",
+    "incidentDate": "ဖြစ်ပွားသောရက်",
+    "claimType": "တောင်းဆိုမှု အမျိုးအစား",
+    "customer": "Customer",
+    "generating": "ပြုလုပ်နေသည်...",
+    "pdf": "PDF",
+    "downloadFailed": "PDF ဒေါင်းလုဒ် မအောင်မြင်ပါ",
+    "noTemplate": "ဤ Plan အတွက် Form Template မတွေ့ပါ။",
+    "noFields": "Template တွင် Field မပါဝင်ပါ။",
+    "noneSelected": "မရွေးချယ်ရသေးပါ",
+    "yes": "ဟုတ်သည်",
+    "no": "မဟုတ်ပါ",
+    "noImageUploaded": "ပုံ မတင်ရသေးပါ",
+    "noFileUploaded": "ဖိုင် မတင်ရသေးပါ",
+    "viewImage": "ပုံကြည့်ရန်",
+    "viewFile": "ဖိုင်ကြည့်ရန်",
+    "loading": "ဖွင့်နေသည်...",
+    "couldNotLoad": "ဖိုင် ဖွင့်၍ မရပါ",
+    "notes": "မှတ်ချက်များ",
+    "noNotes": "မှတ်ချက် မထည့်ရသေးပါ။",
+    "noteCustomer": "Customer",
+    "noteAgent": "Agent",
+    "noteAdmin": "Admin",
+    "year": "နှစ်"
   }
 }

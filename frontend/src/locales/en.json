@@ -931,7 +931,12 @@
       "reasonRequired": "Please provide a note",
       "approvedSuccess": "Claim approved successfully",
       "rejectedSuccess": "Claim rejected successfully",
-      "revisedSuccess": "Claim sent for revision"
+      "revisedSuccess": "Claim sent for revision",
+      "status_ALL": "All",
+      "status_PENDING": "Pending",
+      "status_VERIFIED": "Verified",
+      "status_APPROVED": "Approved",
+      "status_REJECTED": "Rejected"
     },
     "payments": {
       "title": "Payments Management",
@@ -1569,5 +1574,37 @@
       "overdueWarningFailed": "Failed to send overdue warning",
       "pdfFailed": "Failed to generate PDF"
     }
+  },
+  "formModal": {
+    "applicationForm": "Application Form",
+    "claimForm": "Claim Form",
+    "coverage": "Coverage",
+    "premium": "Premium",
+    "duration": "Duration",
+    "risk": "Risk",
+    "claimAmount": "Claim Amount",
+    "incidentDate": "Incident Date",
+    "claimType": "Claim Type",
+    "customer": "Customer",
+    "generating": "Generating...",
+    "pdf": "PDF",
+    "downloadFailed": "Failed to download PDF",
+    "noTemplate": "No form template found for this plan.",
+    "noFields": "No fields in this template.",
+    "noneSelected": "None selected",
+    "yes": "Yes",
+    "no": "No",
+    "noImageUploaded": "No image uploaded",
+    "noFileUploaded": "No file uploaded",
+    "viewImage": "View Image",
+    "viewFile": "View File",
+    "loading": "Loading...",
+    "couldNotLoad": "Could not load file",
+    "notes": "Notes",
+    "noNotes": "No notes have been added yet.",
+    "noteCustomer": "Customer",
+    "noteAgent": "Agent",
+    "noteAdmin": "Admin",
+    "year": "year"
   }
 }

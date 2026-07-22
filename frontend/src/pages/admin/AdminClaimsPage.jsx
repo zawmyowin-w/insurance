@@ -52,7 +52,7 @@ export default function AdminClaimsPage() {
             background: filter === f ? 'var(--primary)' : 'var(--bg-card)',
             color: filter === f ? '#fff' : 'var(--text-secondary)',
             fontSize: '0.85rem', cursor: 'pointer'
-          }}>{f}</button>
+          }}>{t(`admin.claims.status_${f}`)}</button>
         ))}
       </div>
 
@@ -81,12 +81,12 @@ export default function AdminClaimsPage() {
                     </div>
                     <div className="d-flex gap-3 flex-wrap mb-2">
                       {[
-                        { label: 'Policy', value: claim.policyName || claim.policy?.packageName },
-                        { label: 'Claim Amount', value: `${Number(claim.amount).toLocaleString()} MMK` },
-                        claim.coverageAmount ? { label: 'Coverage Limit', value: `${Number(claim.coverageAmount).toLocaleString()} MMK` } : null,
-                        { label: 'Incident Date', value: claim.incidentDate ? new Date(claim.incidentDate).toLocaleDateString() : '—' },
-                        { label: 'Submitted', value: claim.createdAt ? new Date(claim.createdAt).toLocaleDateString() : '—' },
-                        { label: 'Agent', value: claim.agentName || claim.agent?.name || 'N/A' },
+                        { label: t('admin.claims.policyLabel'), value: claim.policyName || claim.policy?.packageName },
+                        { label: t('admin.claims.claimAmountLabel'), value: `${Number(claim.amount).toLocaleString()} MMK` },
+                        claim.coverageAmount ? { label: t('admin.claims.coverageLimitLabel'), value: `${Number(claim.coverageAmount).toLocaleString()} MMK` } : null,
+                        { label: t('admin.claims.incidentDateLabel'), value: claim.incidentDate ? new Date(claim.incidentDate).toLocaleDateString() : '—' },
+                        { label: t('admin.claims.submittedLabel'), value: claim.createdAt ? new Date(claim.createdAt).toLocaleDateString() : '—' },
+                        { label: t('admin.claims.claimAgentLabel'), value: claim.agentName || claim.agent?.name || t('admin.common.na') },
                       ].filter(Boolean).map(item => (
                         <div key={item.label} style={{ minWidth: 100 }}>
                           <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{item.label}</div>

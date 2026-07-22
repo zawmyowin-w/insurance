@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import api from '../services/api'
 
 /**
@@ -14,6 +15,7 @@ import api from '../services/api'
  *   role        {string}   - 'admin' | 'agent' | 'customer'
  */
 export default function FormDetailModal({ show, onClose, type, item, role }) {
+  const { t } = useTranslation()
   const [template, setTemplate] = useState(null)
   const [loading, setLoading]   = useState(false)
   const [pdfLoading, setPdfLoading] = useState(false)
@@ -49,14 +51,14 @@ export default function FormDetailModal({ show, onClose, type, item, role }) {
       a.download = `${type}_${item.id}.pdf`
       a.click()
       window.URL.revokeObjectURL(url)
-    } catch { alert('Failed to download PDF') }
+    } catch { alert(t('formModal.downloadFailed')) }
     finally { setPdfLoading(false) }
   }
 
   const isApp = type === 'application'
   const typeColor   = isApp ? '#1d4ed8' : '#d97706'
   const typeColor2  = isApp ? '#3b82f6' : '#f59e0b'
-  const typeLabel   = isApp ? 'Application Form' : 'Claim Form'
+  const typeLabel   = isApp ? t('formModal.applicationForm') : t('formModal.claimForm')
   const typeIcon    = isApp ? 'bi-file-earmark-text' : 'bi-shield-exclamation'
   const statusValue = item.status
 
@@ -145,8 +147,8 @@ export default function FormDetailModal({ show, onClose, type, item, role }) {
                 display: 'flex', alignItems: 'center', gap: 5,
               }}>
                 {pdfLoading
-                  ? <><span className="spinner-border spinner-border-sm"></span> Generating...</>
-                  : <><i className="bi bi-file-earmark-pdf"></i> PDF</>}
+                  ? <><span className="spinner-border spinner-border-sm"></span> {t('formModal.generating')}</>
+                  : <><i className="bi bi-file-earmark-pdf"></i> {t('formModal.pdf')}</>}
               </button>
               <button onClick={onClose} style={{
                 background: 'rgba(255,255,255,0.15)',
@@ -176,15 +178,15 @@ export default function FormDetailModal({ show, onClose, type, item, role }) {
             position: 'relative', zIndex: 1, flexWrap: 'wrap',
           }}>
             {isApp ? <>
-              {item.coverageAmount && <StatPill icon="bi-shield-check" label="Coverage" value={Number(item.coverageAmount).toLocaleString() + ' MMK'} />}
-              {item.premiumAmount  && <StatPill icon="bi-cash-coin"    label="Premium"  value={Number(item.premiumAmount).toLocaleString() + ' MMK'} />}
-              {item.duration       && <StatPill icon="bi-calendar3"    label="Duration" value={item.duration + ' year'} />}
-              {item.riskLevel      && <StatPill icon="bi-activity"     label="Risk"     value={item.riskLevel} />}
+              {item.coverageAmount && <StatPill icon="bi-shield-check" label={t('formModal.coverage')} value={Number(item.coverageAmount).toLocaleString() + ' MMK'} />}
+              {item.premiumAmount  && <StatPill icon="bi-cash-coin"    label={t('formModal.premium')}  value={Number(item.premiumAmount).toLocaleString() + ' MMK'} />}
+              {item.duration       && <StatPill icon="bi-calendar3"    label={t('formModal.duration')} value={item.duration + ' ' + t('formModal.year')} />}
+              {item.riskLevel      && <StatPill icon="bi-activity"     label={t('formModal.risk')}     value={item.riskLevel} />}
             </> : <>
-              {item.amount       && <StatPill icon="bi-cash-coin"          label="Claim Amount"  value={Number(item.amount).toLocaleString() + ' MMK'} />}
-              {item.incidentDate && <StatPill icon="bi-calendar-event"     label="Incident Date" value={item.incidentDate} />}
-              {item.claimType    && <StatPill icon="bi-tag"                label="Claim Type"    value={item.claimType} />}
-              {item.customerName && <StatPill icon="bi-person"             label="Customer"      value={item.customerName} />}
+              {item.amount       && <StatPill icon="bi-cash-coin"          label={t('formModal.claimAmount')}  value={Number(item.amount).toLocaleString() + ' MMK'} />}
+              {item.incidentDate && <StatPill icon="bi-calendar-event"     label={t('formModal.incidentDate')} value={item.incidentDate} />}
+              {item.claimType    && <StatPill icon="bi-tag"                label={t('formModal.claimType')}    value={item.claimType} />}
+              {item.customerName && <StatPill icon="bi-person"             label={t('formModal.customer')}     value={item.customerName} />}
             </>}
           </div>
         </div>
@@ -204,7 +206,7 @@ export default function FormDetailModal({ show, onClose, type, item, role }) {
               textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem',
             }}>
               <i className="bi bi-info-circle me-2"></i>
-              No form template found for this plan.
+              {t('formModal.noTemplate')}
             </div>
           ) : (
             <div>
@@ -258,8 +260,9 @@ function SectionHeading({ icon, label, color }) {
 }
 
 function FormFieldsView({ fields, formData, role, type, itemId }) {
+  const { t } = useTranslation()
   if (!fields || fields.length === 0) return (
-    <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No fields in this template.</div>
+    <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{t('formModal.noFields')}</div>
   )
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
@@ -271,6 +274,7 @@ function FormFieldsView({ fields, formData, role, type, itemId }) {
 }
 
 function FieldRow({ field, value, role, type, itemId }) {
+  const { t } = useTranslation()
   if (field.fieldType === 'LABEL') {
     return (
       <div style={{
@@ -356,6 +360,7 @@ function FieldRow({ field, value, role, type, itemId }) {
 }
 
 function FileLink({ path, label, isImage, role, type, itemId, fieldId }) {
+  const { t } = useTranslation()
   const [url, setUrl] = useState(null)
   const [loading, setLoading] = useState(false)
 
@@ -368,7 +373,7 @@ function FileLink({ path, label, isImage, role, type, itemId, fieldId }) {
       const objUrl = window.URL.createObjectURL(res.data)
       setUrl(objUrl)
       window.open(objUrl, '_blank')
-    } catch { alert('Could not load file') }
+    } catch { alert(t('formModal.couldNotLoad')) }
     finally { setLoading(false) }
   }
 
@@ -380,22 +385,23 @@ function FileLink({ path, label, isImage, role, type, itemId, fieldId }) {
       display: 'inline-flex', alignItems: 'center', gap: 4,
     }}>
       {loading
-        ? <><span className="spinner-border spinner-border-sm"></span> Loading...</>
+        ? <><span className="spinner-border spinner-border-sm"></span> {t('formModal.loading')}</>
         : <><i className={`bi ${isImage ? 'bi-image' : 'bi-file-earmark-pdf'}`}></i> {label}</>}
     </button>
   )
 }
 
 function NotesSection({ item, type, typeColor }) {
+  const { t } = useTranslation()
   const customerNote = type === 'application' ? item.notes : item.description
   const agentNote    = item.agentNote
   const adminNote    = item.adminNote
   const hasAny       = customerNote || agentNote || adminNote
 
   const noteEntries = [
-    { key: 'customer', icon: 'bi-person-circle',   label: 'Customer', color: '#0369a1', bg: '#e0f2fe', value: customerNote },
-    { key: 'agent',    icon: 'bi-headset',          label: 'Agent',    color: '#7c3aed', bg: '#ede9fe', value: agentNote },
-    { key: 'admin',    icon: 'bi-shield-lock-fill', label: 'Admin',    color: '#b45309', bg: '#fef3c7', value: adminNote },
+    { key: 'customer', icon: 'bi-person-circle',   label: t('formModal.noteCustomer'), color: '#0369a1', bg: '#e0f2fe', value: customerNote },
+    { key: 'agent',    icon: 'bi-headset',          label: t('formModal.noteAgent'),    color: '#7c3aed', bg: '#ede9fe', value: agentNote },
+    { key: 'admin',    icon: 'bi-shield-lock-fill', label: t('formModal.noteAdmin'),    color: '#b45309', bg: '#fef3c7', value: adminNote },
   ].filter(e => e.value)
 
   return (
@@ -421,7 +427,7 @@ function NotesSection({ item, type, typeColor }) {
           <i className="bi bi-sticky-fill"></i>
         </div>
         <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-          Notes
+          {t('formModal.notes')}
         </span>
       </div>
 
@@ -434,7 +440,7 @@ function NotesSection({ item, type, typeColor }) {
             padding: '0.4rem 0',
           }}>
             <i className="bi bi-chat-dots" style={{ fontSize: '1rem', opacity: 0.45 }}></i>
-            <span>No notes have been added yet.</span>
+            <span>{t('formModal.noNotes')}</span>
           </div>
         ) : noteEntries.map(({ key, icon, label, color, bg, value }) => (
           <div key={key} style={{
