@@ -46,7 +46,7 @@ export default function ManageInsuranceTypesPage() {
     e.preventDefault()
     const name = form.name.trim().toUpperCase()
     if (!name) return
-    if (types.some(t => t.name.toUpperCase() === name)) {
+    if (types.some(tp => tp.name.toUpperCase() === name)) {
       toast.error(`"${name}" ${t('admin.insuranceTypes.alreadyExists')}`)
       return
     }
@@ -90,9 +90,9 @@ export default function ManageInsuranceTypesPage() {
   }
 
   // ── Inline Edit ─────────────────────────────────────────────────
-  const startEdit = t => {
-    setEditingId(t.id)
-    setEditForm({ description: t.description || '', benefits: t.benefits || '', rules: t.rules || '' })
+  const startEdit = tp => {
+    setEditingId(tp.id)
+    setEditForm({ description: tp.description || '', benefits: tp.benefits || '', rules: tp.rules || '' })
   }
   const cancelEdit = () => { setEditingId(null); setEditForm({}) }
 
@@ -130,7 +130,8 @@ export default function ManageInsuranceTypesPage() {
         <div className="col-12 col-xl-5">
           <div className="card-custom h-100">
             <h6 style={{ fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>
-              <i className="bi bi-plus-circle me-2" style={{ color: 'var(--primary)' }}></i>{t('admin.insuranceTypes.addFormTitle')}
+              <i className="bi bi-plus-circle me-2" style={{ color: 'var(--primary)' }}></i>
+              {t('admin.insuranceTypes.addFormTitle')}
             </h6>
             <form onSubmit={handleAdd} className="d-flex flex-column gap-3">
 
@@ -141,7 +142,7 @@ export default function ManageInsuranceTypesPage() {
                 </label>
                 <input
                   className="form-control-custom w-100"
-                  placeholder="ဥပမာ — FIRE, MARINE, TRAVEL"
+                  placeholder={t('admin.insuranceTypes.typeNamePlaceholder')}
                   value={form.name}
                   onChange={e => setForm(f => ({ ...f, name: e.target.value.toUpperCase() }))}
                   maxLength={50}
@@ -149,18 +150,18 @@ export default function ManageInsuranceTypesPage() {
                   style={{ textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}
                 />
                 <p style={{ fontSize: '0.73rem', color: 'var(--text-muted)', margin: '0.25rem 0 0' }}>
-                  LIFE, HEALTH, VEHICLE, PROPERTY — uppercase ဖြင့် သိမ်းမည်
+                  {t('admin.insuranceTypes.typeNameHint')}
                 </p>
               </div>
 
               {/* Description */}
               <div>
                 <label style={{ fontWeight: 600, fontSize: '0.83rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.35rem' }}>
-                  ရှင်းလင်းချက် / Description
+                  {t('admin.insuranceTypes.descriptionLabel')}
                 </label>
                 <textarea
                   className="form-control-custom w-100"
-                  placeholder="ဤ အာမခံအမျိုးအစား၏ အကျဉ်းချုပ် ရှင်းလင်းချက်..."
+                  placeholder={t('admin.insuranceTypes.descriptionPlaceholder')}
                   value={form.description}
                   onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
                   rows={3}
@@ -172,11 +173,11 @@ export default function ManageInsuranceTypesPage() {
               <div>
                 <label style={{ fontWeight: 600, fontSize: '0.83rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.35rem' }}>
                   <i className="bi bi-check2-circle me-1" style={{ color: '#16a34a' }}></i>
-                  အကျိုးခံစားခွင့်များ / Benefits
+                  {t('admin.insuranceTypes.benefitsLabel')}
                 </label>
                 <textarea
                   className="form-control-custom w-100"
-                  placeholder="ဥပမာ — ကျန်းမာရေးကုသစရိတ် အပြည့်အဝ ကျခံပေးသည်, ဆေးရုံဆင်းလျှင် လစ်လပ်ငွေ ရရှိသည်..."
+                  placeholder={t('admin.insuranceTypes.benefitsPlaceholder')}
                   value={form.benefits}
                   onChange={e => setForm(f => ({ ...f, benefits: e.target.value }))}
                   rows={3}
@@ -188,11 +189,11 @@ export default function ManageInsuranceTypesPage() {
               <div>
                 <label style={{ fontWeight: 600, fontSize: '0.83rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.35rem' }}>
                   <i className="bi bi-file-text me-1" style={{ color: '#f59e0b' }}></i>
-                  စည်းမျဉ်းစည်းကမ်း / Rules & Conditions
+                  {t('admin.insuranceTypes.rulesLabel')}
                 </label>
                 <textarea
                   className="form-control-custom w-100"
-                  placeholder="ဥပမာ — အသက် ၁၈ မှ ၆၀ နှစ် အတွင်းသာ လျှောက်ထားနိုင်သည်, ကြိုတင်ရောဂါများ မပါဝင်ပါ..."
+                  placeholder={t('admin.insuranceTypes.rulesPlaceholder')}
                   value={form.rules}
                   onChange={e => setForm(f => ({ ...f, rules: e.target.value }))}
                   rows={3}
@@ -207,8 +208,8 @@ export default function ManageInsuranceTypesPage() {
                 style={{ justifyContent: 'center' }}
               >
                 {saving
-                  ? <><span className="spinner-border spinner-border-sm me-1"></span>သိမ်းနေသည်…</>
-                  : <><i className="bi bi-plus-lg me-1"></i>Type ထည့်မည်</>
+                  ? <><span className="spinner-border spinner-border-sm me-1"></span>{t('admin.insuranceTypes.savingBtn')}</>
+                  : <><i className="bi bi-plus-lg me-1"></i>{t('admin.insuranceTypes.addBtn')}</>
                 }
               </button>
             </form>
@@ -220,7 +221,7 @@ export default function ManageInsuranceTypesPage() {
           <div className="card-custom">
             <h6 style={{ fontWeight: 700, marginBottom: '1rem', color: 'var(--text-primary)' }}>
               <i className="bi bi-list-ul me-2" style={{ color: 'var(--primary)' }}></i>
-              ရှိပြီးသား Types ({types.length})
+              {t('admin.insuranceTypes.existingTypesCount', { count: types.length })}
             </h6>
 
             {loading ? (
@@ -230,23 +231,23 @@ export default function ManageInsuranceTypesPage() {
             ) : types.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '2.5rem 0', color: 'var(--text-muted)' }}>
                 <i className="bi bi-tags" style={{ fontSize: '2.5rem', display: 'block', marginBottom: 8 }}></i>
-                Type မရှိသေးပါ — ဘယ်ဖက် Form မှ ထည့်ပါ
+                {t('admin.insuranceTypes.noTypesLeftPanel')}
               </div>
             ) : (
               <div className="d-flex flex-column gap-3">
-                {types.map(t => (
+                {types.map(tp => (
                   <TypeRow
-                    key={t.id}
-                    t={t}
-                    isEditing={editingId === t.id}
+                    key={tp.id}
+                    tp={tp}
+                    isEditing={editingId === tp.id}
                     editForm={editForm}
                     setEditForm={setEditForm}
                     saving={saving}
                     deletingId={deletingId}
-                    onEdit={() => startEdit(t)}
+                    onEdit={() => startEdit(tp)}
                     onCancelEdit={cancelEdit}
-                    onSaveEdit={() => handleSaveEdit(t.id, t.name)}
-                    onDelete={() => handleDelete(t.id, t.name)}
+                    onSaveEdit={() => handleSaveEdit(tp.id, tp.name)}
+                    onDelete={() => handleDelete(tp.id, tp.name)}
                   />
                 ))}
               </div>
@@ -257,8 +258,8 @@ export default function ManageInsuranceTypesPage() {
 
       <DeleteConfirmModal
         open={deleteModal.open}
-        title={`"${deleteModal.name}" ကို ဖျက်မည်လား?`}
-        message="၎င်းကို အသုံးပြုနေသည့် Package နှင့် Agent များ ရှိနိုင်သည်။ ဤလုပ်ဆောင်ချက်ကို ပြန်မလုပ်နိုင်ပါ။"
+        title={t('admin.insuranceTypes.deleteModalTitle', { name: deleteModal.name })}
+        message={t('admin.insuranceTypes.deleteModalMsg')}
         onConfirm={confirmDelete}
         onCancel={() => setDeleteModal({ open: false, id: null, name: '', loading: false })}
         loading={deleteModal.loading}
@@ -269,11 +270,12 @@ export default function ManageInsuranceTypesPage() {
 
 // ── Type Row (with inline edit) ─────────────────────────────────────────────
 
-function TypeRow({ t, isEditing, editForm, setEditForm, saving, deletingId, onEdit, onCancelEdit, onSaveEdit, onDelete }) {
+function TypeRow({ tp, isEditing, editForm, setEditForm, saving, deletingId, onEdit, onCancelEdit, onSaveEdit, onDelete }) {
+  const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
-  const color = typeColor(t.name)
-  const icon  = typeIcon(t.name)
-  const hasDetails = t.description || t.benefits || t.rules
+  const color = typeColor(tp.name)
+  const icon  = typeIcon(tp.name)
+  const hasDetails = tp.description || tp.benefits || tp.rules
 
   return (
     <div style={{
@@ -293,11 +295,11 @@ function TypeRow({ t, isEditing, editForm, setEditForm, saving, deletingId, onEd
           </span>
           <div style={{ minWidth: 0 }}>
             <div style={{ fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '0.04em', fontSize: '0.95rem' }}>
-              {t.name}
+              {tp.name}
             </div>
-            {t.createdAt && (
+            {tp.createdAt && (
               <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                ထည့်သွင်းသည် — {new Date(t.createdAt).toLocaleDateString()}
+                {t('admin.insuranceTypes.addedAt')} — {new Date(tp.createdAt).toLocaleDateString()}
               </div>
             )}
           </div>
@@ -306,21 +308,23 @@ function TypeRow({ t, isEditing, editForm, setEditForm, saving, deletingId, onEd
               onClick={() => setExpanded(v => !v)}
               style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.2rem 0.5rem', borderRadius: 6, color: 'var(--text-muted)', fontSize: '0.78rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap' }}>
               <i className={`bi bi-chevron-${expanded || isEditing ? 'up' : 'down'}`}></i>
-              {expanded || isEditing ? 'ပိတ်မည်' : 'အသေးစိတ်'}
+              {expanded || isEditing
+                ? t('admin.insuranceTypes.collapseDetails')
+                : t('admin.insuranceTypes.expandDetails')}
             </button>
           )}
         </div>
         <div className="d-flex gap-1 flex-shrink-0">
           {!isEditing ? (
-            <button className="icon-btn" onClick={onEdit} title="တည်းဖြတ်မည်" style={{ color: 'var(--primary)' }}>
+            <button className="icon-btn" onClick={onEdit} title={t('admin.insuranceTypes.editBtn')} style={{ color: 'var(--primary)' }}>
               <i className="bi bi-pencil"></i>
             </button>
           ) : (
             <>
-              <button className="icon-btn" onClick={onCancelEdit} title="မလုပ်တော့ပါ" style={{ color: 'var(--text-muted)' }}>
+              <button className="icon-btn" onClick={onCancelEdit} title={t('admin.insuranceTypes.cancelBtn')} style={{ color: 'var(--text-muted)' }}>
                 <i className="bi bi-x-lg"></i>
               </button>
-              <button className="icon-btn" onClick={onSaveEdit} disabled={saving} title="သိမ်းမည်" style={{ color: '#16a34a' }}>
+              <button className="icon-btn" onClick={onSaveEdit} disabled={saving} title={t('admin.insuranceTypes.saveBtn')} style={{ color: '#16a34a' }}>
                 {saving ? <span className="spinner-border spinner-border-sm"></span> : <i className="bi bi-check-lg"></i>}
               </button>
             </>
@@ -328,11 +332,11 @@ function TypeRow({ t, isEditing, editForm, setEditForm, saving, deletingId, onEd
           <button
             className="icon-btn"
             onClick={onDelete}
-            disabled={deletingId === t.id}
-            title="ဖျက်မည်"
+            disabled={deletingId === tp.id}
+            title={t('admin.insuranceTypes.deleteBtn')}
             style={{ color: '#ef4444' }}
           >
-            {deletingId === t.id
+            {deletingId === tp.id
               ? <span className="spinner-border spinner-border-sm"></span>
               : <i className="bi bi-trash3"></i>}
           </button>
@@ -346,59 +350,63 @@ function TypeRow({ t, isEditing, editForm, setEditForm, saving, deletingId, onEd
             <div className="d-flex flex-column gap-2 pt-3">
               <div>
                 <label style={{ fontWeight: 600, fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.25rem' }}>
-                  ရှင်းလင်းချက်
+                  {t('admin.insuranceTypes.descriptionLabel')}
                 </label>
                 <textarea className="form-control-custom w-100" rows={2} style={{ resize: 'vertical' }}
-                  placeholder="Description..."
+                  placeholder={t('admin.insuranceTypes.descriptionPlaceholder')}
                   value={editForm.description}
                   onChange={e => setEditForm(f => ({ ...f, description: e.target.value }))} />
               </div>
               <div>
                 <label style={{ fontWeight: 600, fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.25rem' }}>
-                  <i className="bi bi-check2-circle me-1" style={{ color: '#16a34a' }}></i>အကျိုးခံစားခွင့်များ
+                  <i className="bi bi-check2-circle me-1" style={{ color: '#16a34a' }}></i>
+                  {t('admin.insuranceTypes.benefitsLabel')}
                 </label>
                 <textarea className="form-control-custom w-100" rows={2} style={{ resize: 'vertical' }}
-                  placeholder="Benefits..."
+                  placeholder={t('admin.insuranceTypes.benefitsPlaceholder')}
                   value={editForm.benefits}
                   onChange={e => setEditForm(f => ({ ...f, benefits: e.target.value }))} />
               </div>
               <div>
                 <label style={{ fontWeight: 600, fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.25rem' }}>
-                  <i className="bi bi-file-text me-1" style={{ color: '#f59e0b' }}></i>စည်းမျဉ်းစည်းကမ်း
+                  <i className="bi bi-file-text me-1" style={{ color: '#f59e0b' }}></i>
+                  {t('admin.insuranceTypes.rulesLabel')}
                 </label>
                 <textarea className="form-control-custom w-100" rows={2} style={{ resize: 'vertical' }}
-                  placeholder="Rules..."
+                  placeholder={t('admin.insuranceTypes.rulesPlaceholder')}
                   value={editForm.rules}
                   onChange={e => setEditForm(f => ({ ...f, rules: e.target.value }))} />
               </div>
             </div>
           ) : (
             <div className="d-flex flex-column gap-2 pt-3">
-              {t.description && (
+              {tp.description && (
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 3 }}>ရှင်းလင်းချက်</div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.55 }}>{t.description}</div>
+                  <div style={{ fontWeight: 600, fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 3 }}>
+                    {t('admin.insuranceTypes.descriptionLabel')}
+                  </div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.55 }}>{tp.description}</div>
                 </div>
               )}
-              {t.benefits && (
+              {tp.benefits && (
                 <div>
                   <div style={{ fontWeight: 600, fontSize: '0.75rem', color: '#16a34a', marginBottom: 3 }}>
-                    <i className="bi bi-check2-circle me-1"></i>အကျိုးခံစားခွင့်များ
+                    <i className="bi bi-check2-circle me-1"></i>{t('admin.insuranceTypes.benefitsLabel')}
                   </div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{t.benefits}</div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{tp.benefits}</div>
                 </div>
               )}
-              {t.rules && (
+              {tp.rules && (
                 <div>
                   <div style={{ fontWeight: 600, fontSize: '0.75rem', color: '#f59e0b', marginBottom: 3 }}>
-                    <i className="bi bi-file-text me-1"></i>စည်းမျဉ်းစည်းကမ်း
+                    <i className="bi bi-file-text me-1"></i>{t('admin.insuranceTypes.rulesLabel')}
                   </div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{t.rules}</div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{tp.rules}</div>
                 </div>
               )}
               {!hasDetails && (
                 <div style={{ color: 'var(--text-muted)', fontSize: '0.82rem', fontStyle: 'italic' }}>
-                  အချက်အလက်မထည့်ရသေးပါ — ✏️ Edit ကိုနှိပ်၍ ထည့်ပါ
+                  {t('admin.insuranceTypes.noDetails')}
                 </div>
               )}
             </div>

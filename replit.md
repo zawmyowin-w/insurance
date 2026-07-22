@@ -1,53 +1,63 @@
 # Digital Insurance Claim and Premiums Portal
 
-A full-stack digital insurance portal for Myanmar, with role-based portals (Admin, Agent, Customer), AI chat, a dynamic form builder, multi-language support (English + Myanmar), and PDF generation for reports and claims.
+A full-stack insurance management portal for Myanmar, supporting customer policy applications, claims, premium payments, and admin/agent workflows.
 
 ## Stack
 
-- **Frontend**: React 18 + Vite (port 5000), React Router v6, Bootstrap 5, Axios, i18next
-- **Backend**: Spring Boot 3.2 (Java 17), Spring Security, Hibernate/JPA, Maven (port 8080)
-- **Database**: MySQL 8.0 (self-managed, data persisted under `.mysql/`)
-- **Other**: JWT auth, iText7 (PDF), Swagger/OpenAPI at `/api/swagger-ui.html`
+| Layer    | Technology                          |
+|----------|-------------------------------------|
+| Frontend | React 18 + Vite, Bootstrap 5, i18next (EN/MM) |
+| Backend  | Spring Boot 3.2 (Java 19), Spring Security + JWT |
+| Database | MySQL 8.0 (self-managed, data in `.mysql/`) |
 
-## How to run
+## How to Run on Replit
 
-Two workflows are configured and should both be started:
+Both workflows start automatically:
 
-1. **Backend** — `cd backend && bash start-backend.sh`
-   - Initializes and starts a local MySQL instance (first run takes ~30s)
-   - Starts Spring Boot on port 8080
-   - Auto-creates the admin account and seeds default insurance types/packages on first run
+- **Backend** — `cd backend && bash start-backend.sh`
+  Starts a local mysqld instance (data persisted in `.mysql/`), creates the `insurance_portal` database, then launches the Spring Boot API on port 8080.
+- **Start application** — `cd frontend && npm run dev`
+  Starts the Vite dev server on port 5000. All `/api` requests are proxied to the backend at `localhost:8080`.
 
-2. **Start application** (Frontend) — `cd frontend && npm run dev`
-   - Serves the React app on port 5000
-   - Proxies `/api` requests to the backend at `localhost:8080`
+First boot seeds 4 insurance types, 6 packages, and an admin user via `DataInitializer`.
 
-## Environment variables
+## Default Credentials
 
-All backend variables have safe defaults for local development. No `.env` file is required to run. Optional overrides:
+| Role  | Email               | Password  |
+|-------|---------------------|-----------|
+| Admin | admin@dicp.com.mm   | Admin@123 |
 
-| Variable | Default | Purpose |
-|---|---|---|
-| `DB_PASSWORD` | _(empty)_ | MySQL root password |
-| `JWT_SECRET` | built-in dev key | JWT signing key |
-| `ADMIN_EMAIL` | `admin@dicp.com.mm` | Bootstrap admin email |
-| `ADMIN_PASSWORD` | `Admin@123` | Bootstrap admin password |
-| `XAI_API_KEY` | _(empty)_ | Enables AI chat via xAI Grok |
+## Key Environment Variables
 
-Set via Replit Secrets or by creating `backend/.env`.
+| Variable              | Purpose                                    | Default              |
+|-----------------------|--------------------------------------------|----------------------|
+| `JWT_SECRET`          | HMAC-SHA256 signing key                    | Built-in dev key     |
+| `DB_PASSWORD`         | MySQL root password                        | *(empty)*            |
+| `CORS_ALLOWED_ORIGINS`| Comma-separated allowed origins            | localhost variants   |
+| `ADMIN_EMAIL`         | Bootstrap admin email                      | admin@dicp.com.mm    |
+| `ADMIN_PASSWORD`      | Bootstrap admin password                   | Admin@123            |
 
-## Default login
-
-- **Admin**: `admin@dicp.com.mm` / `Admin@123`
-
-## Project structure
+## Project Structure
 
 ```
-/frontend    — React application
-/backend     — Spring Boot application
-/database    — SQL schema reference (local_mysql.sql)
+├── frontend/          React + Vite app
+│   └── src/
+│       ├── pages/     Customer, Agent, Admin page components
+│       ├── components/
+│       ├── context/   AuthContext, NotifCountContext
+│       └── services/  axios API client
+├── backend/           Spring Boot application
+│   └── src/main/java/com/insurance/portal/
+│       ├── config/    Security, CORS, DataInitializer
+│       ├── controller/
+│       ├── service/
+│       ├── model/
+│       └── repository/
+├── database/          local_mysql.sql — full schema + seed snapshot
+└── .mysql/            MySQL data directory (gitignored, auto-created)
 ```
 
-## User preferences
+## User Preferences
 
-_None recorded yet._
+- Keep the existing monorepo structure (frontend/ + backend/ side by side).
+- Do not migrate the database to Replit PostgreSQL — MySQL is intentional.
