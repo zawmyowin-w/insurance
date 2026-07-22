@@ -109,7 +109,7 @@ export default function AdminPaymentMethodsPage() {
         <button className="btn-primary-custom" style={{ fontSize: '0.88rem', padding: '0.45rem 1rem' }}
           onClick={() => { if (showForm) { setShowForm(false); resetForm() } else { setShowForm(true); setEditing(null); setForm(EMPTY) } }}>
           <i className={`bi bi-${showForm ? 'arrow-left' : 'plus-circle'} me-1`}></i>
-          {showForm ? 'Back' : 'Add Method'}
+          {showForm ? t('admin.paymentMethods.backBtn') : t('admin.paymentMethods.addMethodBtn')}
         </button>
       </div>
 
@@ -118,26 +118,30 @@ export default function AdminPaymentMethodsPage() {
         <div className="card-custom mb-4 fade-in">
           <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1.25rem' }}>
             <i className={`bi bi-${editing ? 'pencil-square' : 'plus-circle-fill'} me-2`} style={{ color: 'var(--primary)' }}></i>
-            {editing ? 'Payment Method ပြင်ဆင်မည်' : 'Payment Method အသစ်ထည့်မည်'}
+            {editing ? t('admin.paymentMethods.editFormTitle') : t('admin.paymentMethods.newFormTitle')}
           </h6>
           <form onSubmit={handleSubmit}>
             <div className="row g-3">
               <div className="col-12 col-md-5">
-                <label className="form-label-custom">ငွေပေးချေနည်း အမည် *</label>
+                <label className="form-label-custom">{t('admin.paymentMethods.nameLabel')}</label>
                 <input className="form-control-custom w-100" required placeholder="e.g. KBZ Pay"
                   value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
               </div>
               {!editing && (
                 <div className="col-12 col-md-4">
-                  <label className="form-label-custom">Method Key * <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>(unique code)</span></label>
+                  <label className="form-label-custom">
+                    {t('admin.paymentMethods.methodKeyLabel')} <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>({t('admin.paymentMethods.methodKeyUniqueCode')})</span>
+                  </label>
                   <input className="form-control-custom w-100" required placeholder="e.g. KBZ_PAY"
                     value={form.methodKey}
                     onChange={e => setForm(f => ({ ...f, methodKey: e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '_') }))} />
-                  <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: '0.25rem 0 0' }}>Capital letters နှင့် underscore သာ သုံးနိုင်သည်</p>
+                  <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: '0.25rem 0 0' }}>
+                    {t('admin.paymentMethods.methodKeyOnlyCapital')}
+                  </p>
                 </div>
               )}
               <div className="col-12 col-md-3">
-                <label className="form-label-custom">Brand Color</label>
+                <label className="form-label-custom">{t('admin.paymentMethods.brandColorLabel')}</label>
                 <div className="d-flex align-items-center gap-2">
                   <input type="color" value={form.color} onChange={e => setForm(f => ({ ...f, color: e.target.value }))}
                     style={{ width: 48, height: 38, border: '1.5px solid var(--border)', borderRadius: 8, cursor: 'pointer', padding: 3 }} />
@@ -149,24 +153,24 @@ export default function AdminPaymentMethodsPage() {
               {/* Logo Upload */}
               <div className="col-12 col-md-6">
                 <label className="form-label-custom">
-                  <i className="bi bi-image me-1"></i>Logo Image {editing && <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>(ပြောင်းလဲချင်မှသာ ရွေးချယ်ပါ)</span>}
+                  <i className="bi bi-image me-1"></i>{t('admin.paymentMethods.logoLabel')} {editing && <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>({t('admin.paymentMethods.logoChangeHint')})</span>}
                 </label>
                 <input ref={logoRef} type="file" accept="image/*" className="form-control-custom w-100"
                   onChange={e => setLogoFile(e.target.files[0] || null)} />
                 <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0.25rem 0 0' }}>
-                  <i className="bi bi-info-circle me-1"></i>PNG/JPG — Payment method icon (optional)
+                  <i className="bi bi-info-circle me-1"></i>{t('admin.paymentMethods.logoFileHint')}
                 </p>
               </div>
 
               {/* QR Code Upload */}
               <div className="col-12 col-md-6">
                 <label className="form-label-custom">
-                  <i className="bi bi-qr-code me-1"></i>QR Code Image {editing && <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>(ပြောင်းလဲချင်မှသာ ရွေးချယ်ပါ)</span>}
+                  <i className="bi bi-qr-code me-1"></i>{t('admin.paymentMethods.qrLabel')} {editing && <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>({t('admin.paymentMethods.qrChangeHint')})</span>}
                 </label>
                 <input ref={qrRef} type="file" accept="image/*" className="form-control-custom w-100"
                   onChange={e => setQrFile(e.target.files[0] || null)} />
                 <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0.25rem 0 0' }}>
-                  <i className="bi bi-info-circle me-1"></i>Customer များ ငွေပေးချေသောအခါ ဤ QR ကိုပြသမည်
+                  <i className="bi bi-info-circle me-1"></i>{t('admin.paymentMethods.qrFileHint')}
                 </p>
               </div>
 
@@ -176,7 +180,7 @@ export default function AdminPaymentMethodsPage() {
                   <input type="checkbox" id="pmActive" checked={form.active}
                     onChange={e => setForm(f => ({ ...f, active: e.target.checked }))} />
                   <label htmlFor="pmActive" style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', cursor: 'pointer' }}>
-                    Active (Customer များ ဤ method ကို မြင်ရမည်)
+                    {t('admin.paymentMethods.activeCheckHint')}
                   </label>
                 </div>
               </div>
@@ -188,19 +192,23 @@ export default function AdminPaymentMethodsPage() {
                 {form.name ? form.name.charAt(0).toUpperCase() : '?'}
               </div>
               <div>
-                <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{form.name || 'Payment Method Name'}</div>
+                <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{form.name || t('admin.paymentMethods.previewName')}</div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{form.methodKey || 'METHOD_KEY'} · {form.color}</div>
               </div>
               <span style={{ marginLeft: 'auto', fontSize: '0.75rem', padding: '0.2rem 0.6rem', borderRadius: 99, background: form.active ? '#dcfce7' : '#fee2e2', color: form.active ? '#16a34a' : '#dc2626', fontWeight: 700 }}>
-                {form.active ? 'Active' : 'Inactive'}
+                {form.active ? t('admin.paymentMethods.activeStatus') : t('admin.paymentMethods.inactiveStatus')}
               </span>
             </div>
 
             <div className="d-flex gap-2 mt-4">
               <button type="submit" disabled={saving} className="btn-primary-custom" style={{ justifyContent: 'center', minWidth: 140 }}>
-                {saving ? <><span className="spinner-border spinner-border-sm me-2"></span>Saving...</> : (editing ? 'Update' : 'Create')}
+                {saving
+                  ? <><span className="spinner-border spinner-border-sm me-2"></span>{t('admin.paymentMethods.savingBtn')}</>
+                  : (editing ? t('admin.paymentMethods.updateBtn') : t('admin.paymentMethods.createBtn'))}
               </button>
-              <button type="button" className="btn-outline-custom" onClick={() => { setShowForm(false); resetForm() }}>Cancel</button>
+              <button type="button" className="btn-outline-custom" onClick={() => { setShowForm(false); resetForm() }}>
+                {t('admin.paymentMethods.cancelBtn')}
+              </button>
             </div>
           </form>
         </div>
@@ -212,8 +220,8 @@ export default function AdminPaymentMethodsPage() {
       ) : methods.length === 0 ? (
         <div className="card-custom text-center py-5">
           <i className="bi bi-qr-code" style={{ fontSize: '3rem', color: 'var(--border)' }}></i>
-          <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>Payment method မရှိသေးပါ</h5>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Add Method button ဖြင့် KBZ Pay, Wave Pay, AYA Pay စသည်တို့ ထည့်ပါ</p>
+          <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>{t('admin.paymentMethods.noMethodsTitle')}</h5>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{t('admin.paymentMethods.noMethodsHint')}</p>
         </div>
       ) : (
         <div className="d-flex flex-column gap-3">
@@ -254,7 +262,7 @@ export default function AdminPaymentMethodsPage() {
                       <div style={{ textAlign: 'center' }}>
                         <img src={`/api/admin/payment-methods/${m.id}/qr`}
                           alt="QR" style={{ width: 80, height: 80, objectFit: 'contain', borderRadius: 8, border: '1.5px solid var(--border)', background: '#fff', padding: 4 }} />
-                        <div style={{ fontSize: '0.65rem', color: '#16a34a', marginTop: 2, fontWeight: 700 }}>✓ QR ရှိသည်</div>
+                        <div style={{ fontSize: '0.65rem', color: '#16a34a', marginTop: 2, fontWeight: 700 }}>{t('admin.paymentMethods.qrPresent')}</div>
                       </div>
                     ) : (
                       <div style={{ width: 80, height: 80, borderRadius: 8, border: '1.5px dashed var(--border)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, background: 'var(--bg-secondary)' }}>
@@ -263,8 +271,8 @@ export default function AdminPaymentMethodsPage() {
                       </div>
                     )}
                     <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
-                      <div><i className="bi bi-image me-1" style={{ color: 'var(--text-muted)' }}></i>Logo: {m.hasLogo ? <span style={{ color: '#16a34a' }}>✓</span> : <span style={{ color: '#dc2626' }}>✗</span>}</div>
-                      <div><i className="bi bi-qr-code me-1" style={{ color: 'var(--text-muted)' }}></i>QR Code: {m.hasQr ? <span style={{ color: '#16a34a' }}>✓</span> : <span style={{ color: '#dc2626' }}>✗</span>}</div>
+                      <div><i className="bi bi-image me-1" style={{ color: 'var(--text-muted)' }}></i>{t('admin.paymentMethods.logoStat')}: {m.hasLogo ? <span style={{ color: '#16a34a' }}>✓</span> : <span style={{ color: '#dc2626' }}>✗</span>}</div>
+                      <div><i className="bi bi-qr-code me-1" style={{ color: 'var(--text-muted)' }}></i>{t('admin.paymentMethods.qrCodeStat')}: {m.hasQr ? <span style={{ color: '#16a34a' }}>✓</span> : <span style={{ color: '#dc2626' }}>✗</span>}</div>
                       <div style={{ marginTop: 4 }}>
                         <span className={`badge-status ${m.active ? 'badge-active' : 'badge-cancelled'}`}>{m.active ? t('admin.paymentMethods.activeStatus') : t('admin.paymentMethods.inactiveStatus')}</span>
                       </div>
@@ -275,13 +283,13 @@ export default function AdminPaymentMethodsPage() {
                 {/* Actions */}
                 <div className="col-12 col-md-3">
                   <div className="d-flex gap-1 flex-wrap justify-content-md-end">
-                    <button className="btn-primary-sm" onClick={() => handleEdit(m)} style={{ padding: '0.3rem 0.6rem' }} title="Edit">
+                    <button className="btn-primary-sm" onClick={() => handleEdit(m)} style={{ padding: '0.3rem 0.6rem' }} title={t('admin.common.edit')}>
                       <i className="bi bi-pencil"></i>
                     </button>
                     <button className="btn-outline-custom" style={{ padding: '0.3rem 0.7rem', fontSize: '0.78rem' }} onClick={() => handleToggle(m)}>
                       {m.active ? t('admin.common.deactivate') : t('admin.common.activate')}
                     </button>
-                    <button className="btn-danger-sm" onClick={() => handleDelete(m.id)} style={{ padding: '0.3rem 0.6rem' }} title="Delete">
+                    <button className="btn-danger-sm" onClick={() => handleDelete(m.id)} style={{ padding: '0.3rem 0.6rem' }} title={t('admin.common.delete')}>
                       <i className="bi bi-trash"></i>
                     </button>
                   </div>
@@ -307,8 +315,8 @@ export default function AdminPaymentMethodsPage() {
 
       <DeleteConfirmModal
         open={deleteModal.open}
-        title="Payment Method ကို ဖျက်မည်လား?"
-        message="ဤ Payment Method ကို ဖယ်ရှားမည်။ ဤလုပ်ဆောင်ချက်ကို ပြန်မလုပ်နိုင်ပါ။"
+        title={t('admin.paymentMethods.deleteModalTitle')}
+        message={t('admin.paymentMethods.deleteModalMsg')}
         onConfirm={confirmDelete}
         onCancel={() => setDeleteModal({ open: false, id: null, loading: false })}
         loading={deleteModal.loading}

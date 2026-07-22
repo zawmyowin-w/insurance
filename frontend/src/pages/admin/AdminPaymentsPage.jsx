@@ -72,14 +72,19 @@ export default function AdminPaymentsPage() {
       </div>
 
       <div className="d-flex gap-2 mb-4 flex-wrap">
-        {['ALL', 'PENDING', 'VERIFIED', 'REJECTED'].map(f => (
-          <button key={f} onClick={() => setFilter(f)} style={{
+        {[
+          { key: 'ALL',      label: t('admin.payments.filterAll') },
+          { key: 'PENDING',  label: t('admin.payments.filterPending') },
+          { key: 'VERIFIED', label: t('admin.payments.filterVerified') },
+          { key: 'REJECTED', label: t('admin.payments.filterRejected') },
+        ].map(({ key, label }) => (
+          <button key={key} onClick={() => setFilter(key)} style={{
             padding: '0.4rem 1rem', borderRadius: 20, border: '1px solid',
-            borderColor: filter === f ? 'var(--primary)' : 'var(--border)',
-            background: filter === f ? 'var(--primary)' : 'var(--bg-card)',
-            color: filter === f ? '#fff' : 'var(--text-secondary)',
+            borderColor: filter === key ? 'var(--primary)' : 'var(--border)',
+            background: filter === key ? 'var(--primary)' : 'var(--bg-card)',
+            color: filter === key ? '#fff' : 'var(--text-secondary)',
             fontSize: '0.85rem', cursor: 'pointer',
-          }}>{f}</button>
+          }}>{label}</button>
         ))}
       </div>
 

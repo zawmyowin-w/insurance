@@ -970,7 +970,11 @@
       "viewBtn": "ကြည့်ရန်",
       "noneLabel": "မရှိ",
       "reviewBtn": "စစ်ဆေးရန်",
-      "proofModalTitle": "ငွေပေးချေမှု ဓာတ်ပုံ"
+      "proofModalTitle": "ငွေပေးချေမှု ဓာတ်ပုံ",
+      "filterAll": "အားလုံး",
+      "filterPending": "စောင့်ဆိုင်းဆဲ",
+      "filterVerified": "အတည်ပြုပြီး",
+      "filterRejected": "ငြင်းပယ်ပြီး"
     },
     "paymentMethods": {
       "title": "ငွေပေးနည်းများ",
@@ -1028,7 +1032,17 @@
       "deleteConfirm": "ဤ ငွေပေးနည်းကို ဖျက်မည်လား?",
       "activeStatus": "တက်ကြွဆဲ",
       "inactiveStatus": "ရပ်ဆိုင်းထား",
-      "previewName": "ငွေပေးနည်းအမည်"
+      "previewName": "ငွေပေးနည်းအမည်",
+      "methodKeyUniqueCode": "unique code",
+      "methodKeyOnlyCapital": "အကြီးအက္ခရာ နှင့် underscore သာ သုံးနိုင်သည်",
+      "logoFileHint": "PNG/JPG — ငွေပေးနည်း icon (ရွေးချယ်ရန် မဖြစ်မနေမဟုတ်)",
+      "qrFileHint": "Customer များ ငွေပေးချေသောအခါ ဤ QR ကိုပြသမည်",
+      "activeCheckHint": "တက်ကြွဆဲ (Customer များ ဤ method ကို မြင်ရမည်)",
+      "noMethodsTitle": "ငွေပေးနည်း မရှိသေးပါ",
+      "noMethodsHint": "Add Method ခလုတ်ဖြင့် KBZ Pay, Wave Pay, AYA Pay စသည်တို့ ထည့်ပါ",
+      "qrPresent": "✓ QR ရှိသည်",
+      "deleteModalTitle": "ငွေပေးနည်းကို ဖျက်မည်လား?",
+      "deleteModalMsg": "ဤ ငွေပေးနည်းကို ဖယ်ရှားမည်။ ဤလုပ်ဆောင်ချက်ကို ပြန်မလုပ်နိုင်ပါ။"
     },
     "users": {
       "title": "အသုံးပြုသူ စီမံရန်",

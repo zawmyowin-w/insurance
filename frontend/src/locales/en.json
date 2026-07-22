@@ -969,7 +969,11 @@
       "viewBtn": "View",
       "noneLabel": "None",
       "reviewBtn": "Review",
-      "proofModalTitle": "Payment Proof"
+      "proofModalTitle": "Payment Proof",
+      "filterAll": "All",
+      "filterPending": "Pending",
+      "filterVerified": "Verified",
+      "filterRejected": "Rejected"
     },
     "paymentMethods": {
       "title": "Payment Methods",
@@ -1027,7 +1031,17 @@
       "deleteConfirm": "Delete this payment method?",
       "activeStatus": "Active",
       "inactiveStatus": "Inactive",
-      "previewName": "Method Name"
+      "previewName": "Method Name",
+      "methodKeyUniqueCode": "unique code",
+      "methodKeyOnlyCapital": "Only capital letters and underscores allowed",
+      "logoFileHint": "PNG/JPG — Payment method icon (optional)",
+      "qrFileHint": "Customers will see this QR when making payments",
+      "activeCheckHint": "Active (Customers will see this method)",
+      "noMethodsTitle": "No payment methods yet",
+      "noMethodsHint": "Use the Add Method button to add KBZ Pay, Wave Pay, AYA Pay, etc.",
+      "qrPresent": "✓ Has QR",
+      "deleteModalTitle": "Delete Payment Method?",
+      "deleteModalMsg": "This payment method will be removed. This action cannot be undone."
     },
     "users": {
       "title": "Manage Users",
