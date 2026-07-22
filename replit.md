@@ -1,63 +1,47 @@
-# Digital Insurance Claim and Premiums Portal
+# Digital Insurance & Claims Portal
 
-A full-stack insurance management portal for Myanmar, supporting customer policy applications, claims, premium payments, and admin/agent workflows.
+A full-stack insurance management web application for Myanmar, supporting policy applications, claims, premium scheduling, and an AI chat assistant.
 
 ## Stack
 
-| Layer    | Technology                          |
-|----------|-------------------------------------|
-| Frontend | React 18 + Vite, Bootstrap 5, i18next (EN/MM) |
-| Backend  | Spring Boot 3.2 (Java 19), Spring Security + JWT |
-| Database | MySQL 8.0 (self-managed, data in `.mysql/`) |
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 18 + Vite 5, Bootstrap 5, React Router v6, i18next (EN/MY) |
+| Backend | Java 19, Spring Boot 3.2, Spring Security + JWT |
+| Database | MySQL 8 (self-managed, data stored in `.mysql/`) |
+| Build | Maven 3.8 |
 
-## How to Run on Replit
+## Running on Replit
 
-Both workflows start automatically:
+Two workflows run in parallel:
 
-- **Backend** — `cd backend && bash start-backend.sh`
-  Starts a local mysqld instance (data persisted in `.mysql/`), creates the `insurance_portal` database, then launches the Spring Boot API on port 8080.
-- **Start application** — `cd frontend && npm run dev`
-  Starts the Vite dev server on port 5000. All `/api` requests are proxied to the backend at `localhost:8080`.
+- **Backend** — starts a local MySQL instance (`.mysql/data/`), creates the `insurance_portal` database, then launches Spring Boot on port 8080.
+- **Start application** — installs npm dependencies and starts Vite on port 5000. The Vite dev server proxies `/api` requests to the backend.
 
-First boot seeds 4 insurance types, 6 packages, and an admin user via `DataInitializer`.
+Start both with the **Project** run button, or restart each individually.
 
-## Default Credentials
+## Default Login
 
-| Role  | Email               | Password  |
-|-------|---------------------|-----------|
-| Admin | admin@dicp.com.mm   | Admin@123 |
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | admin@dicp.com.mm | Admin@123 |
 
-## Key Environment Variables
+## Environment Variables
 
-| Variable              | Purpose                                    | Default              |
-|-----------------------|--------------------------------------------|----------------------|
-| `JWT_SECRET`          | HMAC-SHA256 signing key                    | Built-in dev key     |
-| `DB_PASSWORD`         | MySQL root password                        | *(empty)*            |
-| `CORS_ALLOWED_ORIGINS`| Comma-separated allowed origins            | localhost variants   |
-| `ADMIN_EMAIL`         | Bootstrap admin email                      | admin@dicp.com.mm    |
-| `ADMIN_PASSWORD`      | Bootstrap admin password                   | Admin@123            |
+| Variable | Purpose |
+|----------|---------|
+| `CORS_ALLOWED_ORIGINS` | Comma-separated origins allowed by the backend (must include Replit dev domain) |
+| `VITE_GOOGLE_CLIENT_ID` | Google OAuth client ID for social login |
+| `JWT_SECRET` | Override default JWT signing key in production |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Override seeded admin credentials |
+| `XAI_API_KEY` | Required for the AI chat assistant feature |
 
-## Project Structure
+## Key URLs
 
-```
-├── frontend/          React + Vite app
-│   └── src/
-│       ├── pages/     Customer, Agent, Admin page components
-│       ├── components/
-│       ├── context/   AuthContext, NotifCountContext
-│       └── services/  axios API client
-├── backend/           Spring Boot application
-│   └── src/main/java/com/insurance/portal/
-│       ├── config/    Security, CORS, DataInitializer
-│       ├── controller/
-│       ├── service/
-│       ├── model/
-│       └── repository/
-├── database/          local_mysql.sql — full schema + seed snapshot
-└── .mysql/            MySQL data directory (gitignored, auto-created)
-```
+- App: `http://localhost:5000`
+- API: `http://localhost:8080/api`
+- Swagger UI: `http://localhost:8080/api/swagger-ui.html`
 
-## User Preferences
+## User preferences
 
-- Keep the existing monorepo structure (frontend/ + backend/ side by side).
-- Do not migrate the database to Replit PostgreSQL — MySQL is intentional.
+- Keep existing project structure and stack.
