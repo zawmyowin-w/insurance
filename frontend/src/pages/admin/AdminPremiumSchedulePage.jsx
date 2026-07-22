@@ -3,37 +3,56 @@ import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 
-const FREQ_LABEL = {
-  MONTHLY: 'လစဥ်', QUARTERLY: 'သုံးလတစ်ကြိမ်',
-  HALF_YEARLY: 'ခြောက်လတစ်ကြိမ်', YEARLY: 'နှစ်စဥ်',
+const STATUS_COLORS = {
+  OVERDUE:              { color: '#dc2626', bg: '#fee2e2', icon: 'bi-exclamation-triangle-fill' },
+  DUE:                  { color: '#d97706', bg: '#fef3c7', icon: 'bi-clock-fill' },
+  PENDING_VERIFICATION: { color: '#7c3aed', bg: '#ede9fe', icon: 'bi-hourglass-split' },
+  UPCOMING:             { color: '#64748b', bg: '#f1f5f9', icon: 'bi-calendar-event' },
+  PAID:                 { color: '#16a34a', bg: '#dcfce7', icon: 'bi-check-circle-fill' },
 }
-
-const STATUS_META = {
-  OVERDUE:              { label: 'သတ်မှတ်ရက်ကျော်',   color: '#dc2626', bg: '#fee2e2', icon: 'bi-exclamation-triangle-fill' },
-  DUE:                  { label: 'ဤလပေးရမည်',         color: '#d97706', bg: '#fef3c7', icon: 'bi-clock-fill' },
-  PENDING_VERIFICATION: { label: 'စစ်ဆေးဆဲ',           color: '#7c3aed', bg: '#ede9fe', icon: 'bi-hourglass-split' },
-  UPCOMING:             { label: 'လာမည်',              color: '#64748b', bg: '#f1f5f9', icon: 'bi-calendar-event' },
-  PAID:                 { label: 'ပေးပြီး',            color: '#16a34a', bg: '#dcfce7', icon: 'bi-check-circle-fill' },
-}
-
-const TABS = [
-  { key: 'ALL',    label: 'အားလုံး',              icon: 'bi-list-ul'         },
-  { key: 'OVERDUE',label: 'သတ်မှတ်ရက်ကျော်',     icon: 'bi-exclamation-triangle' },
-  { key: 'DUE',    label: 'ဤလပေးရမည်',            icon: 'bi-clock'           },
-  { key: 'PENDING_VERIFICATION', label: 'စစ်ဆေးဆဲ', icon: 'bi-hourglass-split' },
-  { key: 'PAID',   label: 'ပေးပြီး',              icon: 'bi-check-circle'    },
-]
 
 export default function AdminPremiumSchedulePage() {
   const { t } = useTranslation()
+
+  // Derived from translations — defined inside component so t() is available
+  const FREQ_LABEL = {
+    MONTHLY:     t('admin.premiumSchedule.freqMonthly'),
+    QUARTERLY:   t('admin.premiumSchedule.freqQuarterly'),
+    HALF_YEARLY: t('admin.premiumSchedule.freqHalfYearly'),
+    YEARLY:      t('admin.premiumSchedule.freqYearly'),
+  }
+
+  const STATUS_META = {
+    OVERDUE:              { label: t('admin.premiumSchedule.statusOverdue'),            ...STATUS_COLORS.OVERDUE },
+    DUE:                  { label: t('admin.premiumSchedule.statusDue'),                ...STATUS_COLORS.DUE },
+    PENDING_VERIFICATION: { label: t('admin.premiumSchedule.statusPendingVerification'), ...STATUS_COLORS.PENDING_VERIFICATION },
+    UPCOMING:             { label: t('admin.premiumSchedule.statusUpcoming'),           ...STATUS_COLORS.UPCOMING },
+    PAID:                 { label: t('admin.premiumSchedule.statusPaid'),               ...STATUS_COLORS.PAID },
+  }
+
+  const TABS = [
+    { key: 'ALL',                  label: t('admin.premiumSchedule.tabAll'),     icon: 'bi-list-ul'              },
+    { key: 'OVERDUE',              label: t('admin.premiumSchedule.tabOverdue'), icon: 'bi-exclamation-triangle' },
+    { key: 'DUE',                  label: t('admin.premiumSchedule.tabDue'),     icon: 'bi-clock'                },
+    { key: 'PENDING_VERIFICATION', label: t('admin.premiumSchedule.tabPending'), icon: 'bi-hourglass-split'      },
+    { key: 'PAID',                 label: t('admin.premiumSchedule.tabPaid'),    icon: 'bi-check-circle'         },
+  ]
+
+  const SUMMARY_CARDS = [
+    { key: 'OVERDUE',              label: t('admin.premiumSchedule.statusOverdue'),            icon: 'bi-exclamation-triangle-fill', color: '#dc2626', bg: '#fee2e2' },
+    { key: 'DUE',                  label: t('admin.premiumSchedule.statusDue'),                icon: 'bi-clock-fill',               color: '#d97706', bg: '#fef3c7' },
+    { key: 'PENDING_VERIFICATION', label: t('admin.premiumSchedule.statusPendingVerification'), icon: 'bi-hourglass-split',          color: '#7c3aed', bg: '#ede9fe' },
+    { key: 'PAID',                 label: t('admin.premiumSchedule.statusPaid'),               icon: 'bi-check-circle-fill',        color: '#16a34a', bg: '#dcfce7' },
+  ]
+
   const [entries, setEntries]     = useState([])
   const [loading, setLoading]     = useState(true)
   const [activeTab, setActiveTab] = useState('ALL')
   const [search, setSearch]       = useState('')
-  const [expanded, setExpanded]   = useState({})       // appId → full schedule data
-  const [loadingSchedule, setLoadingSchedule] = useState({}) // appId → bool
-  const [actionLoading, setActionLoading] = useState({}) // appId → 'warn'|'cancel'|null
-  const [cancelConfirm, setCancelConfirm] = useState(null) // appId to confirm cancel
+  const [expanded, setExpanded]   = useState({})
+  const [loadingSchedule, setLoadingSchedule] = useState({})
+  const [actionLoading, setActionLoading] = useState({})
+  const [cancelConfirm, setCancelConfirm] = useState(null)
 
   const fetchData = () => {
     setLoading(true)
@@ -123,6 +142,7 @@ export default function AdminPremiumSchedulePage() {
 
   return (
     <div className="fade-in">
+
       {/* Cancel Confirm Modal */}
       {cancelConfirm && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1050, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
@@ -132,13 +152,16 @@ export default function AdminPremiumSchedulePage() {
                 <i className="bi bi-exclamation-triangle-fill" style={{ color: '#dc2626', fontSize: '1.2rem' }}></i>
               </div>
               <div>
-                <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>Application ပယ်ဖျက်မည်</div>
-                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 2 }}>ဤလုပ်ဆောင်ချက်ကို ပြန်မလှန်နိုင်ပါ</div>
+                <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>
+                  {t('admin.premiumSchedule.cancelConfirmModalTitle')}
+                </div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                  {t('admin.premiumSchedule.cancelConfirmModalIrreversible')}
+                </div>
               </div>
             </div>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
-              Premium ပေးသွင်းမှု သတ်မှတ်ရက်ကျော်သောကြောင့် ဤ Application ကို ပယ်ဖျက်မည်။
-              Customer ထံ အကြောင်းကြားချက် အလိုအလျောက် ပေးပို့မည်။
+              {t('admin.premiumSchedule.cancelConfirmModalBody')}
             </p>
             <div className="d-flex gap-2 justify-content-end">
               <button type="button" className="btn-outline-custom" style={{ padding: '0.45rem 1rem', fontSize: '0.85rem' }}
@@ -164,12 +187,7 @@ export default function AdminPremiumSchedulePage() {
       {/* Summary cards */}
       {!loading && (
         <div className="row g-3 mb-4">
-          {[
-            { key: 'OVERDUE', label: 'သတ်မှတ်ရက်ကျော်', icon: 'bi-exclamation-triangle-fill', color: '#dc2626', bg: '#fee2e2' },
-            { key: 'DUE',     label: 'ဤလပေးရမည်',       icon: 'bi-clock-fill',               color: '#d97706', bg: '#fef3c7' },
-            { key: 'PENDING_VERIFICATION', label: 'စစ်ဆေးဆဲ', icon: 'bi-hourglass-split',    color: '#7c3aed', bg: '#ede9fe' },
-            { key: 'PAID',    label: 'ပေးပြီး',          icon: 'bi-check-circle-fill',        color: '#16a34a', bg: '#dcfce7' },
-          ].map(c => (
+          {SUMMARY_CARDS.map(c => (
             <div key={c.key} className="col-6 col-md-3">
               <div className="card-custom" style={{ padding: '1rem', cursor: 'pointer', border: activeTab === c.key ? `2px solid ${c.color}` : '1px solid var(--border)' }}
                 onClick={() => setActiveTab(c.key === activeTab ? 'ALL' : c.key)}>
@@ -194,7 +212,7 @@ export default function AdminPremiumSchedulePage() {
           <div className="d-flex justify-content-between align-items-center mb-2">
             <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--text-primary)' }}>
               <i className="bi bi-graph-up me-1" style={{ color: '#16a34a' }}></i>
-              Overall Premium Collection Progress
+              {t('admin.premiumSchedule.overallProgress')}
             </span>
             <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#16a34a' }}>
               {totalPaid} / {totalInstallments} ({Math.round(totalPaid / totalInstallments * 100)}%)
@@ -205,7 +223,7 @@ export default function AdminPremiumSchedulePage() {
           </div>
           <div className="d-flex gap-4 mt-2" style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
             <span><i className="bi bi-check-circle-fill me-1" style={{ color: '#16a34a' }}></i>{t('admin.premiumSchedule.paidLabel')}: {totalPaid}</span>
-            <span><i className="bi bi-exclamation-triangle-fill me-1" style={{ color: '#dc2626' }}></i>{t('admin.premiumSchedule.overdue')}: {totalOverdue}</span>
+            <span><i className="bi bi-exclamation-triangle-fill me-1" style={{ color: '#dc2626' }}></i>{t('admin.premiumSchedule.overdueLabel')}: {totalOverdue}</span>
             <span><i className="bi bi-clock-fill me-1" style={{ color: '#d97706' }}></i>{t('admin.premiumSchedule.dueLabel')}: {totalDue}</span>
             <span><i className="bi bi-calendar me-1" style={{ color: '#64748b' }}></i>{t('admin.premiumSchedule.totalLabel')}: {totalInstallments}</span>
           </div>
@@ -238,8 +256,10 @@ export default function AdminPremiumSchedulePage() {
         </div>
 
         <input
-          type="text" placeholder="Customer/Policy ရှာဖွေရန်..."
-          value={search} onChange={e => setSearch(e.target.value)}
+          type="text"
+          placeholder={t('admin.premiumSchedule.searchPlaceholder')}
+          value={search}
+          onChange={e => setSearch(e.target.value)}
           className="form-control-custom"
           style={{ maxWidth: 260, padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
         />
@@ -251,9 +271,9 @@ export default function AdminPremiumSchedulePage() {
       ) : filtered.length === 0 ? (
         <div className="card-custom text-center py-5">
           <i className="bi bi-calendar-x" style={{ fontSize: '3rem', color: 'var(--border)' }}></i>
-          <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>မှတ်တမ်းမရှိပါ</h5>
+          <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>{t('admin.premiumSchedule.emptyTitle')}</h5>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-            Recurring payment frequency သတ်မှတ်ထားသော Approved Policy မရှိသေးပါ
+            {t('admin.premiumSchedule.emptyDesc')}
           </p>
         </div>
       ) : (
@@ -290,9 +310,9 @@ export default function AdminPremiumSchedulePage() {
                   {/* Period */}
                   <div style={{ flex: '0 0 auto', textAlign: 'center' }}>
                     <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                      {e.periodLabel || `Period ${e.currentPeriodNumber}`}
+                      {e.periodLabel || `${t('admin.premiumSchedule.periodColumn')} ${e.currentPeriodNumber}`}
                     </div>
-                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>ကာလ</div>
+                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{t('admin.premiumSchedule.periodColumn')}</div>
                   </div>
 
                   {/* Amount */}
@@ -339,12 +359,12 @@ export default function AdminPremiumSchedulePage() {
                       disabled={isLoadingSched}>
                       {isLoadingSched
                         ? <span className="spinner-border spinner-border-sm"></span>
-                        : <><i className={`bi bi-${isExpanded ? 'chevron-up' : 'calendar3'} me-1`}></i>{isExpanded ? 'ပိတ်' : 'ဇယားကြည့်'}</>}
+                        : <><i className={`bi bi-${isExpanded ? 'chevron-up' : 'calendar3'} me-1`}></i>{isExpanded ? t('admin.premiumSchedule.hideScheduleBtn') : t('admin.premiumSchedule.viewScheduleBtn')}</>}
                     </button>
                     <button
                       className="btn-outline-custom"
                       style={{ padding: '0.3rem 0.65rem', fontSize: '0.75rem' }}
-                      title="Policy Contract PDF ဒေါင်းလုဒ်"
+                      title={t('admin.premiumSchedule.pdfBtnTitle')}
                       onClick={() => downloadPolicy(e.applicationId, e.policyNumber)}>
                       <i className="bi bi-file-earmark-pdf me-1" style={{ color: '#dc2626' }}></i>PDF
                     </button>
@@ -352,7 +372,7 @@ export default function AdminPremiumSchedulePage() {
                       <>
                         <button
                           type="button"
-                          title="Customer ထံ သတိပေးစာ ပေးပို့"
+                          title={t('admin.premiumSchedule.warnBtnTitle')}
                           disabled={actionLoading[e.applicationId] === 'warn'}
                           onClick={() => sendOverdueWarning(e.applicationId)}
                           style={{
@@ -362,11 +382,11 @@ export default function AdminPremiumSchedulePage() {
                           }}>
                           {actionLoading[e.applicationId] === 'warn'
                             ? <span className="spinner-border spinner-border-sm"></span>
-                            : <><i className="bi bi-envelope-exclamation-fill"></i><span className="d-none d-md-inline"> သတိပေး</span></>}
+                            : <><i className="bi bi-envelope-exclamation-fill"></i><span className="d-none d-md-inline"> {t('admin.premiumSchedule.warnBtnLabel')}</span></>}
                         </button>
                         <button
                           type="button"
-                          title="Application ပယ်ဖျက်"
+                          title={t('admin.premiumSchedule.cancelBtnTitle')}
                           disabled={actionLoading[e.applicationId] === 'cancel'}
                           onClick={() => setCancelConfirm(e.applicationId)}
                           style={{
@@ -376,7 +396,7 @@ export default function AdminPremiumSchedulePage() {
                           }}>
                           {actionLoading[e.applicationId] === 'cancel'
                             ? <span className="spinner-border spinner-border-sm"></span>
-                            : <><i className="bi bi-x-circle-fill"></i><span className="d-none d-md-inline"> ပယ်ဖျက်</span></>}
+                            : <><i className="bi bi-x-circle-fill"></i><span className="d-none d-md-inline"> {t('admin.premiumSchedule.cancelBtnLabel')}</span></>}
                         </button>
                       </>
                     )}
@@ -390,14 +410,14 @@ export default function AdminPremiumSchedulePage() {
                     <div style={{ padding: '0.65rem 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
                       <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)' }}>
                         <i className="bi bi-calendar-check me-1" style={{ color: 'var(--primary)' }}></i>
-                        ပေးသွင်းမှု ဇယားအပြည့်အစုံ — {schedule.packageName}
+                        {t('admin.premiumSchedule.scheduleFullTitle')} — {schedule.packageName}
                       </div>
                       <div className="d-flex gap-3" style={{ fontSize: '0.75rem' }}>
                         <span style={{ color: '#16a34a', fontWeight: 700 }}>
-                          <i className="bi bi-check-circle-fill me-1"></i>ပေးပြီး: {schedule.paidCount}/{schedule.totalInstallments}
+                          <i className="bi bi-check-circle-fill me-1"></i>{t('admin.premiumSchedule.paidCount')}: {schedule.paidCount}/{schedule.totalInstallments}
                         </span>
                         <span style={{ color: 'var(--text-muted)' }}>
-                          တစ်ကြိမ်: {schedule.installmentAmount != null ? Number(schedule.installmentAmount).toLocaleString() : '—'} MMK
+                          {t('admin.premiumSchedule.perInstallment')}: {schedule.installmentAmount != null ? Number(schedule.installmentAmount).toLocaleString() : '—'} MMK
                         </span>
                         <span style={{ color: 'var(--text-muted)' }}>
                           {FREQ_LABEL[schedule.paymentFrequency] || schedule.paymentFrequency || '—'}
@@ -430,7 +450,7 @@ export default function AdminPremiumSchedulePage() {
                                 </span>
                               </div>
                               <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: 2 }}>
-                                {inst.periodLabel || `Period ${inst.periodNumber}`}
+                                {inst.periodLabel || `${t('admin.premiumSchedule.periodColumn')} ${inst.periodNumber}`}
                               </div>
                               <div style={{ fontSize: '0.78rem', fontWeight: 800, color: inst.status === 'PAID' ? '#16a34a' : 'var(--primary)' }}>
                                 {inst.amount != null ? Number(inst.amount).toLocaleString() : '—'} MMK
@@ -440,7 +460,7 @@ export default function AdminPremiumSchedulePage() {
                               </div>
                               {inst.paymentId && (
                                 <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: 2 }}>
-                                  Payment #{inst.paymentId}
+                                  {t('admin.premiumSchedule.paymentId')} #{inst.paymentId}
                                   {inst.paymentStatus && <span style={{ marginLeft: 4, fontWeight: 700 }}>({inst.paymentStatus})</span>}
                                 </div>
                               )}
