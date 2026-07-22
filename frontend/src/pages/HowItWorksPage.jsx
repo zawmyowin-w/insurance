@@ -4,22 +4,22 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 
 const steps = [
-  { num: 1, icon: 'bi-person-plus', title: 'Register an Account', desc: 'Create your free customer account with your basic information. No upfront payment required to register.' },
-  { num: 2, icon: 'bi-search', title: 'Explore Insurance Plans', desc: 'Browse all available insurance plans. Use the premium calculator to estimate your costs before committing.' },
-  { num: 3, icon: 'bi-file-earmark-text', title: 'Submit Your Application', desc: 'Choose your desired plan, fill in the application form with your personal details, and submit it to the assigned agent.' },
-  { num: 4, icon: 'bi-person-badge', title: 'Agent Review', desc: 'A licensed insurance agent reviews your application for completeness and accuracy, then forwards it to admin as "Verified".' },
-  { num: 5, icon: 'bi-clipboard-check', title: 'Admin Approval', desc: 'Our admin team conducts a final review. If approved, you receive a notification to proceed with payment.' },
-  { num: 6, icon: 'bi-credit-card', title: 'Make Premium Payment', desc: 'Transfer the premium amount and upload your payment screenshot. Admin verifies the payment and activates your policy.' },
-  { num: 7, icon: 'bi-file-earmark-pdf', title: 'Receive Your Policy', desc: 'Once payment is confirmed, you receive your official insurance policy contract as a PDF document via the portal.' },
-  { num: 8, icon: 'bi-shield-check', title: "You're Protected!", desc: 'Your insurance coverage is now active. Receive timely payment reminders and submit claims whenever needed.' },
+  { num: 1, icon: 'bi-person-plus', titleKey: 'step1Title', descKey: 'step1Desc' },
+  { num: 2, icon: 'bi-search', titleKey: 'step2Title', descKey: 'step2Desc' },
+  { num: 3, icon: 'bi-file-earmark-text', titleKey: 'step3Title', descKey: 'step3Desc' },
+  { num: 4, icon: 'bi-person-badge', titleKey: 'step4Title', descKey: 'step4Desc' },
+  { num: 5, icon: 'bi-clipboard-check', titleKey: 'step5Title', descKey: 'step5Desc' },
+  { num: 6, icon: 'bi-credit-card', titleKey: 'step6Title', descKey: 'step6Desc' },
+  { num: 7, icon: 'bi-file-earmark-pdf', titleKey: 'step7Title', descKey: 'step7Desc' },
+  { num: 8, icon: 'bi-shield-check', titleKey: 'step8Title', descKey: 'step8Desc' },
 ]
 
 const claimSteps = [
-  { icon: 'bi-exclamation-triangle', title: 'Incident Occurs', desc: 'An insured event happens (accident, health issue, etc.).' },
-  { icon: 'bi-file-earmark-plus', title: 'Submit a Claim', desc: 'Log in, select your active policy, and submit a claim with required documents.' },
-  { icon: 'bi-person-badge', title: 'Agent Verification', desc: 'Your agent reviews the claim documents and marks it as verified.' },
-  { icon: 'bi-check2-all', title: 'Admin Decision', desc: 'Admin approves or rejects the claim. You are notified of the outcome.' },
-  { icon: 'bi-cash-coin', title: 'Receive Payout', desc: 'Approved claims are processed and compensation is disbursed to you.' },
+  { icon: 'bi-exclamation-triangle', titleKey: 'claim1Title', descKey: 'claim1Desc' },
+  { icon: 'bi-file-earmark-plus', titleKey: 'claim2Title', descKey: 'claim2Desc' },
+  { icon: 'bi-person-badge', titleKey: 'claim3Title', descKey: 'claim3Desc' },
+  { icon: 'bi-check2-all', titleKey: 'claim4Title', descKey: 'claim4Desc' },
+  { icon: 'bi-cash-coin', titleKey: 'claim5Title', descKey: 'claim5Desc' },
 ]
 
 export default function HowItWorksPage() {
@@ -40,7 +40,7 @@ export default function HowItWorksPage() {
       <section style={{ background: 'var(--bg-secondary)', padding: '4rem 0' }}>
         <div className="container">
           <h2 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '2rem', fontSize: '1.5rem' }}>
-            Getting Started with Insurance
+            {t('how.gettingStarted')}
           </h2>
           <div className="row g-4">
             {steps.map((step, idx) => (
@@ -50,8 +50,8 @@ export default function HowItWorksPage() {
                     <div className="step-number">{step.num}</div>
                     <i className={`bi ${step.icon}`} style={{ fontSize: '1.3rem', color: 'var(--accent)' }}></i>
                   </div>
-                  <h6 style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.4rem' }}>{step.title}</h6>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: 0 }}>{step.desc}</p>
+                  <h6 style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.4rem' }}>{t(`how.${step.titleKey}`)}</h6>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: 0 }}>{t(`how.${step.descKey}`)}</p>
                 </div>
               </div>
             ))}
@@ -63,12 +63,12 @@ export default function HowItWorksPage() {
       <section style={{ background: 'var(--bg)', padding: '4rem 0' }}>
         <div className="container">
           <h2 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem', fontSize: '1.5rem' }}>
-            Claims Process
+            {t('how.claimsProcess')}
           </h2>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>How to file and track your insurance claim</p>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>{t('how.claimsSubtitle')}</p>
           <div className="row g-4 align-items-start">
             {claimSteps.map((step, idx) => (
-              <div key={step.title} className="col-12 col-sm-6 col-lg">
+              <div key={step.titleKey} className="col-12 col-sm-6 col-lg">
                 <div style={{ textAlign: 'center' }}>
                   <div style={{
                     width: 64, height: 64, borderRadius: '50%',
@@ -78,8 +78,8 @@ export default function HowItWorksPage() {
                   }}>
                     <i className={`bi ${step.icon}`}></i>
                   </div>
-                  <h6 style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.9rem' }}>{step.title}</h6>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.83rem' }}>{step.desc}</p>
+                  <h6 style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '0.9rem' }}>{t(`how.${step.titleKey}`)}</h6>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.83rem' }}>{t(`how.${step.descKey}`)}</p>
                 </div>
               </div>
             ))}
@@ -91,15 +91,15 @@ export default function HowItWorksPage() {
       <section style={{ background: 'var(--bg-secondary)', padding: '4rem 0' }}>
         <div className="container">
           <h2 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '2rem', fontSize: '1.5rem' }}>
-            User Roles Explained
+            {t('how.rolesTitle')}
           </h2>
           <div className="row g-4">
             {[
-              { icon: 'bi-person', color: '#1d4ed8', bg: '#eff6ff', title: 'Customer', desc: 'Browse plans, submit applications, pay premiums, and file claims. Self-register on the portal.' },
-              { icon: 'bi-person-badge', color: '#16a34a', bg: '#f0fdf4', title: 'Agent', desc: 'Review and verify customer applications and claims before forwarding to admin. Account created by admin.' },
-              { icon: 'bi-shield-lock', color: '#9333ea', bg: '#faf5ff', title: 'Admin', desc: 'Full system control: manage packages, users, approve/reject applications and claims, send notifications.' },
+              { icon: 'bi-person', color: '#1d4ed8', bg: '#eff6ff', titleKey: 'customerTitle', descKey: 'customerDesc' },
+              { icon: 'bi-person-badge', color: '#16a34a', bg: '#f0fdf4', titleKey: 'agentTitle', descKey: 'agentDesc' },
+              { icon: 'bi-shield-lock', color: '#9333ea', bg: '#faf5ff', titleKey: 'adminTitle', descKey: 'adminDesc' },
             ].map(role => (
-              <div key={role.title} className="col-12 col-md-4">
+              <div key={role.titleKey} className="col-12 col-md-4">
                 <div className="card-custom h-100">
                   <div style={{
                     width: 52, height: 52, borderRadius: 12,
@@ -108,8 +108,8 @@ export default function HowItWorksPage() {
                   }}>
                     <i className={`bi ${role.icon}`} style={{ fontSize: '1.4rem', color: role.color }}></i>
                   </div>
-                  <h5 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>{role.title}</h5>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', margin: 0 }}>{role.desc}</p>
+                  <h5 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>{t(`how.${role.titleKey}`)}</h5>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', margin: 0 }}>{t(`how.${role.descKey}`)}</p>
                 </div>
               </div>
             ))}
@@ -120,19 +120,19 @@ export default function HowItWorksPage() {
       {/* CTA */}
       <section style={{ background: 'var(--primary)', padding: '4rem 0' }}>
         <div className="container text-center">
-          <h2 style={{ color: '#fff', fontWeight: 700, marginBottom: '1rem' }}>Ready to get started?</h2>
+          <h2 style={{ color: '#fff', fontWeight: 700, marginBottom: '1rem' }}>{t('how.ctaTitle')}</h2>
           <p style={{ color: 'rgba(255,255,255,0.8)', marginBottom: '2rem', maxWidth: 460, margin: '0 auto 2rem' }}>
-            Join over 1 million families already protected by our insurance plans.
+            {t('how.ctaDesc')}
           </p>
           <div className="d-flex justify-content-center gap-3 flex-wrap">
             <Link to="/register" style={{
               background: '#fff', color: 'var(--primary)', padding: '0.75rem 2rem',
               borderRadius: 8, fontWeight: 600, textDecoration: 'none'
-            }}>Register Now</Link>
+            }}>{t('how.registerNow')}</Link>
             <Link to="/plans" style={{
               border: '2px solid rgba(255,255,255,0.5)', color: '#fff', padding: '0.75rem 2rem',
               borderRadius: 8, fontWeight: 600, textDecoration: 'none'
-            }}>View Plans</Link>
+            }}>{t('how.viewPlans')}</Link>
           </div>
         </div>
       </section>
