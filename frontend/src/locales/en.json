@@ -1065,7 +1065,13 @@
       "disableBtn": "Disable",
       "paginationShowing": "Showing",
       "paginationOf": "of",
-      "paginationUsers": "users"
+      "paginationUsers": "users",
+      "deleteTitle": "Delete User?",
+      "deleteMessage": "This user will be permanently deleted. All their data will be lost.",
+      "noMatchSearch": "No {{label}} matching \"{{search}}\"",
+      "noUsersYet": "No {{label}} yet",
+      "agentConflictWarning": "{{name}} already has this type assigned. They will be deactivated if you save.",
+      "passwordStrengthError": "Password must be at least 8 characters with uppercase, lowercase, number and special character"
     },
     "packages": {
       "title": "Insurance Packages",

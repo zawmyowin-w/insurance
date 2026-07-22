@@ -1066,7 +1066,13 @@
       "disableBtn": "ပိတ်ရန်",
       "paginationShowing": "ပြသနေသည်",
       "paginationOf": "/",
-      "paginationUsers": "ဦး"
+      "paginationUsers": "ဦး",
+      "deleteTitle": "User ကို ဖျက်မည်လား?",
+      "deleteMessage": "ဤ user ကို အပြီးအပိုင် ဖျက်မည်။ ၎င်း၏ ဒေတာများ အားလုံး ပျောက်ဆုံးမည်ဖြစ်သည်။",
+      "noMatchSearch": "\"{{search}}\" နှင့် ကိုက်ညီသော {{label}} မတွေ့ပါ",
+      "noUsersYet": "{{label}} မရှိသေးပါ",
+      "agentConflictWarning": "{{name}} သည် ဤ type ကို ယူထားသည်။ သိမ်းမည်ဆိုလျှင် ပိတ်ပင်မည်။",
+      "passwordStrengthError": "Password သည် အက္ခရာ ၈ လုံးအထက်၊ အကြီး၊ အသေး၊ နံပါတ် နှင့် သင်္ကေတ ပါရမည်"
     },
     "packages": {
       "title": "အာမခံ Package များ",

@@ -96,7 +96,7 @@ export default function ManageUsersPage() {
     const phoneVal = createForm.phone === '+95' ? '' : createForm.phone
     if (phoneVal && !PHONE_PATTERN.test(phoneVal)) { toast.error(PHONE_ERROR); return }
     if (!isStrongPassword(createForm.password)) {
-      toast.error('Password must be at least 8 characters with uppercase, lowercase, number and special character')
+      toast.error(t('admin.users.passwordStrengthError'))
       return
     }
     setSaving(true)
@@ -145,7 +145,7 @@ export default function ManageUsersPage() {
     const phoneVal = editForm.phone === '+95' ? '' : editForm.phone
     if (phoneVal && !PHONE_PATTERN.test(phoneVal)) { toast.error(PHONE_ERROR); return }
     if (editForm.newPassword && !isStrongPassword(editForm.newPassword)) {
-      toast.error('Password must be at least 8 characters with uppercase, lowercase, number and special character')
+      toast.error(t('admin.users.passwordStrengthError'))
       return
     }
     setEditSaving(true)
@@ -216,12 +216,12 @@ export default function ManageUsersPage() {
           <form onSubmit={handleCreate}>
             <div className="row g-3">
               <div className="col-12 col-md-6">
-                <label className="form-label-custom">Full Name *</label>
+                <label className="form-label-custom">{t('admin.users.name')} *</label>
                 <input required className="form-control-custom w-100" value={createForm.name}
                   onChange={e => setCreateForm(f => ({ ...f, name: e.target.value }))} />
               </div>
               <div className="col-12 col-md-6">
-                <label className="form-label-custom">Email *</label>
+                <label className="form-label-custom">{t('admin.users.email')} *</label>
                 <input type="email" required className="form-control-custom w-100" value={createForm.email}
                   maxLength={EMAIL_MAX_LENGTH}
                   onChange={e => setCreateForm(f => ({ ...f, email: e.target.value }))}
@@ -231,7 +231,7 @@ export default function ManageUsersPage() {
                 )}
               </div>
               <div className={activeTab === 'AGENT' ? 'col-12 col-md-4' : 'col-12 col-md-6'}>
-                <label className="form-label-custom">Phone</label>
+                <label className="form-label-custom">{t('admin.users.phone')}</label>
                 <input className="form-control-custom w-100" placeholder="+959xxxxxxxx" value={createForm.phone}
                   onChange={e => handlePhoneChange(e.target.value, v => setCreateForm(f => ({ ...f, phone: v })))}
                   onFocus={() => { if (!createForm.phone) setCreateForm(f => ({ ...f, phone: '+95' })) }}
@@ -243,7 +243,7 @@ export default function ManageUsersPage() {
               </div>
               {activeTab === 'AGENT' && (
                 <div className="col-12 col-md-4">
-                  <label className="form-label-custom">Insurance Type</label>
+                  <label className="form-label-custom">{t('admin.users.insuranceType')}</label>
                   <select className="form-select-custom w-100" value={createForm.insuranceType}
                     onChange={e => setCreateForm(f => ({ ...f, insuranceType: e.target.value }))}>
                     {[...insuranceTypes, 'ALL'].map(t => <option key={t} value={t}>{t}</option>)}
@@ -251,13 +251,13 @@ export default function ManageUsersPage() {
                   {createForm.insuranceType !== 'ALL' && agentTypeMap[createForm.insuranceType] && (
                     <p style={{ fontSize: '0.76rem', color: '#d97706', margin: '0.25rem 0 0' }}>
                       <i className="bi bi-exclamation-triangle me-1"></i>
-                      <strong>{agentTypeMap[createForm.insuranceType].name}</strong> သည် ဤ type ကို ယူထားသည်။ သိမ်းမည်ဆိုလျှင် ပိတ်ပင်မည်။
+                      {t('admin.users.agentConflictWarning', { name: agentTypeMap[createForm.insuranceType].name })}
                     </p>
                   )}
                 </div>
               )}
               <div className={activeTab === 'AGENT' ? 'col-12 col-md-4' : 'col-12 col-md-6'}>
-                <label className="form-label-custom">Password *</label>
+                <label className="form-label-custom">{t('admin.users.password')} *</label>
                 <div style={{ position: 'relative' }}>
                   <input type={showCreatePwd ? 'text' : 'password'} required className="form-control-custom w-100"
                     value={createForm.password} style={{ paddingRight: '2.5rem' }}
@@ -273,7 +273,7 @@ export default function ManageUsersPage() {
                 )}
               </div>
               <div className="col-12">
-                <label className="form-label-custom">Address</label>
+                <label className="form-label-custom">{t('admin.users.address')}</label>
                 <input className="form-control-custom w-100" value={createForm.address}
                   onChange={e => setCreateForm(f => ({ ...f, address: e.target.value }))} />
               </div>
@@ -295,7 +295,7 @@ export default function ManageUsersPage() {
           color: 'var(--text-muted)', fontSize: '0.85rem', pointerEvents: 'none'
         }}></i>
         <input className="form-control-custom w-100" style={{ paddingLeft: '2.2rem' }}
-          placeholder={`Search ${tabMeta[activeTab].label.toLowerCase()} by name or email…`}
+          placeholder={t('admin.users.searchPlaceholder')}
           value={search} onChange={e => handleSearch(e.target.value)} />
       </div>
 
@@ -309,7 +309,7 @@ export default function ManageUsersPage() {
               <table className="w-100">
                 <thead>
                   <tr>
-                    {['Name', 'Email', 'Phone', 'Address',
+                    {[t('admin.users.name'), t('admin.users.email'), t('admin.users.phone'), t('admin.users.address'),
                       ...(activeTab === 'AGENT' ? [t('admin.users.typeHeader')] : []),
                       t('admin.common.status'), t('admin.users.joinedDate'), t('admin.common.actions')].map(h => <th key={h}>{h}</th>)}
                   </tr>
@@ -317,7 +317,7 @@ export default function ManageUsersPage() {
                 <tbody>
                   {paginated.length === 0 ? (
                     <tr><td colSpan={10} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>
-                      {search ? `No ${tabMeta[activeTab].label.toLowerCase()} matching "${search}"` : `No ${tabMeta[activeTab].label.toLowerCase()} yet`}
+                      {search ? t('admin.users.noMatchSearch', { label: tabMeta[activeTab].label.toLowerCase(), search }) : t('admin.users.noUsersYet', { label: tabMeta[activeTab].label.toLowerCase() })}
                     </td></tr>
                   ) : paginated.map(u => (
                     <tr key={u.id}>
@@ -342,7 +342,7 @@ export default function ManageUsersPage() {
                       )}
                       <td>
                         <span className={`badge-status ${u.active ? 'badge-active' : 'badge-cancelled'}`}>
-                          {u.active ? 'Active' : 'Inactive'}
+                          {u.active ? t('admin.users.active') : t('admin.users.inactive')}
                         </span>
                       </td>
                       <td style={{ fontSize: '0.83rem', color: 'var(--text-muted)' }}>
@@ -350,7 +350,7 @@ export default function ManageUsersPage() {
                       </td>
                       <td>
                         <div className="d-flex gap-1">
-                          <button title="Edit" className="btn-outline-custom"
+                          <button title={t('admin.common.edit')} className="btn-outline-custom"
                             style={{ padding: '0.3rem 0.6rem', fontSize: '0.78rem' }}
                             onClick={() => openEdit(u)}>
                             <i className="bi bi-pencil"></i>
@@ -403,8 +403,8 @@ export default function ManageUsersPage() {
 
       <DeleteConfirmModal
         open={deleteModal.open}
-        title="User ကို ဖျက်မည်လား?"
-        message="ဤ user ကို အပြီးအပိုင် ဖျက်မည်။ ၎င်း၏ ဒေတာများ အားလုံး ပျောက်ဆုံးမည်ဖြစ်သည်။"
+        title={t('admin.users.deleteTitle')}
+        message={t('admin.users.deleteMessage')}
         onConfirm={confirmDelete}
         onCancel={() => setDeleteModal({ open: false, id: null, loading: false })}
         loading={deleteModal.loading}
@@ -440,12 +440,12 @@ export default function ManageUsersPage() {
             <form onSubmit={handleEditSubmit}>
               <div className="row g-3">
                 <div className="col-12 col-md-6">
-                  <label className="form-label-custom">Full Name *</label>
+                  <label className="form-label-custom">{t('admin.users.name')} *</label>
                   <input required className="form-control-custom w-100" value={editForm.name}
                     onChange={e => setEditForm(f => ({ ...f, name: e.target.value }))} />
                 </div>
                 <div className="col-12 col-md-6">
-                  <label className="form-label-custom">Email *</label>
+                  <label className="form-label-custom">{t('admin.users.email')} *</label>
                   <input type="email" required className="form-control-custom w-100" value={editForm.email}
                     maxLength={EMAIL_MAX_LENGTH}
                     onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))}
@@ -455,7 +455,7 @@ export default function ManageUsersPage() {
                   )}
                 </div>
                 <div className="col-12 col-md-6">
-                  <label className="form-label-custom">Phone</label>
+                  <label className="form-label-custom">{t('admin.users.phone')}</label>
                   <input className="form-control-custom w-100" placeholder="+959xxxxxxxx" value={editForm.phone}
                     onChange={e => handlePhoneChange(e.target.value, v => setEditForm(f => ({ ...f, phone: v })))}
                     onFocus={() => { if (!editForm.phone) setEditForm(f => ({ ...f, phone: '+95' })) }}
@@ -467,7 +467,7 @@ export default function ManageUsersPage() {
                 </div>
                 {editingUser.role === 'AGENT' && (
                   <div className="col-12 col-md-6">
-                    <label className="form-label-custom">Insurance Type</label>
+                    <label className="form-label-custom">{t('admin.users.insuranceType')}</label>
                     <select className="form-select-custom w-100" value={editForm.insuranceType}
                       onChange={e => setEditForm(f => ({ ...f, insuranceType: e.target.value }))}>
                       {[...insuranceTypes, 'ALL'].map(t => <option key={t} value={t}>{t}</option>)}
@@ -477,23 +477,23 @@ export default function ManageUsersPage() {
                       agentTypeMap[editForm.insuranceType].id !== editingUser.id && (
                       <p style={{ fontSize: '0.76rem', color: '#d97706', margin: '0.25rem 0 0' }}>
                         <i className="bi bi-exclamation-triangle me-1"></i>
-                        <strong>{agentTypeMap[editForm.insuranceType].name}</strong> သည် ဤ type ကို ယူထားသည်။ သိမ်းမည်ဆိုလျှင် ပိတ်ပင်မည်။
+                        {t('admin.users.agentConflictWarning', { name: agentTypeMap[editForm.insuranceType].name })}
                       </p>
                     )}
                   </div>
                 )}
                 <div className="col-12">
-                  <label className="form-label-custom">Address</label>
+                  <label className="form-label-custom">{t('admin.users.address')}</label>
                   <input className="form-control-custom w-100" value={editForm.address}
                     onChange={e => setEditForm(f => ({ ...f, address: e.target.value }))} />
                 </div>
                 <div className="col-12">
                   <label className="form-label-custom">
-                    Password <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(leave blank to keep)</span>
+                    {t('admin.users.password')} <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>{t('admin.users.passwordHint')}</span>
                   </label>
                   <div style={{ position: 'relative' }}>
                     <input type={showEditPwd ? 'text' : 'password'} className="form-control-custom w-100"
-                      placeholder="New password…" value={editForm.newPassword}
+                      placeholder={t('admin.users.passwordNew')} value={editForm.newPassword}
                       style={{ paddingRight: '2.5rem' }}
                       onChange={e => setEditForm(f => ({ ...f, newPassword: e.target.value }))}
                       onFocus={() => setEditPwdFocused(true)} onBlur={() => setEditPwdFocused(false)} />
@@ -511,7 +511,7 @@ export default function ManageUsersPage() {
                 <button type="submit" disabled={editSaving} className="btn-primary-custom" style={{ justifyContent: 'center' }}>
                   {editSaving ? <><span className="spinner-border spinner-border-sm me-2"></span>{t('admin.common.saving')}</> : t('admin.users.saveChanges')}
                 </button>
-                <button type="button" className="btn-outline-custom" onClick={closeEdit}>Cancel</button>
+                <button type="button" className="btn-outline-custom" onClick={closeEdit}>{t('admin.users.cancelBtn')}</button>
               </div>
             </form>
           </div>
