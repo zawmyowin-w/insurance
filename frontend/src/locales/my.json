@@ -1406,7 +1406,14 @@
       "markAllReadSuccess": "တုံ့ပြန်မှုအားလုံး ဖတ်ပြီးအဖြစ် မှတ်ပြီး",
       "markAllReadFailed": "အားလုံး ဖတ်ပြီးအဖြစ် မှတ်၍ မရပါ",
       "messageHeader": "မက်ဆေ့ချ်",
-      "markAllReadBtn": "အားလုံး ဖတ်ပြီးအဖြစ် မှတ်ပါ"
+      "markAllReadBtn": "အားလုံး ဖတ်ပြီးအဖြစ် မှတ်ပါ",
+      "categoryGeneral": "အထွေထွေ",
+      "categoryClaims": "တောင်းဆိုမှု",
+      "categoryPayments": "ငွေပေးချေမှု",
+      "categoryPolicies": "Policy",
+      "categoryApplications": "လျှောက်လွှာ",
+      "categorySupport": "ပံ့ပိုးမှု",
+      "categoryOther": "အခြား"
     },
     "notifications": {
       "title": "အကြောင်းကြားချက် ပေးပို့ရန်",

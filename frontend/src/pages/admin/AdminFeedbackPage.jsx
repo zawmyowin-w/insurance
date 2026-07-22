@@ -9,6 +9,12 @@ const CATEGORY_COLORS = {
   Policies: '#16a34a', Applications: '#9333ea', Support: '#0891b2', Other: '#dc2626'
 }
 
+const CATEGORY_KEY_MAP = {
+  General: 'categoryGeneral', Claims: 'categoryClaims', Payments: 'categoryPayments',
+  Policies: 'categoryPolicies', Applications: 'categoryApplications',
+  Support: 'categorySupport', Other: 'categoryOther',
+}
+
 function StarDisplay({ rating }) {
   return (
     <span>
@@ -67,7 +73,17 @@ export default function AdminFeedbackPage() {
 
   const unreadCount = feedbacks.filter(f => !f.read).length
 
-  const ratingLabel = r => ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'][r] || ''
+  const ratingLabel = r => [
+    '',
+    t('admin.feedback.ratingPoor'),
+    t('admin.feedback.ratingFair'),
+    t('admin.feedback.ratingGood'),
+    t('admin.feedback.ratingVeryGood'),
+    t('admin.feedback.ratingExcellent'),
+  ][r] || ''
+
+  const categoryLabel = cat =>
+    CATEGORY_KEY_MAP[cat] ? t(`admin.feedback.${CATEGORY_KEY_MAP[cat]}`) : (cat || '')
 
   return (
     <div className="fade-in">
@@ -158,7 +174,7 @@ export default function AdminFeedbackPage() {
                         fontSize: '0.72rem', padding: '0.1rem 0.5rem', borderRadius: 20,
                         background: (CATEGORY_COLORS[fb.category] || '#6b7280') + '18',
                         color: CATEGORY_COLORS[fb.category] || '#6b7280', fontWeight: 600
-                      }}>{fb.category}</span>
+                      }}>{categoryLabel(fb.category)}</span>
                     </div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {fb.message}
@@ -216,7 +232,7 @@ export default function AdminFeedbackPage() {
                       fontSize: '0.82rem', padding: '0.2rem 0.75rem', borderRadius: 20, fontWeight: 600,
                       background: (CATEGORY_COLORS[selected.category] || '#6b7280') + '18',
                       color: CATEGORY_COLORS[selected.category] || '#6b7280'
-                    }}>{selected.category}</span>
+                    }}>{categoryLabel(selected.category)}</span>
                   </div>
                   <div className="col-12">
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>{t('admin.feedback.submittedAt')}</div>

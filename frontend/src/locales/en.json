@@ -1405,7 +1405,14 @@
       "markAllReadSuccess": "All feedback marked as read",
       "markAllReadFailed": "Failed to mark all as read",
       "messageHeader": "Message",
-      "markAllReadBtn": "Mark All Read"
+      "markAllReadBtn": "Mark All Read",
+      "categoryGeneral": "General",
+      "categoryClaims": "Claims",
+      "categoryPayments": "Payments",
+      "categoryPolicies": "Policies",
+      "categoryApplications": "Applications",
+      "categorySupport": "Support",
+      "categoryOther": "Other"
     },
     "notifications": {
       "title": "Send Notifications",
