@@ -906,7 +906,12 @@
       "reasonRequired": "အကြောင်းပြချက် / မှတ်ချက် ဖြည့်ပါ",
       "approvedSuccess": "လျှောက်လွှာ အတည်ပြုပြီး",
       "rejectedSuccess": "လျှောက်လွှာ ငြင်းပယ်ပြီး",
-      "revisedSuccess": "လျှောက်လွှာ ပြင်ဆင်ရန် ပေးပို့ပြီး"
+      "revisedSuccess": "လျှောက်လွှာ ပြင်ဆင်ရန် ပေးပို့ပြီး",
+      "status_ALL": "အားလုံး",
+      "status_PENDING": "စောင့်ဆိုင်းဆဲ",
+      "status_VERIFIED": "အတည်ပြုပြီး",
+      "status_APPROVED": "ခွင့်ပြုပြီး",
+      "status_REJECTED": "ငြင်းပယ်ပြီး"
     },
     "claims": {
       "title": "တောင်းဆိုမှု စီမံရန်",

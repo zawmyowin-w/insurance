@@ -905,7 +905,12 @@
       "reasonRequired": "Please provide a reason/note",
       "approvedSuccess": "Application approved successfully",
       "rejectedSuccess": "Application rejected successfully",
-      "revisedSuccess": "Application sent for revision"
+      "revisedSuccess": "Application sent for revision",
+      "status_ALL": "All",
+      "status_PENDING": "Pending",
+      "status_VERIFIED": "Verified",
+      "status_APPROVED": "Approved",
+      "status_REJECTED": "Rejected"
     },
     "claims": {
       "title": "Claims Management",
