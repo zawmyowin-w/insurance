@@ -61,4 +61,4 @@ externalPort = 8080
 
 [userenv.shared]
 VITE_GOOGLE_CLIENT_ID = "732524451408-48i8ts7a6mfl194nc9rqoebjnnpnsggg.apps.googleusercontent.com"
-CORS_ALLOWED_ORIGINS = "http://localhost:5000,http://localhost:5173,https://a3bc80d2-56b4-4878-9eb5-303e2649e3bb-00-ucnzr8xbgdhn.sisko.replit.dev"
+CORS_ALLOWED_ORIGINS = "http://localhost:5000,http://localhost:5173,https://2693d092-9f40-4639-8b5d-b43998303e87-00-3jvgxkt6bzchc.sisko.replit.dev"
