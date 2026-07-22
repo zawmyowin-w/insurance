@@ -4,22 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import api from '../services/api'
-
-// Icon/color mapping for known insurance type names
-const TYPE_META = {
-  LIFE:     { icon: '❤️', bg: 'linear-gradient(135deg,#fff0f0,#ffe4e4)', color: '#dc2626', accent: '#dc2626' },
-  HEALTH:   { icon: '🏥', bg: 'linear-gradient(135deg,#f0fdf4,#dcfce7)', color: '#16a34a', accent: '#16a34a' },
-  VEHICLE:  { icon: '🚗', bg: 'linear-gradient(135deg,#eff6ff,#dbeafe)', color: '#1d4ed8', accent: '#1d4ed8' },
-  PROPERTY: { icon: '🏠', bg: 'linear-gradient(135deg,#fefce8,#fef08a)', color: '#ca8a04', accent: '#ca8a04' },
-  FIRE:     { icon: '🔥', bg: 'linear-gradient(135deg,#fff7ed,#ffedd5)', color: '#ea580c', accent: '#ea580c' },
-  MARINE:   { icon: '⚓', bg: 'linear-gradient(135deg,#ecfeff,#cffafe)', color: '#0891b2', accent: '#0891b2' },
-  TRAVEL:   { icon: '✈️', bg: 'linear-gradient(135deg,#f5f3ff,#ede9fe)', color: '#7c3aed', accent: '#7c3aed' },
-  ACCIDENT: { icon: '🩺', bg: 'linear-gradient(135deg,#fff1f2,#ffe4e6)', color: '#be123c', accent: '#be123c' },
-  BUSINESS: { icon: '🏢', bg: 'linear-gradient(135deg,#eff6ff,#dbeafe)', color: '#1e40af', accent: '#1e40af' },
-  CROP:     { icon: '🌾', bg: 'linear-gradient(135deg,#f0fdf4,#dcfce7)', color: '#15803d', accent: '#15803d' },
-}
-const DEFAULT_META = { icon: '🛡️', bg: 'linear-gradient(135deg,#f5f3ff,#ede9fe)', color: '#6366f1', accent: '#6366f1' }
-const getMeta = name => TYPE_META[(name || '').toUpperCase()] || DEFAULT_META
+import { getTypeMeta } from '../utils/typeMeta'
 
 // ── AI Chat Widget ──────────────────────────────────────────────────────────
 
@@ -299,7 +284,7 @@ export default function HomePage() {
           ) : (
             <div className="row g-4">
               {insuranceTypes.map(type => {
-                const meta = getMeta(type.name)
+                const meta = getTypeMeta(type.name)
                 const isOpen = expandedType === type.id
                 const hasDetails = type.description || type.benefits || type.rules
                 return (
@@ -309,9 +294,9 @@ export default function HomePage() {
                       style={{ cursor: hasDetails ? 'pointer' : 'default', transition: 'box-shadow .2s' }}
                       onClick={() => hasDetails && setExpandedType(isOpen ? null : type.id)}
                     >
-                      <div className="insurance-card-3d-icon" style={{ background: meta.bg }}>
-                        <span style={{ fontSize: '2rem' }}>{meta.icon}</span>
-                        <div className="insurance-card-3d-glow" style={{ background: meta.accent }} />
+                      <div className="insurance-card-3d-icon" style={{ background: meta.gradientBg }}>
+                        <span style={{ fontSize: '2rem' }}>{meta.emoji}</span>
+                        <div className="insurance-card-3d-glow" style={{ background: meta.color }} />
                       </div>
                       <div style={{ padding: '0 0.25rem' }}>
                         <h5 style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '0.4rem' }}>
@@ -355,21 +340,21 @@ export default function HomePage() {
                         )}
 
                         <div className="d-flex align-items-center gap-2">
-                          <Link to="/plans" className="insurance-card-3d-link" style={{ color: meta.accent }}>
+                          <Link to="/plans" className="insurance-card-3d-link" style={{ color: meta.color }}>
                             {t('home.learnMore')} <i className="bi bi-arrow-right ms-1"></i>
                           </Link>
                           {hasDetails && (
                             <button
                               type="button"
                               onClick={e => { e.stopPropagation(); setExpandedType(isOpen ? null : type.id) }}
-                              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.76rem', color: meta.accent, fontWeight: 600, padding: 0 }}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.76rem', color: meta.color, fontWeight: 600, padding: 0 }}
                             >
                               {isOpen ? 'ပိတ်မည်' : 'အသေးစိတ် ▾'}
                             </button>
                           )}
                         </div>
                       </div>
-                      <div className="insurance-card-3d-accent" style={{ background: meta.accent }} />
+                      <div className="insurance-card-3d-accent" style={{ background: meta.color }} />
                     </div>
                   </div>
                 )

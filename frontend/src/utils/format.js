@@ -2,7 +2,7 @@
  * Shared formatting utilities — use these instead of inline date/currency formatting.
  *
  * Usage:
- *   import { fmtDate, fmtDateTime, fmtCurrency, fmtStatus } from '../utils/format'
+ *   import { fmtDate, fmtDateTime, fmtCurrency, fmtNumber } from '../utils/format'
  */
 
 /**
@@ -45,21 +45,4 @@ export function fmtCurrency(value) {
 export function fmtNumber(value) {
   if (value === null || value === undefined) return '—'
   return Number(value).toLocaleString('en-US')
-}
-
-/**
- * Map a status string to a human-friendly label.
- * Falls back to the raw string if no mapping found.
- */
-const STATUS_LABELS = {
-  PENDING:            'Pending',
-  VERIFIED:           'Verified',
-  APPROVED:           'Approved',
-  REJECTED:           'Rejected',
-  CANCELLED:          'Cancelled',
-  REVISION_REQUESTED: 'Revision Requested',
-}
-
-export function fmtStatus(status) {
-  return STATUS_LABELS[status] ?? status ?? '—'
 }

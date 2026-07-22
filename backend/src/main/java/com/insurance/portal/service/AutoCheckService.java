@@ -36,14 +36,21 @@ public class AutoCheckService {
     @Value("${OPENAI_API_KEY:}")
     private String openAiApiKey;
 
-    private final com.insurance.portal.repository.SchedulerSettingsRepository schedulerSettingsRepo;
+    private final SchedulerSettingsRepository schedulerSettingsRepo;
+
+    /** Fetches scheduler settings once; callers use the returned object for all fields. */
+    private SchedulerSettings getSchedulerSettings() {
+        return schedulerSettingsRepo.findById(1L).orElse(null);
+    }
 
     private boolean isEnabled() {
-        return schedulerSettingsRepo.findById(1L).map(s -> s.isEnabled()).orElse(true);
+        SchedulerSettings s = getSchedulerSettings();
+        return s == null || s.isEnabled();
     }
 
     private int getMinPendingHours() {
-        return schedulerSettingsRepo.findById(1L).map(s -> s.getMinPendingHours()).orElse(1);
+        SchedulerSettings s = getSchedulerSettings();
+        return s != null ? s.getMinPendingHours() : 1;
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -233,11 +240,10 @@ public class AutoCheckService {
         List<Map<String, Object>> results = new ArrayList<>();
 
         // --- Applications ---
-        List<com.insurance.portal.model.PolicyApplication> revisionApps =
-            appRepo.findAllByStatus(com.insurance.portal.model.enums.ApplicationStatus.REVISION_REQUESTED);
-        for (com.insurance.portal.model.PolicyApplication app : revisionApps) {
+        List<PolicyApplication> revisionApps = appRepo.findAllByStatus(ApplicationStatus.REVISION_REQUESTED);
+        for (PolicyApplication app : revisionApps) {
             if (app.getRevisionDeadline() == null || now.isBefore(app.getRevisionDeadline())) continue;
-            app.setStatus(com.insurance.portal.model.enums.ApplicationStatus.REJECTED);
+            app.setStatus(ApplicationStatus.REJECTED);
             app.setAdminNote((app.getAdminNote() != null ? app.getAdminNote() + " | " : "")
                     + "Auto-cancelled: Customer did not respond within 7 days.");
             appRepo.save(app);
@@ -254,9 +260,8 @@ public class AutoCheckService {
         }
 
         // --- Claims ---
-        List<com.insurance.portal.model.Claim> revisionClaims =
-            claimRepo.findAllByStatus(com.insurance.portal.model.enums.ClaimStatus.REVISION_REQUESTED);
-        for (com.insurance.portal.model.Claim claim : revisionClaims) {
+        List<Claim> revisionClaims = claimRepo.findAllByStatus(ClaimStatus.REVISION_REQUESTED);
+        for (Claim claim : revisionClaims) {
             if (claim.getRevisionDeadline() == null || now.isBefore(claim.getRevisionDeadline())) continue;
             claim.setStatus(com.insurance.portal.model.enums.ClaimStatus.REJECTED);
             claim.setAdminNote((claim.getAdminNote() != null ? claim.getAdminNote() + " | " : "")

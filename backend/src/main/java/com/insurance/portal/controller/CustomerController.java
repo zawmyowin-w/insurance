@@ -5,6 +5,7 @@ import com.insurance.portal.dto.*;
 import com.insurance.portal.model.*;
 import com.insurance.portal.model.enums.*;
 import com.insurance.portal.repository.*;
+import com.insurance.portal.service.PolicyService;
 import com.insurance.portal.util.FileStorageUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +35,8 @@ public class CustomerController {
     private final ClaimRepository claimRepo;
     private final PaymentRepository paymentRepo;
     private final NotificationRepository notifRepo;
-    private final com.insurance.portal.repository.PaymentMethodConfigRepository paymentMethodConfigRepo;
+    private final PaymentMethodConfigRepository paymentMethodConfigRepo;
+    private final PolicyService policyService;
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -104,9 +106,9 @@ public class CustomerController {
         BigDecimal coverage = new BigDecimal(coverageAmount);
         int dur = Integer.parseInt(duration);
 
-        String riskLevel = calculateRisk(pkg.getType(), commonInfo, extraInfo);
-        BigDecimal premiumAmount = calculatePremium(coverage, pkg.getPremiumRate(), dur, riskLevel);
-        String policyNumber = generatePolicyNumber(pkg.getType());
+        String riskLevel = policyService.calculateRisk(pkg.getType(), commonInfo, extraInfo);
+        BigDecimal premiumAmount = policyService.calculatePremium(coverage, pkg.getPremiumRate(), dur, riskLevel);
+        String policyNumber = policyService.generatePolicyNumber(pkg.getType());
 
         List<User> agents = userRepo.findAllByRoleAndActive(Role.AGENT, true);
         User agent = agents.stream()
@@ -515,7 +517,8 @@ public class CustomerController {
         if (original.getStatus() != ApplicationStatus.APPROVED)
             return ResponseEntity.badRequest().body(Map.of("message", "Only active policies can be renewed"));
         String newPolicyNumber = original.getInsurancePackage() != null
-                ? generatePolicyNumber(original.getInsurancePackage().getType()) : generatePolicyNumber("POL");
+                ? policyService.generatePolicyNumber(original.getInsurancePackage().getType())
+                : policyService.generatePolicyNumber("POL");
         PolicyApplication renewal = PolicyApplication.builder()
                 .customer(user)
                 .insurancePackage(original.getInsurancePackage())
@@ -602,7 +605,7 @@ public class CustomerController {
     private String processFormFileUploads(String formData, Map<String, MultipartFile> allFiles,
                                           String subDir, String prefix) {
         try {
-            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            ObjectMapper mapper = MAPPER;
             @SuppressWarnings("unchecked")
             Map<String, Object> dataMap = mapper.readValue(formData, Map.class);
             for (Map.Entry<String, MultipartFile> entry : allFiles.entrySet()) {
@@ -621,47 +624,4 @@ public class CustomerController {
         }
     }
 
-    private String calculateRisk(String type, String commonInfoJson, String extraInfoJson) {
-        int score = 0;
-        try {
-            if (commonInfoJson != null) {
-                java.util.regex.Matcher m = java.util.regex.Pattern.compile("\"dob\"\\s*:\\s*\"(\\d{4})-").matcher(commonInfoJson);
-                if (m.find()) {
-                    int age = java.time.Year.now().getValue() - Integer.parseInt(m.group(1));
-                    if (age > 55) score += 3; else if (age > 40) score += 1;
-                }
-            }
-            if (extraInfoJson != null) {
-                if ("LIFE".equals(type)) {
-                    if (extraInfoJson.contains("\"smoking\":true")) score += 2;
-                    if (extraInfoJson.contains("\"hasDisease\":true")) score += 2;
-                }
-                if ("HEALTH".equals(type) && extraInfoJson.contains("\"existingDiseases\"")
-                        && !extraInfoJson.contains("\"existingDiseases\":\"\"")
-                        && !extraInfoJson.contains("\"existingDiseases\":null")) score += 2;
-                if ("MOTOR".equals(type) || "VEHICLE".equals(type)) {
-                    java.util.regex.Matcher m = java.util.regex.Pattern.compile("\"vehicleYear\"\\s*:\\s*\"?(\\d{4})").matcher(extraInfoJson);
-                    if (m.find()) {
-                        int va = java.time.Year.now().getValue() - Integer.parseInt(m.group(1));
-                        if (va > 10) score += 3; else if (va > 5) score += 1;
-                    }
-                }
-            }
-        } catch (Exception ignored) {}
-        return score <= 1 ? "LOW" : score <= 3 ? "MEDIUM" : "HIGH";
-    }
-
-    private BigDecimal calculatePremium(BigDecimal coverage, BigDecimal rate, int duration, String risk) {
-        double multiplier = "HIGH".equals(risk) ? 1.5 : "MEDIUM".equals(risk) ? 1.2 : 1.0;
-        if (rate == null) return BigDecimal.ZERO;
-        return coverage.multiply(rate).multiply(BigDecimal.valueOf(duration))
-                .multiply(BigDecimal.valueOf(multiplier)).setScale(2, java.math.RoundingMode.HALF_UP);
-    }
-
-    private String generatePolicyNumber(String type) {
-        String prefix = (type != null && type.length() >= 3) ? type.substring(0, 3).toUpperCase() : "INS";
-        int year = java.time.Year.now().getValue();
-        int rand = (int) (Math.random() * 900000) + 100000;
-        return String.format("POL-%s-%d-%06d", prefix, year, rand);
-    }
 }

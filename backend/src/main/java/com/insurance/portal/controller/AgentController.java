@@ -54,11 +54,11 @@ public class AgentController {
         String agentType = agent.getInsuranceType(); // e.g. "LIFE", "HEALTH", "ALL", null
 
         List<User> admins = userRepo.findAll().stream()
-                .filter(u -> u.getRole() == com.insurance.portal.model.enums.Role.ADMIN)
+                .filter(u -> u.getRole() == Role.ADMIN)
                 .toList();
 
         // Collect customers who applied for this agent's insurance type
-        Set<Long> customerIds = new java.util.HashSet<>();
+        Set<Long> customerIds = new HashSet<>();
         boolean allTypes = agentType == null || agentType.isBlank() || "ALL".equalsIgnoreCase(agentType);
 
         appRepo.findAll().forEach(a -> {
@@ -70,13 +70,12 @@ public class AgentController {
         });
 
         List<User> customers = userRepo.findAll().stream()
-                .filter(u -> u.getRole() == com.insurance.portal.model.enums.Role.CUSTOMER
-                        && customerIds.contains(u.getId()))
+                .filter(u -> u.getRole() == Role.CUSTOMER && customerIds.contains(u.getId()))
                 .toList();
 
         return ResponseEntity.ok(Map.of(
-                "admins",    admins.stream().map(com.insurance.portal.dto.UserResponse::from).toList(),
-                "customers", customers.stream().map(com.insurance.portal.dto.UserResponse::from).toList(),
+                "admins",    admins.stream().map(UserResponse::from).toList(),
+                "customers", customers.stream().map(UserResponse::from).toList(),
                 "agentType", agentType != null ? agentType : "ALL"
         ));
     }

@@ -3,16 +3,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
-
-const TYPE_META = {
-  LIFE:      { color: '#dc2626', bg: '#fef2f2',  icon: 'bi-heart-pulse'  },
-  HEALTH:    { color: '#16a34a', bg: '#f0fdf4',  icon: 'bi-hospital'     },
-  TRAVEL:    { color: '#0891b2', bg: '#ecfeff',  icon: 'bi-airplane'     },
-  MOTOR:     { color: '#d97706', bg: '#fffbeb',  icon: 'bi-car-front'    },
-  EDUCATION: { color: '#7c3aed', bg: '#f5f3ff',  icon: 'bi-mortarboard'  },
-  VEHICLE:   { color: '#2563eb', bg: '#eff6ff',  icon: 'bi-truck'        },
-  PROPERTY:  { color: '#ca8a04', bg: '#fefce8',  icon: 'bi-house-check'  },
-}
+import { getTypeMeta } from '../../utils/typeMeta'
 
 const RISK_META = {
   LOW:    { color: '#16a34a', bg: '#f0fdf4', icon: 'bi-shield-check'       },
@@ -122,7 +113,7 @@ export default function CustomerPoliciesPage() {
       ) : (
         <div className="row g-4">
           {policies.map(policy => {
-            const typeMeta = TYPE_META[policy.packageType] || { color: '#6b7280', bg: '#f3f4f6', icon: 'bi-shield' }
+            const typeMeta = getTypeMeta(policy.packageType)
             const riskMeta = RISK_META[policy.riskLevel] || RISK_META['LOW']
             return (
               <div key={policy.id} className="col-12 col-md-6">
