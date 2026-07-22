@@ -6,32 +6,40 @@ import { toast } from 'react-toastify'
 import { getTypeMeta } from '../../utils/typeMeta'
 import DeleteConfirmModal from '../../components/DeleteConfirmModal'
 
-const FORM_TYPES = ['APPLICATION', 'CLAIM']
-const FIELD_TYPES = [
-  { value: 'LABEL',        label: 'Section Label',   icon: 'bi-type-h2',             desc: 'Static header text' },
-  { value: 'NAME',         label: 'Name (Auto)',      icon: 'bi-person-fill',         desc: 'Auto-filled from profile — read-only' },
-  { value: 'EMAIL',        label: 'Email (Auto)',     icon: 'bi-envelope-fill',       desc: 'Auto-filled from profile — read-only' },
-  { value: 'PHONE',        label: 'Phone Number',     icon: 'bi-telephone-fill',      desc: 'Phone number input' },
-  { value: 'TEXT',         label: 'Text Box',         icon: 'bi-input-cursor-text',   desc: 'Single-line input' },
-  { value: 'TEXTAREA',     label: 'Text Area',        icon: 'bi-textarea-t',          desc: 'Multi-line input' },
-  { value: 'DATE',         label: 'Date Picker',      icon: 'bi-calendar-date',       desc: 'Date selection' },
-  { value: 'NRC',          label: 'NRC Number',       icon: 'bi-person-vcard',        desc: 'Myanmar NRC format' },
-  { value: 'CHECKBOX',     label: 'Checkbox',         icon: 'bi-check2-square',       desc: 'Checkbox options' },
-  { value: 'IMAGE_UPLOAD', label: 'Image Upload',     icon: 'bi-image',               desc: 'JPG/PNG upload' },
-  { value: 'PDF_UPLOAD',   label: 'File Upload',      icon: 'bi-file-earmark-pdf',    desc: 'PDF/document upload' },
+const FIELD_TYPE_VALUES = [
+  'LABEL', 'NAME', 'EMAIL', 'PHONE', 'TEXT',
+  'TEXTAREA', 'DATE', 'NRC', 'CHECKBOX', 'IMAGE_UPLOAD', 'PDF_UPLOAD',
 ]
 
-// System fields always auto-injected — shown as info in the builder
-const SYSTEM_FIELDS_INFO = [
-  { icon: 'bi-person-fill',     label: 'အမည် (Full Name)',                note: 'ပရိုဖိုင်မှ အလိုအလျောက် — read-only' },
-  { icon: 'bi-envelope-fill',   label: 'အီးမေးလ် (Email)',               note: 'ပရိုဖိုင်မှ အလိုအလျောက် — read-only' },
-  { icon: 'bi-calendar-heart',  label: 'မွေးသက္ကရာဇ် (Date of Birth)',   note: 'Customer ဖြည့်ရသည် — date picker' },
-  { icon: 'bi-person-vcard',    label: 'မှတ်ပုံတင် (NRC No.)',           note: 'Customer ဖြည့်ရသည် — Myanmar format' },
-]
-const formTypeMeta = {
-  APPLICATION: { bg: '#dbeafe', color: '#1d4ed8', label: 'Application Form' },
-  CLAIM:       { bg: '#fef3c7', color: '#d97706', label: 'Claim Form' },
+const FIELD_ICONS = {
+  LABEL:        'bi-type-h2',
+  NAME:         'bi-person-fill',
+  EMAIL:        'bi-envelope-fill',
+  PHONE:        'bi-telephone-fill',
+  TEXT:         'bi-input-cursor-text',
+  TEXTAREA:     'bi-textarea-t',
+  DATE:         'bi-calendar-date',
+  NRC:          'bi-person-vcard',
+  CHECKBOX:     'bi-check2-square',
+  IMAGE_UPLOAD: 'bi-image',
+  PDF_UPLOAD:   'bi-file-earmark-pdf',
 }
+
+const getFieldTypes = (t) => FIELD_TYPE_VALUES.map(v => ({
+  value: v,
+  label: t(`admin.formBuilder.fieldType_${v}_label`),
+  icon:  FIELD_ICONS[v],
+  desc:  t(`admin.formBuilder.fieldType_${v}_desc`),
+}))
+
+const getSystemFields = (t) => [
+  { icon: 'bi-person-fill',    label: t('admin.formBuilder.sysField_name_label'),  note: t('admin.formBuilder.sysField_name_note') },
+  { icon: 'bi-envelope-fill',  label: t('admin.formBuilder.sysField_email_label'), note: t('admin.formBuilder.sysField_email_note') },
+  { icon: 'bi-calendar-heart', label: t('admin.formBuilder.sysField_dob_label'),   note: t('admin.formBuilder.sysField_dob_note') },
+  { icon: 'bi-person-vcard',   label: t('admin.formBuilder.sysField_nrc_label'),   note: t('admin.formBuilder.sysField_nrc_note') },
+]
+
+const FORM_TYPES = ['APPLICATION', 'CLAIM']
 
 const emptyField = () => ({ fieldLabel: '', fieldType: 'TEXT', required: false, fieldOptions: '["Yes","No"]' })
 const emptyForm  = (pkgId, formType) => ({
@@ -44,12 +52,17 @@ export default function AdminFormBuilderPage() {
   const [packages, setPackages] = useState([])
   const [pkgLoading, setPkgLoading] = useState(true)
   const [selectedPkg, setSelectedPkg] = useState(null)
-  const [forms, setForms] = useState([])  // forms for selected package
+  const [forms, setForms] = useState([])
   const [formsLoading, setFormsLoading] = useState(false)
-  const [editing, setEditing] = useState(null)   // 'new-APPLICATION' | 'new-CLAIM' | formId
+  const [editing, setEditing] = useState(null)
   const [editFormType, setEditFormType] = useState('APPLICATION')
   const [form, setForm] = useState(null)
   const [saving, setSaving] = useState(false)
+
+  const formTypeMeta = {
+    APPLICATION: { bg: '#dbeafe', color: '#1d4ed8', label: t('admin.formBuilder.applicationForm') },
+    CLAIM:       { bg: '#fef3c7', color: '#d97706', label: t('admin.formBuilder.claimForm') },
+  }
 
   useEffect(() => {
     api.get('/admin/packages')
@@ -83,10 +96,10 @@ export default function AdminFormBuilderPage() {
     setForm(emptyForm(selectedPkg?.id, formType))
   }
 
-  const openEdit = (t) => {
-    setEditFormType(t.formType)
-    setEditing(t.id)
-    setForm({ ...t, fields: (t.fields || []).map(f => ({ ...f })) })
+  const openEdit = (tmpl) => {
+    setEditFormType(tmpl.formType)
+    setEditing(tmpl.id)
+    setForm({ ...tmpl, fields: (tmpl.fields || []).map(f => ({ ...f })) })
   }
 
   const closePanel = () => { setEditing(null); setForm(null) }
@@ -147,9 +160,6 @@ export default function AdminFormBuilderPage() {
     }
   }
 
-  const appForm   = forms.find(f => f.formType === 'APPLICATION')
-  const claimForm = forms.find(f => f.formType === 'CLAIM')
-
   return (
     <div className="fade-in">
       <div className="d-flex align-items-center justify-content-between mb-4" style={{ flexWrap: 'wrap', gap: '0.75rem' }}>
@@ -172,7 +182,9 @@ export default function AdminFormBuilderPage() {
             {pkgLoading ? (
               <div className="text-center py-4"><div className="spinner-border" style={{ color: 'var(--primary)' }}></div></div>
             ) : packages.length === 0 ? (
-              <div className="text-center py-4" style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No packages found. Create packages first.</div>
+              <div className="text-center py-4" style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                {t('admin.formBuilder.noPackagesCreate')}
+              </div>
             ) : (
               packages.map(pkg => {
                 const meta = getTypeMeta(pkg.type)
@@ -198,7 +210,7 @@ export default function AdminFormBuilderPage() {
                       </div>
                       <span style={{ padding: '0.15rem 0.45rem', borderRadius: 99, fontSize: '0.72rem', fontWeight: 700, flexShrink: 0,
                         background: pkg.active ? '#dcfce7' : '#fee2e2', color: pkg.active ? '#16a34a' : '#dc2626' }}>
-                        {pkg.active ? 'Active' : 'Off'}
+                        {pkg.active ? t('admin.formBuilder.active') : t('admin.formBuilder.pkgOffStatus')}
                       </span>
                     </div>
                   </div>
@@ -213,7 +225,7 @@ export default function AdminFormBuilderPage() {
           <div className="col-12 col-lg-7">
             <div className="card-custom">
               <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1.25rem' }}>
-                Forms for: <span style={{ color: 'var(--primary)' }}>{selectedPkg.name}</span>
+                {t('admin.formBuilder.formsForLabel')}: <span style={{ color: 'var(--primary)' }}>{selectedPkg.name}</span>
               </h6>
               {formsLoading ? (
                 <div className="text-center py-4"><div className="spinner-border" style={{ color: 'var(--primary)' }}></div></div>
@@ -236,7 +248,7 @@ export default function AdminFormBuilderPage() {
                               </span>
                               {existingForm && (
                                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                                  {existingForm.fields?.length || 0} field{existingForm.fields?.length !== 1 ? 's' : ''}
+                                  {t('admin.formBuilder.fieldCountLabel', { count: existingForm.fields?.length || 0 })}
                                 </span>
                               )}
                             </div>
@@ -249,7 +261,7 @@ export default function AdminFormBuilderPage() {
                               </>
                             ) : (
                               <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                                No {meta.label.toLowerCase()} created yet
+                                {t('admin.formBuilder.noFormTypeYet', { label: meta.label })}
                               </div>
                             )}
                           </div>
@@ -259,7 +271,7 @@ export default function AdminFormBuilderPage() {
                                 padding: '0.4rem 0.9rem', borderRadius: 8, border: `1.5px solid ${meta.color}`,
                                 background: 'transparent', color: meta.color, cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem'
                               }}>
-                                <i className="bi bi-pencil me-1"></i>Edit
+                                <i className="bi bi-pencil me-1"></i>{t('admin.formBuilder.editBtnLabel')}
                               </button>
                             ) : (
                               <button onClick={() => openNew(ft)} style={{
@@ -285,7 +297,7 @@ export default function AdminFormBuilderPage() {
             <div className="card-custom text-center py-5">
               <i className="bi bi-arrow-left-circle" style={{ fontSize: '2.5rem', color: 'var(--text-muted)' }}></i>
               <p style={{ color: 'var(--text-muted)', marginTop: '0.75rem', marginBottom: 0 }}>
-                Select an insurance plan to manage its forms
+                {t('admin.formBuilder.selectPlanPrompt')}
               </p>
             </div>
           </div>
@@ -299,11 +311,11 @@ export default function AdminFormBuilderPage() {
                 <div>
                   <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
                     {typeof editing === 'string' && editing.startsWith('new-')
-                      ? `✦ New ${formTypeMeta[editFormType]?.label}`
-                      : `Edit ${formTypeMeta[editFormType]?.label}`}
+                      ? t('admin.formBuilder.editorNewTitle', { label: formTypeMeta[editFormType]?.label })
+                      : t('admin.formBuilder.editorEditTitle', { label: formTypeMeta[editFormType]?.label })}
                   </h6>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 2 }}>
-                    Plan: {selectedPkg?.name}
+                    {t('admin.formBuilder.editorPlanLabel')} {selectedPkg?.name}
                   </div>
                 </div>
                 <button onClick={closePanel} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.1rem' }}>
@@ -314,20 +326,20 @@ export default function AdminFormBuilderPage() {
               <form onSubmit={handleSave}>
                 <div className="row g-3 mb-3">
                   <div className="col-12">
-                    <label className="form-label-custom">Form Name *</label>
+                    <label className="form-label-custom">{t('admin.formBuilder.formNameLabel')}</label>
                     <input required className="form-control-custom w-100"
                       placeholder={`e.g. ${selectedPkg?.name} ${formTypeMeta[editFormType]?.label}`}
                       value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
                   </div>
                   <div className="col-12">
-                    <label className="form-label-custom">Description (optional)</label>
+                    <label className="form-label-custom">{t('admin.formBuilder.description')}</label>
                     <textarea rows={2} className="form-control-custom w-100" style={{ resize: 'vertical' }}
                       value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
                   </div>
                   <div className="col-12">
                     <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
                       <input type="checkbox" checked={form.active} onChange={e => setForm(f => ({ ...f, active: e.target.checked }))} />
-                      Active (visible to customers & agents)
+                      {t('admin.formBuilder.activeVisible')}
                     </label>
                   </div>
                 </div>
@@ -336,7 +348,7 @@ export default function AdminFormBuilderPage() {
                 <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.25rem' }}>
                   <div className="d-flex align-items-center justify-content-between mb-3">
                     <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
-                      Form Fields <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 400 }}>({form.fields.length})</span>
+                      {t('admin.formBuilder.formFields')} <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontWeight: 400 }}>({form.fields.length})</span>
                     </span>
                     <button type="button" onClick={addField} style={{
                       padding: '0.3rem 0.9rem', borderRadius: 8,
@@ -372,7 +384,7 @@ export default function AdminFormBuilderPage() {
                       : <><i className="bi bi-floppy me-2"></i>{t('admin.formBuilder.saveForm')}</>}
                   </button>
                   {typeof editing !== 'string' && (
-                    <button type="button" onClick={handleDelete} title="Delete form" style={{
+                    <button type="button" onClick={handleDelete} title={t('admin.formBuilder.deleteFormTooltip')} style={{
                       padding: '0.65rem 1rem', borderRadius: 10, border: '1.5px solid #dc2626',
                       background: 'transparent', color: '#dc2626', cursor: 'pointer', fontWeight: 600
                     }}>
@@ -388,8 +400,8 @@ export default function AdminFormBuilderPage() {
 
       <DeleteConfirmModal
         open={deleteModal.open}
-        title="Form ကို ဖျက်မည်လား?"
-        message="ဤ Form ကို ဖျက်မည်။ တင်သွင်းထားသော ဒေတာများ ဆက်လက်သိမ်းဆည်းသွားမည်ဖြစ်သော်လည်း လာမည့် Submission များအတွက် Form မရှိတော့ပါ။"
+        title={t('admin.formBuilder.deleteConfirm')}
+        message={t('admin.formBuilder.deleteFormMessage')}
         onConfirm={confirmDelete}
         onCancel={() => setDeleteModal({ open: false, loading: false })}
         loading={deleteModal.loading}
@@ -399,7 +411,9 @@ export default function AdminFormBuilderPage() {
 }
 
 function FieldEditor({ field, index, onUpdate, onRemove, onMoveUp, onMoveDown, isFirst, isLast }) {
-  const meta = FIELD_TYPES.find(t => t.value === field.fieldType) || FIELD_TYPES[0]
+  const { t } = useTranslation()
+  const fieldTypes = getFieldTypes(t)
+  const meta = fieldTypes.find(ft => ft.value === field.fieldType) || fieldTypes[0]
   const isLabel = field.fieldType === 'LABEL'
   const isCheckbox = field.fieldType === 'CHECKBOX'
 
@@ -423,14 +437,14 @@ function FieldEditor({ field, index, onUpdate, onRemove, onMoveUp, onMoveDown, i
         <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontWeight: 700, minWidth: 20 }}>{index + 1}.</span>
         <input required className="form-control-custom flex-grow-1"
           style={{ fontSize: '0.85rem', padding: '0.38rem 0.6rem' }}
-          placeholder={isLabel ? 'Section header text (e.g. Personal Information)' : 'Field label (e.g. Full Name, Passport Number)'}
+          placeholder={isLabel ? t('admin.formBuilder.fieldLabelHint') : t('admin.formBuilder.fieldLabelHint2')}
           value={field.fieldLabel}
           onChange={e => onUpdate('fieldLabel', e.target.value)} />
         <select className="form-select-custom"
           style={{ fontSize: '0.82rem', padding: '0.38rem 0.5rem', width: 'auto', flexShrink: 0 }}
           value={field.fieldType}
           onChange={e => onUpdate('fieldType', e.target.value)}>
-          {FIELD_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+          {fieldTypes.map(ft => <option key={ft.value} value={ft.value}>{ft.label}</option>)}
         </select>
       </div>
 
@@ -438,7 +452,7 @@ function FieldEditor({ field, index, onUpdate, onRemove, onMoveUp, onMoveDown, i
       {isCheckbox && (
         <div style={{ paddingLeft: 42, marginBottom: '0.5rem' }}>
           <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: 4, fontWeight: 600 }}>
-            Checkbox Options (one per line)
+            {t('admin.formBuilder.checkboxOptions')}
           </div>
           <textarea rows={2} className="form-control-custom w-100"
             style={{ fontSize: '0.82rem', resize: 'vertical', padding: '0.35rem 0.5rem' }}
@@ -455,14 +469,14 @@ function FieldEditor({ field, index, onUpdate, onRemove, onMoveUp, onMoveDown, i
         {!isLabel ? (
           <label style={{ fontSize: '0.79rem', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, margin: 0 }}>
             <input type="checkbox" checked={field.required} onChange={e => onUpdate('required', e.target.checked)} />
-            Required
+            {t('admin.formBuilder.required')}
           </label>
         ) : <span />}
         <div className="d-flex align-items-center gap-3">
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
             <i className={`bi ${meta.icon} me-1`}></i>{meta.label}
           </span>
-          <button type="button" onClick={onRemove} title="Remove field" style={{
+          <button type="button" onClick={onRemove} title={t('admin.formBuilder.removeFieldTooltip')} style={{
             background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', padding: '0.1rem 0.25rem', fontSize: '0.85rem'
           }}>
             <i className="bi bi-trash3"></i>
