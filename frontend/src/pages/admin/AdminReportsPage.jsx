@@ -59,7 +59,7 @@ function BarChart({ data, color = 'var(--primary)', height = 180 }) {
   )
 }
 
-function GroupedBarChart({ data1, data2, label1 = 'ဝင်ငွေ', label2 = 'ထွက်ငွေ', height = 200 }) {
+function GroupedBarChart({ data1, data2, label1, label2, height = 200 }) {
   const keys = Object.keys(data1 || {})
   if (!keys.length) return <Empty />
   const allVals = [...Object.values(data1 || {}).map(Number), ...Object.values(data2 || {}).map(Number)]
@@ -154,11 +154,12 @@ function DonutGauge({ value, max = 100, color = '#16a34a', size = 120, label }) 
   )
 }
 
-function Empty() {
+function Empty({ text = 'admin.reports.noData' }) {
+  const { t } = useTranslation()
   return (
     <div className="text-center py-4" style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
       <i className="bi bi-bar-chart-line" style={{ fontSize: '2rem', opacity: 0.3, display: 'block', marginBottom: 6 }}></i>
-      Data မရှိသေးပါ
+      {t(text)}
     </div>
   )
 }
@@ -182,13 +183,13 @@ function StatCard({ label, value, icon, color, bg, sub }) {
 
 // ── Main Component ────────────────────────────────────────────────────────────
 const TABS = [
-  { key: 'overview',  label: 'ဘဏ္ဍာရေး အနှစ်ချုပ်', icon: 'bi-graph-up-arrow' },
-  { key: 'bytype',    label: 'Insurance Type',         icon: 'bi-pie-chart'      },
-  { key: 'wallet',    label: 'Premium Wallet',          icon: 'bi-wallet2'        },
-  { key: 'claims',    label: 'Claim ထုတ်ပေးမှု',        icon: 'bi-cash-stack'     },
-  { key: 'agents',    label: 'Agent Performance',       icon: 'bi-person-badge'   },
-  { key: 'packages',  label: 'Plan Popularity',         icon: 'bi-star'           },
-  { key: 'analytics', label: 'Application Analytics',  icon: 'bi-bar-chart-line' },
+  { key: 'overview',  labelKey: 'tabOverviewLabel', icon: 'bi-graph-up-arrow' },
+  { key: 'bytype',    labelKey: 'tabByTypeLabel', icon: 'bi-pie-chart' },
+  { key: 'wallet',    labelKey: 'tabWallet', icon: 'bi-wallet2' },
+  { key: 'claims',    labelKey: 'tabPayouts', icon: 'bi-cash-stack' },
+  { key: 'agents',    labelKey: 'tabAgents', icon: 'bi-person-badge' },
+  { key: 'packages',  labelKey: 'tabPackages', icon: 'bi-star' },
+  { key: 'analytics', labelKey: 'tabAnalytics', icon: 'bi-bar-chart-line' },
 ]
 
 export default function AdminReportsPage() {
@@ -252,18 +253,18 @@ export default function AdminReportsPage() {
 
       {/* Tabs */}
       <div className="d-flex gap-1 mb-4 flex-wrap" style={{ background: 'var(--bg-secondary)', padding: '0.3rem', borderRadius: 12, width: 'fit-content', maxWidth: '100%' }}>
-        {TABS.map(t => (
-          <button key={t.key} type="button" onClick={() => setTab(t.key)}
+        {TABS.map(tabItem => (
+          <button key={tabItem.key} type="button" onClick={() => setTab(tabItem.key)}
             style={{
               padding: '0.45rem 0.9rem', borderRadius: 9, border: 'none', cursor: 'pointer',
               fontWeight: 700, fontSize: '0.78rem', transition: 'all .15s',
               display: 'flex', alignItems: 'center', gap: 5,
-              background: tab === t.key ? 'var(--bg-primary)' : 'transparent',
-              color: tab === t.key ? 'var(--text-primary)' : 'var(--text-muted)',
-              boxShadow: tab === t.key ? '0 1px 4px rgba(0,0,0,.08)' : 'none',
+              background: tab === tabItem.key ? 'var(--bg-primary)' : 'transparent',
+              color: tab === tabItem.key ? 'var(--text-primary)' : 'var(--text-muted)',
+              boxShadow: tab === tabItem.key ? '0 1px 4px rgba(0,0,0,.08)' : 'none',
             }}>
-            <i className={`bi ${t.icon}`}></i>
-            <span className="d-none d-sm-inline">{t.label}</span>
+            <i className={`bi ${tabItem.icon}`}></i>
+            <span className="d-none d-sm-inline">{t(`admin.reports.${tabItem.labelKey}`)}</span>
           </button>
         ))}
       </div>
@@ -281,20 +282,20 @@ export default function AdminReportsPage() {
                     <i className="bi bi-arrow-down-circle-fill" style={{ color: '#6ee7b7', fontSize: '1.1rem' }}></i>
                   </div>
                   <div>
-                    <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>ဝင်ငွေ စုစုပေါင်း</div>
-                    <div style={{ color: '#6ee7b7', fontSize: '0.78rem', fontWeight: 700 }}>Customer Premium ကြေးများသာ</div>
+                  <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{t('admin.reports.totalIncome')}</div>
+                    <div style={{ color: '#6ee7b7', fontSize: '0.78rem', fontWeight: 700 }}>{t('admin.reports.premiumOnly')}</div>
                   </div>
                 </div>
                 <div style={{ fontSize: '2rem', fontWeight: 900, color: '#fff', lineHeight: 1 }}>{totalRevenue.toLocaleString()}</div>
-                <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.82rem', marginTop: 4 }}>MMK · Verified Payments</div>
+                <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.82rem', marginTop: 4 }}>MMK · {t('admin.reports.verifiedPayments')}</div>
                 {revGrowth != null && (
                   <div style={{ marginTop: 10, fontSize: '0.78rem', color: Number(revGrowth) >= 0 ? '#4ade80' : '#f87171', fontWeight: 600 }}>
                     <i className={`bi bi-arrow-${Number(revGrowth) >= 0 ? 'up' : 'down'} me-1`}></i>
-                    {Math.abs(revGrowth)}% ယခင်လနှင့် နှိုင်းယှဉ်
+                    {Math.abs(revGrowth)}% {t('admin.reports.vsPreviousMonth')}
                   </div>
                 )}
                 <div style={{ marginTop: 12, padding: '0.6rem 0.85rem', background: 'rgba(255,255,255,0.1)', borderRadius: 8, fontSize: '0.78rem', color: 'rgba(255,255,255,0.75)' }}>
-                  <i className="bi bi-info-circle me-1"></i>ဤပမာဏသည် Customer မှ ပေးသော Premium ကြေးများသာဖြစ်ပြီး Claim ငွေမပါဝင်ပါ
+                  <i className="bi bi-info-circle me-1"></i>{t('admin.reports.incomeNote')}
                 </div>
               </div>
             </div>
@@ -306,19 +307,19 @@ export default function AdminReportsPage() {
                     <i className="bi bi-arrow-up-circle-fill" style={{ color: '#fca5a5', fontSize: '1.1rem' }}></i>
                   </div>
                   <div>
-                    <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>ထွက်ငွေ စုစုပေါင်း</div>
-                    <div style={{ color: '#fca5a5', fontSize: '0.78rem', fontWeight: 700 }}>Admin မှ Customer ဆီ Claim လျှော်ကြေးသာ</div>
+                    <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{t('admin.reports.totalExpenses')}</div>
+                    <div style={{ color: '#fca5a5', fontSize: '0.78rem', fontWeight: 700 }}>{t('admin.reports.claimPayoutOnly')}</div>
                   </div>
                 </div>
                 <div style={{ fontSize: '2rem', fontWeight: 900, color: '#fff', lineHeight: 1 }}>{totalClaimsPaid.toLocaleString()}</div>
-                <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.82rem', marginTop: 4 }}>MMK · Approved Claim Payouts</div>
+                <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.82rem', marginTop: 4 }}>MMK · {t('admin.reports.approvedClaimPayouts')}</div>
                 <div style={{ marginTop: 10, fontSize: '0.78rem', color: totalClaimsPaid > 0 ? '#f87171' : '#86efac', fontWeight: 600 }}>
                   {totalClaimsPaid > 0
-                    ? <><i className="bi bi-dash-circle me-1"></i>Approved Claims {reports.approvedClaims} ခု ထုတ်ပေးပြီး</>
-                    : <><i className="bi bi-check-circle me-1"></i>Claim ထုတ်ပေးမှု မရှိသေးပါ</>}
+                    ? <><i className="bi bi-dash-circle me-1"></i>{t('admin.reports.approvedClaimsPaid', { count: reports.approvedClaims })}</>
+                    : <><i className="bi bi-check-circle me-1"></i>{t('admin.reports.noClaimPayouts')}</>}
                 </div>
                 <div style={{ marginTop: 12, padding: '0.6rem 0.85rem', background: 'rgba(255,255,255,0.1)', borderRadius: 8, fontSize: '0.78rem', color: 'rgba(255,255,255,0.75)' }}>
-                  <i className="bi bi-info-circle me-1"></i>ဤပမာဏသည် Admin မှ Customer ဆီ ပေးသော Claim လျှော်ကြေးသာဖြစ်ပြီး Premium ငွေမပါဝင်ပါ
+                  <i className="bi bi-info-circle me-1"></i>{t('admin.reports.expenseNote')}
                 </div>
               </div>
             </div>
@@ -328,7 +329,7 @@ export default function AdminReportsPage() {
           <div className="card-custom" style={{ background: netProfit >= 0 ? 'linear-gradient(135deg, #0f172a, #1e3a8a)' : 'linear-gradient(135deg, #1c1917, #44403c)', border: 'none', padding: '1.25rem' }}>
             <div className="row align-items-center g-3">
               <div className="col-12 col-md-5">
-                <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>အသားတင် အမြတ် (ဝင်ငွေ − ထွက်ငွေ)</div>
+                <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>{t('admin.reports.netProfitFormula')}</div>
                 <div style={{ fontSize: '1.8rem', fontWeight: 900, color: netProfit >= 0 ? '#86efac' : '#fca5a5', lineHeight: 1 }}>
                   {netProfit >= 0 ? '+' : ''}{netProfit.toLocaleString()}
                 </div>
@@ -337,8 +338,8 @@ export default function AdminReportsPage() {
               <div className="col-12 col-md-7">
                 <div className="row g-2">
                   {[
-                    { label: 'ဤလ Premium ဝင်ငွေ', value: thisMonthRev.toLocaleString() + ' MMK', color: '#93c5fd' },
-                    { label: 'Profit Margin', value: Pct(profitMargin), color: profitMargin >= 20 ? '#86efac' : profitMargin >= 0 ? '#fde68a' : '#fca5a5' },
+                    { label: t('admin.reports.thisMonthRevenue'), value: thisMonthRev.toLocaleString() + ' MMK', color: '#93c5fd' },
+                    { label: t('admin.reports.profitMargin'), value: Pct(profitMargin), color: profitMargin >= 20 ? '#86efac' : profitMargin >= 0 ? '#fde68a' : '#fca5a5' },
                   ].map(c => (
                     <div key={c.label} className="col-6">
                       <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 10, padding: '0.65rem 0.75rem' }}>
@@ -355,12 +356,12 @@ export default function AdminReportsPage() {
           <div className="card-custom">
             <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
               <i className="bi bi-speedometer2 me-2" style={{ color: 'var(--primary)' }}></i>
-              မြန်မာအာမခံ စံနှုန်း KPI များ
+              {t('admin.reports.kpiTitle')}
             </h6>
             <div className="row g-3 align-items-center">
               {[
-                { label: 'Loss Ratio', desc: 'Claim ထုတ် / Premium ဝင်', value: lossRatio, max: 100, color: lossRatio < 60 ? '#16a34a' : lossRatio < 80 ? '#d97706' : '#dc2626', note: lossRatio < 60 ? '✅ ကောင်းမွန်' : lossRatio < 80 ? '⚠️ သတိပြု' : '🔴 အန္တရာယ်' },
-                { label: 'Profit Margin', desc: 'အမြတ် / Premium ဝင်', value: Math.max(0, Math.min(profitMargin, 100)), max: 100, color: profitMargin >= 20 ? '#16a34a' : profitMargin >= 0 ? '#d97706' : '#dc2626', note: profitMargin >= 20 ? '✅ ကောင်းသည်' : profitMargin >= 0 ? '⚠️ နည်းသည်' : '🔴 အရှုံး' },
+                { label: t('admin.reports.lossRatio'), desc: t('admin.reports.claimsOverPremium'), value: lossRatio, max: 100, color: lossRatio < 60 ? '#16a34a' : lossRatio < 80 ? '#d97706' : '#dc2626', note: lossRatio < 60 ? t('admin.reports.good') : lossRatio < 80 ? t('admin.reports.caution') : t('admin.reports.risk') },
+                { label: t('admin.reports.profitMargin'), desc: t('admin.reports.profitOverPremium'), value: Math.max(0, Math.min(profitMargin, 100)), max: 100, color: profitMargin >= 20 ? '#16a34a' : profitMargin >= 0 ? '#d97706' : '#dc2626', note: profitMargin >= 20 ? t('admin.reports.good') : profitMargin >= 0 ? t('admin.reports.low') : t('admin.reports.loss') },
               ].map(g => (
                 <div key={g.label} className="col-6 text-center">
                   <DonutGauge value={g.value} max={g.max} color={g.color} size={130} label={g.label} />
@@ -373,9 +374,9 @@ export default function AdminReportsPage() {
 
           <div className="row g-3">
             {[
-              { label: 'Customer Premium ဝင်ငွေ (စုစုပေါင်း)', value: MMK(totalRevenue),    icon: 'bi-arrow-down-circle-fill', color: '#16a34a', bg: '#dcfce7' },
-              { label: 'Claim လျှော်ကြေး ထုတ်ပေး (စုစုပေါင်း)', value: MMK(totalClaimsPaid), icon: 'bi-arrow-up-circle-fill',   color: '#dc2626', bg: '#fee2e2' },
-              { label: 'အသားတင် အမြတ် (Premium − Claim)',        value: MMK(netProfit),       icon: 'bi-graph-up',               color: netProfit >= 0 ? '#16a34a' : '#dc2626', bg: netProfit >= 0 ? '#dcfce7' : '#fee2e2' },
+              { label: t('admin.reports.totalPremiumIncome'), value: MMK(totalRevenue), icon: 'bi-arrow-down-circle-fill', color: '#16a34a', bg: '#dcfce7' },
+              { label: t('admin.reports.totalClaimPayout'), value: MMK(totalClaimsPaid), icon: 'bi-arrow-up-circle-fill', color: '#dc2626', bg: '#fee2e2' },
+              { label: t('admin.reports.netProfitPremiumClaim'), value: MMK(netProfit), icon: 'bi-graph-up', color: netProfit >= 0 ? '#16a34a' : '#dc2626', bg: netProfit >= 0 ? '#dcfce7' : '#fee2e2' },
             ].map(c => (
               <div key={c.label} className="col-12 col-md-4">
                 <StatCard {...c} />
@@ -386,9 +387,9 @@ export default function AdminReportsPage() {
           <div className="card-custom">
             <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
               <i className="bi bi-bar-chart me-2" style={{ color: 'var(--primary)' }}></i>
-              လစဥ် Premium ဝင်ငွေ vs Claim ထုတ်ပေး (MMK)
+              {t('admin.reports.monthlyPremiumVsClaims')}
             </h6>
-            <GroupedBarChart data1={monRev} data2={monClaims} label1="Premium ဝင်ငွေ" label2="Claim ထုတ်ပေး" height={200} />
+             <GroupedBarChart data1={monRev} data2={monClaims} label1={t('admin.reports.premiumRevenue')} label2={t('admin.reports.claimPayout')} height={200} />
           </div>
 
           {/* Insurance Type financial summary */}
@@ -397,17 +398,17 @@ export default function AdminReportsPage() {
               <div style={{ padding: '1rem 1.25rem 0.75rem', borderBottom: '1px solid var(--border)' }}>
                 <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>
                   <i className="bi bi-table me-2" style={{ color: 'var(--primary)' }}></i>
-                  ဘဏ္ဍာရေးအနှစ်ချုပ် — Insurance Type အလိုက်
+                  {t('admin.reports.financialByType')}
                 </div>
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>
-                  ဝင်ငွေ = Customer Premium ကြေးများ &nbsp;|&nbsp; ထွက်ငွေ = Admin မှ Claim လျှော်ကြေးပေးသော ပမာဏ
+                  {t('admin.reports.financialByTypeDesc')}
                 </div>
               </div>
               <div className="table-custom">
                 <table className="w-100">
                   <thead>
                     <tr>
-                      {['Insurance Type', 'ဝင်ငွေ (Customer Premium)', 'ထွက်ငွေ (Claim လျှော်ကြေး)', 'အမြတ် / အရှုံး', 'Loss Ratio'].map(h => <th key={h}>{h}</th>)}
+                      {[t('admin.reports.insuranceType'), t('admin.reports.incomePremium'), t('admin.reports.outflowClaims'), t('admin.reports.profitLoss'), t('admin.reports.lossRatio')].map(h => <th key={h}>{h}</th>)}
                     </tr>
                   </thead>
                   <tbody>
@@ -431,7 +432,7 @@ export default function AdminReportsPage() {
                               {profit >= 0 ? '+' : ''}{profit.toLocaleString()} MMK
                             </span>
                             <div style={{ fontSize: '0.68rem', color: profit >= 0 ? '#16a34a' : '#dc2626', marginTop: 1 }}>
-                              {profit >= 0 ? '✅ အမြတ်ရ' : '🔴 အရှုံး'}
+                              {profit >= 0 ? `✅ ${t('admin.reports.profit_positive')}` : `🔴 ${t('admin.reports.profit_negative')}`}
                             </div>
                           </td>
                           <td>
@@ -450,7 +451,7 @@ export default function AdminReportsPage() {
                     {/* Totals row */}
                     <tr style={{ background: 'var(--bg-secondary)', fontWeight: 800 }}>
                       <td style={{ fontWeight: 800, fontSize: '0.88rem', color: 'var(--text-primary)' }}>
-                        <i className="bi bi-calculator me-1" style={{ color: 'var(--primary)' }}></i>စုစုပေါင်း
+                        <i className="bi bi-calculator me-1" style={{ color: 'var(--primary)' }}></i>{t('admin.reports.totalRow')}
                       </td>
                       <td style={{ fontWeight: 800, color: '#16a34a' }}>{totalRevenue.toLocaleString()} MMK</td>
                       <td style={{ fontWeight: 800, color: totalClaimsPaid > 0 ? '#dc2626' : 'var(--text-muted)' }}>{totalClaimsPaid > 0 ? totalClaimsPaid.toLocaleString() + ' MMK' : '—'}</td>
@@ -477,7 +478,7 @@ export default function AdminReportsPage() {
               <div className="card-custom h-100">
                 <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
                   <i className="bi bi-pie-chart me-2" style={{ color: 'var(--primary)' }}></i>
-                  Policy အမျိုးအစား အချိုးအစား
+                  {t('admin.reports.policyTypeShare')}
                 </h6>
                 <div className="d-flex align-items-center justify-content-center gap-4 flex-wrap">
                   <PieChart data={byType} colors={TYPE_COLORS} size={200} />
@@ -501,7 +502,7 @@ export default function AdminReportsPage() {
               <div className="card-custom h-100">
                 <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
                   <i className="bi bi-bar-chart me-2" style={{ color: 'var(--primary)' }}></i>
-                  Insurance Type အလိုက် ဝင်ငွေ (MMK)
+                  {t('admin.reports.revenueByType')}
                 </h6>
                 <BarChart data={revByType} color={Object.keys(revByType).map(typeColor)} height={200} />
               </div>
@@ -512,7 +513,7 @@ export default function AdminReportsPage() {
           <div className="card-custom">
             <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
               <i className="bi bi-bar-chart-steps me-2" style={{ color: 'var(--primary)' }}></i>
-              Insurance Type အလိုက် Claim ထုတ်ပေးမှု (ပြီးခဲ့သော ၁၂ လ)
+              {t('admin.reports.claimsByTypeLast12Months')}
             </h6>
             {Object.keys(claimsByType).length === 0 ? <Empty /> : (
               <div className="d-flex flex-column gap-3">
@@ -538,13 +539,13 @@ export default function AdminReportsPage() {
           <div className="card-custom p-0">
             <div style={{ padding: '1rem 1.25rem 0.75rem', fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)', borderBottom: '1px solid var(--border)' }}>
               <i className="bi bi-table me-2" style={{ color: 'var(--primary)' }}></i>
-              Insurance Type အလိုက် အသေးစိတ်
+              {t('admin.reports.typeDetails')}
             </div>
             <div className="table-custom">
               <table className="w-100">
                 <thead>
                   <tr>
-                    {['Insurance Type', 'Active Policies', 'ဝင်ငွေ Premium (MMK)', 'Claim ထုတ် (MMK)', 'Profit/Loss (MMK)', 'ဝင်ငွေ အချိုး'].map(h => <th key={h}>{h}</th>)}
+                    {[t('admin.reports.insuranceType'), t('admin.reports.activePolicies'), t('admin.reports.premiumRevenueMmk'), t('admin.reports.claimPayoutMmk'), t('admin.reports.profitLossMmk'), t('admin.reports.incomeShare')].map(h => <th key={h}>{h}</th>)}
                   </tr>
                 </thead>
                 <tbody>
@@ -611,12 +612,12 @@ export default function AdminReportsPage() {
         <div className="fade-in d-flex flex-column gap-4">
           <div className="row g-3">
             {[
-              { label: 'Customers',         value: reports.totalCustomers,       icon: 'bi-people-fill',          color: '#1d4ed8', bg: '#eff6ff' },
-              { label: 'Active Policies',   value: reports.activePolicies,       icon: 'bi-shield-check',         color: '#16a34a', bg: '#f0fdf4' },
-              { label: 'Total Applications',value: reports.totalApplications,    icon: 'bi-file-earmark-text',    color: '#7c3aed', bg: '#f5f3ff' },
-              { label: 'Pending',           value: reports.pendingApplications,  icon: 'bi-hourglass-split',      color: '#d97706', bg: '#fffbeb' },
-              { label: 'Rejected',          value: reports.rejectedApplications, icon: 'bi-x-circle',             color: '#dc2626', bg: '#fef2f2' },
-              { label: 'Approved Claims',   value: reports.approvedClaims,       icon: 'bi-check-circle',         color: '#0891b2', bg: '#ecfeff' },
+              { label: t('admin.reports.customers'), value: reports.totalCustomers, icon: 'bi-people-fill', color: '#1d4ed8', bg: '#eff6ff' },
+              { label: t('admin.reports.activePolicies'), value: reports.activePolicies, icon: 'bi-shield-check', color: '#16a34a', bg: '#f0fdf4' },
+              { label: t('admin.reports.totalApplications'), value: reports.totalApplications, icon: 'bi-file-earmark-text', color: '#7c3aed', bg: '#f5f3ff' },
+              { label: t('admin.reports.pending'), value: reports.pendingApplications, icon: 'bi-hourglass-split', color: '#d97706', bg: '#fffbeb' },
+              { label: t('admin.reports.rejected'), value: reports.rejectedApplications, icon: 'bi-x-circle', color: '#dc2626', bg: '#fef2f2' },
+              { label: t('admin.reports.approvedClaims'), value: reports.approvedClaims, icon: 'bi-check-circle', color: '#0891b2', bg: '#ecfeff' },
             ].map(c => (
               <div key={c.label} className="col-6 col-md-4 col-xl-2">
                 <StatCard {...c} />
@@ -626,7 +627,7 @@ export default function AdminReportsPage() {
           <div className="card-custom">
             <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
               <i className="bi bi-bar-chart me-2" style={{ color: 'var(--primary)' }}></i>
-              လစဥ် Application တင်သွင်းမှု (ပြီးခဲ့သော ၁၂ လ)
+              {t('admin.reports.monthlyApplications')}
             </h6>
             <BarChart data={monApps} height={190} />
           </div>
@@ -635,7 +636,7 @@ export default function AdminReportsPage() {
               <div className="card-custom h-100">
                 <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
                   <i className="bi bi-pie-chart me-2" style={{ color: 'var(--primary)' }}></i>
-                  Application Status ခွဲခြမ်း
+                  {t('admin.reports.applicationStatusBreakdown')}
                 </h6>
                 <PieChart
                   data={{ Approved: reports.activePolicies, Pending: reports.pendingApplications, Rejected: reports.rejectedApplications }}
@@ -643,7 +644,7 @@ export default function AdminReportsPage() {
                   size={200}
                 />
                 <div className="d-flex justify-content-center gap-4 mt-3 flex-wrap">
-                  {[['Approved', '#16a34a', reports.activePolicies], ['Pending', '#d97706', reports.pendingApplications], ['Rejected', '#dc2626', reports.rejectedApplications]].map(([l, c, v]) => (
+                  {[[t('admin.reports.approved'), '#16a34a', reports.activePolicies], [t('admin.reports.pending'), '#d97706', reports.pendingApplications], [t('admin.reports.rejected'), '#dc2626', reports.rejectedApplications]].map(([l, c, v]) => (
                     <div key={l} className="text-center">
                       <div style={{ width: 12, height: 12, borderRadius: 3, background: c, margin: '0 auto 4px' }}></div>
                       <div style={{ fontSize: '1rem', fontWeight: 800, color: c }}>{v}</div>
@@ -657,14 +658,14 @@ export default function AdminReportsPage() {
               <div className="card-custom h-100">
                 <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
                   <i className="bi bi-file-earmark-medical me-2" style={{ color: 'var(--primary)' }}></i>
-                  Claims အနှစ်ချုပ်
+                  {t('admin.reports.claimsSummary')}
                 </h6>
                 <div className="d-flex flex-column gap-3">
                   {[
-                    { label: 'စုစုပေါင်း Claims',     value: reports.totalClaims,   color: '#2563eb', w: 100 },
-                    { label: 'အတည်ပြုပြီး (Approved)', value: reports.approvedClaims, color: '#16a34a', w: reports.totalClaims > 0 ? Math.round(reports.approvedClaims / reports.totalClaims * 100) : 0 },
-                    { label: 'ဆဲဆေးစစ် (Pending)',    value: reports.pendingClaims,  color: '#d97706', w: reports.totalClaims > 0 ? Math.round(reports.pendingClaims  / reports.totalClaims * 100) : 0 },
-                    { label: 'ပယ်ချသည် (Rejected)',   value: reports.rejectedClaims, color: '#dc2626', w: reports.totalClaims > 0 ? Math.round(reports.rejectedClaims / reports.totalClaims * 100) : 0 },
+                    { label: t('admin.reports.totalClaims'), value: reports.totalClaims, color: '#2563eb', w: 100 },
+                    { label: t('admin.reports.approved'), value: reports.approvedClaims, color: '#16a34a', w: reports.totalClaims > 0 ? Math.round(reports.approvedClaims / reports.totalClaims * 100) : 0 },
+                    { label: t('admin.reports.pending'), value: reports.pendingClaims, color: '#d97706', w: reports.totalClaims > 0 ? Math.round(reports.pendingClaims / reports.totalClaims * 100) : 0 },
+                    { label: t('admin.reports.rejected'), value: reports.rejectedClaims, color: '#dc2626', w: reports.totalClaims > 0 ? Math.round(reports.rejectedClaims / reports.totalClaims * 100) : 0 },
                   ].map(item => (
                     <div key={item.label}>
                       <div className="d-flex justify-content-between mb-1">
@@ -688,6 +689,7 @@ export default function AdminReportsPage() {
 
 // ── Claims Payout Tab ────────────────────────────────────────────────────────
 function ClaimsPayoutTab({ claimsPayoutByCustomer, totalClaimsPaid, monthlyClaims, claimsByType, reports }) {
+  const { t } = useTranslation()
   const [expand, setExpand] = useState(null)
 
   const totalClaims = reports?.totalClaims || 0
@@ -700,7 +702,7 @@ function ClaimsPayoutTab({ claimsPayoutByCustomer, totalClaimsPaid, monthlyClaim
         <div className="row align-items-center g-3">
           <div className="col-12 col-md-5">
             <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>
-              စုစုပေါင်း Claim ထုတ်ပေးပမာဏ (Approved Claims)
+              {t('admin.reports.totalClaimPayouts')}
             </div>
             <div style={{ fontSize: '2rem', fontWeight: 900, color: '#fff', lineHeight: 1 }}>
               {Number(totalClaimsPaid).toLocaleString()}
@@ -710,10 +712,10 @@ function ClaimsPayoutTab({ claimsPayoutByCustomer, totalClaimsPaid, monthlyClaim
           <div className="col-12 col-md-7">
             <div className="row g-2">
               {[
-                { l: 'Claim ပေးရမည့် Customer', v: claimsPayoutByCustomer.length + ' ဦး', c: '#fca5a5' },
-                { l: 'Approved Claims', v: approvedClaims + ' ခု', c: '#fde68a' },
-                { l: 'Average per Customer', v: claimsPayoutByCustomer.length > 0 ? Math.round(Number(totalClaimsPaid) / claimsPayoutByCustomer.length).toLocaleString() + ' MMK' : '—', c: '#6ee7b7' },
-                { l: 'Total Claims', v: totalClaims + ' ခု', c: '#c4b5fd' },
+                { l: t('admin.reports.customersWithClaims'), v: claimsPayoutByCustomer.length + ' ' + t('admin.reports.people'), c: '#fca5a5' },
+                { l: t('admin.reports.approvedClaims'), v: approvedClaims + ' ' + t('admin.reports.items'), c: '#fde68a' },
+                { l: t('admin.reports.averagePerCustomer'), v: claimsPayoutByCustomer.length > 0 ? Math.round(Number(totalClaimsPaid) / claimsPayoutByCustomer.length).toLocaleString() + ' MMK' : '—', c: '#6ee7b7' },
+                { l: t('admin.reports.totalClaims'), v: totalClaims + ' ' + t('admin.reports.items'), c: '#c4b5fd' },
               ].map(x => (
                 <div key={x.l} className="col-6">
                   <div style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 10, padding: '0.65rem 0.75rem' }}>
@@ -731,7 +733,7 @@ function ClaimsPayoutTab({ claimsPayoutByCustomer, totalClaimsPaid, monthlyClaim
       <div className="card-custom">
         <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
           <i className="bi bi-bar-chart me-2" style={{ color: '#dc2626' }}></i>
-          လစဥ် Claim ထုတ်ပေးမှု (MMK) — ပြီးခဲ့သော ၁၂ လ
+          {t('admin.reports.monthlyClaimPayouts')}
         </h6>
         <BarChart data={monthlyClaims} color="#dc2626" height={180} />
       </div>
@@ -741,11 +743,11 @@ function ClaimsPayoutTab({ claimsPayoutByCustomer, totalClaimsPaid, monthlyClaim
         <div className="card-custom">
           <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
             <i className="bi bi-pie-chart me-2" style={{ color: 'var(--primary)' }}></i>
-            Insurance Type အလိုက် Claim ထုတ်ပေးမှု
+            {t('admin.reports.claimsByType')}
           </h6>
           <div className="d-flex align-items-center justify-content-center gap-4 flex-wrap">
             <PieChart
-              data={Object.fromEntries(Object.entries(claimsByType).map(([t, d]) => [t, Object.values(d).reduce((s, v) => s + Number(v), 0)]))}
+              data={Object.fromEntries(Object.entries(claimsByType).map(([claimType, monthData]) => [claimType, Object.values(monthData).reduce((s, v) => s + Number(v), 0)]))}
               colors={TYPE_COLORS} size={200}
             />
             <div className="d-flex flex-column gap-2">
@@ -769,16 +771,16 @@ function ClaimsPayoutTab({ claimsPayoutByCustomer, totalClaimsPaid, monthlyClaim
         <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border)' }}>
           <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
             <i className="bi bi-people me-2" style={{ color: '#dc2626' }}></i>
-            Customer အလိုက် Claim ထုတ်ပေးမှု
+            {t('admin.reports.claimsByCustomer')}
           </div>
           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>
-            {claimsPayoutByCustomer.length} ဦးကို Claim ပေးထားပြီး
+            {t('admin.reports.customersPaidClaims', { count: claimsPayoutByCustomer.length })}
           </div>
         </div>
         {claimsPayoutByCustomer.length === 0 ? (
           <div className="text-center py-5" style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
             <i className="bi bi-cash-stack" style={{ fontSize: '2rem', opacity: 0.3, display: 'block', marginBottom: 6 }}></i>
-            Claim ထုတ်ပေးမှု မှတ်တမ်း မရှိသေးပါ
+            {t('admin.reports.noClaimPayouts')}
           </div>
         ) : (
           <div>
@@ -802,14 +804,14 @@ function ClaimsPayoutTab({ claimsPayoutByCustomer, totalClaimsPaid, monthlyClaim
                     <div className="d-flex align-items-center gap-3">
                       <div style={{ textAlign: 'right' }}>
                         <div style={{ fontWeight: 800, fontSize: '1rem', color: '#dc2626' }}>{Number(c.totalPayout).toLocaleString()} <span style={{ fontSize: '0.72rem' }}>MMK</span></div>
-                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{c.claimCount} claim</div>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{c.claimCount} {t('admin.reports.claims')}</div>
                       </div>
                       <i className={`bi bi-chevron-${isOpen ? 'up' : 'down'}`} style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}></i>
                     </div>
                   </div>
                   {isOpen && c.claims?.length > 0 && (
                     <div style={{ background: 'var(--bg-secondary)', padding: '0.5rem 1.25rem 0.75rem' }}>
-                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Claim မှတ်တမ်း</div>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('admin.reports.claimHistory')}</div>
                       <div className="d-flex flex-column gap-2">
                         {c.claims.map(claim => (
                           <div key={claim.claimId} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6, background: 'var(--bg-primary)', borderRadius: 8, padding: '0.55rem 0.85rem', border: '1px solid var(--border)' }}>
@@ -843,6 +845,7 @@ function ClaimsPayoutTab({ claimsPayoutByCustomer, totalClaimsPaid, monthlyClaim
 
 // ── Agent Performance Tab ────────────────────────────────────────────────────
 function AgentPerformanceTab({ agents }) {
+  const { t } = useTranslation()
   const maxApps = Math.max(...agents.map(a => a.applicationsHandled || 0), 1)
 
   return (
@@ -850,10 +853,10 @@ function AgentPerformanceTab({ agents }) {
       {/* Summary stats */}
       <div className="row g-3">
         {[
-          { label: 'Agent စုစုပေါင်း',      value: agents.length,                                                            icon: 'bi-person-badge',  color: '#1d4ed8', bg: '#eff6ff' },
-          { label: 'Application စုစုပေါင်း',  value: agents.reduce((s, a) => s + (a.applicationsHandled || 0), 0),           icon: 'bi-file-earmark',  color: '#7c3aed', bg: '#f5f3ff' },
-          { label: 'Approved Applications',   value: agents.reduce((s, a) => s + (a.applicationsApproved || 0), 0),           icon: 'bi-shield-check',  color: '#16a34a', bg: '#f0fdf4' },
-          { label: 'Claims Handled',          value: agents.reduce((s, a) => s + (a.claimsHandled || 0), 0),                  icon: 'bi-clipboard2',    color: '#d97706', bg: '#fffbeb' },
+          { label: t('admin.reports.totalAgents'), value: agents.length, icon: 'bi-person-badge', color: '#1d4ed8', bg: '#eff6ff' },
+          { label: t('admin.reports.totalApplicationsHandled'), value: agents.reduce((s, a) => s + (a.applicationsHandled || 0), 0), icon: 'bi-file-earmark', color: '#7c3aed', bg: '#f5f3ff' },
+          { label: t('admin.reports.approvedApplications'), value: agents.reduce((s, a) => s + (a.applicationsApproved || 0), 0), icon: 'bi-shield-check', color: '#16a34a', bg: '#f0fdf4' },
+          { label: t('admin.reports.claimsHandled'), value: agents.reduce((s, a) => s + (a.claimsHandled || 0), 0), icon: 'bi-clipboard2', color: '#d97706', bg: '#fffbeb' },
         ].map(c => (
           <div key={c.label} className="col-6 col-md-3">
             <StatCard {...c} />
@@ -866,7 +869,7 @@ function AgentPerformanceTab({ agents }) {
         <div className="card-custom">
           <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
             <i className="bi bi-bar-chart me-2" style={{ color: 'var(--primary)' }}></i>
-            Agent တစ်ဦးချင်း Application စီမံမှု
+            {t('admin.reports.applicationsPerAgent')}
           </h6>
           <BarChart
             data={Object.fromEntries(agents.map(a => [a.agentName?.split(' ')[0] || 'Agent', a.applicationsHandled || 0]))}
@@ -880,19 +883,19 @@ function AgentPerformanceTab({ agents }) {
       {agents.length === 0 ? (
         <div className="card-custom text-center py-5">
           <i className="bi bi-person-badge" style={{ fontSize: '3rem', color: 'var(--border)' }}></i>
-          <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>Agent မရှိသေးပါ</h5>
+          <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>{t('admin.reports.noAgents')}</h5>
         </div>
       ) : (
         <div className="card-custom p-0">
           <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border)', fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
             <i className="bi bi-table me-2" style={{ color: 'var(--primary)' }}></i>
-            Agent အလိုက် Performance အသေးစိတ်
+            {t('admin.reports.agentPerformanceDetails')}
           </div>
           <div className="table-custom">
             <table className="w-100">
               <thead>
                 <tr>
-                  {['Agent', 'Insurance Type', 'Applications', 'Approved', 'Claims', 'Approval Rate', 'Performance'].map(h => <th key={h}>{h}</th>)}
+                  {[t('admin.reports.agent'), t('admin.reports.insuranceType'), t('admin.reports.applications'), t('admin.reports.approved'), t('admin.reports.claims'), t('admin.reports.approvalRate'), t('admin.reports.performance')].map(h => <th key={h}>{h}</th>)}
                 </tr>
               </thead>
               <tbody>
@@ -948,16 +951,17 @@ function AgentPerformanceTab({ agents }) {
 
 // ── Package Popularity Tab ───────────────────────────────────────────────────
 function PackagePopularityTab({ packages }) {
+  const { t } = useTranslation()
   const maxApps = Math.max(...packages.map(p => p.applicationCount || 0), 1)
 
   return (
     <div className="fade-in d-flex flex-column gap-4">
       <div className="row g-3">
         {[
-          { label: 'Insurance Plan အားလုံး', value: packages.length,                                                icon: 'bi-box-seam',       color: '#7c3aed', bg: '#f5f3ff' },
-          { label: 'Active Plans',            value: packages.filter(p => p.active).length,                         icon: 'bi-check-circle',   color: '#16a34a', bg: '#f0fdf4' },
-          { label: 'လျှောက်မှု စုစုပေါင်း',    value: packages.reduce((s, p) => s + (p.applicationCount || 0), 0), icon: 'bi-file-earmark',   color: '#1d4ed8', bg: '#eff6ff' },
-          { label: 'Plan ဝင်ငွေ စုစုပေါင်း',   value: packages.reduce((s, p) => s + Number(p.revenue || 0), 0).toLocaleString() + ' MMK', icon: 'bi-cash-stack', color: '#d97706', bg: '#fffbeb' },
+          { label: t('admin.reports.totalPlans'), value: packages.length, icon: 'bi-box-seam', color: '#7c3aed', bg: '#f5f3ff' },
+          { label: t('admin.reports.activePlans'), value: packages.filter(p => p.active).length, icon: 'bi-check-circle', color: '#16a34a', bg: '#f0fdf4' },
+          { label: t('admin.reports.totalApplications'), value: packages.reduce((s, p) => s + (p.applicationCount || 0), 0), icon: 'bi-file-earmark', color: '#1d4ed8', bg: '#eff6ff' },
+          { label: t('admin.reports.totalPlanRevenue'), value: packages.reduce((s, p) => s + Number(p.revenue || 0), 0).toLocaleString() + ' MMK', icon: 'bi-cash-stack', color: '#d97706', bg: '#fffbeb' },
         ].map(c => (
           <div key={c.label} className="col-6 col-md-3">
             <StatCard {...c} />
@@ -970,7 +974,7 @@ function PackagePopularityTab({ packages }) {
         <div className="card-custom">
           <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
             <i className="bi bi-bar-chart me-2" style={{ color: 'var(--primary)' }}></i>
-            Plan တစ်ခုချင်း လျှောက်ထားမှု
+            {t('admin.reports.applicationsPerPlan')}
           </h6>
           <BarChart
             data={Object.fromEntries(packages.slice(0, 15).map(p => [p.packageName?.substring(0, 10) || 'Plan', p.applicationCount || 0]))}
@@ -984,19 +988,19 @@ function PackagePopularityTab({ packages }) {
       {packages.length === 0 ? (
         <div className="card-custom text-center py-5">
           <i className="bi bi-box-seam" style={{ fontSize: '3rem', color: 'var(--border)' }}></i>
-          <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>Package မရှိသေးပါ</h5>
+          <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>{t('admin.reports.noPackages')}</h5>
         </div>
       ) : (
         <div className="card-custom p-0">
           <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border)', fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
             <i className="bi bi-table me-2" style={{ color: 'var(--primary)' }}></i>
-            Insurance Plan အသေးစိတ် (လူကြိုက်အများဆုံးမှ)
+            {t('admin.reports.planDetails')}
           </div>
           <div className="table-custom">
             <table className="w-100">
               <thead>
                 <tr>
-                  {['Plan', 'Type', 'Status', 'Applications', 'Approved', 'Approval %', 'ဝင်ငွေ (MMK)', 'Popularity'].map(h => <th key={h}>{h}</th>)}
+                  {[t('admin.reports.plan'), t('admin.reports.type'), t('admin.reports.status'), t('admin.reports.applications'), t('admin.reports.approved'), t('admin.reports.approvalPercent'), t('admin.reports.revenueMmk'), t('admin.reports.popularity')].map(h => <th key={h}>{h}</th>)}
                 </tr>
               </thead>
               <tbody>
@@ -1015,7 +1019,7 @@ function PackagePopularityTab({ packages }) {
                       </td>
                       <td>
                         <span className={`badge-status ${pkg.active ? 'badge-active' : 'badge-cancelled'}`}>
-                          {pkg.active ? 'Active' : 'Inactive'}
+                          {pkg.active ? t('admin.reports.active') : t('admin.reports.inactive')}
                         </span>
                       </td>
                       <td><span style={{ fontWeight: 700, fontSize: '0.9rem' }}>{pkg.applicationCount || 0}</span></td>
@@ -1031,7 +1035,7 @@ function PackagePopularityTab({ packages }) {
                           <div style={{ height: '100%', width: `${barW}%`, background: typeColor(pkg.packageType), borderRadius: 99 }}></div>
                         </div>
                         <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: 2 }}>
-                          {pkg.applicationCount || 0} applications
+                          {pkg.applicationCount || 0} {t('admin.reports.applications').toLowerCase()}
                         </div>
                       </td>
                     </tr>
@@ -1048,13 +1052,14 @@ function PackagePopularityTab({ packages }) {
 
 // ── Wallet Tab ────────────────────────────────────────────────────────────────
 function WalletTab({ wallet, walletLoaded }) {
+  const { t } = useTranslation()
   const [expand, setExpand] = useState(null)
 
   if (!walletLoaded) {
     return (
       <div className="text-center py-5">
         <div className="spinner-border" style={{ color: 'var(--primary)' }}></div>
-        <p style={{ marginTop: 12, color: 'var(--text-muted)', fontSize: '0.85rem' }}>Wallet ဒေတာ ဆွဲယူနေသည်...</p>
+        <p style={{ marginTop: 12, color: 'var(--text-muted)', fontSize: '0.85rem' }}>{t('admin.reports.walletLoading')}</p>
       </div>
     )
   }
@@ -1062,7 +1067,7 @@ function WalletTab({ wallet, walletLoaded }) {
     return (
       <div className="card-custom text-center py-5">
         <i className="bi bi-exclamation-triangle" style={{ fontSize: '2rem', color: '#d97706', display: 'block', marginBottom: 8 }}></i>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', margin: 0 }}>Wallet ဒေတာ ဆွဲယူ၍ မရပါ။ နောက်မှ ထပ်ကြည့်ပါ။</p>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', margin: 0 }}>{t('admin.reports.walletLoadFailed')}</p>
       </div>
     )
   }
@@ -1079,20 +1084,20 @@ function WalletTab({ wallet, walletLoaded }) {
       <div className="card-custom" style={{ background: balance >= 0 ? 'linear-gradient(135deg, #064e3b, #065f46, #047857)' : 'linear-gradient(135deg, #7f1d1d, #991b1b)', border: 'none', padding: '1.5rem' }}>
         <div className="row align-items-center g-3">
           <div className="col-12 col-md-5">
-            <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>Premium Wallet လက်ကျန်ငွေ</div>
+            <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>{t('admin.reports.walletBalance')}</div>
             <div style={{ fontSize: '2rem', fontWeight: 900, color: '#fff', lineHeight: 1 }}>{balance.toLocaleString()}</div>
             <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.8rem', marginTop: 4 }}>MMK</div>
             <div style={{ marginTop: 10, display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.12)', borderRadius: 8, padding: '0.3rem 0.7rem' }}>
               <i className={`bi bi-${balance >= 0 ? 'check-circle-fill' : 'exclamation-triangle-fill'}`} style={{ color: balance >= 0 ? '#6ee7b7' : '#fca5a5', fontSize: '0.85rem' }}></i>
-              <span style={{ fontSize: '0.78rem', color: '#fff', fontWeight: 600 }}>{balance >= 0 ? 'Profitable' : 'Loss Making'}</span>
+              <span style={{ fontSize: '0.78rem', color: '#fff', fontWeight: 600 }}>{balance >= 0 ? t('admin.reports.profitable') : t('admin.reports.lossMaking')}</span>
             </div>
           </div>
           <div className="col-12 col-md-7">
             <div className="row g-2">
               {[
-                { l: 'Customer Premium ဝင်ငွေ', v: inflow,  icon: 'bi-arrow-down-circle', c: '#6ee7b7' },
-                { l: 'Claim လျှော်ကြေး ထုတ်ပေး', v: claims,  icon: 'bi-arrow-up-circle',   c: '#fca5a5' },
-                { l: 'လက်ကျန် (ဝင် − ထွက်)',     v: balance, icon: 'bi-wallet2',            c: balance >= 0 ? '#86efac' : '#fca5a5' },
+                { l: t('admin.reports.customerPremiumIncome'), v: inflow, icon: 'bi-arrow-down-circle', c: '#6ee7b7' },
+                { l: t('admin.reports.claimPayout'), v: claims, icon: 'bi-arrow-up-circle', c: '#fca5a5' },
+                { l: t('admin.reports.walletBalanceChange'), v: balance, icon: 'bi-wallet2', c: balance >= 0 ? '#86efac' : '#fca5a5' },
               ].map(x => (
                 <div key={x.l} className="col-6">
                   <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 10, padding: '0.65rem 0.75rem' }}>
@@ -1109,9 +1114,9 @@ function WalletTab({ wallet, walletLoaded }) {
       <div className="card-custom">
         <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
           <i className="bi bi-bar-chart me-2" style={{ color: 'var(--primary)' }}></i>
-          လစဥ် Premium ဝင်ငွေ vs Claim ထုတ်ပေး (MMK)
+          {t('admin.reports.monthlyPremiumVsClaims')}
         </h6>
-        <GroupedBarChart data1={monIn} data2={monOut} label1="Premium ဝင်ငွေ" label2="Claim ထုတ်" height={200} />
+        <GroupedBarChart data1={monIn} data2={monOut} label1={t('admin.reports.premiumRevenue')} label2={t('admin.reports.claimPayout')} height={200} />
       </div>
 
       <div className="card-custom p-0">
@@ -1119,16 +1124,16 @@ function WalletTab({ wallet, walletLoaded }) {
           <div>
             <div style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
               <i className="bi bi-list-check me-2" style={{ color: 'var(--primary)' }}></i>
-              Customer Premium ပေးချေမှု
+              {t('admin.reports.customerPremiumPayments')}
             </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>{customers.length} ဦးမှ ပေးချေပြီး</div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>{t('admin.reports.customersPaidPremium', { count: customers.length })}</div>
           </div>
           <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '0.3rem 0.75rem', fontSize: '0.78rem', fontWeight: 700, color: '#16a34a' }}>
-            <i className="bi bi-wallet2 me-1"></i>Total: {inflow.toLocaleString()} MMK
+            <i className="bi bi-wallet2 me-1"></i>{t('admin.reports.total')}: {inflow.toLocaleString()} MMK
           </div>
         </div>
         {customers.length === 0 ? (
-          <div className="text-center py-5" style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Premium ပေးချေမှု မှတ်တမ်းမရှိသေးပါ</div>
+          <div className="text-center py-5" style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{t('admin.reports.noPremiumPayments')}</div>
         ) : (
           <div>
             {customers.map((c, idx) => {
@@ -1151,14 +1156,14 @@ function WalletTab({ wallet, walletLoaded }) {
                     <div className="d-flex align-items-center gap-3">
                       <div style={{ textAlign: 'right' }}>
                         <div style={{ fontWeight: 800, fontSize: '1rem', color: '#16a34a' }}>{Number(c.totalPaid).toLocaleString()} <span style={{ fontSize: '0.72rem' }}>MMK</span></div>
-                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{c.paymentCount} ကြိမ်ပေးသွင်း</div>
+                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{c.paymentCount} {t('admin.reports.payments')}</div>
                       </div>
                       <i className={`bi bi-chevron-${isOpen ? 'up' : 'down'}`} style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}></i>
                     </div>
                   </div>
                   {isOpen && c.transactions?.length > 0 && (
                     <div style={{ background: 'var(--bg-secondary)', padding: '0.5rem 1.25rem 0.75rem' }}>
-                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Transaction မှတ်တမ်း</div>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('admin.reports.transactionHistory')}</div>
                       <div className="d-flex flex-column gap-2">
                         {c.transactions.map(tx => (
                           <div key={tx.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 6, background: 'var(--bg-primary)', borderRadius: 8, padding: '0.55rem 0.85rem', border: '1px solid var(--border)' }}>
