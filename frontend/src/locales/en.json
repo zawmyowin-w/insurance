@@ -1463,7 +1463,11 @@
       "editProfileTitle": "Edit Profile",
       "viewProfileTitle": "View Profile",
       "phoneHint": "e.g. +959xxxxxxxxx",
-      "cancelBtn": "Cancel"
+      "cancelBtn": "Cancel",
+      "emailError": "Email must be lowercase only, use letters/digits/dots only (no special chars), max 30 characters",
+      "phoneError": "Phone must start with +959 followed by 7–10 more digits (e.g. +9591234567)",
+      "editProfileTitle": "Edit Profile Information",
+      "viewProfileTitle": "Profile Information"
     },
     "reports": {
       "title": "Reports & Analytics",

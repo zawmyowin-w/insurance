@@ -5,8 +5,8 @@ import { toast } from 'react-toastify'
 import { useAuth } from '../../context/AuthContext'
 import ProfileAvatar from '../../components/ProfileAvatar'
 import {
-  EMAIL_MAX_LENGTH, EMAIL_ERROR, isEmailValid,
-  PHONE_PATTERN, PHONE_ERROR,
+  EMAIL_MAX_LENGTH, isEmailValid,
+  PHONE_PATTERN,
 } from '../../utils/validation'
 
 function handlePhoneChange(val, setter) {
@@ -49,9 +49,9 @@ export default function AdminProfilePage() {
   const handleProfileSubmit = async e => {
     e.preventDefault()
     setEmailTouched(true)
-    if (!isEmailValid(form.email)) { toast.error(EMAIL_ERROR.en); return }
+    if (!isEmailValid(form.email)) { toast.error(t('admin.profile.emailError')); return }
     const phoneVal = form.phone === '+95' ? '' : form.phone
-    if (phoneVal && !PHONE_PATTERN.test(phoneVal)) { toast.error(PHONE_ERROR); return }
+    if (phoneVal && !PHONE_PATTERN.test(phoneVal)) { toast.error(t('admin.profile.phoneError')); return }
     setSavingProfile(true)
     try {
       if (pendingPhotoFile) {
@@ -98,6 +98,7 @@ export default function AdminProfilePage() {
       <div className="row g-4">
         <div className="col-12 col-lg-8">
           <div className="card-custom">
+            {/* Avatar + photo hint */}
             <div className="d-flex align-items-center gap-3 mb-4">
               <ProfileAvatar
                 fetchUrl="/auth/profile/picture"
@@ -112,17 +113,23 @@ export default function AdminProfilePage() {
               <div>
                 <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{user?.name}</div>
                 <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
-                  {editMode ? 'Click the camera icon to change your photo' : 'Your account photo'}
+                  {editMode
+                    ? t('admin.profile.clickCameraHint')
+                    : t('admin.profile.yourPhotoHint')}
                 </div>
               </div>
             </div>
 
+            {/* Section title */}
             <h6 style={{ fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
-              {editMode ? 'Edit Profile Information' : 'Profile Information'}
+              {editMode
+                ? t('admin.profile.editProfileTitle')
+                : t('admin.profile.viewProfileTitle')}
             </h6>
 
             <form onSubmit={handleProfileSubmit}>
               <div className="row g-3">
+                {/* Full Name */}
                 <div className="col-12 col-md-6">
                   <label className="form-label-custom">{t('admin.profile.nameLabel')}</label>
                   <input
@@ -134,8 +141,10 @@ export default function AdminProfilePage() {
                     style={!editMode ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
                   />
                 </div>
+
+                {/* Email */}
                 <div className="col-12 col-md-6">
-                  <label className="form-label-custom">Email</label>
+                  <label className="form-label-custom">{t('admin.profile.emailLabel')}</label>
                   <input
                     type="email"
                     disabled={!editMode}
@@ -151,11 +160,15 @@ export default function AdminProfilePage() {
                     }}
                   />
                   {emailInvalid && (
-                    <p style={{ fontSize: '0.76rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{EMAIL_ERROR.en}</p>
+                    <p style={{ fontSize: '0.76rem', color: '#ef4444', margin: '0.25rem 0 0' }}>
+                      {t('admin.profile.emailError')}
+                    </p>
                   )}
                 </div>
+
+                {/* Phone */}
                 <div className="col-12 col-md-6">
-                  <label className="form-label-custom">Phone</label>
+                  <label className="form-label-custom">{t('admin.profile.phoneLabel')}</label>
                   <input
                     disabled={!editMode}
                     className="form-control-custom w-100"
@@ -171,7 +184,9 @@ export default function AdminProfilePage() {
                     }}
                   />
                   {editMode && phoneInvalid && (
-                    <p style={{ fontSize: '0.76rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{PHONE_ERROR}</p>
+                    <p style={{ fontSize: '0.76rem', color: '#ef4444', margin: '0.25rem 0 0' }}>
+                      {t('admin.profile.phoneError')}
+                    </p>
                   )}
                   {editMode && (
                     <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '0.2rem 0 0' }}>
@@ -179,6 +194,8 @@ export default function AdminProfilePage() {
                     </p>
                   )}
                 </div>
+
+                {/* Address */}
                 <div className="col-12 col-md-6">
                   <label className="form-label-custom">{t('admin.profile.addressLabel')}</label>
                   <input
@@ -186,18 +203,21 @@ export default function AdminProfilePage() {
                     className="form-control-custom w-100"
                     value={form.address}
                     onChange={e => setForm(f => ({ ...f, address: e.target.value }))}
-                    placeholder="Your address"
+                    placeholder={t('admin.profile.addressPlaceholder')}
                     onKeyDown={e => { if (e.key === 'Enter') e.preventDefault() }}
                     style={!editMode ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
                   />
                 </div>
               </div>
 
+              {/* Actions */}
               <div className="mt-3 d-flex gap-2">
                 {editMode ? (
                   <React.Fragment key="edit-actions">
                     <button type="submit" disabled={savingProfile} className="btn-primary-custom" style={{ justifyContent: 'center' }}>
-                      {savingProfile ? <><span className="spinner-border spinner-border-sm me-2"></span>{t('admin.profile.saving')}</> : t('admin.profile.saveChanges')}
+                      {savingProfile
+                        ? <><span className="spinner-border spinner-border-sm me-2"></span>{t('admin.profile.saving')}</>
+                        : t('admin.profile.saveChanges')}
                     </button>
                     <button type="button" onClick={handleCancelEdit} className="btn-outline-custom" style={{ justifyContent: 'center' }}>
                       {t('admin.profile.cancelBtn')}
@@ -215,7 +235,6 @@ export default function AdminProfilePage() {
           </div>
         </div>
       </div>
-
     </div>
   )
 }
