@@ -2,14 +2,18 @@ package com.insurance.portal.config;
 
 import com.insurance.portal.model.InsurancePackage;
 import com.insurance.portal.model.InsuranceType;
+import com.insurance.portal.model.User;
+import com.insurance.portal.model.enums.Role;
 import com.insurance.portal.repository.InsurancePackageRepository;
 import com.insurance.portal.repository.InsuranceTypeRepository;
+import com.insurance.portal.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -21,12 +25,15 @@ public class DataInitializer implements ApplicationRunner {
 
     private final InsurancePackageRepository packageRepo;
     private final InsuranceTypeRepository insuranceTypeRepo;
+    private final UserRepository userRepo;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
         seedInsuranceTypes();
         seedPackages();
+        seedDemoUsers();
     }
 
     private void seedInsuranceTypes() {
@@ -165,5 +172,54 @@ public class DataInitializer implements ApplicationRunner {
 
         packageRepo.saveAll(packages);
         log.info("✅ Seeded {} default insurance packages with full details", packages.size());
+    }
+
+    /**
+     * Provides a useful local demo dataset without affecting existing accounts.
+     * Each record is checked by email so restarting localhost is idempotent.
+     */
+    private void seedDemoUsers() {
+        String[] agentNames = {
+                "Aung Kyaw Moe", "Thiri Hlaing", "Min Zaw Oo", "Ei Ei Mon", "Htet Naing Win"
+        };
+        String[] agentTypes = {"LIFE", "HEALTH", "VEHICLE", "PROPERTY", "ALL"};
+        for (int i = 0; i < agentNames.length; i++) {
+            String email = "agent" + (i + 1) + "@dicp.com.mm";
+            if (!userRepo.existsByEmail(email)) {
+                userRepo.save(User.builder()
+                        .name(agentNames[i])
+                        .email(email)
+                        .password(passwordEncoder.encode("Agent@123"))
+                        .phone("+95950000" + String.format("%03d", i + 1))
+                        .address("Yangon, Myanmar")
+                        .role(Role.AGENT)
+                        .insuranceType(agentTypes[i])
+                        .active(true)
+                        .build());
+            }
+        }
+
+        String[] customerNames = {
+                "Zaw Min Htun", "Ei Phyu Phyu", "Ye Naing Win", "Su Su Htwe",
+                "Kyaw Zin Htet", "Aye Aye Khin", "Htet Aung Naing", "Nilar Oo",
+                "Phyo Wai Lwin", "Thin Zar Hlaing", "Min Thura Zaw", "Hnin Wai Wai",
+                "Aung Htet Oo", "Khin Mar Aye", "Wai Yan Kyaw", "Cho Cho Win",
+                "Pyae Phyo Aung", "May Zin Oo", "Zin Ko Ko", "Nang Hseng Kham"
+        };
+        for (int i = 0; i < customerNames.length; i++) {
+            String email = "customer" + (i + 1) + "@dicp.com.mm";
+            if (!userRepo.existsByEmail(email)) {
+                userRepo.save(User.builder()
+                        .name(customerNames[i])
+                        .email(email)
+                        .password(passwordEncoder.encode("Customer@123"))
+                        .phone("+9595100" + String.format("%04d", i + 1))
+                        .address("Yangon, Myanmar")
+                        .role(Role.CUSTOMER)
+                        .active(true)
+                        .build());
+            }
+        }
+        log.info("✅ Ensured 5 demo agents and 20 demo customers");
     }
 }
