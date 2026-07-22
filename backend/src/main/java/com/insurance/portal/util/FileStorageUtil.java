@@ -12,8 +12,8 @@ import java.util.*;
 
 /**
  * Shared helper for saving customer-uploaded files (payment screenshots, claim documents,
- * application supporting documents) safely under ./uploads/{subDir}, and for tracking
- * multiple uploaded paths as a JSON array string in a single TEXT/VARCHAR column.
+ * application supporting documents) safely under the configured file-storage directory,
+ * and for tracking multiple uploaded paths as a JSON array string in a TEXT column.
  */
 public final class FileStorageUtil {
 
@@ -25,20 +25,60 @@ public final class FileStorageUtil {
     );
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final String STORAGE_ROOT =
+            firstNonBlank(System.getProperty("app.upload.dir"),
+                    System.getenv("FILE_STORAGE_DIR"),
+                    "./uploads");
 
     private FileStorageUtil() {}
+
+    private static String firstNonBlank(String... values) {
+        for (String value : values) {
+            if (value != null && !value.isBlank()) return value;
+        }
+        return "./uploads";
+    }
+
+    private static File storageRoot() throws IOException {
+        File root = new File(STORAGE_ROOT).getCanonicalFile();
+        if (!root.exists() && !root.mkdirs()) {
+            throw new IOException("Unable to create file storage directory");
+        }
+        return root;
+    }
+
+    private static File resolveStoredFile(String storedPath) throws IOException {
+        if (storedPath == null || storedPath.isBlank()) {
+            throw new IOException("File path is empty");
+        }
+        File root = storageRoot();
+        File candidate = new File(storedPath);
+        // Existing records may contain absolute paths from the previous implementation.
+        File file = candidate.isAbsolute()
+                ? candidate.getCanonicalFile()
+                : new File(root, storedPath).getCanonicalFile();
+        if (!file.toPath().startsWith(root.toPath())) {
+            throw new IOException("Invalid file path");
+        }
+        return file;
+    }
 
     // ── Internal helper — shared path-traversal-safe write logic ─────────────
     private static String writeToDir(MultipartFile file, String ext, String subDir, String prefix) throws IOException {
         String safeFilename = prefix + "_" + UUID.randomUUID() + ext;
-        File uploadRoot = new File("./uploads/" + subDir).getCanonicalFile();
-        uploadRoot.mkdirs();
+        File uploadRoot = new File(storageRoot(), subDir).getCanonicalFile();
+        if (!uploadRoot.toPath().startsWith(storageRoot().toPath())) {
+            throw new IOException("Invalid upload directory");
+        }
+        if (!uploadRoot.exists() && !uploadRoot.mkdirs()) {
+            throw new IOException("Unable to create upload directory");
+        }
         File dest = new File(uploadRoot, safeFilename).getCanonicalFile();
         if (!dest.getPath().startsWith(uploadRoot.getPath())) {
             throw new RuntimeException("Invalid upload path");
         }
         file.transferTo(dest);
-        return dest.getPath();
+        return storageRoot().toPath().relativize(dest.toPath()).toString();
     }
 
     /** Saves a file under uploads/{subDir}. Accepts images and PDFs. Returns null if the file is empty. */
@@ -80,7 +120,7 @@ public final class FileStorageUtil {
     /** Best-effort delete of a previously stored file (e.g. when replacing a profile picture). */
     public static void deleteFileQuietly(String path) {
         if (path == null || path.isBlank()) return;
-        try { new File(path).delete(); } catch (Exception ignored) {}
+        try { resolveStoredFile(path).delete(); } catch (Exception ignored) {}
     }
 
     /** Serialises a list of file paths to a JSON array string for storage in a TEXT column. */
@@ -100,6 +140,7 @@ public final class FileStorageUtil {
 
     /** Returns the MIME content type for a file path based on its extension. */
     public static String contentTypeFor(String path) {
+        if (path == null) return "application/octet-stream";
         String lower = path.toLowerCase();
         if (lower.endsWith(".png"))                    return "image/png";
         if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
@@ -111,11 +152,15 @@ public final class FileStorageUtil {
 
     /** Streams a file from disk as an HTTP response. Returns 404 if the file does not exist. */
     public static ResponseEntity<?> streamFile(String path) {
-        File file = new File(path);
-        if (!file.exists()) return ResponseEntity.notFound().build();
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(contentTypeFor(path)))
-                .body(new FileSystemResource(file));
+        try {
+            File file = resolveStoredFile(path);
+            if (!file.exists() || !file.isFile()) return ResponseEntity.notFound().build();
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentTypeFor(path)))
+                    .body(new FileSystemResource(file));
+        } catch (IOException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     /**

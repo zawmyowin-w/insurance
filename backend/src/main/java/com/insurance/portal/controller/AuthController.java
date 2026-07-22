@@ -13,7 +13,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
@@ -21,7 +20,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.insurance.portal.util.FileStorageUtil;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
@@ -225,11 +223,7 @@ public class AuthController {
         if (path == null || path.isBlank()) {
             return ResponseEntity.notFound().build();
         }
-        File file = new File(path);
-        if (!file.exists()) return ResponseEntity.notFound().build();
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(FileStorageUtil.contentTypeFor(path)))
-                .body(new FileSystemResource(file));
+        return FileStorageUtil.streamFile(path);
     }
 
     record ErrorResponse(String message) {}

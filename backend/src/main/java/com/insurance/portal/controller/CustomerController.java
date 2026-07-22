@@ -9,8 +9,6 @@ import com.insurance.portal.service.PolicyService;
 import com.insurance.portal.util.FileStorageUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,7 +17,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.MultipartHttpServletRequest;
 
-import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
@@ -564,11 +561,7 @@ public class CustomerController {
         if (agent.getRole() != Role.AGENT) return ResponseEntity.status(403).build();
         String path = agent.getProfilePicture();
         if (path == null || path.isBlank()) return ResponseEntity.notFound().build();
-        File file = new File(path);
-        if (!file.exists()) return ResponseEntity.notFound().build();
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(FileStorageUtil.contentTypeFor(path)))
-                .body(new FileSystemResource(file));
+        return FileStorageUtil.streamFile(path);
     }
 
     // ── Form field file serving ──────────────────────────────────────

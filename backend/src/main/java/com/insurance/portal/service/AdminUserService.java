@@ -9,15 +9,12 @@ import com.insurance.portal.util.EmailValidationUtil;
 import com.insurance.portal.util.FileStorageUtil;
 import com.insurance.portal.util.PasswordValidationUtil;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.util.Map;
 import java.util.Optional;
 
@@ -143,11 +140,7 @@ public class AdminUserService {
         User user = userRepo.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
         String path = user.getProfilePicture();
         if (path == null || path.isBlank()) return ResponseEntity.notFound().build();
-        File file = new File(path);
-        if (!file.exists()) return ResponseEntity.notFound().build();
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(FileStorageUtil.contentTypeFor(path)))
-                .body(new FileSystemResource(file));
+        return FileStorageUtil.streamFile(path);
     }
 
     @Transactional

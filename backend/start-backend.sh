@@ -8,6 +8,7 @@ DB_HOST="${DB_HOST:-127.0.0.1}"
 DB_PORT="${DB_PORT:-3306}"
 DB_NAME="${DB_NAME:-insurance_portal}"
 DB_USER="${DB_USER:-root}"
+FILE_STORAGE_DIR="${FILE_STORAGE_DIR:-$ROOT_DIR/backend/uploads}"
 MYSQL_DATA_DIR="$ROOT_DIR/.mysql/data"
 MYSQL_RUN_DIR="$ROOT_DIR/.mysql/run"
 MYSQL_SOCK="$MYSQL_RUN_DIR/mysqld.sock"
@@ -75,4 +76,5 @@ mysql "${mysql_args[@]}" -e "CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARAC
 
 echo "[start-backend] Starting Spring Boot application..."
 cd "$ROOT_DIR/backend"
-exec env DB_HOST="$DB_HOST" DB_PORT="$DB_PORT" DB_NAME="$DB_NAME" DB_USER="$DB_USER" mvn -q spring-boot:run
+exec env DB_HOST="$DB_HOST" DB_PORT="$DB_PORT" DB_NAME="$DB_NAME" DB_USER="$DB_USER" \
+  FILE_STORAGE_DIR="$FILE_STORAGE_DIR" mvn -q spring-boot:run

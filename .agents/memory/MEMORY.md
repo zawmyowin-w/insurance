@@ -8,3 +8,4 @@
 - [Premium installment schedule system](premium-schedule-system.md) — dynamic schedule from app+package data; Payment.periodNumber tracks which installment is paid; PremiumScheduleUtil shared by both endpoints
 - [iText7 bilingual PDF without Myanmar font](itext7-bilingual-pdf.md) — StandardFonts (Helvetica) are Latin-only; Myanmar Unicode must be embedded TTF; pragmatic fallback: English primary + Myanmar romanized labels in parentheses
 - [Insurance type details + AI chat architecture](insurance-type-details-and-chat.md) — InsuranceType has description/benefits/rules; AI chat at /ai/chat needs XAI_API_KEY; payment needs last-6-digits + amount
+- [MySQL and file storage](mysql-and-file-storage.md) — Keep business records in MySQL and uploaded binaries in persistent protected storage with MySQL references

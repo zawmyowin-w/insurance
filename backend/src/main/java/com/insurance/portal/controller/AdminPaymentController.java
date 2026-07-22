@@ -10,8 +10,6 @@ import com.insurance.portal.repository.UserRepository;
 import com.insurance.portal.service.NotificationService;
 import com.insurance.portal.util.FileStorageUtil;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -19,7 +17,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.File;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -97,10 +94,6 @@ public class AdminPaymentController {
         if (payment.getScreenshotPath() == null || payment.getScreenshotPath().isBlank()) {
             return ResponseEntity.notFound().build();
         }
-        File file = new File(payment.getScreenshotPath());
-        if (!file.exists()) return ResponseEntity.notFound().build();
-        return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(FileStorageUtil.contentTypeFor(payment.getScreenshotPath())))
-                .body(new FileSystemResource(file));
+        return FileStorageUtil.streamFile(payment.getScreenshotPath());
     }
 }

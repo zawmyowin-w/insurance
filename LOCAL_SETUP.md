@@ -63,6 +63,17 @@ export DB_PASSWORD='your_password_here'
 
 Leave `DB_PASSWORD` unset if the user has no password.
 
+Uploaded documents are stored persistently under `backend/uploads/`, while
+their file references and business data are stored in MySQL. To use another
+persistent disk location, set:
+
+```bash
+export FILE_STORAGE_DIR=/path/to/insurance-uploads
+```
+
+Do not delete this directory: it contains claim documents, payment screenshots,
+profile pictures, and policy files referenced by MySQL.
+
 ---
 
 ## Step 4 — Start the Backend
