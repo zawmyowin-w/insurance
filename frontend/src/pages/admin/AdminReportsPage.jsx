@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 
@@ -181,6 +181,17 @@ function StatCard({ label, value, icon, color, bg, sub }) {
   )
 }
 
+// ── Blob-download helper ──────────────────────────────────────────────────────
+function triggerBlobDownload(data, filename, mime = 'application/pdf') {
+  const url = URL.createObjectURL(new Blob([data], { type: mime }))
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove() }, 200)
+}
+
 // ── Main Component ────────────────────────────────────────────────────────────
 const TABS = [
   { key: 'overview',  labelKey: 'tabOverviewLabel', icon: 'bi-graph-up-arrow' },
@@ -190,6 +201,7 @@ const TABS = [
   { key: 'agents',    labelKey: 'tabAgents', icon: 'bi-person-badge' },
   { key: 'packages',  labelKey: 'tabPackages', icon: 'bi-star' },
   { key: 'analytics', labelKey: 'tabAnalytics', icon: 'bi-bar-chart-line' },
+  { key: 'monthly',   labelKey: 'tabMonthly', icon: 'bi-file-earmark-pdf' },
 ]
 
 export default function AdminReportsPage() {
@@ -199,6 +211,20 @@ export default function AdminReportsPage() {
   const [loading, setLoading]   = useState(true)
   const [tab,     setTab]       = useState('overview')
   const [walletLoaded, setWalletLoaded] = useState(false)
+
+  // Monthly report state
+  const [pdfBusy,       setPdfBusy]       = useState(false)
+  const [resetBusy,     setResetBusy]     = useState(false)
+  const [showResetModal, setShowResetModal] = useState(false)
+  const [snapshots,     setSnapshots]     = useState([])
+  const [snapsLoading,  setSnapsLoading]  = useState(false)
+  const [snapsLoaded,   setSnapsLoaded]   = useState(false)
+  const [toast,         setToast]         = useState(null)
+
+  const showToast = (msg, ok = true) => {
+    setToast({ msg, ok })
+    setTimeout(() => setToast(null), 3500)
+  }
 
   useEffect(() => {
     api.get('/admin/reports')
@@ -214,10 +240,71 @@ export default function AdminReportsPage() {
         .then(r => setWallet(r.data))
         .catch(() => setWallet(null))
     }
+    if (tab === 'monthly' && !snapsLoaded) {
+      setSnapsLoaded(true)
+      setSnapsLoading(true)
+      api.get('/admin/reports/monthly-snapshots')
+        .then(r => setSnapshots(r.data || []))
+        .catch(() => setSnapshots([]))
+        .finally(() => setSnapsLoading(false))
+    }
   }, [tab])
+
+  // Download current-month PDF without resetting
+  const handleDownloadPdf = async () => {
+    setPdfBusy(true)
+    try {
+      const now = new Date()
+      const res = await api.get('/admin/reports/monthly-pdf', {
+        params: { year: now.getFullYear(), month: now.getMonth() + 1 },
+        responseType: 'blob',
+      })
+      const filename = `monthly-report-${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}.pdf`
+      triggerBlobDownload(res.data, filename)
+    } catch {
+      showToast(t('admin.reports.downloadError'), false)
+    } finally {
+      setPdfBusy(false)
+    }
+  }
+
+  // Monthly reset — saves snapshot + downloads PDF
+  const handleReset = async () => {
+    setShowResetModal(false)
+    setResetBusy(true)
+    try {
+      const now = new Date()
+      const res = await api.post('/admin/reports/monthly-reset', null, { responseType: 'blob' })
+      const filename = `monthly-report-${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}.pdf`
+      triggerBlobDownload(res.data, filename)
+      showToast(t('admin.reports.monthlyResetSuccess'))
+      // Reload snapshots list
+      const snaps = await api.get('/admin/reports/monthly-snapshots')
+      setSnapshots(snaps.data || [])
+    } catch {
+      showToast(t('admin.reports.monthlyResetError'), false)
+    } finally {
+      setResetBusy(false)
+    }
+  }
+
+  // Re-download an archived snapshot PDF
+  const handleSnapshotDownload = async (id, year, month) => {
+    try {
+      const res = await api.get(`/admin/reports/monthly-snapshots/${id}/pdf`, { responseType: 'blob' })
+      const filename = `monthly-report-${year}-${String(month).padStart(2,'0')}.pdf`
+      triggerBlobDownload(res.data, filename)
+    } catch {
+      showToast(t('admin.reports.downloadError'), false)
+    }
+  }
 
   if (loading) return <div className="text-center py-5"><div className="spinner-border" style={{ color: 'var(--primary)' }}></div></div>
   if (!reports) return <div className="card-custom text-center py-5"><p style={{ color: 'var(--text-muted)' }}>{t('admin.reports.loadFailed')}</p></div>
+
+  const now = new Date()
+  const currentMonthName = now.toLocaleString('en', { month: 'long' })
+  const currentYear = now.getFullYear()
 
   const byType    = reports.policiesByType    || {}
   const revByType = reports.revenueByType     || {}
@@ -245,6 +332,52 @@ export default function AdminReportsPage() {
 
   return (
     <div className="fade-in">
+      {/* ── Toast notification ── */}
+      {toast && (
+        <div style={{
+          position: 'fixed', top: 20, right: 20, zIndex: 9999,
+          padding: '0.7rem 1.2rem', borderRadius: 10, fontWeight: 600, fontSize: '0.85rem',
+          background: toast.ok ? '#f0fdf4' : '#fef2f2',
+          color: toast.ok ? '#16a34a' : '#dc2626',
+          border: `1px solid ${toast.ok ? '#bbf7d0' : '#fecaca'}`,
+          boxShadow: '0 4px 16px rgba(0,0,0,.12)',
+          display: 'flex', alignItems: 'center', gap: 8,
+        }}>
+          <i className={`bi ${toast.ok ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill'}`}></i>
+          {toast.msg}
+        </div>
+      )}
+
+      {/* ── Reset confirmation modal ── */}
+      {showResetModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9990, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
+          onClick={() => setShowResetModal(false)}>
+          <div style={{ background: 'var(--bg-primary)', borderRadius: 16, padding: '2rem', maxWidth: 480, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,.3)' }}
+            onClick={e => e.stopPropagation()}>
+            <div className="d-flex align-items-center gap-2 mb-3">
+              <div style={{ width: 40, height: 40, borderRadius: 12, background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <i className="bi bi-arrow-counterclockwise" style={{ color: '#d97706', fontSize: '1.2rem' }}></i>
+              </div>
+              <h5 style={{ margin: 0, fontWeight: 800, color: 'var(--text-primary)' }}>{t('admin.reports.monthlyResetConfirmTitle')}</h5>
+            </div>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.5rem', lineHeight: 1.6 }}>
+              {t('admin.reports.monthlyResetConfirmBody')}
+            </p>
+            <div className="d-flex gap-2 justify-content-end flex-wrap">
+              <button type="button" onClick={() => setShowResetModal(false)}
+                style={{ padding: '0.55rem 1.25rem', borderRadius: 9, border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-secondary)', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem' }}>
+                {t('admin.reports.monthlyResetCancel')}
+              </button>
+              <button type="button" onClick={handleReset}
+                style={{ padding: '0.55rem 1.25rem', borderRadius: 9, border: 'none', background: 'linear-gradient(135deg, #d97706, #b45309)', color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <i className="bi bi-file-earmark-pdf-fill"></i>
+                {t('admin.reports.monthlyResetConfirm')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="mb-4">
         <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('admin.reports.title')}</h4>
@@ -680,6 +813,160 @@ export default function AdminReportsPage() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── TAB: Monthly Report & Reset ── */}
+      {tab === 'monthly' && (
+        <div className="fade-in d-flex flex-column gap-4">
+          {/* Hero action card */}
+          <div className="card-custom" style={{ background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%)', border: 'none', padding: '1.75rem' }}>
+            <div className="row align-items-center g-4">
+              <div className="col-12 col-md-7">
+                <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 6 }}>
+                  {t('admin.reports.monthlyReportTitle')}
+                </div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#fff', lineHeight: 1.2, marginBottom: 8 }}>
+                  {currentMonthName} {currentYear}
+                </div>
+                <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.85rem', margin: 0, lineHeight: 1.6 }}>
+                  {t('admin.reports.monthlyReportSubtitle')}
+                </p>
+              </div>
+              <div className="col-12 col-md-5">
+                <div className="d-flex flex-column gap-2">
+                  {/* Download PDF (current month, no reset) */}
+                  <button type="button" onClick={handleDownloadPdf} disabled={pdfBusy}
+                    style={{
+                      padding: '0.7rem 1.25rem', borderRadius: 10, border: 'none', cursor: pdfBusy ? 'not-allowed' : 'pointer',
+                      background: 'rgba(255,255,255,0.15)', color: '#fff', fontWeight: 700, fontSize: '0.88rem',
+                      display: 'flex', alignItems: 'center', gap: 8, opacity: pdfBusy ? 0.7 : 1,
+                      backdropFilter: 'blur(4px)', transition: 'all .15s',
+                    }}>
+                    {pdfBusy
+                      ? <><div className="spinner-border spinner-border-sm" style={{ width: 16, height: 16, borderWidth: 2 }}></div>{t('admin.reports.generatingPdf')}</>
+                      : <><i className="bi bi-file-earmark-pdf-fill" style={{ fontSize: '1rem' }}></i>{t('admin.reports.downloadMonthlyPdf')}</>
+                    }
+                  </button>
+                  {/* Monthly Reset — archives PDF and records period end */}
+                  <button type="button" onClick={() => setShowResetModal(true)} disabled={resetBusy}
+                    style={{
+                      padding: '0.7rem 1.25rem', borderRadius: 10, border: 'none', cursor: resetBusy ? 'not-allowed' : 'pointer',
+                      background: resetBusy ? 'rgba(217,119,6,0.5)' : 'linear-gradient(135deg, #d97706, #b45309)', color: '#fff',
+                      fontWeight: 700, fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: 8, opacity: resetBusy ? 0.7 : 1, transition: 'all .15s',
+                    }}>
+                    {resetBusy
+                      ? <><div className="spinner-border spinner-border-sm" style={{ width: 16, height: 16, borderWidth: 2 }}></div>{t('admin.reports.resetting')}</>
+                      : <><i className="bi bi-arrow-counterclockwise" style={{ fontSize: '1rem' }}></i>{t('admin.reports.monthlyReset')}</>
+                    }
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* What the reset does — info panel */}
+          <div className="card-custom" style={{ borderLeft: '4px solid #d97706', background: 'var(--bg-secondary)' }}>
+            <div className="d-flex gap-3 align-items-start">
+              <i className="bi bi-info-circle-fill" style={{ color: '#d97706', fontSize: '1.2rem', flexShrink: 0, marginTop: 2 }}></i>
+              <div>
+                <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4, fontSize: '0.9rem' }}>
+                  Monthly Reset — How it works
+                </div>
+                <ul style={{ margin: 0, padding: '0 0 0 1.1rem', color: 'var(--text-secondary)', fontSize: '0.83rem', lineHeight: 1.7 }}>
+                  <li>Generates a comprehensive PDF of <strong>{currentMonthName} {currentYear}</strong>'s analytics data</li>
+                  <li>Saves the PDF to disk and records the snapshot in the archive below</li>
+                  <li>Downloads the PDF to your browser immediately</li>
+                  <li><strong>Does NOT delete</strong> any business data (payments, claims, applications remain intact)</li>
+                  <li>You can re-download any archived PDF at any time from the table below</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Snapshots archive table */}
+          <div className="card-custom p-0">
+            <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>
+                  <i className="bi bi-archive me-2" style={{ color: 'var(--primary)' }}></i>
+                  {t('admin.reports.snapshotsTitle')}
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>{t('admin.reports.snapshotsSubtitle')}</div>
+              </div>
+              <span style={{ background: '#eff6ff', color: '#1d4ed8', padding: '0.2rem 0.7rem', borderRadius: 20, fontSize: '0.78rem', fontWeight: 700 }}>
+                {snapshots.length} {snapshots.length === 1 ? 'report' : 'reports'}
+              </span>
+            </div>
+
+            {snapsLoading ? (
+              <div className="text-center py-5"><div className="spinner-border" style={{ color: 'var(--primary)' }}></div></div>
+            ) : snapshots.length === 0 ? (
+              <div className="text-center py-5">
+                <i className="bi bi-archive" style={{ fontSize: '2.5rem', color: 'var(--border)', display: 'block', marginBottom: 8 }}></i>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.88rem', margin: 0 }}>{t('admin.reports.snapshotsEmpty')}</p>
+              </div>
+            ) : (
+              <div className="table-custom">
+                <table className="w-100">
+                  <thead>
+                    <tr>
+                      {[
+                        t('admin.reports.snapshotMonth'),
+                        t('admin.reports.snapshotRevenue'),
+                        t('admin.reports.snapshotClaims'),
+                        t('admin.reports.snapshotProfit'),
+                        t('admin.reports.snapshotApplications'),
+                        t('admin.reports.snapshotPolicies'),
+                        t('admin.reports.snapshotDate'),
+                        t('admin.reports.snapshotDownload'),
+                      ].map(h => <th key={h}>{h}</th>)}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {snapshots.map(s => {
+                      const profit = Number(s.netProfit || 0)
+                      const rev    = Number(s.totalRevenue || 0)
+                      const claims = Number(s.totalClaimsPaid || 0)
+                      return (
+                        <tr key={s.id}>
+                          <td>
+                            <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)' }}>
+                              {s.monthName} {s.year}
+                            </div>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                              {s.totalCustomers} customers
+                            </div>
+                          </td>
+                          <td style={{ fontWeight: 700, color: '#16a34a' }}>{rev.toLocaleString()}</td>
+                          <td style={{ fontWeight: 700, color: claims > 0 ? '#dc2626' : 'var(--text-muted)' }}>
+                            {claims > 0 ? claims.toLocaleString() : '—'}
+                          </td>
+                          <td>
+                            <span style={{ fontWeight: 800, color: profit >= 0 ? '#16a34a' : '#dc2626' }}>
+                              {profit >= 0 ? '+' : ''}{profit.toLocaleString()}
+                            </span>
+                          </td>
+                          <td style={{ fontWeight: 600 }}>{s.totalApplications}</td>
+                          <td style={{ fontWeight: 600, color: '#16a34a' }}>{s.newPolicies}</td>
+                          <td style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                            {s.createdAt ? new Date(s.createdAt).toLocaleDateString('en', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'}
+                          </td>
+                          <td>
+                            <button type="button"
+                              onClick={() => handleSnapshotDownload(s.id, s.year, s.month)}
+                              style={{ padding: '0.3rem 0.75rem', borderRadius: 7, border: 'none', background: '#eff6ff', color: '#1d4ed8', fontWeight: 700, cursor: 'pointer', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: 4 }}>
+                              <i className="bi bi-download"></i> PDF
+                            </button>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       )}
