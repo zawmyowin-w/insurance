@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Outlet, NavLink } from 'react-router-dom'
 import Navbar from './Navbar'
+import api from '../services/api'
 
 /**
  * Shared sidebar layout for Admin, Agent, and Customer dashboards.
