@@ -387,10 +387,22 @@
     "sendError": "Failed to send code. Please try again."
   },
   "insuranceTypes": {
-    "life":     { "title": "Life Insurance",     "desc": "Financial protection for your family in case of unexpected loss of life." },
-    "health":   { "title": "Health Insurance",   "desc": "Coverage for medical expenses, hospitalization, and treatments." },
-    "vehicle":  { "title": "Vehicle Insurance",  "desc": "Protect your vehicle against accidents, theft, and damages." },
-    "property": { "title": "Property Insurance", "desc": "Safeguard your home and assets from unforeseen events." }
+    "life": {
+      "title": "Life Insurance",
+      "desc": "Financial protection for your family in case of unexpected loss of life."
+    },
+    "health": {
+      "title": "Health Insurance",
+      "desc": "Coverage for medical expenses, hospitalization, and treatments."
+    },
+    "vehicle": {
+      "title": "Vehicle Insurance",
+      "desc": "Protect your vehicle against accidents, theft, and damages."
+    },
+    "property": {
+      "title": "Property Insurance",
+      "desc": "Safeguard your home and assets from unforeseen events."
+    }
   },
   "layout": {
     "customerPortal": "Customer Portal"
@@ -1500,14 +1512,12 @@
       "updateFailed": "Failed to update profile",
       "clickCameraHint": "Click the camera icon to change your photo",
       "yourPhotoHint": "Your profile photo",
-      "editProfileTitle": "Edit Profile",
-      "viewProfileTitle": "View Profile",
+      "editProfileTitle": "Edit Profile Information",
+      "viewProfileTitle": "Profile Information",
       "phoneHint": "e.g. +959xxxxxxxxx",
       "cancelBtn": "Cancel",
       "emailError": "Email must be lowercase only, use letters/digits/dots only (no special chars), max 30 characters",
-      "phoneError": "Phone must start with +959 followed by 7–10 more digits (e.g. +9591234567)",
-      "editProfileTitle": "Edit Profile Information",
-      "viewProfileTitle": "Profile Information"
+      "phoneError": "Phone must start with +959 followed by 7–10 more digits (e.g. +9591234567)"
     },
     "reports": {
       "title": "Reports & Analytics",
@@ -1568,7 +1578,6 @@
       "incomePremium": "Income (Customer Premium)",
       "outflowClaims": "Expenses (Claim Payouts)",
       "profitLoss": "Profit / Loss",
-      "totalRow": "Total",
       "policyTypeShare": "Policy Type Distribution",
       "revenueByType": "Revenue by Insurance Type",
       "claimsByTypeLast12Months": "Claims by Insurance Type (Last 12 Months)",
@@ -1661,9 +1670,7 @@
       "snapshotDate": "Archived On",
       "snapshotDownload": "PDF",
       "generatingPdf": "Generating PDF…",
-      "resetting": "Saving & Downloading…",
-      "payments": "payments",
-      "transactionHistory": "Transaction History"
+      "resetting": "Saving & Downloading…"
     },
     "autoCheck": {
       "title": "Auto-Check Scheduler",
@@ -1847,6 +1854,29 @@
     "noteCustomer": "Customer",
     "noteAgent": "Agent",
     "noteAdmin": "Admin",
-    "year": "year"
+    "year": "year",
+    "signature": "Digital Signature",
+    "signatureVerified": "Digitally signed by the applicant",
+    "pi": {
+      "title": "Personal & Policy Information",
+      "customerName": "Customer Name",
+      "customerEmail": "Email Address",
+      "agentName": "Agent",
+      "package": "Insurance Package",
+      "packageType": "Package Type",
+      "policyNumber": "Policy Number",
+      "coverage": "Coverage Amount",
+      "premium": "Premium Amount",
+      "duration": "Duration",
+      "paymentFreq": "Payment Frequency",
+      "installment": "Installment Amount",
+      "totalInst": "Total Installments",
+      "riskLevel": "Risk Level",
+      "submittedAt": "Submitted At",
+      "policy": "Policy",
+      "claimType": "Claim Type",
+      "claimAmount": "Claim Amount",
+      "incidentDate": "Incident Date"
+    }
   }
 }

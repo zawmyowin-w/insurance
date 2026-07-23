@@ -195,6 +195,9 @@ export default function FormDetailModal({ show, onClose, type, item, role }) {
         {/* ── Body ── */}
         <div style={{ overflowY: 'auto', flex: 1, padding: '1.5rem' }}>
 
+          {/* ── Personal Information section (always shown) ── */}
+          <PersonalInfoSection item={item} type={type} formData={formData} typeColor={typeColor} />
+
           {/* Dynamic form fields */}
           {loading ? (
             <div className="text-center py-4">
@@ -216,9 +219,119 @@ export default function FormDetailModal({ show, onClose, type, item, role }) {
             </div>
           )}
 
+          {/* ── Digital Signature section ── */}
+          {formData.__signature && (
+            <SignatureSection signature={formData.__signature} typeColor={typeColor} />
+          )}
+
           {/* ── Notes section (always shown) ── */}
           <NotesSection item={item} type={type} typeColor={typeColor} />
         </div>
+      </div>
+    </div>
+  )
+}
+
+/* ── Personal Information Section ── */
+function PersonalInfoSection({ item, type, formData, typeColor }) {
+  const { t } = useTranslation()
+  const isApp = type === 'application'
+
+  // Build rows: merge DTO fields + __name/__email from formData
+  const rows = []
+
+  // Customer identity
+  const nameVal  = item.customerName  || formData.__name  || null
+  const emailVal = item.customerEmail || formData.__email || null
+  if (nameVal)  rows.push({ icon: 'bi-person-fill',       label: t('formModal.pi.customerName'),  value: nameVal })
+  if (emailVal) rows.push({ icon: 'bi-envelope-fill',     label: t('formModal.pi.customerEmail'), value: emailVal })
+  if (item.agentName)         rows.push({ icon: 'bi-headset',            label: t('formModal.pi.agentName'),     value: item.agentName })
+
+  if (isApp) {
+    if (item.packageName)     rows.push({ icon: 'bi-box-seam',           label: t('formModal.pi.package'),        value: item.packageName })
+    if (item.packageType)     rows.push({ icon: 'bi-tag',                label: t('formModal.pi.packageType'),    value: item.packageType })
+    if (item.policyNumber)    rows.push({ icon: 'bi-hash',               label: t('formModal.pi.policyNumber'),   value: item.policyNumber })
+    if (item.coverageAmount)  rows.push({ icon: 'bi-shield-check',       label: t('formModal.pi.coverage'),       value: Number(item.coverageAmount).toLocaleString() + ' MMK' })
+    if (item.premiumAmount)   rows.push({ icon: 'bi-cash-coin',          label: t('formModal.pi.premium'),        value: Number(item.premiumAmount).toLocaleString() + ' MMK' })
+    if (item.duration)        rows.push({ icon: 'bi-calendar3',          label: t('formModal.pi.duration'),       value: item.duration + ' ' + t('formModal.year') })
+    if (item.paymentFrequency) rows.push({ icon: 'bi-arrow-repeat',     label: t('formModal.pi.paymentFreq'),    value: item.paymentFrequency })
+    if (item.installmentAmount) rows.push({ icon: 'bi-receipt',         label: t('formModal.pi.installment'),    value: Number(item.installmentAmount).toLocaleString() + ' MMK' })
+    if (item.totalInstallments) rows.push({ icon: 'bi-list-ol',         label: t('formModal.pi.totalInst'),      value: item.totalInstallments })
+    if (item.riskLevel)       rows.push({ icon: 'bi-activity',           label: t('formModal.pi.riskLevel'),      value: item.riskLevel })
+    if (item.createdAt)       rows.push({ icon: 'bi-calendar-event',     label: t('formModal.pi.submittedAt'),    value: new Date(item.createdAt).toLocaleString() })
+  } else {
+    if (item.policyName)      rows.push({ icon: 'bi-file-earmark-text',  label: t('formModal.pi.policy'),         value: item.policyName })
+    if (item.claimType)       rows.push({ icon: 'bi-tag',                label: t('formModal.pi.claimType'),      value: item.claimType })
+    if (item.amount)          rows.push({ icon: 'bi-cash-coin',          label: t('formModal.pi.claimAmount'),    value: Number(item.amount).toLocaleString() + ' MMK' })
+    if (item.coverageAmount)  rows.push({ icon: 'bi-shield-check',       label: t('formModal.pi.coverage'),       value: Number(item.coverageAmount).toLocaleString() + ' MMK' })
+    if (item.incidentDate)    rows.push({ icon: 'bi-calendar-event',     label: t('formModal.pi.incidentDate'),   value: item.incidentDate })
+    if (item.createdAt)       rows.push({ icon: 'bi-clock-history',      label: t('formModal.pi.submittedAt'),    value: new Date(item.createdAt).toLocaleString() })
+  }
+
+  if (rows.length === 0) return null
+
+  return (
+    <div style={{ marginBottom: '1.25rem' }}>
+      <SectionHeading icon="bi-person-vcard" label={t('formModal.pi.title')} color={typeColor} />
+      <div style={{
+        borderRadius: 12,
+        border: '1.5px solid var(--border)',
+        overflow: 'hidden',
+      }}>
+        {rows.map(({ icon, label, value }, idx) => (
+          <div key={idx} style={{
+            display: 'grid',
+            gridTemplateColumns: '180px 1fr',
+            gap: '0.5rem',
+            padding: '0.55rem 0.85rem',
+            alignItems: 'center',
+            background: idx % 2 === 0 ? 'var(--bg-secondary)' : 'var(--bg-card, #fff)',
+            borderBottom: idx < rows.length - 1 ? '1px solid var(--border)' : 'none',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              <i className={'bi ' + icon} style={{ color: typeColor, fontSize: '0.82rem', width: 14, textAlign: 'center' }}></i>
+              <span style={{ fontSize: '0.79rem', color: 'var(--text-secondary)', fontWeight: 600 }}>{label}</span>
+            </div>
+            <span style={{ fontSize: '0.87rem', color: 'var(--text-primary)', fontWeight: 500, wordBreak: 'break-word' }}>{value}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/* ── Digital Signature Section ── */
+function SignatureSection({ signature, typeColor }) {
+  const { t } = useTranslation()
+  return (
+    <div style={{ marginTop: '1.25rem', marginBottom: '0.25rem' }}>
+      <SectionHeading icon="bi-pen" label={t('formModal.signature')} color={typeColor} />
+      <div style={{
+        borderRadius: 12,
+        border: '1.5px solid var(--border)',
+        padding: '1rem',
+        background: 'var(--bg-secondary)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-start',
+        gap: '0.5rem',
+      }}>
+        <img
+          src={signature}
+          alt="Digital Signature"
+          style={{
+            maxWidth: '100%',
+            maxHeight: 120,
+            border: '1px solid var(--border)',
+            borderRadius: 8,
+            background: '#fff',
+            padding: '0.25rem',
+          }}
+        />
+        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+          <i className="bi bi-patch-check-fill me-1" style={{ color: '#16a34a' }}></i>
+          {t('formModal.signatureVerified')}
+        </span>
       </div>
     </div>
   )
