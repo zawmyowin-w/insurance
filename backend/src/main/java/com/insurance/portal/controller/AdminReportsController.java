@@ -52,9 +52,12 @@ public class AdminReportsController {
         r.put("pendingClaims",        allClaims.stream().filter(c -> c.getStatus() == ClaimStatus.PENDING || c.getStatus() == ClaimStatus.VERIFIED).count());
         r.put("rejectedClaims",       allClaims.stream().filter(c -> c.getStatus() == ClaimStatus.REJECTED).count());
 
-        // Revenue
+        // Revenue — only count customer premium payments; exclude CLAIM_PAYOUT entries
+        // (CLAIM_PAYOUT records are created internally when admin approves a claim and
+        //  represent money going OUT to customers, not income coming IN from premiums)
         List<Payment> verifiedPayments = allPayments.stream()
-                .filter(p -> p.getStatus() == PaymentStatus.VERIFIED && p.getAmount() != null)
+                .filter(p -> p.getStatus() == PaymentStatus.VERIFIED && p.getAmount() != null
+                        && !"CLAIM_PAYOUT".equals(p.getPaymentType()))
                 .toList();
         BigDecimal totalRevenue = sumAmounts(verifiedPayments.stream().map(Payment::getAmount).toList());
         BigDecimal totalClaimsPaid = sumAmounts(allClaims.stream()
@@ -229,8 +232,10 @@ public class AdminReportsController {
         List<Payment> allPayments = paymentRepo.findAll();
         List<Claim>   allClaims  = claimRepo.findAll();
 
+        // Only count customer premium payments; exclude CLAIM_PAYOUT entries from inflow
         List<Payment> verifiedPayments = allPayments.stream()
-                .filter(p -> p.getStatus() == PaymentStatus.VERIFIED && p.getAmount() != null)
+                .filter(p -> p.getStatus() == PaymentStatus.VERIFIED && p.getAmount() != null
+                        && !"CLAIM_PAYOUT".equals(p.getPaymentType()))
                 .toList();
         BigDecimal totalInflow  = sumAmounts(verifiedPayments.stream().map(Payment::getAmount).toList());
         BigDecimal totalOutflow = sumAmounts(allClaims.stream()
