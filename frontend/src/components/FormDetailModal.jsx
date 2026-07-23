@@ -88,11 +88,12 @@ export default function FormDetailModal({ show, onClose, type, item, role }) {
       backdropFilter: 'blur(3px)',
     }} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div style={{
-        background: 'var(--bg-primary)',
+        background: 'var(--bg-card, #ffffff)',
         borderRadius: 20,
         width: '100%', maxWidth: 700, maxHeight: '92vh',
         display: 'flex', flexDirection: 'column', overflow: 'hidden',
-        boxShadow: '0 32px 80px rgba(0,0,0,0.35)',
+        boxShadow: '0 32px 80px rgba(0,0,0,0.45)',
+        border: '1px solid var(--border)',
       }}>
 
         {/* ── Gradient Hero Header ── */}

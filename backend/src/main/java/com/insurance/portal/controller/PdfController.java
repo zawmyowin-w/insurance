@@ -442,48 +442,111 @@ public class PdfController {
     private ResponseEntity<byte[]> buildApplicationPdf(PolicyApplication app) {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            PdfWriter writer = new PdfWriter(baos);
-            PdfDocument pdf = new PdfDocument(writer);
-            Document doc = new Document(pdf);
+            Document doc = new Document(new PdfDocument(new PdfWriter(baos)));
+            doc.setMargins(36, 40, 36, 40);
 
-            PdfFont boldFont = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);
-            PdfFont regularFont = PdfFontFactory.createFont(StandardFonts.HELVETICA);
-            DeviceRgb headerBg = new DeviceRgb(30, 64, 175);  // blue
-            DeviceRgb labelBg  = new DeviceRgb(241, 245, 249); // slate-100
+            PdfFont bold    = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);
+            PdfFont regular = PdfFontFactory.createFont(StandardFonts.HELVETICA);
+            PdfFont oblique = PdfFontFactory.createFont(StandardFonts.HELVETICA_OBLIQUE);
 
-            // Title
-            doc.add(new Paragraph("Insurance Application Form")
-                    .setFont(boldFont).setFontSize(20)
-                    .setFontColor(ColorConstants.WHITE)
-                    .setBackgroundColor(headerBg)
+            DeviceRgb navy   = new DeviceRgb(15, 23, 42);
+            DeviceRgb blue   = new DeviceRgb(29, 78, 175);
+            DeviceRgb green  = new DeviceRgb(22, 163, 74);
+            DeviceRgb gray   = new DeviceRgb(71, 85, 105);
+            DeviceRgb light  = new DeviceRgb(241, 245, 249);
+            DeviceRgb amber  = new DeviceRgb(217, 119, 6);
+            DeviceRgb red    = new DeviceRgb(220, 38, 38);
+
+            var pkg      = app.getInsurancePackage();
+            var customer = app.getCustomer();
+            var agent    = app.getAgent();
+            String issueDate  = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy"));
+            String policyNum  = app.getPolicyNumber() != null ? app.getPolicyNumber() : "N/A";
+            String statusStr  = app.getStatus().name();
+
+            // ── HEADER ──────────────────────────────────────────────────
+            Table headerTable = new Table(UnitValue.createPercentArray(new float[]{70, 30})).useAllAvailableWidth();
+            headerTable.addCell(new Cell()
+                    .add(new Paragraph("DIGITAL INSURANCE CLAIMS AND PREMIUMS").setFont(bold).setFontSize(12).setFontColor(blue).setMarginBottom(2))
+                    .add(new Paragraph("PORTAL — MYANMAR").setFont(bold).setFontSize(9).setFontColor(navy).setMarginBottom(3))
+                    .add(new Paragraph("ဒစ်ဂျစ်တယ် အာမခံ တောင်းဆိုမှုနှင့် ကြေးငွေ ပေါ်တယ် — မြန်မာ").setFont(oblique).setFontSize(8).setFontColor(gray))
+                    .setBorder(Border.NO_BORDER).setPadding(4));
+            headerTable.addCell(new Cell()
+                    .add(new Paragraph("INSURANCE APPLICATION FORM").setFont(bold).setFontSize(10).setFontColor(blue).setTextAlignment(TextAlignment.RIGHT).setMarginBottom(3))
+                    .add(new Paragraph("အာမခံ လျှောက်လွှာ ပုံစံ").setFont(oblique).setFontSize(8).setFontColor(gray).setTextAlignment(TextAlignment.RIGHT).setMarginBottom(6))
+                    .add(new Paragraph("Policy No: " + policyNum).setFont(bold).setFontSize(8).setFontColor(navy).setTextAlignment(TextAlignment.RIGHT).setMarginBottom(2))
+                    .add(new Paragraph("Date: " + issueDate).setFont(regular).setFontSize(8).setFontColor(gray).setTextAlignment(TextAlignment.RIGHT))
+                    .setBorder(Border.NO_BORDER).setPadding(4));
+            doc.add(headerTable);
+
+            // Blue title bar
+            doc.add(new Table(UnitValue.createPercentArray(new float[]{100})).useAllAvailableWidth()
+                    .addCell(new Cell()
+                            .add(new Paragraph("INSURANCE APPLICATION — MYANMAR (အာမခံ လျှောက်လွှာ — မြန်မာ)")
+                                    .setFont(bold).setFontSize(10).setFontColor(ColorConstants.WHITE).setTextAlignment(TextAlignment.CENTER))
+                            .setBackgroundColor(blue).setPadding(6).setBorder(Border.NO_BORDER)));
+
+            // Status banner
+            DeviceRgb statusColor = "APPROVED".equals(statusStr) ? green : "REJECTED".equals(statusStr) ? red : amber;
+            doc.add(new Paragraph("● STATUS: " + statusStr
+                    + (app.getRiskLevel() != null ? "   |   Risk Level: " + app.getRiskLevel() : "")
+                    + (app.getPolicyNumber() != null ? "   |   Policy No: " + policyNum : ""))
+                    .setFont(bold).setFontSize(9).setFontColor(statusColor)
                     .setTextAlignment(TextAlignment.CENTER)
-                    .setMarginBottom(4));
+                    .setBackgroundColor(light).setPaddingTop(4).setPaddingBottom(4).setMarginBottom(8));
 
-            // Meta section
-            String pkgName = app.getInsurancePackage() != null ? app.getInsurancePackage().getName() : "N/A";
-            String custName = app.getCustomer() != null ? app.getCustomer().getName() : "N/A";
-            addMetaTable(doc, boldFont, regularFont, labelBg, List.of(
-                    entry("Policy Number", app.getPolicyNumber()),
-                    entry("Customer Name", custName),
-                    entry("Insurance Plan", pkgName),
-                    entry("Coverage Amount", app.getCoverageAmount() != null ? app.getCoverageAmount().toPlainString() + " MMK" : "N/A"),
-                    entry("Duration", app.getDuration() != null ? app.getDuration() + " year(s)" : "N/A"),
-                    entry("Premium Amount", app.getPremiumAmount() != null ? app.getPremiumAmount().toPlainString() + " MMK" : "N/A"),
-                    entry("Risk Level", app.getRiskLevel()),
-                    entry("Status", app.getStatus().name()),
-                    entry("Submitted", app.getCreatedAt() != null ? app.getCreatedAt().toString() : "N/A")
+            // ── SECTION 1: APPLICANT INFORMATION ────────────────────────
+            addContractSection(doc, bold, "SECTION 1: APPLICANT INFORMATION   (အပိုင်း ၁: လျှောက်ထားသူ သတင်းအချက်အလက်)", blue, bold);
+            addMetaTable(doc, bold, regular, light, java.util.List.of(
+                    entry("Full Name  (နာမည်အပြည့်)",        customer != null ? customer.getName() : "N/A"),
+                    entry("Email Address  (အီးမေးလ်)",       customer != null ? customer.getEmail() : "N/A"),
+                    entry("Phone  (ဖုန်းနံပါတ်)",            customer != null && customer.getPhone() != null ? customer.getPhone() : "N/A"),
+                    entry("Address  (လိပ်စာ)",               customer != null && customer.getAddress() != null ? customer.getAddress() : "N/A"),
+                    entry("Assigned Agent  (တာဝန်ခံ Agent)", agent != null ? agent.getName() + (agent.getEmail() != null ? " <" + agent.getEmail() + ">" : "") : "No agent assigned")
             ));
 
-            // Dynamic form data
-            if (app.getInsurancePackage() != null) {
-                Optional<FormTemplate> tmplOpt = templateRepo.findByInsurancePackageIdAndFormType(
-                        app.getInsurancePackage().getId(), FormType.APPLICATION);
-                tmplOpt.ifPresent(tmpl -> addFormSection(doc, boldFont, regularFont, labelBg,
-                        "Application Details", tmpl.getFields(), app.getFormData()));
+            // ── SECTION 2: INSURANCE PLAN DETAILS ───────────────────────
+            addContractSection(doc, bold, "SECTION 2: INSURANCE PLAN DETAILS   (အပိုင်း ၂: အာမခံ Plan အသေးစိတ်)", blue, bold);
+            addMetaTable(doc, bold, regular, light, java.util.List.of(
+                    entry("Insurance Plan  (အာမခံ Plan)",         pkg != null ? pkg.getName() : "N/A"),
+                    entry("Insurance Type  (အာမခံ အမျိုးအစား)",  pkg != null ? pkg.getType() : "N/A"),
+                    entry("Coverage Amount  (အာမခံပမာဏ)",        app.getCoverageAmount() != null ? app.getCoverageAmount().toPlainString() + " MMK" : "N/A"),
+                    entry("Total Premium  (စုစုပေါင်း Premium)",  app.getPremiumAmount() != null ? app.getPremiumAmount().toPlainString() + " MMK" : "N/A"),
+                    entry("Policy Duration  (ကာလသတ်မှတ်)",       app.getDuration() != null ? app.getDuration() + " year(s)  (" + app.getDuration() * 12 + " months)" : "N/A"),
+                    entry("Payment Frequency  (ပေးချေပုံစံ)",    pkg != null && pkg.getPaymentFrequency() != null ? formatFrequency(pkg.getPaymentFrequency()) : "N/A"),
+                    entry("Max Claim Amount  (အများဆုံး Claim)",  pkg != null && pkg.getMaxClaimAmount() != null ? pkg.getMaxClaimAmount().toPlainString() + " MMK" : "N/A"),
+                    entry("Risk Level  (အန္တရာယ်အဆင့်)",         app.getRiskLevel() != null ? app.getRiskLevel() : "N/A"),
+                    entry("Application Date  (လျှောက်ထားသောနေ့)", app.getCreatedAt() != null ? app.getCreatedAt().format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm")) : "N/A"),
+                    entry("Policy Number  (ပါလစီနံပါတ်)",        policyNum)
+            ));
+
+            // ── SECTION 3: APPLICATION FORM DATA ────────────────────────
+            if (pkg != null) {
+                Optional<FormTemplate> tmplOpt = templateRepo.findByInsurancePackageIdAndFormType(pkg.getId(), FormType.APPLICATION);
+                if (tmplOpt.isPresent()) {
+                    FormTemplate tmpl = tmplOpt.get();
+                    addContractSection(doc, bold, "SECTION 3: APPLICATION FORM DETAILS   (အပိုင်း ၃: လျှောက်လွှာ ပုံစံ အချက်အလက်များ)", blue, bold);
+                    addFormSection(doc, bold, regular, light, tmpl.getName(), tmpl.getFields(), app.getFormData());
+                }
             }
 
-            // Notes
-            addNotesSection(doc, boldFont, regularFont, app.getNotes(), app.getAgentNote(), app.getAdminNote());
+            // ── SECTION 4: NOTES & REMARKS ───────────────────────────────
+            boolean hasNotes = (app.getNotes() != null && !app.getNotes().isBlank())
+                    || (app.getAgentNote() != null && !app.getAgentNote().isBlank())
+                    || (app.getAdminNote() != null && !app.getAdminNote().isBlank());
+            if (hasNotes) {
+                addContractSection(doc, bold, "SECTION 4: NOTES & REMARKS   (အပိုင်း ၄: မှတ်ချက်များ)", blue, bold);
+                addNotesSection(doc, bold, regular, app.getNotes(), app.getAgentNote(), app.getAdminNote());
+            }
+
+            // ── FOOTER ───────────────────────────────────────────────────
+            doc.add(new Paragraph(
+                    "\nThis document was generated by the Digital Insurance Claims and Premiums Portal on " + issueDate +
+                    ".\nApplication ID: #" + app.getId() + "  |  Status: " + statusStr +
+                    "\nThis is a computer-generated document.")
+                    .setFont(oblique).setFontSize(7.5f).setFontColor(gray)
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setBorderTop(new SolidBorder(light, 0.5f)).setPaddingTop(8).setMarginTop(12));
 
             doc.close();
             return pdfResponse(baos.toByteArray(), "application_" + app.getId() + ".pdf");
@@ -495,52 +558,118 @@ public class PdfController {
     private ResponseEntity<byte[]> buildClaimPdf(Claim claim) {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            PdfWriter writer = new PdfWriter(baos);
-            PdfDocument pdf = new PdfDocument(writer);
-            Document doc = new Document(pdf);
+            Document doc = new Document(new PdfDocument(new PdfWriter(baos)));
+            doc.setMargins(36, 40, 36, 40);
 
-            PdfFont boldFont = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);
-            PdfFont regularFont = PdfFontFactory.createFont(StandardFonts.HELVETICA);
-            DeviceRgb headerBg = new DeviceRgb(217, 119, 6);  // amber
-            DeviceRgb labelBg  = new DeviceRgb(255, 251, 235);
+            PdfFont bold    = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);
+            PdfFont regular = PdfFontFactory.createFont(StandardFonts.HELVETICA);
+            PdfFont oblique = PdfFontFactory.createFont(StandardFonts.HELVETICA_OBLIQUE);
 
-            doc.add(new Paragraph("Insurance Claim Form")
-                    .setFont(boldFont).setFontSize(20)
-                    .setFontColor(ColorConstants.WHITE)
-                    .setBackgroundColor(headerBg)
+            DeviceRgb navy   = new DeviceRgb(15, 23, 42);
+            DeviceRgb blue   = new DeviceRgb(29, 78, 175);
+            DeviceRgb amber  = new DeviceRgb(217, 119, 6);
+            DeviceRgb green  = new DeviceRgb(22, 163, 74);
+            DeviceRgb red    = new DeviceRgb(220, 38, 38);
+            DeviceRgb gray   = new DeviceRgb(71, 85, 105);
+            DeviceRgb light  = new DeviceRgb(255, 251, 235);   // amber-50
+            DeviceRgb lightB = new DeviceRgb(241, 245, 249);   // slate-100 for tables
+
+            var customer = claim.getCustomer();
+            var app      = claim.getApplication();
+            var pkg      = app != null ? app.getInsurancePackage() : null;
+            var agent    = claim.getAgent();
+            String issueDate = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy"));
+            String statusStr = claim.getStatus().name();
+
+            // ── HEADER ──────────────────────────────────────────────────
+            Table headerTable = new Table(UnitValue.createPercentArray(new float[]{70, 30})).useAllAvailableWidth();
+            headerTable.addCell(new Cell()
+                    .add(new Paragraph("DIGITAL INSURANCE CLAIMS AND PREMIUMS").setFont(bold).setFontSize(12).setFontColor(amber).setMarginBottom(2))
+                    .add(new Paragraph("PORTAL — MYANMAR").setFont(bold).setFontSize(9).setFontColor(navy).setMarginBottom(3))
+                    .add(new Paragraph("ဒစ်ဂျစ်တယ် အာမခံ တောင်းဆိုမှုနှင့် ကြေးငွေ ပေါ်တယ် — မြန်မာ").setFont(oblique).setFontSize(8).setFontColor(gray))
+                    .setBorder(Border.NO_BORDER).setPadding(4));
+            headerTable.addCell(new Cell()
+                    .add(new Paragraph("INSURANCE CLAIM FORM").setFont(bold).setFontSize(10).setFontColor(amber).setTextAlignment(TextAlignment.RIGHT).setMarginBottom(3))
+                    .add(new Paragraph("အာမခံ တောင်းဆိုမှု ပုံစံ").setFont(oblique).setFontSize(8).setFontColor(gray).setTextAlignment(TextAlignment.RIGHT).setMarginBottom(6))
+                    .add(new Paragraph("Claim ID: #" + claim.getId()).setFont(bold).setFontSize(8).setFontColor(navy).setTextAlignment(TextAlignment.RIGHT).setMarginBottom(2))
+                    .add(new Paragraph("Date: " + issueDate).setFont(regular).setFontSize(8).setFontColor(gray).setTextAlignment(TextAlignment.RIGHT))
+                    .setBorder(Border.NO_BORDER).setPadding(4));
+            doc.add(headerTable);
+
+            // Amber title bar
+            doc.add(new Table(UnitValue.createPercentArray(new float[]{100})).useAllAvailableWidth()
+                    .addCell(new Cell()
+                            .add(new Paragraph("INSURANCE CLAIM FORM — MYANMAR (အာမခံ တောင်းဆိုမှု ပုံစံ — မြန်မာ)")
+                                    .setFont(bold).setFontSize(10).setFontColor(ColorConstants.WHITE).setTextAlignment(TextAlignment.CENTER))
+                            .setBackgroundColor(amber).setPadding(6).setBorder(Border.NO_BORDER)));
+
+            // Status banner
+            DeviceRgb statusColor = "APPROVED".equals(statusStr) ? green : "REJECTED".equals(statusStr) ? red : amber;
+            doc.add(new Paragraph("● STATUS: " + statusStr
+                    + (claim.getClaimType() != null ? "   |   Type: " + claim.getClaimType() : "")
+                    + (claim.getAmount() != null ? "   |   Amount: " + claim.getAmount().toPlainString() + " MMK" : ""))
+                    .setFont(bold).setFontSize(9).setFontColor(statusColor)
                     .setTextAlignment(TextAlignment.CENTER)
-                    .setMarginBottom(4));
+                    .setBackgroundColor(lightB).setPaddingTop(4).setPaddingBottom(4).setMarginBottom(8));
 
-            String policyName = claim.getApplication() != null && claim.getApplication().getInsurancePackage() != null
-                    ? claim.getApplication().getInsurancePackage().getName() : "N/A";
-            String custName = claim.getCustomer() != null ? claim.getCustomer().getName() : "N/A";
-
-            addMetaTable(doc, boldFont, regularFont, labelBg, List.of(
-                    entry("Claim ID", "#" + claim.getId()),
-                    entry("Customer Name", custName),
-                    entry("Insurance Plan", policyName),
-                    entry("Claim Type", claim.getClaimType()),
-                    entry("Claim Amount", claim.getAmount() != null ? claim.getAmount().toPlainString() + " MMK" : "N/A"),
-                    entry("Incident Date", claim.getIncidentDate() != null ? claim.getIncidentDate().toString() : "N/A"),
-                    entry("Status", claim.getStatus().name()),
-                    entry("Submitted", claim.getCreatedAt() != null ? claim.getCreatedAt().toString() : "N/A")
+            // ── SECTION 1: CLAIMANT INFORMATION ─────────────────────────
+            addContractSection(doc, bold, "SECTION 1: CLAIMANT INFORMATION   (အပိုင်း ၁: တောင်းဆိုသူ သတင်းအချက်အလက်)", amber, bold);
+            addMetaTable(doc, bold, regular, lightB, java.util.List.of(
+                    entry("Full Name  (နာမည်အပြည့်)",        customer != null ? customer.getName() : "N/A"),
+                    entry("Email Address  (အီးမေးလ်)",       customer != null ? customer.getEmail() : "N/A"),
+                    entry("Phone  (ဖုန်းနံပါတ်)",            customer != null && customer.getPhone() != null ? customer.getPhone() : "N/A"),
+                    entry("Address  (လိပ်စာ)",               customer != null && customer.getAddress() != null ? customer.getAddress() : "N/A"),
+                    entry("Assigned Agent  (တာဝန်ခံ Agent)", agent != null ? agent.getName() + (agent.getEmail() != null ? " <" + agent.getEmail() + ">" : "") : "N/A")
             ));
 
-            // Dynamic claim form data
-            if (claim.getApplication() != null && claim.getApplication().getInsurancePackage() != null) {
-                Optional<FormTemplate> tmplOpt = templateRepo.findByInsurancePackageIdAndFormType(
-                        claim.getApplication().getInsurancePackage().getId(), FormType.CLAIM);
-                tmplOpt.ifPresent(tmpl -> addFormSection(doc, boldFont, regularFont, labelBg,
-                        "Claim Details", tmpl.getFields(), claim.getFormData()));
+            // ── SECTION 2: CLAIM DETAILS ─────────────────────────────────
+            addContractSection(doc, bold, "SECTION 2: CLAIM DETAILS   (အပိုင်း ၂: တောင်းဆိုမှု အသေးစိတ်)", amber, bold);
+            String policyNum = app != null && app.getPolicyNumber() != null ? app.getPolicyNumber() : "N/A";
+            addMetaTable(doc, bold, regular, lightB, java.util.List.of(
+                    entry("Claim ID  (တောင်းဆိုမှု ID)",         "#" + claim.getId()),
+                    entry("Insurance Plan  (အာမခံ Plan)",          pkg != null ? pkg.getName() : "N/A"),
+                    entry("Insurance Type  (အာမခံ အမျိုးအစား)",   pkg != null ? pkg.getType() : "N/A"),
+                    entry("Policy Number  (ပါလစီနံပါတ်)",         policyNum),
+                    entry("Claim Type  (တောင်းဆိုမှု အမျိုးအစား)", claim.getClaimType() != null ? claim.getClaimType() : "N/A"),
+                    entry("Claim Amount  (တောင်းဆိုသောပမာဏ)",     claim.getAmount() != null ? claim.getAmount().toPlainString() + " MMK" : "N/A"),
+                    entry("Incident Date  (ဖြစ်ပွားသောနေ့)",       claim.getIncidentDate() != null ? claim.getIncidentDate().toString() : "N/A"),
+                    entry("Submitted Date  (တင်ပြသောနေ့)",        claim.getCreatedAt() != null ? claim.getCreatedAt().format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm")) : "N/A"),
+                    entry("Status  (အခြေအနေ)",                    statusStr)
+            ));
+
+            // ── SECTION 3: CLAIM FORM DATA ───────────────────────────────
+            if (pkg != null) {
+                Optional<FormTemplate> tmplOpt = templateRepo.findByInsurancePackageIdAndFormType(pkg.getId(), FormType.CLAIM);
+                if (tmplOpt.isPresent()) {
+                    FormTemplate tmpl = tmplOpt.get();
+                    addContractSection(doc, bold, "SECTION 3: CLAIM FORM DETAILS   (အပိုင်း ၃: တောင်းဆိုမှု ပုံစံ အချက်အလက်များ)", amber, bold);
+                    addFormSection(doc, bold, regular, lightB, tmpl.getName(), tmpl.getFields(), claim.getFormData());
+                }
             }
 
-            // Description
+            // ── SECTION 4: DESCRIPTION ───────────────────────────────────
             if (claim.getDescription() != null && !claim.getDescription().isBlank()) {
-                doc.add(new Paragraph("Description").setFont(boldFont).setFontSize(12).setMarginTop(12).setMarginBottom(4));
-                doc.add(new Paragraph(claim.getDescription()).setFont(regularFont).setFontSize(10));
+                addContractSection(doc, bold, "SECTION 4: INCIDENT DESCRIPTION   (အပိုင်း ၄: ဖြစ်ရပ် ဖော်ပြချက်)", amber, bold);
+                doc.add(new Paragraph(claim.getDescription()).setFont(regular).setFontSize(9.5f).setFontColor(gray).setMarginBottom(6));
             }
 
-            addNotesSection(doc, boldFont, regularFont, null, claim.getAgentNote(), claim.getAdminNote());
+            // ── SECTION 5: NOTES & REMARKS ───────────────────────────────
+            boolean hasNotes = (claim.getAgentNote() != null && !claim.getAgentNote().isBlank())
+                    || (claim.getAdminNote() != null && !claim.getAdminNote().isBlank());
+            if (hasNotes) {
+                int secNum = (claim.getDescription() != null && !claim.getDescription().isBlank()) ? 5 : 4;
+                addContractSection(doc, bold, "SECTION " + secNum + ": NOTES & REMARKS   (အပိုင်း " + secNum + ": မှတ်ချက်များ)", amber, bold);
+                addNotesSection(doc, bold, regular, null, claim.getAgentNote(), claim.getAdminNote());
+            }
+
+            // ── FOOTER ───────────────────────────────────────────────────
+            doc.add(new Paragraph(
+                    "\nThis document was generated by the Digital Insurance Claims and Premiums Portal on " + issueDate +
+                    ".\nClaim ID: #" + claim.getId() + "  |  Status: " + statusStr +
+                    "\nThis is a computer-generated document.")
+                    .setFont(oblique).setFontSize(7.5f).setFontColor(gray)
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setBorderTop(new SolidBorder(lightB, 0.5f)).setPaddingTop(8).setMarginTop(12));
 
             doc.close();
             return pdfResponse(baos.toByteArray(), "claim_" + claim.getId() + ".pdf");
