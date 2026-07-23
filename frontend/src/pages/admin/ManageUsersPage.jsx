@@ -246,9 +246,9 @@ export default function ManageUsersPage() {
                   <label className="form-label-custom">{t('admin.users.insuranceType')}</label>
                   <select className="form-select-custom w-100" value={createForm.insuranceType}
                     onChange={e => setCreateForm(f => ({ ...f, insuranceType: e.target.value }))}>
-                    {[...insuranceTypes, 'ALL'].map(t => <option key={t} value={t}>{t}</option>)}
+                    {insuranceTypes.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
-                  {createForm.insuranceType !== 'ALL' && agentTypeMap[createForm.insuranceType] && (
+                  {agentTypeMap[createForm.insuranceType] && (
                     <p style={{ fontSize: '0.76rem', color: '#d97706', margin: '0.25rem 0 0' }}>
                       <i className="bi bi-exclamation-triangle me-1"></i>
                       {t('admin.users.agentConflictWarning', { name: agentTypeMap[createForm.insuranceType].name })}
@@ -470,10 +470,9 @@ export default function ManageUsersPage() {
                     <label className="form-label-custom">{t('admin.users.insuranceType')}</label>
                     <select className="form-select-custom w-100" value={editForm.insuranceType}
                       onChange={e => setEditForm(f => ({ ...f, insuranceType: e.target.value }))}>
-                      {[...insuranceTypes, 'ALL'].map(t => <option key={t} value={t}>{t}</option>)}
+                      {insuranceTypes.map(t => <option key={t} value={t}>{t}</option>)}
                     </select>
-                    {editForm.insuranceType !== 'ALL' &&
-                      agentTypeMap[editForm.insuranceType] &&
+                    {agentTypeMap[editForm.insuranceType] &&
                       agentTypeMap[editForm.insuranceType].id !== editingUser.id && (
                       <p style={{ fontSize: '0.76rem', color: '#d97706', margin: '0.25rem 0 0' }}>
                         <i className="bi bi-exclamation-triangle me-1"></i>
