@@ -76,5 +76,9 @@ mysql "${mysql_args[@]}" -e "CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARAC
 
 echo "[start-backend] Starting Spring Boot application..."
 cd "$ROOT_DIR/backend"
+# Use SESSION_SECRET as the JWT signing key when available (Replit secret)
+JWT_SECRET_VAL="${JWT_SECRET:-${SESSION_SECRET:-}}"
 exec env DB_HOST="$DB_HOST" DB_PORT="$DB_PORT" DB_NAME="$DB_NAME" DB_USER="$DB_USER" \
-  FILE_STORAGE_DIR="$FILE_STORAGE_DIR" mvn -q spring-boot:run
+  FILE_STORAGE_DIR="$FILE_STORAGE_DIR" \
+  JWT_SECRET="$JWT_SECRET_VAL" \
+  mvn -q spring-boot:run
