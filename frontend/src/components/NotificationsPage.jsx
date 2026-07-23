@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import api from '../services/api'
 import { toast } from 'react-toastify'
-import { useNotifCount } from '../context/NotifCountContext'
 
 const ICON_MAP  = { APPROVAL: 'bi-check-circle-fill', REJECTION: 'bi-x-circle-fill', PAYMENT: 'bi-credit-card-fill', CLAIM: 'bi-file-earmark-medical-fill', INFO: 'bi-info-circle-fill', REMINDER: 'bi-bell-fill' }
 const COLOR_MAP = { APPROVAL: '#16a34a', REJECTION: '#dc2626', PAYMENT: '#1d4ed8', CLAIM: '#f59e0b', INFO: '#6b7280', REMINDER: '#9333ea' }

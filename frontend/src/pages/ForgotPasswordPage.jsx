@@ -13,11 +13,6 @@ export default function ForgotPasswordPage() {
   const handleSubmit = async e => {
     e.preventDefault()
     setLoading(true)
-    // NOTE: Email-existence check removed — the backend does not yet expose
-    // a public check-email endpoint. The OTP flow proceeds unconditionally;
-    // a backend /auth/forgot-password endpoint (TODO) will validate the email
-    // server-side and send the reset code.
-
     try {
       await issueOtp(email, 'reset')
       toast.success(t('otp.sent'))

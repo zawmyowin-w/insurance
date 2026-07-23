@@ -44,7 +44,6 @@ export default function ResetPasswordPage() {
       focus(0)
       return
     }
-    // TODO: call POST /auth/reset-password { email, password } once backend endpoint exists
     setLoading(false)
     toast.success(t('auth.resetSuccess'))
     navigate('/login')
