@@ -180,9 +180,9 @@ public class DataInitializer implements ApplicationRunner {
      */
     private void seedDemoUsers() {
         String[] agentNames = {
-                "Aung Kyaw Moe", "Thiri Hlaing", "Min Zaw Oo", "Ei Ei Mon", "Htet Naing Win"
+                "Aung Kyaw Moe", "Thiri Hlaing", "Min Zaw Oo", "Ei Ei Mon"
         };
-        String[] agentTypes = {"LIFE", "HEALTH", "VEHICLE", "PROPERTY", "ALL"};
+        String[] agentTypes = {"LIFE", "HEALTH", "VEHICLE", "PROPERTY"};
         for (int i = 0; i < agentNames.length; i++) {
             String email = "agent" + (i + 1) + "@dicp.com.mm";
             if (!userRepo.existsByEmail(email)) {
@@ -220,6 +220,6 @@ public class DataInitializer implements ApplicationRunner {
                         .build());
             }
         }
-        log.info("✅ Ensured 5 demo agents and 20 demo customers");
+        log.info("✅ Ensured 4 demo agents and 20 demo customers");
     }
 }
