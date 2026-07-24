@@ -227,14 +227,6 @@ export default function HomePage() {
                     {t('hero.cta2')}
                   </Link>
                 </div>
-                <div className="d-flex align-items-center gap-3 mt-5 flex-wrap">
-                  {['SSL Secured','ISO Certified','Bank-grade Encryption'].map(label => (
-                    <div key={label} className="hero-trust-pill">
-                      <i className="bi bi-check-circle-fill me-1" style={{ color: '#4ade80', fontSize: '0.8rem' }}></i>
-                      <span>{label}</span>
-                    </div>
-                  ))}
-                </div>
               </div>
             </div>
             <div className="col-12 col-lg-6 d-flex justify-content-center align-items-center py-4 py-lg-0">
