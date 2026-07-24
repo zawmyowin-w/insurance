@@ -11,7 +11,30 @@
 
 ---
 
-## Step 1 — Start MySQL
+## Step 1 — Configure environment
+
+### Backend
+
+```bash
+cp backend/.env.example backend/.env
+```
+
+Edit `backend/.env` and fill in your values (MySQL password, xAI key, etc.).  
+`start-backend.sh` loads this file automatically — no manual `export` needed.
+
+### Frontend
+
+```bash
+cp frontend/.env.example frontend/.env
+```
+
+Edit `frontend/.env` and fill in your EmailJS credentials.  
+**EmailJS is required** for OTP and password-reset emails to be delivered.  
+Sign up at https://www.emailjs.com to get your keys.
+
+---
+
+## Step 2 — Start MySQL
 
 | OS | Command |
 |----|---------|
@@ -23,7 +46,7 @@ The backend connects to `127.0.0.1:3306` by default.
 
 ---
 
-## Step 2 — Start the Backend
+## Step 3 — Start the Backend
 
 ```bash
 cd backend
@@ -34,33 +57,9 @@ API → **http://localhost:8080/api**
 
 > First run takes ~60 s while Maven downloads dependencies.
 
-If your MySQL root user has a password, set it first:
-
-```bash
-export DB_PASSWORD='your_password_here'
-cd backend && bash start-backend.sh
-```
-
-**Windows (PowerShell):**
-```powershell
-$env:DB_PASSWORD = 'your_password_here'
-cd backend
-bash start-backend.sh        # requires Git Bash / WSL
-```
-
-For a different MySQL user, host, port, or database name:
-
-```bash
-export DB_HOST=127.0.0.1
-export DB_PORT=3306
-export DB_USER=root
-export DB_NAME=insurance_portal
-export DB_PASSWORD='your_password_here'
-```
-
 ---
 
-## Step 3 — Start the Frontend
+## Step 4 — Start the Frontend
 
 Open a **new terminal**:
 
@@ -84,59 +83,14 @@ Demo agents and customers are seeded automatically on first run.
 
 ---
 
-## Email OTP — Demo Mode
-
-EmailJS keys are **not required** locally. Without them the app runs in
-*demo mode*:
-
-- OTP codes and email-verification links are printed to the **browser
-  console** (press **F12** → **Console** tab) instead of being emailed.
-- Copy the code from the console and paste it into the form to continue.
-
-To enable real email sending, copy `frontend/.env.example` to
-`frontend/.env` and fill in your EmailJS credentials:
-
-```bash
-cp frontend/.env.example frontend/.env
-# then edit frontend/.env with your EmailJS values
-```
-
----
-
-## Configure MySQL Connection (if needed)
-
-You can also set variables permanently by creating a `.env` file in the
-`backend/` directory (it is git-ignored):
-
-```
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_USER=root
-DB_NAME=insurance_portal
-DB_PASSWORD=your_password_here
-```
-
-Then source it before starting:
-
-```bash
-export $(cat backend/.env | xargs)
-cd backend && bash start-backend.sh
-```
-
-Uploaded documents are stored under `backend/uploads/`. Do not delete
-this directory — it contains claim documents, payment screenshots, and
-policy files referenced by the database.
-
----
-
 ## Troubleshooting
 
 | Error | Fix |
 |-------|-----|
-| `Access denied for user 'root'` | Set `DB_PASSWORD` before starting the backend |
+| `Access denied for user 'root'` | Set `DB_PASSWORD` in `backend/.env` |
 | `Unknown database 'insurance_portal'` | The startup script creates it; check the MySQL user has `CREATE` permission |
-| `Communications link failure` | Start MySQL — see Step 1 |
+| `Communications link failure` | Start MySQL — see Step 2 |
 | Port 8080 in use | Add `server.port=9090` to `backend/src/main/resources/application-local.properties` |
-| Port 5000 in use | Change `--port 5000` to another port in `frontend/package.json` dev script, and update `app.cors.allowed-origins` in `application.properties` |
+| Port 5000 in use | Change `--port 5000` in `frontend/package.json` dev script, and update `app.cors.allowed-origins` in `application.properties` |
 | Frontend "Network Error" | Start the backend first, then the frontend |
-| OTP code not received | Check browser console (F12) — code is printed there in demo mode |
+| OTP email not received | Check your EmailJS credentials in `frontend/.env` |
