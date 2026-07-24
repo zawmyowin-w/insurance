@@ -114,80 +114,118 @@ function SettingsModal({ status, onClose, onSaved }) {
 
   return (
     <div style={{
-      position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9000, padding: '1rem',
+      position: 'fixed', inset: 0,
+      background: 'rgba(15, 23, 42, 0.65)',
+      backdropFilter: 'blur(4px)',
+      WebkitBackdropFilter: 'blur(4px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      zIndex: 9000, padding: '1rem',
     }} onClick={e => e.target === e.currentTarget && onClose()}>
       <div style={{
-        background: 'var(--bg-primary)', borderRadius: 16, width: '100%', maxWidth: 560,
-        boxShadow: '0 20px 60px rgba(0,0,0,.25)', maxHeight: '90vh', overflowY: 'auto',
+        background: '#ffffff',
+        borderRadius: 20, width: '100%', maxWidth: 560,
+        boxShadow: '0 25px 80px rgba(0,0,0,.35)',
+        maxHeight: '90vh', overflowY: 'auto',
+        border: 'none',
       }}>
-        {/* Header */}
-        <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border)',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <div style={{ fontWeight: 800, fontSize: '1rem', color: 'var(--text-primary)' }}>
-              <i className="bi bi-gear-fill me-2" style={{ color: 'var(--primary)' }}></i>
-               {t('admin.autoCheck.settingsTitle')}
+        {/* Gradient Header */}
+        <div style={{
+          background: 'linear-gradient(135deg, #1d4ed8 0%, #4f46e5 60%, #7c3aed 100%)',
+          borderRadius: '20px 20px 0 0',
+          padding: '1.5rem 1.75rem',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          position: 'relative', overflow: 'hidden',
+        }}>
+          {/* decorative circles */}
+          <div style={{ position: 'absolute', width: 140, height: 140, borderRadius: '50%',
+            background: 'rgba(255,255,255,0.07)', top: -40, right: 60, pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', width: 80, height: 80, borderRadius: '50%',
+            background: 'rgba(255,255,255,0.07)', bottom: -30, right: 20, pointerEvents: 'none' }} />
+          <div style={{ position: 'relative' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10,
+                background: 'rgba(255,255,255,0.2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <i className="bi bi-gear-fill" style={{ color: '#fff', fontSize: '1rem' }}></i>
+              </div>
+              <div style={{ fontWeight: 800, fontSize: '1.05rem', color: '#fff' }}>
+                {t('admin.autoCheck.settingsTitle')}
+              </div>
             </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>
-               {t('admin.autoCheck.settingsTimezoneDesc')}
+            <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)', marginLeft: 46 }}>
+              {t('admin.autoCheck.settingsTimezoneDesc')}
             </div>
           </div>
-          <button type="button" onClick={onClose}
-            style={{ background: 'none', border: 'none', cursor: 'pointer',
-              color: 'var(--text-muted)', fontSize: '1.2rem', lineHeight: 1 }}>
+          <button type="button" onClick={onClose} style={{
+            background: 'rgba(255,255,255,0.15)', border: 'none', cursor: 'pointer',
+            color: '#fff', fontSize: '1rem', lineHeight: 1,
+            width: 32, height: 32, borderRadius: 8,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            position: 'relative', flexShrink: 0,
+          }}>
             <i className="bi bi-x-lg"></i>
           </button>
         </div>
 
-        <div style={{ padding: '1.5rem' }}>
+        <div style={{ padding: '1.5rem 1.75rem', background: '#ffffff' }}>
           {/* Enable toggle */}
           <div className="d-flex align-items-center justify-content-between mb-4"
-            style={{ background: 'var(--bg-secondary)', borderRadius: 12, padding: '0.85rem 1.1rem' }}>
+            style={{ background: '#f8fafc', border: '1.5px solid #e2e8f0', borderRadius: 12, padding: '0.9rem 1.1rem' }}>
             <div>
-              <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)' }}>
+              <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#1e293b' }}>
                 {t('admin.autoCheck.title')}
               </div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 1 }}>
+              <div style={{ fontSize: '0.75rem', color: form.enabled ? '#16a34a' : '#dc2626', marginTop: 2, fontWeight: 600 }}>
+                <i className={`bi bi-${form.enabled ? 'check-circle-fill' : 'x-circle-fill'} me-1`}></i>
                 {form.enabled ? t('admin.autoCheck.enabled') : t('admin.autoCheck.disabled')}
               </div>
             </div>
-            <label style={{ position: 'relative', width: 48, height: 26, cursor: 'pointer', flexShrink: 0 }}>
+            <label style={{ position: 'relative', width: 50, height: 28, cursor: 'pointer', flexShrink: 0 }}>
               <input type="checkbox" checked={form.enabled}
                 onChange={e => setForm(f => ({ ...f, enabled: e.target.checked }))}
                 style={{ opacity: 0, width: 0, height: 0, position: 'absolute' }} />
               <span style={{
-                position: 'absolute', inset: 0, borderRadius: 13, transition: '.25s',
-                background: form.enabled ? 'var(--primary)' : '#cbd5e1',
+                position: 'absolute', inset: 0, borderRadius: 14, transition: '.25s',
+                background: form.enabled ? '#1d4ed8' : '#cbd5e1',
+                boxShadow: form.enabled ? '0 0 0 3px rgba(29,78,216,0.2)' : 'none',
               }}>
                 <span style={{
-                  position: 'absolute', width: 20, height: 20, borderRadius: '50%',
+                  position: 'absolute', width: 22, height: 22, borderRadius: '50%',
                   background: '#fff', top: 3, transition: '.25s',
                   left: form.enabled ? 25 : 3,
-                  boxShadow: '0 1px 3px rgba(0,0,0,.2)',
+                  boxShadow: '0 2px 6px rgba(0,0,0,.25)',
                 }}></span>
               </span>
             </label>
           </div>
 
+          {/* Section label */}
+          <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#6366f1',
+            textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.75rem' }}>
+            <i className="bi bi-clock me-1"></i>Myanmar Time Schedule
+          </div>
+
           {/* Time pickers */}
-          <div className="d-flex flex-column gap-3 mb-3">
+          <div className="d-flex flex-column gap-3 mb-4">
             {[
-               { field: 'verify',   cronField: 'verifyCron',          label: t('admin.autoCheck.verifyTimeLabel'), icon: 'bi-shield-check', color: '#1d4ed8', val: verifyTime },
-               { field: 'reminder', cronField: 'reminderCron',        label: t('admin.autoCheck.reminderTimeLabel'), icon: 'bi-bell-fill', color: '#d97706', val: reminderTime },
-               { field: 'cleanup',  cronField: 'revisionCleanupCron', label: t('admin.autoCheck.cleanupTimeLabel'), icon: 'bi-trash3', color: '#dc2626', val: cleanupTime },
+               { field: 'verify',   cronField: 'verifyCron',          label: t('admin.autoCheck.verifyTimeLabel'), icon: 'bi-shield-check', color: '#1d4ed8', bg: '#eff6ff', val: verifyTime },
+               { field: 'reminder', cronField: 'reminderCron',        label: t('admin.autoCheck.reminderTimeLabel'), icon: 'bi-bell-fill', color: '#d97706', bg: '#fffbeb', val: reminderTime },
+               { field: 'cleanup',  cronField: 'revisionCleanupCron', label: t('admin.autoCheck.cleanupTimeLabel'), icon: 'bi-trash3', color: '#dc2626', bg: '#fef2f2', val: cleanupTime },
             ].map(row => (
-              <div key={row.field}>
-                <label style={labelStyle}>
-                  <i className={`bi ${row.icon} me-1`} style={{ color: row.color }}></i>
-                   {row.label}
+              <div key={row.field} style={{ background: '#f8fafc', borderRadius: 12, padding: '0.85rem 1rem', border: '1px solid #e2e8f0' }}>
+                <label style={{ ...labelStyle, color: '#374151', marginBottom: 8 }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    width: 22, height: 22, borderRadius: 6, background: row.bg, marginRight: 6 }}>
+                    <i className={`bi ${row.icon}`} style={{ color: row.color, fontSize: '0.72rem' }}></i>
+                  </span>
+                  {row.label}
                 </label>
                 <div className="d-flex align-items-center gap-2">
                   <input type="time" value={row.val}
                     onChange={e => handleTimeChange(row.field, row.cronField, e.target.value)}
-                    style={{ ...inputStyle, flex: 1 }} />
-                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', minWidth: 110 }}>
-                     {t('admin.autoCheck.cronLabel')}: <code style={{ fontSize: '0.72rem' }}>{form[row.cronField]}</code>
+                    style={{ ...inputStyle, flex: 1, background: '#fff', border: '1.5px solid #d1d5db' }} />
+                  <span style={{ fontSize: '0.68rem', color: '#94a3b8', whiteSpace: 'nowrap', minWidth: 110 }}>
+                     {t('admin.autoCheck.cronLabel')}: <code style={{ fontSize: '0.68rem', color: '#4f46e5' }}>{form[row.cronField]}</code>
                   </span>
                 </div>
               </div>
@@ -195,15 +233,18 @@ function SettingsModal({ status, onClose, onSaved }) {
           </div>
 
           {/* Min pending hours */}
-          <div className="mb-3">
-            <label style={labelStyle}>
-              <i className="bi bi-hourglass me-1" style={{ color: '#7c3aed' }}></i>
-               {t('admin.autoCheck.minPendingHours')}
+          <div style={{ background: '#f8fafc', borderRadius: 12, padding: '0.85rem 1rem', border: '1px solid #e2e8f0', marginBottom: '1rem' }}>
+            <label style={{ ...labelStyle, color: '#374151', marginBottom: 8 }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                width: 22, height: 22, borderRadius: 6, background: '#f5f3ff', marginRight: 6 }}>
+                <i className="bi bi-hourglass" style={{ color: '#7c3aed', fontSize: '0.72rem' }}></i>
+              </span>
+              {t('admin.autoCheck.minPendingHours')}
             </label>
             <input type="number" min={0} max={72} value={form.minPendingHours}
               onChange={e => setForm(f => ({ ...f, minPendingHours: parseInt(e.target.value) || 0 }))}
-              style={{ ...inputStyle, width: 120 }} />
-            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 4 }}>
+              style={{ ...inputStyle, width: 120, background: '#fff', border: '1.5px solid #d1d5db' }} />
+            <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 6 }}>
                {t('admin.autoCheck.minPendingDesc')}
             </div>
           </div>
@@ -211,51 +252,53 @@ function SettingsModal({ status, onClose, onSaved }) {
           {/* Advanced: raw cron edit */}
           <button type="button" onClick={() => setAdvanced(v => !v)}
             style={{ background: 'none', border: 'none', cursor: 'pointer',
-              color: 'var(--text-muted)', fontSize: '0.75rem', padding: 0, marginBottom: 8 }}>
+              color: '#6366f1', fontSize: '0.75rem', padding: 0, marginBottom: 8, fontWeight: 600 }}>
             <i className={`bi bi-chevron-${advanced ? 'up' : 'down'} me-1`}></i>
              {t('admin.autoCheck.advancedCron')}
           </button>
           {advanced && (
-            <div className="d-flex flex-column gap-2 mb-3">
+            <div className="d-flex flex-column gap-2 mb-3" style={{ background: '#f8fafc', borderRadius: 12, padding: '1rem', border: '1px solid #e2e8f0' }}>
               {[
                  { label: t('admin.autoCheck.verifyCronLabel'), key: 'verifyCron' },
                  { label: t('admin.autoCheck.reminderCronLabel'), key: 'reminderCron' },
                  { label: t('admin.autoCheck.cleanupCronLabel'), key: 'revisionCleanupCron' },
               ].map(row => (
                 <div key={row.key}>
-                  <label style={labelStyle}>{row.label}</label>
+                  <label style={{ ...labelStyle, color: '#374151' }}>{row.label}</label>
                   <input value={form[row.key]}
                     onChange={e => setForm(f => ({ ...f, [row.key]: e.target.value }))}
-                    placeholder="0 30 2 * * *" style={inputStyle} />
+                    placeholder="0 30 2 * * *"
+                    style={{ ...inputStyle, background: '#fff', border: '1.5px solid #d1d5db' }} />
                 </div>
               ))}
-              <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', background: 'var(--bg-secondary)',
-                borderRadius: 8, padding: '0.5rem 0.75rem' }}>
-                 {t('admin.autoCheck.cronFormat')}: <code>seconds minutes hours day month weekday</code><br />
+              <div style={{ fontSize: '0.72rem', color: '#64748b', background: '#fff',
+                borderRadius: 8, padding: '0.5rem 0.75rem', border: '1px solid #e2e8f0' }}>
+                 {t('admin.autoCheck.cronFormat')}: <code style={{ color: '#4f46e5' }}>seconds minutes hours day month weekday</code><br />
                  {t('admin.autoCheck.timezoneFormat')}
               </div>
             </div>
           )}
 
           {err && (
-            <div style={{ background: '#fee2e2', color: '#dc2626', borderRadius: 8, padding: '0.6rem 0.85rem',
-              fontSize: '0.8rem', marginBottom: 12 }}>
+            <div style={{ background: '#fef2f2', color: '#dc2626', borderRadius: 10, padding: '0.7rem 1rem',
+              fontSize: '0.8rem', marginBottom: 12, border: '1px solid #fecaca' }}>
               <i className="bi bi-exclamation-triangle-fill me-2"></i>{err}
             </div>
           )}
 
           {/* Actions */}
-          <div className="d-flex gap-2 justify-content-end">
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', paddingTop: '0.5rem', borderTop: '1px solid #f1f5f9', marginTop: 4 }}>
             <button type="button" onClick={onClose}
-              style={{ padding: '0.5rem 1.25rem', borderRadius: 8, border: '1.5px solid var(--border)',
-                background: 'transparent', color: 'var(--text-secondary)', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}>
+              style={{ padding: '0.55rem 1.4rem', borderRadius: 10, border: '1.5px solid #e2e8f0',
+                background: '#fff', color: '#64748b', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}>
               {t('admin.common.cancel')}
             </button>
             <button type="button" onClick={save} disabled={saving}
-              style={{ padding: '0.5rem 1.5rem', borderRadius: 8, border: 'none', cursor: 'pointer',
-                background: saving ? '#e2e8f0' : 'var(--primary)',
+              style={{ padding: '0.55rem 1.5rem', borderRadius: 10, border: 'none', cursor: 'pointer',
+                background: saving ? '#e2e8f0' : 'linear-gradient(135deg, #1d4ed8, #4f46e5)',
                 color: saving ? '#64748b' : '#fff', fontWeight: 700, fontSize: '0.85rem',
-                display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                boxShadow: saving ? 'none' : '0 4px 12px rgba(29,78,216,0.35)' }}>
               {saving
                 ? <><span className="spinner-border spinner-border-sm"></span> {t('admin.common.saving')}</>
                 : <><i className="bi bi-floppy-fill"></i> {t('admin.autoCheck.saveSettings')}</>}
