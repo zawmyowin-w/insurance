@@ -1,58 +1,57 @@
 # Digital Insurance Claim and Premiums Portal
 
-A full-stack insurance portal for Myanmar, supporting policy applications, premium payments, claims, and admin management.
+A full-stack insurance management platform for Myanmar, supporting policy applications, claims, payments, and agent/admin workflows.
 
 ## Stack
 
 | Layer | Tech |
 |-------|------|
-| Frontend | React 18 + Vite, Bootstrap 5, React Router v6 |
-| Backend | Spring Boot 3.2 (Java 19), Spring Security + JWT |
-| Database | MySQL 8 (self-managed, data in `.mysql/`) |
+| Frontend | React 18 + Vite (port 5000) |
+| Backend | Java 17 / Spring Boot 3.2, Maven (port 8080) |
+| Database | MySQL 8 (project-local, data in `.mysql/data/`) |
+| Auth | JWT (access + refresh tokens) |
 
-## How to Run
+## Running the project
 
-Both workflows start automatically. No manual steps needed.
+Two workflows run in parallel (both start automatically):
 
-- **Frontend** (`Start application`) — `cd frontend && npm install && npm run dev` → port 5000
-- **Backend** (`Backend`) — `cd backend && bash start-backend.sh` → port 8080
-  - `start-backend.sh` initialises and starts a local MySQL instance, creates the `insurance_portal` database, then launches Spring Boot via Maven.
-  - First run takes ~60 s while Maven downloads dependencies and MySQL initialises.
+- **Start application** — `cd frontend && npm install && npm run dev`
+- **Backend** — `cd backend && bash start-backend.sh` (starts MySQL if needed, then Spring Boot)
 
-Frontend proxies `/api/*` to `http://localhost:8080` via Vite, so no CORS issues in dev.
+First backend start takes ~60 s while Maven downloads dependencies.
 
-## Default Login
+## Default login
 
 | Role | Email | Password |
 |------|-------|----------|
 | Admin | admin@dicp.com.mm | Admin@123 |
 
-Seed data: 4 insurance types · 6 insurance packages — loaded automatically on first backend start by `DataInitializer`.
+Demo agents and customers are seeded automatically on first run.
 
-## Environment Variables
+## Key environment variables
 
-| Key | Purpose |
-|-----|---------|
-| `CORS_ALLOWED_ORIGINS` | Comma-separated allowed origins for the Spring CORS config |
-| `VITE_GOOGLE_CLIENT_ID` | Google OAuth client ID for social login |
-| `JWT_SECRET` | Override the default JWT signing secret (optional in dev) |
-| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Override default admin credentials (optional in dev) |
-| `XAI_API_KEY` | Required for the AI chat feature (`/ai/chat` endpoint) |
+| Variable | Purpose | Default |
+|----------|---------|---------|
+| `DB_HOST` | MySQL host | `127.0.0.1` |
+| `DB_PORT` | MySQL port | `3306` |
+| `DB_USER` | MySQL user | `root` |
+| `DB_NAME` | Database name | `insurance_portal` |
+| `DB_PASSWORD` | MySQL password | _(empty)_ |
+| `FILE_STORAGE_DIR` | Uploaded file storage | `backend/uploads/` |
+| `SESSION_SECRET` | JWT signing secret | set in Replit Secrets |
+| `VITE_GOOGLE_CLIENT_ID` | Google OAuth client ID | set in `.replit` userenv |
+| `CORS_ALLOWED_ORIGINS` | Allowed frontend origins | set in `.replit` userenv |
 
-## Key Directories
+## Project structure
 
 ```
-frontend/src/
-  pages/         — route-level React pages (customer/, admin/, public/)
-  services/api.js — Axios instance with JWT interceptor
-backend/src/main/java/com/insurance/portal/
-  controller/    — REST controllers
-  service/       — business logic
-  config/        — security, CORS, data initializer
-database/        — local_mysql.sql seed/schema snapshot
-.mysql/          — MySQL data directory (gitignored, created at runtime)
+frontend/   React app (Vite)
+backend/    Spring Boot API
+  src/      Java source
+  start-backend.sh  Starts MySQL + Spring Boot
+database/   SQL seed file (local_mysql.sql)
 ```
 
-## User Preferences
+## User preferences
 
-- Keep existing project structure and stack — do not restructure or migrate.
+_(none recorded yet)_
