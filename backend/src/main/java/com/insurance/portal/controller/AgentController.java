@@ -6,6 +6,7 @@ import com.insurance.portal.model.enums.*;
 import com.insurance.portal.repository.*;
 import com.insurance.portal.service.NotificationService;
 import com.insurance.portal.util.FileStorageUtil;
+import com.insurance.portal.util.DigitalSignatureUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -133,8 +134,13 @@ public class AgentController {
         if (app.getStatus() != ApplicationStatus.PENDING && app.getStatus() != ApplicationStatus.REVISION_REQUESTED) {
             return ResponseEntity.badRequest().body(Map.of("message", "Application is not in a verifiable state"));
         }
+        String signatureError = DigitalSignatureUtil.validationError(req.get("signature"));
+        if (signatureError != null)
+            return ResponseEntity.badRequest().body(Map.of("message", signatureError));
         app.setStatus(ApplicationStatus.VERIFIED);
         app.setAgentNote(req.get("note"));
+        app.setAgentSignature(req.get("signature"));
+        app.setAgentSignedAt(java.time.LocalDateTime.now());
         return ResponseEntity.ok(ApplicationResponse.from(appRepo.save(app)));
     }
 
@@ -243,8 +249,13 @@ public class AgentController {
         if (claim.getStatus() != ClaimStatus.PENDING && claim.getStatus() != ClaimStatus.REVISION_REQUESTED) {
             return ResponseEntity.badRequest().body(Map.of("message", "Claim is not in a verifiable state"));
         }
+        String signatureError = DigitalSignatureUtil.validationError(req.get("signature"));
+        if (signatureError != null)
+            return ResponseEntity.badRequest().body(Map.of("message", signatureError));
         claim.setStatus(ClaimStatus.VERIFIED);
         claim.setAgentNote(req.get("note"));
+        claim.setAgentSignature(req.get("signature"));
+        claim.setAgentSignedAt(java.time.LocalDateTime.now());
         return ResponseEntity.ok(ClaimResponse.from(claimRepo.save(claim)));
     }
 

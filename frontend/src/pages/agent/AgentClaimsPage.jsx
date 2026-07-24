@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import FormDetailModal from '../../components/FormDetailModal'
+import DigitalSignatureCanvas from '../../components/DigitalSignatureCanvas'
 import { apiError } from '../../utils/apiError'
 
 const FILTERS = ['ALL', 'PENDING', 'VERIFIED', 'REVISION_REQUESTED', 'REJECTED']
@@ -21,6 +22,7 @@ export default function AgentClaimsPage() {
   const [forwardNote, setForwardNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [viewItem, setViewItem] = useState(null)
+  const [signatureData, setSignatureData] = useState(null)
 
   const filter = (() => { const f = searchParams.get('filter'); return FILTERS.includes(f) ? f : 'ALL' })()
 
@@ -44,14 +46,16 @@ export default function AgentClaimsPage() {
 
   const clearActions = () => {
     setSelected(null); setNote('')
+    setSignatureData(null)
     setRejectId(null); setRejectNote('')
     setForwardId(null); setForwardNote('')
   }
 
   const handleVerify = async (id) => {
+    if (!signatureData) { toast.error(t('agent.claims.signatureRequired')); return }
     setSubmitting(true)
     try {
-      await api.put(`/agent/claims/${id}/verify`, { note })
+      await api.put(`/agent/claims/${id}/verify`, { note, signature: signatureData })
       toast.success(t('agent.claims.verifySuccess'))
       clearActions(); fetchClaims()
     } catch (err) { apiError(err) } finally { setSubmitting(false) }
@@ -187,6 +191,12 @@ export default function AgentClaimsPage() {
                     <>
                       {activeAction === 'verify' && (
                         <div>
+                          <DigitalSignatureCanvas
+                            label={t('agent.claims.signatureLabel')}
+                            required
+                            onChange={setSignatureData}
+                            height={120}
+                          />
                           <textarea rows={2} className="form-control-custom w-100 mb-2" style={{ resize: 'vertical' }}
                             placeholder={t('agent.claims.verifyPlaceholder')}
                             value={note} onChange={e => setNote(e.target.value)} />
@@ -249,7 +259,7 @@ export default function AgentClaimsPage() {
                             </button>
                           )}
                           <div className="d-flex gap-2">
-                            <button onClick={() => setSelected(claim.id)} style={{
+                            <button onClick={() => { setSelected(claim.id); setSignatureData(null) }} style={{
                               flex: 1, padding: '0.5rem', borderRadius: 8, border: 'none',
                               background: '#16a34a', color: '#fff', fontWeight: 700, fontSize: '0.85rem',
                               cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6

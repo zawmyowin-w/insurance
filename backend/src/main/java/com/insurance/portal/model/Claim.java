@@ -63,6 +63,20 @@ public class Claim {
     @Column(name = "form_data", columnDefinition = "TEXT")
     private String formData;
 
+    /** Browser-drawn signature captured when the assigned agent verifies the claim. */
+    @Column(name = "agent_signature", columnDefinition = "LONGTEXT")
+    private String agentSignature;
+
+    @Column(name = "agent_signed_at")
+    private LocalDateTime agentSignedAt;
+
+    /** Browser-drawn signature captured when an admin approves the claim. */
+    @Column(name = "admin_signature", columnDefinition = "LONGTEXT")
+    private String adminSignature;
+
+    @Column(name = "admin_signed_at")
+    private LocalDateTime adminSignedAt;
+
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private ClaimStatus status = ClaimStatus.PENDING;

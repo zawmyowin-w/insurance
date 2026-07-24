@@ -25,6 +25,10 @@ public class ClaimResponse {
     private String status;
     private String agentNote;
     private String adminNote;
+    private String agentSignature;
+    private LocalDateTime agentSignedAt;
+    private String adminSignature;
+    private LocalDateTime adminSignedAt;
     private String formData;
     private int documentCount;
     private LocalDateTime createdAt;
@@ -54,6 +58,10 @@ public class ClaimResponse {
         dto.setStatus(claim.getStatus().name());
         dto.setAgentNote(claim.getAgentNote());
         dto.setAdminNote(claim.getAdminNote());
+        dto.setAgentSignature(claim.getAgentSignature());
+        dto.setAgentSignedAt(claim.getAgentSignedAt());
+        dto.setAdminSignature(claim.getAdminSignature());
+        dto.setAdminSignedAt(claim.getAdminSignedAt());
         dto.setFormData(claim.getFormData());
         dto.setDocumentCount(FileStorageUtil.fromJsonArray(claim.getDocumentsPath()).size());
         dto.setCreatedAt(claim.getCreatedAt());

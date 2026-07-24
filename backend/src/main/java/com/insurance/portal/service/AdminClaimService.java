@@ -8,6 +8,7 @@ import com.insurance.portal.model.enums.NotificationType;
 import com.insurance.portal.model.enums.PaymentStatus;
 import com.insurance.portal.repository.ClaimRepository;
 import com.insurance.portal.repository.PaymentRepository;
+import com.insurance.portal.util.DigitalSignatureUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -25,13 +26,18 @@ public class AdminClaimService {
     private final NotificationService notifService;
 
     @Transactional
-    public ResponseEntity<?> approve(Long id, String note) {
+    public ResponseEntity<?> approve(Long id, String note, String signature) {
         Claim claim = claimRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Claim not found"));
         if (claim.getStatus() != ClaimStatus.VERIFIED)
             return ResponseEntity.badRequest().body(Map.of("message", "Only VERIFIED claims can be approved"));
+        String signatureError = DigitalSignatureUtil.validationError(signature);
+        if (signatureError != null)
+            return ResponseEntity.badRequest().body(Map.of("message", signatureError));
         claim.setStatus(ClaimStatus.APPROVED);
         claim.setAdminNote(note);
+        claim.setAdminSignature(signature);
+        claim.setAdminSignedAt(LocalDateTime.now());
         claimRepo.save(claim);
 
         paymentRepo.save(Payment.builder()
@@ -71,6 +77,8 @@ public class AdminClaimService {
                 .orElseThrow(() -> new RuntimeException("Claim not found"));
         claim.setStatus(ClaimStatus.REVISION_REQUESTED);
         claim.setAdminNote(note);
+        claim.setAdminSignature(null);
+        claim.setAdminSignedAt(null);
         claim.setRevisionDeadline(LocalDateTime.now().plusDays(7));
         claimRepo.save(claim);
         notifService.send(claim.getCustomer(),

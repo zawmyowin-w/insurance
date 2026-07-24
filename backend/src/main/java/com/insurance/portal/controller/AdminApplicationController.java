@@ -56,7 +56,8 @@ public class AdminApplicationController {
     @PutMapping("/{id}/approve")
     public ResponseEntity<?> approve(@PathVariable Long id, @RequestBody Map<String, String> req,
                                      @AuthenticationPrincipal UserDetails principal) {
-        return appService.approve(id, req.get("note"), principal != null ? principal.getUsername() : null);
+        return appService.approve(id, req.get("note"), req.get("signature"),
+                principal != null ? principal.getUsername() : null);
     }
 
     @PutMapping("/{id}/reject")

@@ -7,6 +7,7 @@ import com.insurance.portal.model.enums.ApplicationStatus;
 import com.insurance.portal.model.enums.NotificationType;
 import com.insurance.portal.repository.PolicyApplicationRepository;
 import com.insurance.portal.repository.UserRepository;
+import com.insurance.portal.util.DigitalSignatureUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -24,13 +25,18 @@ public class AdminApplicationService {
     private final UserRepository userRepo;
 
     @Transactional
-    public ResponseEntity<?> approve(Long id, String note, String adminEmail) {
+    public ResponseEntity<?> approve(Long id, String note, String signature, String adminEmail) {
         PolicyApplication app = appRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Application not found"));
         if (app.getStatus() != ApplicationStatus.VERIFIED)
             return ResponseEntity.badRequest().body(Map.of("message", "Only VERIFIED applications can be approved"));
+        String signatureError = DigitalSignatureUtil.validationError(signature);
+        if (signatureError != null)
+            return ResponseEntity.badRequest().body(Map.of("message", signatureError));
         app.setStatus(ApplicationStatus.APPROVED);
         app.setAdminNote(note);
+        app.setAdminSignature(signature);
+        app.setAdminSignedAt(LocalDateTime.now());
         app.setApprovedAt(LocalDateTime.now());
         if (adminEmail != null) {
             userRepo.findByEmail(adminEmail).ifPresent(app::setApprovedBy);
@@ -65,6 +71,8 @@ public class AdminApplicationService {
                 .orElseThrow(() -> new RuntimeException("Application not found"));
         app.setStatus(ApplicationStatus.REVISION_REQUESTED);
         app.setAdminNote(note);
+        app.setAdminSignature(null);
+        app.setAdminSignedAt(null);
         app.setRevisionDeadline(LocalDateTime.now().plusDays(7));
         appRepo.save(app);
         notifService.send(app.getCustomer(),

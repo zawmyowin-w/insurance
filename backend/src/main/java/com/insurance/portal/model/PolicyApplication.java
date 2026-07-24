@@ -87,6 +87,20 @@ public class PolicyApplication {
     @Column(name = "form_data", columnDefinition = "TEXT")
     private String formData;
 
+    /** Browser-drawn signature captured when the assigned agent verifies the form. */
+    @Column(name = "agent_signature", columnDefinition = "LONGTEXT")
+    private String agentSignature;
+
+    @Column(name = "agent_signed_at")
+    private LocalDateTime agentSignedAt;
+
+    /** Browser-drawn signature captured when an admin approves the application. */
+    @Column(name = "admin_signature", columnDefinition = "LONGTEXT")
+    private String adminSignature;
+
+    @Column(name = "admin_signed_at")
+    private LocalDateTime adminSignedAt;
+
     /** Calculated total premium amount */
     @Column(name = "premium_amount", precision = 20, scale = 2)
     private BigDecimal premiumAmount;

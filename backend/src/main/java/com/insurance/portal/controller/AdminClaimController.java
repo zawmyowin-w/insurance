@@ -42,7 +42,7 @@ public class AdminClaimController {
 
     @PutMapping("/{id}/approve")
     public ResponseEntity<?> approve(@PathVariable Long id, @RequestBody Map<String, String> req) {
-        return claimService.approve(id, req.get("note"));
+        return claimService.approve(id, req.get("note"), req.get("signature"));
     }
 
     @PutMapping("/{id}/reject")

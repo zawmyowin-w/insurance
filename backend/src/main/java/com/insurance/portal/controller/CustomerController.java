@@ -209,6 +209,12 @@ public class CustomerController {
             }
         }
         app.setStatus(ApplicationStatus.PENDING);
+        app.setAgentSignature(null);
+        app.setAgentSignedAt(null);
+        app.setAdminSignature(null);
+        app.setAdminSignedAt(null);
+        app.setApprovedBy(null);
+        app.setApprovedAt(null);
         return ResponseEntity.ok(ApplicationResponse.from(appRepo.save(app)));
     }
 
@@ -269,6 +275,10 @@ public class CustomerController {
             }
         }
         claim.setStatus(ClaimStatus.PENDING);
+        claim.setAgentSignature(null);
+        claim.setAgentSignedAt(null);
+        claim.setAdminSignature(null);
+        claim.setAdminSignedAt(null);
         return ResponseEntity.ok(ClaimResponse.from(claimRepo.save(claim)));
     }
 

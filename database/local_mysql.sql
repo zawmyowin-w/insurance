@@ -160,7 +160,11 @@ CREATE TABLE `form_fields` (
 CREATE TABLE `policy_applications` (
   `id`                bigint        NOT NULL AUTO_INCREMENT,
   `admin_note`        text          COLLATE utf8mb4_unicode_ci,
+  `admin_signature`   longtext      COLLATE utf8mb4_unicode_ci,
+  `admin_signed_at`   datetime(6)    DEFAULT NULL,
   `agent_note`        text          COLLATE utf8mb4_unicode_ci,
+  `agent_signature`   longtext      COLLATE utf8mb4_unicode_ci,
+  `agent_signed_at`   datetime(6)    DEFAULT NULL,
   `common_info`       text          COLLATE utf8mb4_unicode_ci,
   `coverage_amount`   decimal(20,2) NOT NULL,
   `created_at`        datetime(6)   DEFAULT NULL,
@@ -216,7 +220,11 @@ CREATE TABLE `payments` (
 CREATE TABLE `claims` (
   `id`                bigint        NOT NULL AUTO_INCREMENT,
   `admin_note`        text          COLLATE utf8mb4_unicode_ci,
+  `admin_signature`   longtext      COLLATE utf8mb4_unicode_ci,
+  `admin_signed_at`   datetime(6)    DEFAULT NULL,
   `agent_note`        text          COLLATE utf8mb4_unicode_ci,
+  `agent_signature`   longtext      COLLATE utf8mb4_unicode_ci,
+  `agent_signed_at`   datetime(6)    DEFAULT NULL,
   `amount`            decimal(20,2) NOT NULL,
   `claim_type`        varchar(255)  COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_at`        datetime(6)   DEFAULT NULL,

@@ -26,6 +26,10 @@ public class ApplicationResponse {
     private String notes;
     private String agentNote;
     private String adminNote;
+    private String agentSignature;
+    private LocalDateTime agentSignedAt;
+    private String adminSignature;
+    private LocalDateTime adminSignedAt;
     private String commonInfo;
     private String extraInfo;
     private String formData;
@@ -79,6 +83,10 @@ public class ApplicationResponse {
         dto.setNotes(app.getNotes());
         dto.setAgentNote(app.getAgentNote());
         dto.setAdminNote(app.getAdminNote());
+        dto.setAgentSignature(app.getAgentSignature());
+        dto.setAgentSignedAt(app.getAgentSignedAt());
+        dto.setAdminSignature(app.getAdminSignature());
+        dto.setAdminSignedAt(app.getAdminSignedAt());
         dto.setCommonInfo(app.getCommonInfo());
         dto.setExtraInfo(app.getExtraInfo());
         dto.setFormData(app.getFormData());

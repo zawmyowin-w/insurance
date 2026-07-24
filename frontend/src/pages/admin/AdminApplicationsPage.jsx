@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import FormDetailModal from '../../components/FormDetailModal'
+import DigitalSignatureCanvas from '../../components/DigitalSignatureCanvas'
 import { apiError } from '../../utils/apiError'
 
 const STATUS_KEYS = ['ALL', 'PENDING', 'VERIFIED', 'APPROVED', 'REJECTED']
@@ -21,6 +22,7 @@ export default function AdminApplicationsPage() {
   const [actionNote, setActionNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [viewItem, setViewItem] = useState(null)
+  const [signatureData, setSignatureData] = useState(null)
 
   const statusLabel = (key) => t(`admin.applications.status_${key}`)
 
@@ -36,15 +38,21 @@ export default function AdminApplicationsPage() {
     if ((action === 'reject' || action === 'revise') && !actionNote.trim()) {
       toast.error(t('admin.applications.reasonRequired')); return
     }
+    if (action === 'approve' && !signatureData) {
+      toast.error(t('admin.applications.signatureRequired')); return
+    }
     setSubmitting(true)
     try {
-      await api.put(`/admin/applications/${id}/${action}`, { note: actionNote })
+      await api.put(`/admin/applications/${id}/${action}`, {
+        note: actionNote,
+        ...(action === 'approve' ? { signature: signatureData } : {}),
+      })
       toast.success(
         action === 'approve' ? t('admin.applications.approvedSuccess')
         : action === 'reject' ? t('admin.applications.rejectedSuccess')
         : t('admin.applications.revisedSuccess')
       )
-      setSelected(null); setActionNote(''); fetchApps()
+      setSelected(null); setActionNote(''); setSignatureData(null); fetchApps()
     } catch (err) { apiError(err) } finally { setSubmitting(false) }
   }
 
@@ -128,6 +136,12 @@ export default function AdminApplicationsPage() {
                     <div className="col-12 col-md-4 mt-3 mt-md-0">
                       {selected === app.id ? (
                         <div>
+                          <DigitalSignatureCanvas
+                            label={t('admin.applications.signatureLabel')}
+                            required
+                            onChange={setSignatureData}
+                            height={120}
+                          />
                           <textarea rows={2} className="form-control-custom w-100 mb-2" style={{ resize: 'vertical' }}
                             placeholder={t('admin.applications.notePlaceholder')}
                             value={actionNote} onChange={e => setActionNote(e.target.value)} />
@@ -150,7 +164,7 @@ export default function AdminApplicationsPage() {
                         </div>
                       ) : (
                         <button className="btn-primary-custom" style={{ fontSize: '0.85rem', padding: '0.45rem 1rem' }}
-                          onClick={() => { setSelected(app.id); setActionNote('') }}>
+                           onClick={() => { setSelected(app.id); setActionNote(''); setSignatureData(null) }}>
                           {t('admin.applications.reviewApplication')}
                         </button>
                       )}

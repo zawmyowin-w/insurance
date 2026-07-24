@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import FormDetailModal from '../../components/FormDetailModal'
+import DigitalSignatureCanvas from '../../components/DigitalSignatureCanvas'
 import { apiError } from '../../utils/apiError'
 
 export default function AdminClaimsPage() {
@@ -19,6 +20,7 @@ export default function AdminClaimsPage() {
   const [actionNote, setActionNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [viewItem, setViewItem] = useState(null)
+  const [signatureData, setSignatureData] = useState(null)
 
   const fetchClaims = () => {
     api.get(`/admin/claims${filter !== 'ALL' ? `?status=${filter}` : ''}`)
@@ -30,11 +32,17 @@ export default function AdminClaimsPage() {
 
   const handleAction = async (id, action) => {
     if ((action === 'reject' || action === 'revise') && !actionNote.trim()) { toast.error(t('admin.claims.reasonRequired')); return }
+    if (action === 'approve' && !signatureData) {
+      toast.error(t('admin.claims.signatureRequired')); return
+    }
     setSubmitting(true)
     try {
-      await api.put(`/admin/claims/${id}/${action}`, { note: actionNote })
+      await api.put(`/admin/claims/${id}/${action}`, {
+        note: actionNote,
+        ...(action === 'approve' ? { signature: signatureData } : {}),
+      })
       toast.success(action === 'approve' ? t('admin.claims.approvedSuccess') : action === 'reject' ? t('admin.claims.rejectedSuccess') : t('admin.claims.revisedSuccess'))
-      setSelected(null); setActionNote(''); fetchClaims()
+      setSelected(null); setActionNote(''); setSignatureData(null); fetchClaims()
     } catch (err) { apiError(err) } finally { setSubmitting(false) }
   }
 
@@ -113,6 +121,12 @@ export default function AdminClaimsPage() {
                     <div className="col-12 col-md-4 mt-3 mt-md-0">
                       {selected === claim.id ? (
                         <div>
+                          <DigitalSignatureCanvas
+                            label={t('admin.claims.signatureLabel')}
+                            required
+                            onChange={setSignatureData}
+                            height={120}
+                          />
                           <textarea rows={2} className="form-control-custom w-100 mb-2" style={{ resize: 'vertical' }}
                             placeholder={t('admin.claims.notePlaceholder')} value={actionNote} onChange={e => setActionNote(e.target.value)} />
                           <div className="d-flex gap-1 flex-wrap">
@@ -127,7 +141,7 @@ export default function AdminClaimsPage() {
                         </div>
                       ) : (
                         <button className="btn-primary-custom" style={{ fontSize: '0.85rem', padding: '0.45rem 1rem' }}
-                          onClick={() => { setSelected(claim.id); setActionNote('') }}>
+                           onClick={() => { setSelected(claim.id); setActionNote(''); setSignatureData(null) }}>
                           {t('admin.claims.reviewClaim')}
                         </button>
                       )}

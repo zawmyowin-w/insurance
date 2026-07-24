@@ -781,6 +781,8 @@
       "rejectSuccess": "Application rejected",
       "forwardSuccess": "Customer notified to update their application",
       "reasonRequired": "Please provide a reason",
+      "signatureLabel": "Agent digital signature",
+      "signatureRequired": "Please sign before verifying the application",
       "yearSuffix": "year",
       "yearsSuffix": "years"
     },
@@ -807,7 +809,9 @@
       "verifySuccess": "Claim verified and sent to admin",
       "rejectSuccess": "Claim rejected",
       "forwardSuccess": "Customer notified to update their claim",
-      "reasonRequired": "Provide rejection reason"
+      "reasonRequired": "Provide rejection reason",
+      "signatureLabel": "Agent digital signature",
+      "signatureRequired": "Please sign before verifying the claim"
     },
     "messages": {
       "title": "Send Message",
@@ -945,6 +949,8 @@
       "noFound": "No applications found for",
       "reviewApplication": "Review Application",
       "notePlaceholder": "Note for approve/reject/revise...",
+      "signatureLabel": "Admin digital signature",
+      "signatureRequired": "Please sign before approving the application",
       "agentNote": "Agent",
       "viewDetails": "View Details",
       "planLabel": "Plan",
@@ -970,6 +976,8 @@
       "noFound": "No claims found for",
       "reviewClaim": "Review Claim",
       "notePlaceholder": "Decision note...",
+      "signatureLabel": "Admin digital signature",
+      "signatureRequired": "Please sign before approving the claim",
       "agentNote": "Agent",
       "viewDetails": "View Details",
       "payout": "Payout",
@@ -1857,6 +1865,9 @@
     "year": "year",
     "signature": "Digital Signature",
     "signatureVerified": "Digitally signed by the applicant",
+    "signatureCustomer": "Customer signature",
+    "signatureAgent": "Agent verification signature",
+    "signatureAdmin": "Admin approval signature",
     "pi": {
       "title": "Personal & Policy Information",
       "customerName": "Customer Name",

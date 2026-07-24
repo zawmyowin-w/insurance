@@ -220,8 +220,13 @@ export default function FormDetailModal({ show, onClose, type, item, role }) {
           )}
 
           {/* ── Digital Signature section ── */}
-          {formData.__signature && (
-            <SignatureSection signature={formData.__signature} typeColor={typeColor} />
+          {(formData.__signature || item.agentSignature || item.adminSignature) && (
+            <SignatureSection
+              customerSignature={formData.__signature}
+              agentSignature={item.agentSignature}
+              adminSignature={item.adminSignature}
+              typeColor={typeColor}
+            />
           )}
 
           {/* ── Notes section (always shown) ── */}
@@ -301,37 +306,45 @@ function PersonalInfoSection({ item, type, formData, typeColor }) {
 }
 
 /* ── Digital Signature Section ── */
-function SignatureSection({ signature, typeColor }) {
+function SignatureSection({ customerSignature, agentSignature, adminSignature, typeColor }) {
   const { t } = useTranslation()
+  const signatures = [
+    { key: 'customer', signature: customerSignature, label: t('formModal.signatureCustomer'), color: '#0369a1' },
+    { key: 'agent', signature: agentSignature, label: t('formModal.signatureAgent'), color: '#7c3aed' },
+    { key: 'admin', signature: adminSignature, label: t('formModal.signatureAdmin'), color: '#b45309' },
+  ].filter(entry => entry.signature)
+
   return (
     <div style={{ marginTop: '1.25rem', marginBottom: '0.25rem' }}>
       <SectionHeading icon="bi-pen" label={t('formModal.signature')} color={typeColor} />
-      <div style={{
-        borderRadius: 12,
-        border: '1.5px solid var(--border)',
-        padding: '1rem',
-        background: 'var(--bg-secondary)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'flex-start',
-        gap: '0.5rem',
-      }}>
-        <img
-          src={signature}
-          alt="Digital Signature"
-          style={{
-            maxWidth: '100%',
-            maxHeight: 120,
-            border: '1px solid var(--border)',
-            borderRadius: 8,
-            background: '#fff',
-            padding: '0.25rem',
-          }}
-        />
-        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-          <i className="bi bi-patch-check-fill me-1" style={{ color: '#16a34a' }}></i>
-          {t('formModal.signatureVerified')}
-        </span>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '0.75rem' }}>
+        {signatures.map(({ key, signature, label, color }) => (
+          <div key={key} style={{
+            borderRadius: 12,
+            border: '1.5px solid var(--border)',
+            padding: '0.8rem',
+            background: 'var(--bg-secondary)',
+          }}>
+            <div style={{ fontSize: '0.78rem', fontWeight: 700, color, marginBottom: '0.5rem' }}>{label}</div>
+            <img
+              src={signature}
+              alt={label}
+              style={{
+                width: '100%',
+                maxHeight: 100,
+                objectFit: 'contain',
+                border: '1px solid var(--border)',
+                borderRadius: 8,
+                background: '#fff',
+                padding: '0.25rem',
+              }}
+            />
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', marginTop: '0.4rem' }}>
+              <i className="bi bi-patch-check-fill me-1" style={{ color: '#16a34a' }}></i>
+              {t('formModal.signatureVerified')}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   )

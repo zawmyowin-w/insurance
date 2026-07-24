@@ -782,6 +782,8 @@
       "rejectSuccess": "လျှောက်လွှာ ပယ်ချပြီးပါပြီ",
       "forwardSuccess": "Customer ထံ ပြင်ဆင်ရန် အကြောင်းကြားပြီးပါပြီ",
       "reasonRequired": "အကြောင်းပြချက် ဖြည့်ပါ",
+      "signatureLabel": "Agent ဒစ်ဂျစ်တယ် လက်မှတ်",
+      "signatureRequired": "လျှောက်လွှာ အတည်မပြုမီ လက်မှတ်ရေးထိုးပါ",
       "yearSuffix": "နှစ်",
       "yearsSuffix": "နှစ်"
     },
@@ -808,7 +810,9 @@
       "verifySuccess": "Claim အတည်ပြုပြီး Admin ထံ ပေးပို့ပြီးပါပြီ",
       "rejectSuccess": "Claim ပယ်ချပြီးပါပြီ",
       "forwardSuccess": "Customer ထံ Claim ပြင်ဆင်ရန် အကြောင်းကြားပြီးပါပြီ",
-      "reasonRequired": "အကြောင်းပြချက် ဖြည့်ပါ"
+      "reasonRequired": "အကြောင်းပြချက် ဖြည့်ပါ",
+      "signatureLabel": "Agent ဒစ်ဂျစ်တယ် လက်မှတ်",
+      "signatureRequired": "Claim အတည်မပြုမီ လက်မှတ်ရေးထိုးပါ"
     },
     "messages": {
       "title": "စာပေးပို့ရန်",
@@ -946,6 +950,8 @@
       "noFound": "မတွေ့ပါ —",
       "reviewApplication": "လျှောက်လွှာ စစ်ဆေးရန်",
       "notePlaceholder": "အတည်ပြု/ငြင်းပယ်/ပြင်ဆင်မှတ်ချက်...",
+      "signatureLabel": "Admin ဒစ်ဂျစ်တယ် လက်မှတ်",
+      "signatureRequired": "လျှောက်လွှာ ခွင့်မပြုမီ လက်မှတ်ရေးထိုးပါ",
       "agentNote": "Agent",
       "viewDetails": "အသေးစိတ်ကြည့်ရန်",
       "planLabel": "Plan",
@@ -971,6 +977,8 @@
       "noFound": "မတွေ့ပါ —",
       "reviewClaim": "တောင်းဆိုမှု စစ်ဆေးရန်",
       "notePlaceholder": "ဆုံးဖြတ်ချက် မှတ်ချက်...",
+      "signatureLabel": "Admin ဒစ်ဂျစ်တယ် လက်မှတ်",
+      "signatureRequired": "Claim ခွင့်မပြုမီ လက်မှတ်ရေးထိုးပါ",
       "agentNote": "Agent",
       "viewDetails": "အသေးစိတ်ကြည့်ရန်",
       "payout": "ထုတ်ငွေ",
@@ -1858,6 +1866,9 @@
     "year": "နှစ်",
     "signature": "ဒစ်ဂျစ်တယ် လက်မှတ်",
     "signatureVerified": "လျှောက်ထားသူမှ ဒစ်ဂျစ်တယ်နည်းဖြင့် လက်မှတ်ရေးထိုးထားသည်",
+    "signatureCustomer": "Customer လက်မှတ်",
+    "signatureAgent": "Agent စစ်ဆေးလက်မှတ်",
+    "signatureAdmin": "Admin ခွင့်ပြုလက်မှတ်",
     "pi": {
       "title": "ကိုယ်ရေး & ပေါ်လစီ အချက်အလက်",
       "customerName": "ဖောက်သည်အမည်",

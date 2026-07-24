@@ -19,6 +19,7 @@ import com.insurance.portal.util.PremiumScheduleUtil;
 import com.itextpdf.layout.element.LineSeparator;
 import com.itextpdf.kernel.pdf.canvas.draw.SolidLine;
 import com.itextpdf.io.font.constants.StandardFonts;
+import com.itextpdf.io.image.ImageDataFactory;
 import com.itextpdf.kernel.colors.ColorConstants;
 import com.itextpdf.kernel.colors.DeviceRgb;
 import com.itextpdf.kernel.font.PdfFont;
@@ -29,6 +30,7 @@ import com.itextpdf.layout.Document;
 import com.itextpdf.layout.borders.Border;
 import com.itextpdf.layout.borders.SolidBorder;
 import com.itextpdf.layout.element.Cell;
+import com.itextpdf.layout.element.Image;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
 import com.itextpdf.layout.properties.TextAlignment;
@@ -45,6 +47,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.ByteArrayOutputStream;
 import java.util.*;
+import java.util.Base64;
 
 @RestController
 @RequiredArgsConstructor
@@ -412,6 +415,7 @@ public class PdfController {
             String custAddress = customer != null && customer.getAddress() != null ? customer.getAddress() : "N/A";
             String custSubmitDate = app.getCreatedAt() != null ? app.getCreatedAt().format(dtFmt) : "N/A";
             String custSigRef  = String.format("SIG-C-%08X", Math.abs(java.util.Objects.hash(custEmail, policyNum)));
+            String customerSignature = extractCustomerSignature(app.getFormData());
 
             Cell custSig = new Cell()
                     .add(new Paragraph("POLICYHOLDER / CUSTOMER  (ပါလစီဝင်)").setFont(bold).setFontSize(9).setFontColor(green).setMarginBottom(6))
@@ -422,7 +426,7 @@ public class PdfController {
                     .add(new Paragraph("Address:  " + custAddress).setFont(regular).setFontSize(8).setFontColor(gray).setMarginBottom(6))
                     .add(new Paragraph("Application Submitted:").setFont(bold).setFontSize(8).setFontColor(gray))
                     .add(new Paragraph(custSubmitDate).setFont(regular).setFontSize(8).setFontColor(navy).setMarginBottom(8))
-                    .add(new Paragraph("[ DIGITALLY SIGNED ]")
+                    .add(new Paragraph(customerSignature != null ? "[ DIGITALLY SIGNED ]" : "[ NOT SIGNED ]")
                             .setFont(bold).setFontSize(9).setFontColor(green)
                             .setTextAlignment(TextAlignment.CENTER)
                             .setBackgroundColor(greenLight).setPadding(6)
@@ -430,6 +434,7 @@ public class PdfController {
                     .add(new Paragraph("Ref: " + custSigRef).setFont(oblique).setFontSize(7).setFontColor(gray)
                             .setTextAlignment(TextAlignment.CENTER))
                     .setBackgroundColor(greenLight).setBorder(new SolidBorder(green, 1)).setPadding(10).setMarginRight(4);
+            addSignatureImage(custSig, customerSignature);
 
             // AGENT DIGITAL SIGNATURE BLOCK
             String agentName  = agent != null ? agent.getName() : "Not Assigned";
@@ -448,7 +453,7 @@ public class PdfController {
                     .add(new Paragraph("Specialty:  " + agentType).setFont(regular).setFontSize(8).setFontColor(gray).setMarginBottom(4))
                     .add(new Paragraph("Agent Remarks:").setFont(bold).setFontSize(8).setFontColor(gray))
                     .add(new Paragraph(agentNote).setFont(oblique).setFontSize(8).setFontColor(navy).setMarginBottom(8))
-                    .add(new Paragraph("[ DIGITALLY VERIFIED ]")
+                     .add(new Paragraph(app.getAgentSignature() != null ? "[ DIGITALLY VERIFIED ]" : "[ NOT SIGNED ]")
                             .setFont(bold).setFontSize(9).setFontColor(purple)
                             .setTextAlignment(TextAlignment.CENTER)
                             .setBackgroundColor(purpleLight).setPadding(6)
@@ -456,6 +461,7 @@ public class PdfController {
                     .add(new Paragraph("Ref: " + agentSigRef).setFont(oblique).setFontSize(7).setFontColor(gray)
                             .setTextAlignment(TextAlignment.CENTER))
                     .setBackgroundColor(purpleLight).setBorder(new SolidBorder(purple, 1)).setPadding(10).setMarginLeft(4);
+            addSignatureImage(agentSig, app.getAgentSignature());
 
             sigRow1.addCell(custSig).addCell(agentSig);
             doc.add(sigRow1);
@@ -490,7 +496,7 @@ public class PdfController {
                             .setFont(oblique).setFontSize(8).setFontColor(gray).setMarginTop(6).setMarginBottom(8))
                     .add(new Table(UnitValue.createPercentArray(new float[]{60, 40})).useAllAvailableWidth()
                             .addCell(new Cell().setBorder(Border.NO_BORDER)
-                                    .add(new Paragraph("[ DIGITALLY APPROVED ]")
+                             .add(new Paragraph(app.getAdminSignature() != null ? "[ DIGITALLY APPROVED ]" : "[ NOT SIGNED ]")
                                             .setFont(bold).setFontSize(10).setFontColor(blue)
                                             .setTextAlignment(TextAlignment.CENTER)
                                             .setBackgroundColor(blueLight).setPadding(8)
@@ -501,6 +507,7 @@ public class PdfController {
                                     .add(new Paragraph("Sig Ref:").setFont(bold).setFontSize(8).setFontColor(gray))
                                     .add(new Paragraph(adminSigRef).setFont(regular).setFontSize(8).setFontColor(navy))))
                     .setBackgroundColor(blueLight).setBorder(new SolidBorder(blue, 1)).setPadding(10);
+            addSignatureImage(adminSig, app.getAdminSignature());
             adminRow.addCell(adminSig);
             doc.add(adminRow);
 
@@ -635,6 +642,10 @@ public class PdfController {
                 }
             }
 
+            addDigitalSignatures(doc, bold, regular, light, blue,
+                    extractCustomerSignature(app.getFormData()),
+                    app.getAgentSignature(), app.getAdminSignature());
+
             // ── SECTION 4: NOTES & REMARKS ───────────────────────────────
             boolean hasNotes = (app.getNotes() != null && !app.getNotes().isBlank())
                     || (app.getAgentNote() != null && !app.getAgentNote().isBlank())
@@ -758,6 +769,10 @@ public class PdfController {
                 doc.add(new Paragraph(claim.getDescription()).setFont(regular).setFontSize(9.5f).setFontColor(gray).setMarginBottom(6));
             }
 
+            addDigitalSignatures(doc, bold, regular, lightB, amber,
+                    extractCustomerSignature(claim.getFormData()),
+                    claim.getAgentSignature(), claim.getAdminSignature());
+
             // ── SECTION 5: NOTES & REMARKS ───────────────────────────────
             boolean hasNotes = (claim.getAgentNote() != null && !claim.getAgentNote().isBlank())
                     || (claim.getAdminNote() != null && !claim.getAdminNote().isBlank());
@@ -794,6 +809,86 @@ public class PdfController {
                     .setPadding(5));
         }
         doc.add(table);
+    }
+
+    /**
+     * Renders the three independently stored signatures in generated form PDFs.
+     * The customer signature remains inside formData for backward compatibility;
+     * agent/admin signatures are stored on the record itself.
+     */
+    private void addDigitalSignatures(Document doc, PdfFont boldFont, PdfFont regularFont,
+                                      DeviceRgb background, DeviceRgb accent,
+                                      String customerSignature, String agentSignature,
+                                      String adminSignature) {
+        if (customerSignature == null && agentSignature == null && adminSignature == null) return;
+
+        addContractSection(doc, boldFont,
+                "DIGITAL SIGNATURES   (ဒစ်ဂျစ်တယ် လက်မှတ်များ)", accent, boldFont);
+        doc.add(new Paragraph(
+                "Signatures captured for the customer submission, agent verification, and admin approval."
+                        + "  (Customer / Agent / Admin လက်မှတ်များ)")
+                .setFont(regularFont).setFontSize(8).setFontColor(new DeviceRgb(71, 85, 105))
+                .setMarginBottom(6));
+
+        Table table = new Table(UnitValue.createPercentArray(new float[]{33.33f, 33.33f, 33.34f}))
+                .useAllAvailableWidth();
+        table.addCell(signatureCell("CUSTOMER  (Customer)", customerSignature, boldFont, regularFont, background, accent));
+        table.addCell(signatureCell("AGENT VERIFICATION  (Agent)", agentSignature, boldFont, regularFont, background, accent));
+        table.addCell(signatureCell("ADMIN APPROVAL  (Admin)", adminSignature, boldFont, regularFont, background, accent));
+        doc.add(table);
+    }
+
+    private Cell signatureCell(String label, String signature, PdfFont boldFont,
+                               PdfFont regularFont, DeviceRgb background, DeviceRgb accent) {
+        Cell cell = new Cell()
+                .setBackgroundColor(background)
+                .setBorder(new SolidBorder(accent, 0.8f))
+                .setPadding(7);
+        cell.add(new Paragraph(label).setFont(boldFont).setFontSize(8).setFontColor(accent)
+                .setMarginBottom(5));
+        Image image = signatureImage(signature);
+        if (image != null) {
+            image.scaleToFit(150, 78);
+            cell.add(image);
+            cell.add(new Paragraph("Digitally signed").setFont(regularFont).setFontSize(7)
+                    .setFontColor(new DeviceRgb(22, 163, 74)).setMarginTop(3));
+        } else {
+            cell.add(new Paragraph("[ NOT SIGNED ]").setFont(boldFont).setFontSize(8)
+                    .setFontColor(new DeviceRgb(100, 116, 139)).setMarginTop(25).setMarginBottom(25));
+        }
+        return cell;
+    }
+
+    @SuppressWarnings("unchecked")
+    private String extractCustomerSignature(String formDataJson) {
+        if (formDataJson == null || formDataJson.isBlank()) return null;
+        try {
+            Map<String, Object> data = MAPPER.readValue(formDataJson, Map.class);
+            Object signature = data.get("__signature");
+            return signature == null ? null : String.valueOf(signature);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private Image signatureImage(String signature) {
+        if (signature == null || signature.isBlank()) return null;
+        int comma = signature.indexOf(',');
+        if (comma <= 0) return null;
+        try {
+            byte[] bytes = Base64.getDecoder().decode(signature.substring(comma + 1));
+            return new Image(ImageDataFactory.create(bytes));
+        } catch (RuntimeException ignored) {
+            return null;
+        }
+    }
+
+    private void addSignatureImage(Cell cell, String signature) {
+        Image image = signatureImage(signature);
+        if (image != null) {
+            image.scaleToFit(180, 72);
+            cell.add(image);
+        }
     }
 
     @SuppressWarnings("unchecked")
