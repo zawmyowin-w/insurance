@@ -81,7 +81,7 @@ export default function NrcInput({ value, onChange, required, readOnly }) {
           <option value="">{t('nrc.statePlaceholder')}</option>
           {Object.entries(NRC_DATA).map(([k, v]) => (
             <option key={k} value={k}>
-              {isEn ? `${k}/ — ${v.engState}` : `${k}/ — ${v.stateName}`}
+              {isEn ? `${k}/ — ${v.engState}` : `${toMM(k)}/ — ${v.stateName}`}
             </option>
           ))}
         </select>
