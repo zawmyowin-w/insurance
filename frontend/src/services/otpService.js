@@ -82,7 +82,9 @@ export async function sendOtpEmail(email, code, type) {
       throw enriched
     }
   } else {
-    throw new Error('EmailJS is not configured. Please set VITE_EMAILJS_SERVICE_ID and VITE_EMAILJS_PUBLIC_KEY.')
+    // Demo mode — no EmailJS configured; log OTP to browser console for local dev
+    console.info(`[OTP Demo] Code for ${email} (type=${type}): ${code}`)
+    return
   }
 }
 
