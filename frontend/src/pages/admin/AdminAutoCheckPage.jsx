@@ -458,18 +458,6 @@ export default function AdminAutoCheckPage() {
         </div>
       </div>
 
-      {/* AI key missing notice */}
-      {!status?.aiEnabled && (
-        <div className="mb-4" style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 10, padding: '0.85rem 1.1rem', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-          <i className="bi bi-info-circle-fill" style={{ color: '#d97706', fontSize: '1.1rem', marginTop: 1, flexShrink: 0 }}></i>
-          <div>
-            <div style={{ fontWeight: 700, color: '#92400e', fontSize: '0.85rem' }}>{t('admin.autoCheck.aiMissing')}</div>
-            <div style={{ fontSize: '0.8rem', color: '#b45309', marginTop: 2 }}>
-              {t('admin.autoCheck.aiMissingDesc')}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Stats row */}
       <div className="row g-3 mb-4">
