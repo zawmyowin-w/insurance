@@ -42,6 +42,15 @@ public class AuthController {
         return ResponseEntity.ok(new AuthResponse(token, UserResponse.from(user)));
     }
 
+    /** Check whether an email address is available (not yet registered). */
+    @GetMapping("/check-email")
+    public ResponseEntity<?> checkEmail(@RequestParam String email) {
+        if (userRepository.existsByEmail(email)) {
+            return ResponseEntity.status(409).body(new ErrorResponse("Email already in use"));
+        }
+        return ResponseEntity.ok(Map.of("available", true));
+    }
+
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest req) {
         if (userRepository.existsByEmail(req.getEmail())) {

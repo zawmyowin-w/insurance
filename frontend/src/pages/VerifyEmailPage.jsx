@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { useSearchParams, Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'react-toastify'
-import { verifyOtp } from '../services/otpService'
+import { verifyOtp, getPendingRegistration, clearPendingRegistration } from '../services/otpService'
+import { useAuth } from '../context/AuthContext'
 import { useOtpInput } from '../hooks/useOtpInput'
 
 export default function VerifyEmailPage() {
@@ -10,6 +11,7 @@ export default function VerifyEmailPage() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const email = params.get('email') || ''
+  const { register } = useAuth()
 
   const [loading, setLoading] = useState(false)
   const {
@@ -25,15 +27,29 @@ export default function VerifyEmailPage() {
     setLoading(true)
     await new Promise(r => setTimeout(r, 300))
     const result = verifyOtp(email, 'verify', code)
-    setLoading(false)
 
     if (!result.ok) {
+      setLoading(false)
       toast.error(result.reason === 'expired' ? t('otp.expired') : t('otp.invalid'))
       setDigits(Array(BOX_COUNT).fill(''))
       focus(0)
       return
     }
 
+    // OTP verified — now create the account in the database
+    const pending = getPendingRegistration(email)
+    if (pending) {
+      try {
+        await register(pending)
+        clearPendingRegistration(email)
+      } catch (err) {
+        setLoading(false)
+        toast.error(err.response?.data?.message || t('auth.registerError'))
+        return
+      }
+    }
+
+    setLoading(false)
     toast.success(t('emailVerify.confirmSuccessTitle') || 'Email verified! Please log in.')
     navigate('/login')
   }

@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useAuth } from '../context/AuthContext'
 import { toast } from 'react-toastify'
-import { issueOtp } from '../services/otpService'
+import { issueOtp, storePendingRegistration } from '../services/otpService'
+import api from '../services/api'
 import {
   EMAIL_PATTERN, EMAIL_MAX_LENGTH, EMAIL_ERROR,
   isEmailValid, PWD_RULES, passwordStrengthLevel, isStrongPassword,
@@ -11,7 +11,6 @@ import {
 
 export default function RegisterPage() {
   const { t, i18n } = useTranslation()
-  const { register } = useAuth()
   const navigate = useNavigate()
   const [form, setForm] = useState({
     name: '', email: '', address: '', password: '', confirmPassword: ''
@@ -38,15 +37,20 @@ export default function RegisterPage() {
     if (!agree) { toast.error(t('auth.mustAgree')); return }
     setLoading(true)
     const { confirmPassword, ...payload } = form
-    // Step 1: create account (phone omitted — not required at registration)
+
+    // Step 1: check email availability — account is NOT created yet
     try {
-      await register(payload)
+      await api.get(`/auth/check-email?email=${encodeURIComponent(payload.email)}`)
     } catch (err) {
       toast.error(err.response?.data?.message || t('auth.registerError'))
       setLoading(false)
       return
     }
-    // Step 2: issue OTP for email verification
+
+    // Step 2: stash pending registration data in sessionStorage
+    storePendingRegistration(payload)
+
+    // Step 3: send OTP — account stays out of DB until code is verified
     try {
       await issueOtp(payload.email, 'verify')
       toast.success(t('otp.sent') || 'Verification code sent!')

@@ -93,3 +93,20 @@ export async function issueOtp(email, type) {
   await sendOtpEmail(email, code, type)
   return code
 }
+
+// ── Pending registration store (sessionStorage) ──────────────────────────────
+// Holds the registration payload until email verification succeeds.
+const pendingKey = email => `pending_reg_${email}`
+
+export function storePendingRegistration(payload) {
+  sessionStorage.setItem(pendingKey(payload.email), JSON.stringify(payload))
+}
+
+export function getPendingRegistration(email) {
+  const raw = sessionStorage.getItem(pendingKey(email))
+  return raw ? JSON.parse(raw) : null
+}
+
+export function clearPendingRegistration(email) {
+  sessionStorage.removeItem(pendingKey(email))
+}
