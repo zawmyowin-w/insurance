@@ -82,9 +82,7 @@ export async function sendOtpEmail(email, code, type) {
       throw enriched
     }
   } else {
-    // Demo mode — no EmailJS configured; log OTP to browser console for local dev
-    console.info(`[OTP Demo] Code for ${email} (type=${type}): ${code}`)
-    return
+    throw new Error('Email service is not configured. Please set up EmailJS credentials.')
   }
 }
 

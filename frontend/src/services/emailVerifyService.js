@@ -38,8 +38,7 @@ export async function sendVerificationEmail(email) {
       { publicKey: PUB_KEY.trim() },
     )
   } else {
-    // Demo mode — no EmailJS configured, log the link for local testing
-    console.info(`[Email Verify Demo] Confirmation link for ${email}: ${confirmLink}`)
+    throw new Error('Email service is not configured. Please set up EmailJS credentials.')
   }
   return confirmLink
 }
