@@ -114,45 +114,53 @@ export default function RevisionFormModal({ show, onClose, type, item, onRevised
   }
 
   const typeColor = type === 'application' ? '#1d4ed8' : '#d97706'
+  const typeColorDark = type === 'application' ? '#1e3a8a' : '#92400e'
   const typeLabel = type === 'application' ? 'Application' : 'Claim'
 
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 1070,
-      background: 'rgba(0,0,0,0.55)', display: 'flex',
-      alignItems: 'center', justifyContent: 'center', padding: '1rem'
+      background: 'linear-gradient(135deg, rgba(15,23,42,0.78), rgba(30,64,175,0.48))',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem'
     }} onClick={e => { if (e.target === e.currentTarget) onClose() }}>
       <div style={{
-        background: 'var(--bg-primary)', borderRadius: 16,
+        background: 'var(--bg-card, #ffffff)',
+        border: '1px solid var(--border)',
+        borderRadius: 20,
         width: '100%', maxWidth: 680, maxHeight: '92vh',
         display: 'flex', flexDirection: 'column', overflow: 'hidden',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+        boxShadow: '0 24px 80px rgba(15,23,42,0.38)'
       }}>
         {/* Header */}
         <div style={{
           padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border)',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0,
+          background: `linear-gradient(135deg, ${typeColorDark} 0%, ${typeColor} 58%, ${type === 'application' ? '#60a5fa' : '#f59e0b'} 100%)`
         }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ width: 10, height: 10, borderRadius: '50%', background: typeColor, display: 'inline-block' }}></span>
-              <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>
+              <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#fff', display: 'inline-block', boxShadow: '0 0 0 4px rgba(255,255,255,0.2)' }}></span>
+              <span style={{ fontWeight: 700, fontSize: '1rem', color: '#fff' }}>
                 Edit & Resubmit {typeLabel}
               </span>
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>#{item.id}</span>
+              <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.78)' }}>#{item.id}</span>
             </div>
-            <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginTop: 2 }}>
+            <div style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.84)', marginTop: 2 }}>
               Update the required fields and resubmit for review
             </div>
           </div>
           <button onClick={onClose} style={{
-            background: 'none', border: 'none', color: 'var(--text-muted)',
-            cursor: 'pointer', fontSize: '1.3rem', lineHeight: 1, padding: '0.25rem'
+            width: 34, height: 34, borderRadius: '50%',
+            background: 'rgba(255,255,255,0.16)', border: '1px solid rgba(255,255,255,0.38)',
+            color: '#fff', cursor: 'pointer', fontSize: '1.3rem', lineHeight: 1, padding: 0
           }}>×</button>
         </div>
 
         {/* Body */}
-        <div style={{ overflowY: 'auto', padding: '1.5rem', flex: 1 }}>
+        <div style={{
+          overflowY: 'auto', padding: '1.5rem', flex: 1,
+          background: 'linear-gradient(180deg, var(--bg-card, #ffffff) 0%, var(--bg, #f5f8ff) 100%)'
+        }}>
           {/* Notes from admin/agent */}
           {(item.adminNote || item.agentNote) && (
             <div style={{
@@ -218,7 +226,8 @@ export default function RevisionFormModal({ show, onClose, type, item, onRevised
         {/* Footer */}
         <div style={{
           padding: '1rem 1.5rem', borderTop: '1px solid var(--border)',
-          display: 'flex', gap: 8, flexShrink: 0, background: 'var(--bg-primary)'
+          display: 'flex', gap: 8, flexShrink: 0,
+          background: 'var(--bg-card, #ffffff)'
         }}>
           <button onClick={handleSubmit} disabled={submitting || templateLoading || !template}
             className="btn-primary-custom flex-grow-1" style={{ justifyContent: 'center' }}>
