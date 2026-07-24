@@ -91,6 +91,17 @@ public class PolicyApplication {
     @Column(name = "premium_amount", precision = 20, scale = 2)
     private BigDecimal premiumAmount;
 
+    /** Admin who approved this application (set when status transitions to APPROVED) */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "approved_by_id")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private User approvedBy;
+
+    /** Timestamp when the application was approved by admin */
+    @Column(name = "approved_at")
+    private LocalDateTime approvedAt;
+
     /** JSON array of server-stored paths for uploaded supporting documents */
     @Column(name = "documents_path", columnDefinition = "TEXT")
     private String documentsPath;

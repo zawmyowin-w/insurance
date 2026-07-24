@@ -16,6 +16,8 @@ import com.insurance.portal.model.Payment;
 import com.insurance.portal.model.enums.PaymentStatus;
 import com.insurance.portal.repository.PaymentRepository;
 import com.insurance.portal.util.PremiumScheduleUtil;
+import com.itextpdf.layout.element.LineSeparator;
+import com.itextpdf.kernel.pdf.canvas.draw.SolidLine;
 import com.itextpdf.io.font.constants.StandardFonts;
 import com.itextpdf.kernel.colors.ColorConstants;
 import com.itextpdf.kernel.colors.DeviceRgb;
@@ -179,59 +181,71 @@ public class PdfController {
             DeviceRgb navy   = new DeviceRgb(15, 23, 42);
             DeviceRgb blue   = new DeviceRgb(29, 78, 175);
             DeviceRgb green  = new DeviceRgb(22, 163, 74);
+            DeviceRgb purple = new DeviceRgb(109, 40, 217);
             DeviceRgb gray   = new DeviceRgb(71, 85, 105);
             DeviceRgb light  = new DeviceRgb(241, 245, 249);
             DeviceRgb amber  = new DeviceRgb(217, 119, 6);
             DeviceRgb red    = new DeviceRgb(220, 38, 38);
+            DeviceRgb greenLight  = new DeviceRgb(240, 253, 244);
+            DeviceRgb blueLight   = new DeviceRgb(239, 246, 255);
+            DeviceRgb purpleLight = new DeviceRgb(245, 243, 255);
 
-            var pkg = app.getInsurancePackage();
+            var pkg      = app.getInsurancePackage();
             var customer = app.getCustomer();
-            var agent = app.getAgent();
+            var agent    = app.getAgent();
+            var adminUser = app.getApprovedBy();
             String policyNum = app.getPolicyNumber() != null ? app.getPolicyNumber() : "N/A";
             String issueDate = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy"));
+            java.time.format.DateTimeFormatter dtFmt = java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm");
+
+            // Unique document reference hash (visual identifier, not cryptographic)
+            String docRef = String.format("DICP-%s-%08X", policyNum,
+                    Math.abs(java.util.Objects.hash(policyNum, app.getId(), customer != null ? customer.getEmail() : "")));
 
             // ─────────────────────────────────────────────────────────────
             // HEADER
             // ─────────────────────────────────────────────────────────────
             Table headerTable = new Table(UnitValue.createPercentArray(new float[]{70, 30})).useAllAvailableWidth();
-            Cell logoCell = new Cell()
+            headerTable.addCell(new Cell()
                     .add(new Paragraph("DIGITAL INSURANCE CLAIMS AND PREMIUMS")
                             .setFont(bold).setFontSize(13).setFontColor(blue).setMarginBottom(2))
                     .add(new Paragraph("PORTAL — MYANMAR")
                             .setFont(bold).setFontSize(10).setFontColor(navy).setMarginBottom(4))
                     .add(new Paragraph("ဒစ်ဂျစ်တယ် အာမခံ တောင်းဆိုမှုနှင့် ကြေးငွေ ပေါ်တယ် — မြန်မာ")
                             .setFont(oblique).setFontSize(8).setFontColor(gray))
-                    .setBorder(Border.NO_BORDER).setPadding(4);
-            Cell titleCell = new Cell()
-                    .add(new Paragraph("OFFICIAL POLICY CONTRACT")
+                    .setBorder(Border.NO_BORDER).setPadding(4));
+            headerTable.addCell(new Cell()
+                    .add(new Paragraph("OFFICIAL POLICY CERTIFICATE")
                             .setFont(bold).setFontSize(10).setFontColor(blue)
                             .setTextAlignment(TextAlignment.RIGHT).setMarginBottom(3))
-                    .add(new Paragraph("တရားဝင် ပါလစီ စာချုပ်")
+                    .add(new Paragraph("တရားဝင် ပါလစီ လက်မှတ်")
                             .setFont(oblique).setFontSize(8).setFontColor(gray)
-                            .setTextAlignment(TextAlignment.RIGHT).setMarginBottom(6))
+                            .setTextAlignment(TextAlignment.RIGHT).setMarginBottom(4))
                     .add(new Paragraph("Policy No: " + policyNum)
                             .setFont(bold).setFontSize(8).setFontColor(navy)
                             .setTextAlignment(TextAlignment.RIGHT).setMarginBottom(2))
                     .add(new Paragraph("Issue Date: " + issueDate)
                             .setFont(regular).setFontSize(8).setFontColor(gray)
+                            .setTextAlignment(TextAlignment.RIGHT).setMarginBottom(2))
+                    .add(new Paragraph("Ref: " + docRef)
+                            .setFont(oblique).setFontSize(7).setFontColor(gray)
                             .setTextAlignment(TextAlignment.RIGHT))
-                    .setBorder(Border.NO_BORDER).setPadding(4);
-            headerTable.addCell(logoCell).addCell(titleCell);
+                    .setBorder(Border.NO_BORDER).setPadding(4));
             doc.add(headerTable);
 
             // Blue header bar
-            Table bar = new Table(UnitValue.createPercentArray(new float[]{100})).useAllAvailableWidth();
-            bar.addCell(new Cell()
-                    .add(new Paragraph("INSURANCE POLICY CONTRACT — MYANMAR (မြန်မာ ပါလစီ စာချုပ်)")
-                            .setFont(bold).setFontSize(10).setFontColor(ColorConstants.WHITE)
-                            .setTextAlignment(TextAlignment.CENTER))
-                    .setBackgroundColor(blue).setPadding(6).setBorder(Border.NO_BORDER));
-            doc.add(bar);
+            doc.add(new Table(UnitValue.createPercentArray(new float[]{100})).useAllAvailableWidth()
+                    .addCell(new Cell()
+                            .add(new Paragraph("INSURANCE POLICY CERTIFICATE — MYANMAR (မြန်မာ ပါလစီ လက်မှတ်)")
+                                    .setFont(bold).setFontSize(10).setFontColor(ColorConstants.WHITE)
+                                    .setTextAlignment(TextAlignment.CENTER))
+                            .setBackgroundColor(blue).setPadding(6).setBorder(Border.NO_BORDER)));
 
             // Status banner
             String status = app.getStatus().name();
             DeviceRgb statusColor = "APPROVED".equals(status) ? green : "REJECTED".equals(status) ? red : amber;
-            doc.add(new Paragraph("● STATUS: " + status + "   |   Risk Level: " + (app.getRiskLevel() != null ? app.getRiskLevel() : "N/A"))
+            doc.add(new Paragraph("● STATUS: " + status + "   |   Risk Level: " + (app.getRiskLevel() != null ? app.getRiskLevel() : "N/A")
+                    + "   |   Policy No: " + policyNum)
                     .setFont(bold).setFontSize(9).setFontColor(statusColor)
                     .setTextAlignment(TextAlignment.CENTER)
                     .setBackgroundColor(light).setPaddingTop(4).setPaddingBottom(4).setMarginBottom(8));
@@ -245,8 +259,13 @@ public class PdfController {
                     entry("Email Address  (အီးမေးလ်)",        customer != null ? customer.getEmail() : "N/A"),
                     entry("Phone  (ဖုန်းနံပါတ်)",             customer != null && customer.getPhone() != null ? customer.getPhone() : "N/A"),
                     entry("Address  (လိပ်စာ)",                customer != null && customer.getAddress() != null ? customer.getAddress() : "N/A"),
-                    entry("Assigned Agent  (တာဝန်ခံ Agent)",  agent != null ? agent.getName() + (agent.getEmail() != null ? " <" + agent.getEmail() + ">" : "") : "No agent assigned")
+                    entry("Application Date  (လျှောက်ထားသောနေ့)", app.getCreatedAt() != null ? app.getCreatedAt().format(dtFmt) : "N/A"),
+                    entry("Assigned Agent  (တာဝန်ခံ Agent)",  agent != null ? agent.getName() + (agent.getEmail() != null ? "  <" + agent.getEmail() + ">" : "") : "No agent assigned")
             ));
+            if (app.getNotes() != null && !app.getNotes().isBlank()) {
+                doc.add(new Paragraph("Customer Notes: " + app.getNotes())
+                        .setFont(oblique).setFontSize(8.5f).setFontColor(gray).setMarginBottom(4));
+            }
 
             // ─────────────────────────────────────────────────────────────
             // SECTION 2: INSURANCE PLAN DETAILS
@@ -260,26 +279,41 @@ public class PdfController {
                     entry("Max Claim Amount  (အများဆုံး Claim)",  pkg != null && pkg.getMaxClaimAmount() != null ? pkg.getMaxClaimAmount().toPlainString() + " MMK" : "N/A"),
                     entry("Total Premium  (စုစုပေါင်း Premium)",  app.getPremiumAmount() != null ? app.getPremiumAmount().toPlainString() + " MMK" : "N/A"),
                     entry("Payment Frequency  (ပေးချေပုံစံ)",    pkg != null && pkg.getPaymentFrequency() != null ? formatFrequency(pkg.getPaymentFrequency()) : "N/A"),
-                    entry("Application Date  (လျှောက်ထားသောနေ့)", app.getCreatedAt() != null ? app.getCreatedAt().format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm")) : "N/A"),
+                    entry("Risk Level  (အန္တရာယ်အဆင့်)",         app.getRiskLevel() != null ? app.getRiskLevel() : "N/A"),
                     entry("Policy Number  (ပါလစီနံပါတ်)",        policyNum)
             ));
 
             // ─────────────────────────────────────────────────────────────
-            // SECTION 3: PREMIUM PAYMENT SCHEDULE
+            // SECTION 3: CUSTOMER APPLICATION FORM DATA
             // ─────────────────────────────────────────────────────────────
-            addContractSection(doc, bold, "SECTION 3: PREMIUM PAYMENT SCHEDULE   (အပိုင်း ၃: Premium ပေးသွင်းမှု ဇယား)", blue, bold);
-            var schedule = PremiumScheduleUtil.buildSchedule(app, payments);
-            doc.add(new Paragraph(String.format(
-                    "Payment Frequency: %s  |  Installment Amount: %s MMK  |  Total Installments: %d  |  Paid: %d",
-                    schedule.getPaymentFrequency() != null ? formatFrequency(schedule.getPaymentFrequency()) : "N/A",
-                    schedule.getInstallmentAmount() != null ? schedule.getInstallmentAmount().toPlainString() : "0",
-                    schedule.getTotalInstallments(), schedule.getPaidCount()))
-                    .setFont(regular).setFontSize(8.5f).setFontColor(gray).setMarginBottom(6));
+            if (pkg != null) {
+                Optional<FormTemplate> tmplOpt = templateRepo.findByInsurancePackageIdAndFormType(pkg.getId(), FormType.APPLICATION);
+                if (tmplOpt.isPresent()) {
+                    FormTemplate tmpl = tmplOpt.get();
+                    addContractSection(doc, bold, "SECTION 3: CUSTOMER APPLICATION FORM DATA   (အပိုင်း ၃: Customer ဖြည့်စွက်သော ပုံစံ အချက်အလက်များ)", blue, bold);
+                    addFormSection(doc, bold, regular, light, tmpl.getName(), tmpl.getFields(), app.getFormData());
+                }
+            }
 
+            // ─────────────────────────────────────────────────────────────
+            // SECTION 4: PREMIUM PAYMENT DETAILS
+            // ─────────────────────────────────────────────────────────────
+            addContractSection(doc, bold, "SECTION 4: PREMIUM PAYMENT DETAILS   (အပိုင်း ၄: Premium ငွေပေးချေမှု အချက်အလက်များ)", blue, bold);
+            var schedule = PremiumScheduleUtil.buildSchedule(app, payments);
+            addMetaTable(doc, bold, regular, light, java.util.List.of(
+                    entry("Payment Frequency  (ပေးချေပုံစံ)",     schedule.getPaymentFrequency() != null ? formatFrequency(schedule.getPaymentFrequency()) : "N/A"),
+                    entry("Installment Amount  (တစ်ကြိမ်ပမာဏ)",  schedule.getInstallmentAmount() != null ? schedule.getInstallmentAmount().toPlainString() + " MMK" : "N/A"),
+                    entry("Total Installments  (စုစုပေါင်းကြိမ်)", String.valueOf(schedule.getTotalInstallments())),
+                    entry("Paid Installments  (ပေးပြီးကြိမ်)",    String.valueOf(schedule.getPaidCount())),
+                    entry("Remaining  (ကျန်ကြိမ်)",               String.valueOf(schedule.getTotalInstallments() - schedule.getPaidCount()))
+            ));
+
+            // Payment schedule table
             if (!schedule.getSchedule().isEmpty()) {
-                Table schTable = new Table(UnitValue.createPercentArray(new float[]{8, 20, 25, 22, 25})).useAllAvailableWidth();
-                String[] headers = {"#", "Period  (ကာလ)", "Due Date  (ရက်)", "Amount (MMK)", "Status  (အခြေအနေ)"};
-                for (String h : headers) {
+                doc.add(new Paragraph("Payment Schedule  (ပေးချေမှု ဇယား)")
+                        .setFont(bold).setFontSize(9.5f).setFontColor(navy).setMarginTop(8).setMarginBottom(4));
+                Table schTable = new Table(UnitValue.createPercentArray(new float[]{6, 18, 22, 20, 34})).useAllAvailableWidth();
+                for (String h : new String[]{"#", "Period  (ကာလ)", "Due Date  (ရက်)", "Amount (MMK)", "Status  (အခြေအနေ)"}) {
                     schTable.addHeaderCell(new Cell().add(new Paragraph(h).setFont(bold).setFontSize(8))
                             .setBackgroundColor(navy).setFontColor(ColorConstants.WHITE).setPadding(4));
                 }
@@ -293,34 +327,35 @@ public class PdfController {
                     schTable.addCell(new Cell().add(new Paragraph(st).setFont(bold).setFontSize(8).setFontColor(stColor)).setPadding(4));
                 }
                 doc.add(schTable);
-            } else {
-                doc.add(new Paragraph("No payment schedule available. (ပေးချေမှု ဇယား မရှိသေးပါ)").setFont(regular).setFontSize(9).setFontColor(gray));
             }
 
-            // Payment History
-            List<Payment> paidPayments = payments.stream().filter(p -> p.getStatus() == PaymentStatus.VERIFIED).toList();
-            if (!paidPayments.isEmpty()) {
-                doc.add(new Paragraph("\nPayment History  (ငွေပေးချေမှု မှတ်တမ်း)")
-                        .setFont(bold).setFontSize(10).setFontColor(navy).setMarginTop(8).setMarginBottom(4));
-                Table histTable = new Table(UnitValue.createPercentArray(new float[]{15, 30, 30, 25})).useAllAvailableWidth();
-                for (String h : new String[]{"Amount (MMK)", "Period", "Method", "Date"}) {
-                    histTable.addHeaderCell(new Cell().add(new Paragraph(h).setFont(bold).setFontSize(8))
-                            .setBackgroundColor(light).setPadding(4));
+            // Verified payment records (detailed)
+            List<Payment> verifiedPayments = payments.stream().filter(p -> p.getStatus() == PaymentStatus.VERIFIED).toList();
+            if (!verifiedPayments.isEmpty()) {
+                doc.add(new Paragraph("\nVerified Payment Records  (စစ်ဆေးပြီး ငွေပေးချေမှု မှတ်တမ်းများ)")
+                        .setFont(bold).setFontSize(9.5f).setFontColor(navy).setMarginTop(8).setMarginBottom(4));
+                Table histTable = new Table(UnitValue.createPercentArray(new float[]{14, 16, 18, 16, 22, 14})).useAllAvailableWidth();
+                for (String h : new String[]{"Amount (MMK)", "Trans. Amount", "Period", "Method", "Verified By", "Date"}) {
+                    histTable.addHeaderCell(new Cell().add(new Paragraph(h).setFont(bold).setFontSize(7.5f))
+                            .setBackgroundColor(new DeviceRgb(22, 163, 74)).setFontColor(ColorConstants.WHITE).setPadding(4));
                 }
-                for (Payment p : paidPayments) {
+                for (Payment p : verifiedPayments) {
                     histTable.addCell(cellOf(p.getAmount() != null ? p.getAmount().toPlainString() : "—", bold, 8, null));
+                    histTable.addCell(cellOf(p.getTransactionAmount() != null ? p.getTransactionAmount().toPlainString()
+                            + (p.getTransactionLastSixDigits() != null ? "\n(Ref: ..." + p.getTransactionLastSixDigits() + ")" : "") : "—", regular, 7.5f, null));
                     histTable.addCell(cellOf(p.getPeriodLabel() != null ? p.getPeriodLabel() : "—", regular, 8, null));
-                    histTable.addCell(cellOf(p.getPaymentMethod() != null ? p.getPaymentMethod() : "—", regular, 8, null));
-                    histTable.addCell(cellOf(p.getCreatedAt() != null ? p.getCreatedAt().format(java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy")) : "—", regular, 8, null));
+                    histTable.addCell(cellOf(p.getPaymentMethod() != null ? p.getPaymentMethod().replace("_", " ") : "—", regular, 8, null));
+                    histTable.addCell(cellOf(p.getVerifiedBy() != null ? p.getVerifiedBy() : "—", regular, 8, null));
+                    histTable.addCell(cellOf(p.getUpdatedAt() != null ? p.getUpdatedAt().format(dtFmt) : "—", regular, 7.5f, null));
                 }
                 doc.add(histTable);
             }
 
             // ─────────────────────────────────────────────────────────────
-            // SECTION 4: BENEFITS AND COVERAGE
+            // SECTION 5: BENEFITS AND COVERAGE
             // ─────────────────────────────────────────────────────────────
             if (pkg != null) {
-                addContractSection(doc, bold, "SECTION 4: BENEFITS AND COVERAGE   (အပိုင်း ၄: အကျိုးခံစားခွင့်နှင့် Coverage)", blue, bold);
+                addContractSection(doc, bold, "SECTION 5: BENEFITS AND COVERAGE   (အပိုင်း ၅: အကျိုးခံစားခွင့်နှင့် Coverage)", blue, bold);
                 if (pkg.getBenefitsJson() != null && !pkg.getBenefitsJson().isBlank()) {
                     try {
                         @SuppressWarnings("unchecked")
@@ -343,9 +378,9 @@ public class PdfController {
             }
 
             // ─────────────────────────────────────────────────────────────
-            // SECTION 5: TERMS AND CONDITIONS
+            // SECTION 6: TERMS AND CONDITIONS
             // ─────────────────────────────────────────────────────────────
-            addContractSection(doc, bold, "SECTION 5: TERMS AND CONDITIONS   (အပိုင်း ၅: စည်းမျဉ်းနှင့် စည်းကမ်းများ)", blue, bold);
+            addContractSection(doc, bold, "SECTION 6: TERMS AND CONDITIONS   (အပိုင်း ၆: စည်းမျဉ်းနှင့် စည်းကမ်းများ)", blue, bold);
             String terms = (pkg != null && pkg.getTermsAndConditions() != null && !pkg.getTermsAndConditions().isBlank())
                     ? pkg.getTermsAndConditions()
                     : "Standard terms and conditions of the Digital Insurance Claims and Premiums Portal apply to this policy. " +
@@ -358,58 +393,128 @@ public class PdfController {
             doc.add(new Paragraph(terms).setFont(regular).setFontSize(8.5f).setFontColor(gray).setMarginBottom(6));
 
             // ─────────────────────────────────────────────────────────────
-            // SECTION 6: DIGITAL SIGNATURES
+            // SECTION 7: DIGITAL SIGNATURES
             // ─────────────────────────────────────────────────────────────
-            addContractSection(doc, bold, "SECTION 6: AUTHORIZED SIGNATURES   (အပိုင်း ၆: တရားဝင် လက်မှတ်များ)", blue, bold);
+            addContractSection(doc, bold, "SECTION 7: DIGITAL SIGNATURES   (အပိုင်း ၇: ဒစ်ဂျစ်တယ် လက်မှတ်များ)", blue, bold);
             doc.add(new Paragraph(
-                    "This policy contract is legally binding upon both parties upon signature. " +
-                    "ဤပါလစီ စာချုပ်သည် နှစ်ဖက် လက်မှတ်ထိုးပြီးသည့် အချိန်မှ တရားဝင် ဥပဒေနှင့် ချည်နှောင်မည်ဖြစ်သည်။")
+                    "This certificate is digitally verified and legally binding. Each signature block below certifies the " +
+                    "role and identity of the party in this insurance contract. " +
+                    "ဤလက်မှတ်သည် ဒစ်ဂျစ်တယ် စစ်ဆေးပြီးဖြစ်ပြီး တရားဝင် ဥပဒေနှင့် ချည်နှောင်မည်ဖြစ်သည်။")
                     .setFont(oblique).setFontSize(8.5f).setFontColor(gray).setMarginBottom(10));
 
-            Table sigTable = new Table(UnitValue.createPercentArray(new float[]{50, 50})).useAllAvailableWidth();
+            // --- Row 1: Customer + Agent (side by side) ---
+            Table sigRow1 = new Table(UnitValue.createPercentArray(new float[]{50, 50})).useAllAvailableWidth();
 
-            // Admin / Authorized Officer signature block
-            Cell adminSig = new Cell()
-                    .add(new Paragraph("AUTHORIZED OFFICER  (တာဝန်ရှိသူ)").setFont(bold).setFontSize(9).setFontColor(blue).setMarginBottom(4))
-                    .add(new Paragraph("Name: ___________________________________").setFont(regular).setFontSize(9).setMarginBottom(4))
-                    .add(new Paragraph("Designation: _____________________________").setFont(regular).setFontSize(9).setMarginBottom(4))
-                    .add(new Paragraph("NRC / ID: ________________________________").setFont(regular).setFontSize(9).setMarginBottom(16))
-                    .add(new Paragraph("Signature:").setFont(bold).setFontSize(9).setFontColor(gray).setMarginBottom(2))
-                    .add(new Paragraph("________________________").setFont(regular).setFontSize(9).setMarginBottom(2))
-                    .add(new Paragraph("Date: _______________").setFont(regular).setFontSize(9).setMarginBottom(6))
-                    .add(new Paragraph("[Official Seal  (တံဆိပ်တုံး)]").setFont(oblique).setFontSize(8).setFontColor(gray)
-                            .setBorder(new SolidBorder(gray, 0.5f)).setPadding(12).setTextAlignment(TextAlignment.CENTER))
-                    .setBorder(new SolidBorder(light, 1)).setPadding(10).setMarginRight(5);
+            // CUSTOMER DIGITAL SIGNATURE BLOCK
+            String custName    = customer != null ? customer.getName() : "N/A";
+            String custEmail   = customer != null ? customer.getEmail() : "N/A";
+            String custPhone   = customer != null && customer.getPhone()   != null ? customer.getPhone()   : "N/A";
+            String custAddress = customer != null && customer.getAddress() != null ? customer.getAddress() : "N/A";
+            String custSubmitDate = app.getCreatedAt() != null ? app.getCreatedAt().format(dtFmt) : "N/A";
+            String custSigRef  = String.format("SIG-C-%08X", Math.abs(java.util.Objects.hash(custEmail, policyNum)));
 
-            // Customer signature block
-            String custName = customer != null ? customer.getName() : "N/A";
-            String custEmail = customer != null ? customer.getEmail() : "N/A";
             Cell custSig = new Cell()
-                    .add(new Paragraph("POLICYHOLDER  (ပါလစီဝင်)").setFont(bold).setFontSize(9).setFontColor(green).setMarginBottom(4))
-                    .add(new Paragraph("Name: " + custName).setFont(regular).setFontSize(9).setMarginBottom(4))
-                    .add(new Paragraph("Email: " + custEmail).setFont(regular).setFontSize(9).setMarginBottom(4))
-                    .add(new Paragraph("NRC / ID: ________________________________").setFont(regular).setFontSize(9).setMarginBottom(16))
-                    .add(new Paragraph("Signature:").setFont(bold).setFontSize(9).setFontColor(gray).setMarginBottom(2))
-                    .add(new Paragraph("________________________").setFont(regular).setFontSize(9).setMarginBottom(2))
-                    .add(new Paragraph("Date: _______________").setFont(regular).setFontSize(9).setMarginBottom(6))
-                    .add(new Paragraph("Phone: " + (customer != null && customer.getPhone() != null ? customer.getPhone() : "N/A"))
-                            .setFont(regular).setFontSize(8).setFontColor(gray))
-                    .setBorder(new SolidBorder(light, 1)).setPadding(10).setMarginLeft(5);
+                    .add(new Paragraph("POLICYHOLDER / CUSTOMER  (ပါလစီဝင်)").setFont(bold).setFontSize(9).setFontColor(green).setMarginBottom(6))
+                    .add(new Paragraph("Name:").setFont(bold).setFontSize(8).setFontColor(gray))
+                    .add(new Paragraph(custName).setFont(bold).setFontSize(9.5f).setFontColor(navy).setMarginBottom(4))
+                    .add(new Paragraph("Email:  " + custEmail).setFont(regular).setFontSize(8).setFontColor(gray).setMarginBottom(2))
+                    .add(new Paragraph("Phone:  " + custPhone).setFont(regular).setFontSize(8).setFontColor(gray).setMarginBottom(2))
+                    .add(new Paragraph("Address:  " + custAddress).setFont(regular).setFontSize(8).setFontColor(gray).setMarginBottom(6))
+                    .add(new Paragraph("Application Submitted:").setFont(bold).setFontSize(8).setFontColor(gray))
+                    .add(new Paragraph(custSubmitDate).setFont(regular).setFontSize(8).setFontColor(navy).setMarginBottom(8))
+                    .add(new Paragraph("[ DIGITALLY SIGNED ]")
+                            .setFont(bold).setFontSize(9).setFontColor(green)
+                            .setTextAlignment(TextAlignment.CENTER)
+                            .setBackgroundColor(greenLight).setPadding(6)
+                            .setBorder(new SolidBorder(green, 0.8f)).setMarginBottom(3))
+                    .add(new Paragraph("Ref: " + custSigRef).setFont(oblique).setFontSize(7).setFontColor(gray)
+                            .setTextAlignment(TextAlignment.CENTER))
+                    .setBackgroundColor(greenLight).setBorder(new SolidBorder(green, 1)).setPadding(10).setMarginRight(4);
 
-            sigTable.addCell(adminSig).addCell(custSig);
-            doc.add(sigTable);
+            // AGENT DIGITAL SIGNATURE BLOCK
+            String agentName  = agent != null ? agent.getName() : "Not Assigned";
+            String agentEmail = agent != null && agent.getEmail() != null ? agent.getEmail() : "N/A";
+            String agentPhone = agent != null && agent.getPhone() != null ? agent.getPhone() : "N/A";
+            String agentType  = agent != null && agent.getInsuranceType() != null ? agent.getInsuranceType() : "N/A";
+            String agentNote  = app.getAgentNote() != null && !app.getAgentNote().isBlank() ? app.getAgentNote() : "—";
+            String agentSigRef = String.format("SIG-A-%08X", Math.abs(java.util.Objects.hash(agentEmail, policyNum)));
+
+            Cell agentSig = new Cell()
+                    .add(new Paragraph("REVIEWING AGENT  (စစ်ဆေးသော Agent)").setFont(bold).setFontSize(9).setFontColor(purple).setMarginBottom(6))
+                    .add(new Paragraph("Name:").setFont(bold).setFontSize(8).setFontColor(gray))
+                    .add(new Paragraph(agentName).setFont(bold).setFontSize(9.5f).setFontColor(navy).setMarginBottom(4))
+                    .add(new Paragraph("Email:  " + agentEmail).setFont(regular).setFontSize(8).setFontColor(gray).setMarginBottom(2))
+                    .add(new Paragraph("Phone:  " + agentPhone).setFont(regular).setFontSize(8).setFontColor(gray).setMarginBottom(2))
+                    .add(new Paragraph("Specialty:  " + agentType).setFont(regular).setFontSize(8).setFontColor(gray).setMarginBottom(4))
+                    .add(new Paragraph("Agent Remarks:").setFont(bold).setFontSize(8).setFontColor(gray))
+                    .add(new Paragraph(agentNote).setFont(oblique).setFontSize(8).setFontColor(navy).setMarginBottom(8))
+                    .add(new Paragraph("[ DIGITALLY VERIFIED ]")
+                            .setFont(bold).setFontSize(9).setFontColor(purple)
+                            .setTextAlignment(TextAlignment.CENTER)
+                            .setBackgroundColor(purpleLight).setPadding(6)
+                            .setBorder(new SolidBorder(purple, 0.8f)).setMarginBottom(3))
+                    .add(new Paragraph("Ref: " + agentSigRef).setFont(oblique).setFontSize(7).setFontColor(gray)
+                            .setTextAlignment(TextAlignment.CENTER))
+                    .setBackgroundColor(purpleLight).setBorder(new SolidBorder(purple, 1)).setPadding(10).setMarginLeft(4);
+
+            sigRow1.addCell(custSig).addCell(agentSig);
+            doc.add(sigRow1);
+
+            // --- Row 2: Admin (full width) ---
+            doc.add(new Paragraph("").setMarginBottom(6));
+            String adminName      = adminUser != null ? adminUser.getName() : "Portal Administrator";
+            String adminEmail2    = adminUser != null && adminUser.getEmail() != null ? adminUser.getEmail() : "admin@dicp.com.mm";
+            String adminPhone     = adminUser != null && adminUser.getPhone() != null ? adminUser.getPhone() : "N/A";
+            String adminNote      = app.getAdminNote() != null && !app.getAdminNote().isBlank() ? app.getAdminNote() : "—";
+            String adminApproveDate = app.getApprovedAt() != null ? app.getApprovedAt().format(dtFmt)
+                    : (app.getUpdatedAt() != null ? app.getUpdatedAt().format(dtFmt) : issueDate);
+            String adminSigRef    = String.format("SIG-D-%08X", Math.abs(java.util.Objects.hash(adminEmail2, policyNum)));
+
+            Table adminRow = new Table(UnitValue.createPercentArray(new float[]{100})).useAllAvailableWidth();
+            Cell adminSig = new Cell()
+                    .add(new Paragraph("APPROVING ADMINISTRATOR  (အတည်ပြုသော Admin)").setFont(bold).setFontSize(9).setFontColor(blue).setMarginBottom(6))
+                    .add(new Table(UnitValue.createPercentArray(new float[]{25, 25, 25, 25})).useAllAvailableWidth()
+                            .addCell(new Cell().setBorder(Border.NO_BORDER)
+                                    .add(new Paragraph("Name:").setFont(bold).setFontSize(8).setFontColor(gray))
+                                    .add(new Paragraph(adminName).setFont(bold).setFontSize(9.5f).setFontColor(navy)))
+                            .addCell(new Cell().setBorder(Border.NO_BORDER)
+                                    .add(new Paragraph("Email:").setFont(bold).setFontSize(8).setFontColor(gray))
+                                    .add(new Paragraph(adminEmail2).setFont(regular).setFontSize(8.5f).setFontColor(navy)))
+                            .addCell(new Cell().setBorder(Border.NO_BORDER)
+                                    .add(new Paragraph("Phone:").setFont(bold).setFontSize(8).setFontColor(gray))
+                                    .add(new Paragraph(adminPhone).setFont(regular).setFontSize(8.5f).setFontColor(navy)))
+                            .addCell(new Cell().setBorder(Border.NO_BORDER)
+                                    .add(new Paragraph("Approval Date:").setFont(bold).setFontSize(8).setFontColor(gray))
+                                    .add(new Paragraph(adminApproveDate).setFont(regular).setFontSize(8.5f).setFontColor(navy))))
+                    .add(new Paragraph("Admin Remarks:  " + adminNote)
+                            .setFont(oblique).setFontSize(8).setFontColor(gray).setMarginTop(6).setMarginBottom(8))
+                    .add(new Table(UnitValue.createPercentArray(new float[]{60, 40})).useAllAvailableWidth()
+                            .addCell(new Cell().setBorder(Border.NO_BORDER)
+                                    .add(new Paragraph("[ DIGITALLY APPROVED ]")
+                                            .setFont(bold).setFontSize(10).setFontColor(blue)
+                                            .setTextAlignment(TextAlignment.CENTER)
+                                            .setBackgroundColor(blueLight).setPadding(8)
+                                            .setBorder(new SolidBorder(blue, 1))))
+                            .addCell(new Cell().setBorder(Border.NO_BORDER).setPaddingLeft(8)
+                                    .add(new Paragraph("Document Ref:").setFont(bold).setFontSize(8).setFontColor(gray))
+                                    .add(new Paragraph(docRef).setFont(regular).setFontSize(8).setFontColor(navy).setMarginBottom(2))
+                                    .add(new Paragraph("Sig Ref:").setFont(bold).setFontSize(8).setFontColor(gray))
+                                    .add(new Paragraph(adminSigRef).setFont(regular).setFontSize(8).setFontColor(navy))))
+                    .setBackgroundColor(blueLight).setBorder(new SolidBorder(blue, 1)).setPadding(10);
+            adminRow.addCell(adminSig);
+            doc.add(adminRow);
 
             // Footer
             doc.add(new Paragraph(
-                    "\nThis document was generated by the Digital Insurance Claims and Premiums Portal on " + issueDate +
-                    ".\nPolicy Number: " + policyNum + "  |  Status: " + status +
-                    "\nThis is a computer-generated document. For authenticity verification, contact the Insurance Portal administration.")
+                    "\nThis certificate was generated by the Digital Insurance Claims and Premiums Portal on " + issueDate +
+                    ".\nPolicy Number: " + policyNum + "  |  Status: " + status + "  |  Document Ref: " + docRef +
+                    "\nThis is a digitally verified document. For authenticity verification, contact the Insurance Portal administration.")
                     .setFont(oblique).setFontSize(7.5f).setFontColor(gray)
                     .setTextAlignment(TextAlignment.CENTER)
                     .setBorderTop(new SolidBorder(light, 0.5f)).setPaddingTop(8).setMarginTop(12));
 
             doc.close();
-            return pdfResponse(baos.toByteArray(), "policy_contract_" + policyNum + ".pdf");
+            return pdfResponse(baos.toByteArray(), "policy_certificate_" + policyNum + ".pdf");
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
         }

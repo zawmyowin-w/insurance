@@ -11,6 +11,8 @@ import com.insurance.portal.util.PremiumScheduleUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -52,8 +54,9 @@ public class AdminApplicationController {
     }
 
     @PutMapping("/{id}/approve")
-    public ResponseEntity<?> approve(@PathVariable Long id, @RequestBody Map<String, String> req) {
-        return appService.approve(id, req.get("note"));
+    public ResponseEntity<?> approve(@PathVariable Long id, @RequestBody Map<String, String> req,
+                                     @AuthenticationPrincipal UserDetails principal) {
+        return appService.approve(id, req.get("note"), principal != null ? principal.getUsername() : null);
     }
 
     @PutMapping("/{id}/reject")

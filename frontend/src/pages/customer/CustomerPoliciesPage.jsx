@@ -78,6 +78,8 @@ export default function CustomerPoliciesPage() {
   }
   useEffect(() => { fetchPolicies() }, [])
 
+  const [downloading, setDownloading] = useState(null)
+
   const handleRenew = async (id) => {
     if (!window.confirm(t('policies.renewConfirm'))) return
     setRenewing(id)
@@ -87,6 +89,21 @@ export default function CustomerPoliciesPage() {
     } catch (err) {
       toast.error(err.response?.data?.message || t('policies.renewFailed'))
     } finally { setRenewing(null) }
+  }
+
+  const handleDownloadCertificate = async (policy) => {
+    setDownloading(policy.id)
+    try {
+      const res = await api.get(`/customer/applications/${policy.id}/policy-contract`, { responseType: 'blob' })
+      const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `policy_certificate_${policy.policyNumber || policy.id}.pdf`
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch {
+      toast.error('Failed to download certificate PDF')
+    } finally { setDownloading(null) }
   }
 
   return (
@@ -175,9 +192,18 @@ export default function CustomerPoliciesPage() {
                   )}
 
                   {/* Actions */}
-                  <div className="d-flex gap-2 mt-auto">
-                    <button onClick={() => setCertPolicy(policy)} className="btn-primary-sm flex-grow-1">
+                  <div className="d-flex flex-wrap gap-2 mt-auto">
+                    <button onClick={() => setCertPolicy(policy)} className="btn-primary-sm" style={{ flex: '1 1 auto' }}>
                       <i className="bi bi-file-earmark-text me-1"></i>{t('policies.certificate')}
+                    </button>
+                    <button
+                      onClick={() => handleDownloadCertificate(policy)}
+                      disabled={downloading === policy.id}
+                      style={{ flex: '1 1 auto', padding: '0.4rem 0.85rem', borderRadius: 8, border: '1.5px solid #1d4ed8', background: '#eff6ff', color: '#1d4ed8', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600 }}
+                    >
+                      {downloading === policy.id
+                        ? <span className="spinner-border spinner-border-sm"></span>
+                        : <><i className="bi bi-download me-1"></i>PDF</>}
                     </button>
                     <Link to="/customer/submit-claim" className="btn-outline-custom" style={{ textDecoration: 'none', padding: '0.4rem 0.85rem', fontSize: '0.85rem' }}>
                       <i className="bi bi-file-earmark-plus me-1"></i>{t('policies.claim')}

@@ -2,9 +2,11 @@ package com.insurance.portal.service;
 
 import com.insurance.portal.dto.ApplicationResponse;
 import com.insurance.portal.model.PolicyApplication;
+import com.insurance.portal.model.User;
 import com.insurance.portal.model.enums.ApplicationStatus;
 import com.insurance.portal.model.enums.NotificationType;
 import com.insurance.portal.repository.PolicyApplicationRepository;
+import com.insurance.portal.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -19,15 +21,20 @@ public class AdminApplicationService {
 
     private final PolicyApplicationRepository appRepo;
     private final NotificationService notifService;
+    private final UserRepository userRepo;
 
     @Transactional
-    public ResponseEntity<?> approve(Long id, String note) {
+    public ResponseEntity<?> approve(Long id, String note, String adminEmail) {
         PolicyApplication app = appRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Application not found"));
         if (app.getStatus() != ApplicationStatus.VERIFIED)
             return ResponseEntity.badRequest().body(Map.of("message", "Only VERIFIED applications can be approved"));
         app.setStatus(ApplicationStatus.APPROVED);
         app.setAdminNote(note);
+        app.setApprovedAt(LocalDateTime.now());
+        if (adminEmail != null) {
+            userRepo.findByEmail(adminEmail).ifPresent(app::setApprovedBy);
+        }
         appRepo.save(app);
         notifService.send(app.getCustomer(),
                 "Application Approved! 🎉",
