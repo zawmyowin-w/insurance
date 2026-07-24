@@ -147,9 +147,6 @@ export default function NrcInput({ value, onChange, required, readOnly }) {
         </div>
       )}
 
-      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 3 }}>
-        {t('nrc.example')}
-      </div>
     </div>
   )
 }
