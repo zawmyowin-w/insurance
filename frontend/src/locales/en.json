@@ -1893,5 +1893,14 @@
       "claimAmount": "Claim Amount",
       "incidentDate": "Incident Date"
     }
+  },
+  "nrc": {
+    "statePlaceholder": "State No.",
+    "townshipPlaceholder": "Township",
+    "typePlaceholder": "Type",
+    "digitsPlaceholder": "123456",
+    "mmLabel": "Myanmar",
+    "enLabel": "English",
+    "example": "e.g. 10/MADANA(N)123456  |  ၁၀/မဒန(နိုင်)၁၂၃၄၅၆"
   }
 }

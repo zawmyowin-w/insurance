@@ -1,14 +1,18 @@
+import { useTranslation } from 'react-i18next'
 import { NRC_DATA, NRC_CITIZEN_TYPES, getTownships, resolveToCode, findTownship } from '../data/nrcData'
 
 /**
- * Myanmar NRC input component — bilingual (Myanmar + English).
+ * Myanmar NRC input component — bilingual, language-aware.
  *
- * Stored format : "10/မဒန(နိုင်)241890"
- *                  ──  ───  ────  ──────
- *                  state code  type  digits
+ * Responds to the app's EN ↔ မြန်မာ toggle:
+ *   EN  mode → English labels & codes first, Myanmar in parentheses
+ *   မြန်မာ mode → Myanmar labels & codes first, English in parentheses
  *
- * Myanmar preview : ၁၀/မဒန(နိုင်)၂၄၁၈၉၀
- * English preview : 10/MADANA(N)241890
+ * Stored format (language-independent): "10/မဒန(နိုင်)241890"
+ *
+ * Preview:
+ *   မြန်မာ  ၁၀/မဒန(နိုင်)၂၄၁၈၉၀
+ *   English  10/MADANA(N)241890
  *
  * Props
  *   value    : NRC string (controlled)
@@ -17,6 +21,9 @@ import { NRC_DATA, NRC_CITIZEN_TYPES, getTownships, resolveToCode, findTownship 
  *   readOnly : bool
  */
 export default function NrcInput({ value, onChange, required, readOnly }) {
+  const { t, i18n } = useTranslation()
+  const isEn = i18n.language === 'en'
+
   const parsed = parseNrc(value || '')
 
   // Migrate legacy full-name township to code on the fly
@@ -38,33 +45,65 @@ export default function NrcInput({ value, onChange, required, readOnly }) {
     ? { background: 'var(--bg-secondary)', cursor: 'not-allowed', color: 'var(--text-muted)' }
     : {}
 
-  // Convert Arabic digits to Myanmar digits for the Myanmar preview
+  // Convert Arabic digits → Myanmar digits
   const toMM = str => (str || '').replace(/[0-9]/g, d => '၀၁၂၃၄၅၆၇၈၉'[d])
+  // Convert Myanmar digits → Arabic digits
+  const toAR = str => (str || '').replace(/[၀-၉]/g, d => '၀၁၂၃၄၅၆၇၈၉'.indexOf(d))
 
-  // Build both preview strings
+  // ── State dropdown option label ───────────────────────────────────
+  const stateLabel = (key, stateData) =>
+    isEn
+      ? `${key}/ — ${stateData.engState}`
+      : `${key}/ — ${stateData.stateName}`
+
+  // ── Township dropdown option label ────────────────────────────────
+  const townshipLabel = t =>
+    isEn
+      ? `${t.engCode} — ${t.engName} (${t.code} — ${t.name})`
+      : `${t.code} — ${t.name} (${t.engCode} — ${t.engName})`
+
+  // ── Citizen type option label ─────────────────────────────────────
+  const citizenLabel = ct =>
+    isEn
+      ? `${ct.engValue} — ${ct.label.split(' — ')[1]?.split(' (')[0] ?? ct.engValue} (${ct.value})`
+      : `${ct.value} (${ct.engValue})`
+
+  // ── Myanmar preview ───────────────────────────────────────────────
   const mmPreview = (() => {
     if (!parsed.state && !resolvedCode && !parsed.type && !parsed.digits) return ''
     let s = ''
-    if (parsed.state)   s += toMM(parsed.state) + '/'
-    if (resolvedCode)   s += resolvedCode
-    if (parsed.type)    s += `(${parsed.type})`
-    if (parsed.digits)  s += toMM(parsed.digits)
+    if (parsed.state)  s += toMM(parsed.state) + '/'
+    if (resolvedCode)  s += resolvedCode
+    if (parsed.type)   s += `(${parsed.type})`
+    if (parsed.digits) s += toMM(parsed.digits)
     return s
   })()
 
+  // ── English preview ───────────────────────────────────────────────
   const enPreview = (() => {
     if (!parsed.state && !resolvedCode && !parsed.type && !parsed.digits) return ''
     let s = ''
-    if (parsed.state)           s += parsed.state + '/'
-    if (townshipObj?.engCode)   s += townshipObj.engCode
-    else if (resolvedCode)      s += resolvedCode
-    if (citizenObj?.engValue)   s += `(${citizenObj.engValue})`
-    else if (parsed.type)       s += `(${parsed.type})`
-    if (parsed.digits)          s += parsed.digits.replace(/[၀-၉]/g, d => String('၀၁၂၃၄၅၆၇၈၉'.indexOf(d)))
+    if (parsed.state)         s += parsed.state + '/'
+    if (townshipObj?.engCode) s += townshipObj.engCode
+    else if (resolvedCode)    s += resolvedCode
+    if (citizenObj?.engValue) s += `(${citizenObj.engValue})`
+    else if (parsed.type)     s += `(${parsed.type})`
+    if (parsed.digits)        s += toAR(parsed.digits)
     return s
   })()
 
   const hasPreview = mmPreview || enPreview
+
+  // ── Which preview row goes first based on language ────────────────
+  const previewRows = isEn
+    ? [
+        { label: t('nrc.enLabel'), text: enPreview },
+        { label: t('nrc.mmLabel'), text: mmPreview },
+      ]
+    : [
+        { label: t('nrc.mmLabel'), text: mmPreview },
+        { label: t('nrc.enLabel'), text: enPreview },
+      ]
 
   return (
     <div>
@@ -73,31 +112,31 @@ export default function NrcInput({ value, onChange, required, readOnly }) {
         {/* ── State number ── */}
         <select
           className="form-select-custom"
-          style={{ width: 70, flexShrink: 0, ...inputStyle }}
+          style={{ width: 160, flexShrink: 0, ...inputStyle }}
           value={parsed.state}
           disabled={readOnly}
           required={required && !readOnly}
           onChange={e => handleChange('state', e.target.value)}
         >
-          <option value="">နံပါတ်</option>
+          <option value="">{t('nrc.statePlaceholder')}</option>
           {Object.entries(NRC_DATA).map(([k, v]) => (
-            <option key={k} value={k}>{k}/ ({v.engState})</option>
+            <option key={k} value={k}>{stateLabel(k, v)}</option>
           ))}
         </select>
 
-        {/* ── Township code ── */}
+        {/* ── Township ── */}
         <select
           className="form-select-custom"
-          style={{ flex: '1 1 220px', minWidth: 180, ...inputStyle }}
+          style={{ flex: '1 1 240px', minWidth: 200, ...inputStyle }}
           value={resolvedCode}
           disabled={readOnly || !parsed.state}
           required={required && !readOnly}
           onChange={e => handleChange('township', e.target.value)}
         >
-          <option value="">မြို့နယ် / Township</option>
-          {townships.map(t => (
-            <option key={t.code} value={t.code}>
-              {t.code} — {t.name} ({t.engCode} — {t.engName})
+          <option value="">{t('nrc.townshipPlaceholder')}</option>
+          {townships.map(tp => (
+            <option key={tp.code} value={tp.code}>
+              {townshipLabel(tp)}
             </option>
           ))}
         </select>
@@ -105,16 +144,16 @@ export default function NrcInput({ value, onChange, required, readOnly }) {
         {/* ── Citizen type ── */}
         <select
           className="form-select-custom"
-          style={{ width: 110, flexShrink: 0, ...inputStyle }}
+          style={{ width: 120, flexShrink: 0, ...inputStyle }}
           value={parsed.type}
           disabled={readOnly}
           required={required && !readOnly}
           onChange={e => handleChange('type', e.target.value)}
         >
-          <option value="">အမျိုး</option>
+          <option value="">{t('nrc.typePlaceholder')}</option>
           {NRC_CITIZEN_TYPES.map(ct => (
             <option key={ct.value} value={ct.value}>
-              {ct.value} ({ct.engValue})
+              {citizenLabel(ct)}
             </option>
           ))}
         </select>
@@ -123,7 +162,7 @@ export default function NrcInput({ value, onChange, required, readOnly }) {
         <input
           className="form-control-custom"
           style={{ width: 110, flexShrink: 0, ...inputStyle }}
-          placeholder="၁၂၃၄၅၆"
+          placeholder={t('nrc.digitsPlaceholder')}
           maxLength={6}
           value={parsed.digits}
           readOnly={readOnly}
@@ -132,28 +171,22 @@ export default function NrcInput({ value, onChange, required, readOnly }) {
         />
       </div>
 
-      {/* ── Dual preview ── */}
+      {/* ── Live dual preview ── */}
       {hasPreview && (
         <div style={{ marginTop: 6, fontSize: '0.78rem', fontFamily: 'monospace' }}>
-          {/* Myanmar format */}
-          <div style={{ color: 'var(--text-muted)' }}>
-            <span style={{ marginRight: 4 }}>မြန်မာ:</span>
-            <strong style={{ color: 'var(--text-primary)', letterSpacing: '0.03em' }}>
-              {mmPreview || '—'}
-            </strong>
-          </div>
-          {/* English format */}
-          <div style={{ color: 'var(--text-muted)', marginTop: 2 }}>
-            <span style={{ marginRight: 4 }}>English:</span>
-            <strong style={{ color: 'var(--text-primary)', letterSpacing: '0.05em' }}>
-              {enPreview || '—'}
-            </strong>
-          </div>
+          {previewRows.map(row => (
+            <div key={row.label} style={{ color: 'var(--text-muted)', marginTop: 1 }}>
+              <span style={{ marginRight: 4 }}>{row.label}:</span>
+              <strong style={{ color: 'var(--text-primary)', letterSpacing: '0.04em' }}>
+                {row.text || '—'}
+              </strong>
+            </div>
+          ))}
         </div>
       )}
 
-      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 2 }}>
-        ဥပမာ — ၁၀/မဒန(နိုင်)၁၂၃၄၅၆ &nbsp;|&nbsp; 10/MADANA(N)123456
+      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 3 }}>
+        {t('nrc.example')}
       </div>
     </div>
   )
@@ -163,37 +196,17 @@ export default function NrcInput({ value, onChange, required, readOnly }) {
 //  Helpers
 // ─────────────────────────────────────────────
 
-/**
- * Parse an NRC string into its four parts.
- *
- * Accepted patterns:
- *   "10/မဒန(နိုင်)123456"   ← full
- *   "10/မဒန(နိုင်)"         ← no digits
- *   "10/မဒန"                ← no type/digits
- *   "10/"                   ← state only
- */
 function parseNrc(str) {
   if (!str) return { state: '', township: '', type: '', digits: '' }
-
-  // Full: digits captured after closing paren
   const full = str.match(/^(\d+)\/([^(]*)\(([^)]+)\)(.*)$/)
   if (full) return { state: full[1], township: full[2], type: full[3], digits: full[4] }
-
-  // State + township, no type
   const partial2 = str.match(/^(\d+)\/([^(]+)$/)
   if (partial2) return { state: partial2[1], township: partial2[2], type: '', digits: '' }
-
-  // State only
   const partial1 = str.match(/^(\d+)\/$/)
   if (partial1) return { state: partial1[1], township: '', type: '', digits: '' }
-
   return { state: '', township: '', type: '', digits: '' }
 }
 
-/**
- * Serialise the four parts back into a canonical NRC string.
- * Returns '' when all parts are empty.
- */
 function formatNrc({ state, township, type, digits }) {
   if (!state && !township && !type && !digits) return ''
   let s = ''

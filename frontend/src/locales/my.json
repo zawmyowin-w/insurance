@@ -1894,5 +1894,14 @@
       "claimAmount": "တောင်းဆိုမှုပမာဏ",
       "incidentDate": "ဖြစ်ပွားသည့်ရက်"
     }
+  },
+  "nrc": {
+    "statePlaceholder": "နံပါတ်",
+    "townshipPlaceholder": "မြို့နယ်",
+    "typePlaceholder": "အမျိုး",
+    "digitsPlaceholder": "၁၂၃၄၅၆",
+    "mmLabel": "မြန်မာ",
+    "enLabel": "English",
+    "example": "ဥပမာ — ၁၀/မဒန(နိုင်)၁၂၃၄၅၆  |  10/MADANA(N)123456"
   }
 }
