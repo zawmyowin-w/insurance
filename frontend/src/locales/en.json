@@ -3,7 +3,6 @@
   "nav": {
     "plans": "Plans",
     "howItWorks": "How It Works",
-    "contact": "Contact",
     "login": "Log in",
     "register": "Register",
     "dashboard": "Dashboard",
@@ -369,18 +368,14 @@
     "confirmErrorDesc": "This confirmation link is no longer valid. Please request a new one."
   },
   "otp": {
-    "title": "Verify your email",
     "subtitle": "We sent a 6-digit code to",
     "code": "Verification Code",
     "verify": "Verify Email",
-    "verifying": "Verifying...",
     "resend": "Resend Code",
     "resending": "Resending...",
-    "resendIn": "Resend available in",
     "resent": "A new code has been sent to your email",
     "sent": "Verification code sent! Check your inbox.",
     "expiresIn": "Code expires in",
-    "verified": "Email verified! You can now log in.",
     "enterAll": "Please enter all 6 digits",
     "invalid": "Incorrect code. Please try again.",
     "expired": "Code expired. Request a new one.",
@@ -503,8 +498,6 @@
     "subtitle": "Track your insurance applications",
     "newApp": "New Application",
     "noApps": "No applications yet",
-    "cancelConfirm": "Cancel this application?",
-    "deleteConfirm": "Permanently delete this application? This cannot be undone.",
     "cancelled": "Application cancelled",
     "deletedSuccess": "Application deleted",
     "deleteFailed": "Failed to delete",
@@ -1898,9 +1891,6 @@
     "statePlaceholder": "State No.",
     "townshipPlaceholder": "Township",
     "typePlaceholder": "Type",
-    "digitsPlaceholder": "123456",
-    "mmLabel": "Myanmar",
-    "enLabel": "English",
-    "example": "e.g. 10/MADANA(N)123456"
+    "digitsPlaceholder": "123456"
   }
 }

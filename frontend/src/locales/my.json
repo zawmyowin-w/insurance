@@ -3,7 +3,6 @@
   "nav": {
     "plans": "အာမခံ Plan များ",
     "howItWorks": "လုပ်ထုံးလုပ်နည်း",
-    "contact": "ဆက်သွယ်ရန်",
     "login": "ဝင်ရောက်ရန်",
     "register": "မှတ်ပုံတင်ရန်",
     "dashboard": "Dashboard",
@@ -88,7 +87,6 @@
     "recommendedFor": "သင့်အတွက် အကြံပြုသော Plan များ -",
     "clearFilter": "ရှင်းလင်းမည်",
     "notFound": "ဤ type အတွက် Plan မတွေ့ပါ",
-    "allPlansBtn2": "Plan အားလုံး",
     "detailBtn": "အသေးစိတ်",
     "applyBtn": "လျှောက်ထားမည်",
     "moreOtherBenefits": "အခြားအကျိုးကျေးဇူးများ",
@@ -370,18 +368,14 @@
     "confirmErrorDesc": "ဤ Confirmation Link သက်တမ်းကုန်သွားပါပြီ။ အသစ်တစ်ခု ပြန်တောင်းပါ"
   },
   "otp": {
-    "title": "Email ကို အတည်ပြုရန်",
     "subtitle": "ဂဏန်း ၆ လုံး Code ကို ဤ Email သို့ ပို့လိုက်ပြီ",
     "code": "အတည်ပြုကုဒ်",
     "verify": "Email အတည်ပြုရန်",
-    "verifying": "အတည်ပြုနေသည်...",
     "resend": "Code ထပ်ပို့ရန်",
     "resending": "ပို့နေသည်...",
-    "resendIn": "ထပ်ပို့နိုင်မည့်အချိန်",
     "resent": "Code အသစ် Email သို့ ပို့ပြီးပါပြီ",
     "sent": "အတည်ပြုကုဒ် ပို့ပြီးပါပြီ! Inbox ကြည့်ပါ",
     "expiresIn": "Code သက်တမ်းကုန်ချိန်",
-    "verified": "Email အတည်ပြုပြီးပါပြီ! ဝင်ရောက်နိုင်ပါပြီ",
     "enterAll": "ဂဏန်း ၆ လုံး အားလုံးထည့်ပါ",
     "invalid": "Code မှားပါသည်။ ထပ်မံကြိုးစားပါ",
     "expired": "Code သက်တမ်းကုန်သွားပါပြီ။ အသစ်တောင်းပါ",
@@ -504,8 +498,6 @@
     "subtitle": "အာမခံ လျှောက်လွှာများကို ခြေရာခံရန်",
     "newApp": "လျှောက်လွှာ အသစ်",
     "noApps": "မည်သည့်လျှောက်လွှာမျှ မရှိသေးပါ",
-    "cancelConfirm": "ဤလျှောက်လွှာကို ပယ်ဖျက်မည်လား?",
-    "deleteConfirm": "ဤလျှောက်လွှာကို အပြီးအပိုင် ဖျက်မည်လား? ပြန်မဖြစ်နိုင်ပါ",
     "cancelled": "လျှောက်လွှာ ပယ်ဖျက်ပြီးပါပြီ",
     "deletedSuccess": "လျှောက်လွှာ ဖျက်ပြီးပါပြီ",
     "deleteFailed": "ဖျက်မှု မအောင်မြင်ပါ",
@@ -1899,9 +1891,6 @@
     "statePlaceholder": "နံပါတ်",
     "townshipPlaceholder": "မြို့နယ်",
     "typePlaceholder": "အမျိုးအစား",
-    "digitsPlaceholder": "၁၂၃၄၅၆",
-    "mmLabel": "မြန်မာ",
-    "enLabel": "English",
-    "example": "ဥပမာ — ၁၀/မဒန(နိုင်)၁၂၃၄၅၆"
+    "digitsPlaceholder": "၁၂၃၄၅၆"
   }
 }
