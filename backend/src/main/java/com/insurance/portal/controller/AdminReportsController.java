@@ -1,5 +1,6 @@
 package com.insurance.portal.controller;
 
+import com.insurance.portal.model.AnalyticsResetRecord;
 import com.insurance.portal.model.Claim;
 import com.insurance.portal.model.Payment;
 import com.insurance.portal.model.PolicyApplication;
@@ -29,16 +30,25 @@ public class AdminReportsController {
     private final ClaimRepository claimRepo;
     private final PaymentRepository paymentRepo;
     private final InsurancePackageRepository packageRepo;
+    private final AnalyticsResetRepository resetRepo;
 
     // ── Reports ───────────────────────────────────────────────────────
     @GetMapping("/reports")
     @Transactional(readOnly = true)
     public Map<String, Object> getReports() {
         Map<String, Object> r = new LinkedHashMap<>();
-        List<PolicyApplication> allApps     = appRepo.findAll();
-        List<Claim>            allClaims    = claimRepo.findAll();
-        List<Payment>          allPayments  = paymentRepo.findAll();
         LocalDateTime          now          = LocalDateTime.now();
+        // Only count data created after the last analytics reset (if any)
+        LocalDateTime          resetAfter   = getLastResetTime();
+        List<PolicyApplication> allApps     = appRepo.findAll().stream()
+                .filter(a -> a.getCreatedAt() == null || !a.getCreatedAt().isBefore(resetAfter))
+                .toList();
+        List<Claim>            allClaims    = claimRepo.findAll().stream()
+                .filter(c -> c.getCreatedAt() == null || !c.getCreatedAt().isBefore(resetAfter))
+                .toList();
+        List<Payment>          allPayments  = paymentRepo.findAll().stream()
+                .filter(p -> p.getCreatedAt() == null || !p.getCreatedAt().isBefore(resetAfter))
+                .toList();
 
         // Basic counts
         r.put("totalCustomers",       userRepo.findAllByRole(Role.CUSTOMER).size());
@@ -229,8 +239,13 @@ public class AdminReportsController {
     public Map<String, Object> getWallet() {
         Map<String, Object> w = new LinkedHashMap<>();
         LocalDateTime now = LocalDateTime.now();
-        List<Payment> allPayments = paymentRepo.findAll();
-        List<Claim>   allClaims  = claimRepo.findAll();
+        LocalDateTime resetAfter = getLastResetTime();
+        List<Payment> allPayments = paymentRepo.findAll().stream()
+                .filter(p -> p.getCreatedAt() == null || !p.getCreatedAt().isBefore(resetAfter))
+                .toList();
+        List<Claim>   allClaims  = claimRepo.findAll().stream()
+                .filter(c -> c.getCreatedAt() == null || !c.getCreatedAt().isBefore(resetAfter))
+                .toList();
 
         // Only count customer premium payments; exclude CLAIM_PAYOUT entries from inflow
         List<Payment> verifiedPayments = allPayments.stream()
@@ -288,6 +303,13 @@ public class AdminReportsController {
     }
 
     // ── Helpers ───────────────────────────────────────────────────────
+
+    /** Returns the timestamp of the last analytics reset, or LocalDateTime.MIN if no reset has occurred. */
+    private LocalDateTime getLastResetTime() {
+        return resetRepo.findTopByOrderByResetAtDesc()
+                .map(AnalyticsResetRecord::getResetAt)
+                .orElse(LocalDateTime.MIN);
+    }
 
     private static BigDecimal sumAmounts(List<BigDecimal> amounts) {
         return amounts.stream().reduce(BigDecimal.ZERO, BigDecimal::add);

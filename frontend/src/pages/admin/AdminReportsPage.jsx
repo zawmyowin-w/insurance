@@ -220,6 +220,8 @@ export default function AdminReportsPage() {
   const [snapsLoading,  setSnapsLoading]  = useState(false)
   const [snapsLoaded,   setSnapsLoaded]   = useState(false)
   const [toast,         setToast]         = useState(null)
+  // Last reset info — determines the "current analytics period" start date
+  const [lastReset,     setLastReset]     = useState(undefined) // undefined = not yet loaded
 
   const showToast = (msg, ok = true) => {
     setToast({ msg, ok })
@@ -227,10 +229,14 @@ export default function AdminReportsPage() {
   }
 
   useEffect(() => {
-    api.get('/admin/reports')
-      .then(r => setReports(r.data))
-      .catch(() => setReports(null))
-      .finally(() => setLoading(false))
+    Promise.all([
+      api.get('/admin/reports'),
+      api.get('/admin/reports/last-reset'),
+    ]).then(([reportsRes, resetRes]) => {
+      setReports(reportsRes.data)
+      setLastReset(resetRes.data || null)
+    }).catch(() => setReports(null))
+    .finally(() => setLoading(false))
   }, [])
 
   useEffect(() => {
@@ -268,19 +274,25 @@ export default function AdminReportsPage() {
     }
   }
 
-  // Monthly reset — saves snapshot + downloads PDF
+  // Monthly reset — exports full-period PDF, then resets all analytics to zero
   const handleReset = async () => {
     setShowResetModal(false)
     setResetBusy(true)
     try {
       const now = new Date()
       const res = await api.post('/admin/reports/monthly-reset', null, { responseType: 'blob' })
-      const filename = `monthly-report-${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}.pdf`
+      const filename = `period-report-${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}.pdf`
       triggerBlobDownload(res.data, filename)
       showToast(t('admin.reports.monthlyResetSuccess'))
-      // Reload snapshots list
-      const snaps = await api.get('/admin/reports/monthly-snapshots')
+      // Reload everything — analytics now shows zero, snapshots table updated
+      const [snaps, newReports, newReset] = await Promise.all([
+        api.get('/admin/reports/monthly-snapshots'),
+        api.get('/admin/reports'),
+        api.get('/admin/reports/last-reset'),
+      ])
       setSnapshots(snaps.data || [])
+      setReports(newReports.data)
+      setLastReset(newReset.data || null)
     } catch {
       showToast(t('admin.reports.monthlyResetError'), false)
     } finally {
@@ -360,9 +372,15 @@ export default function AdminReportsPage() {
               </div>
               <h5 style={{ margin: 0, fontWeight: 800, color: 'var(--text-primary)' }}>{t('admin.reports.monthlyResetConfirmTitle')}</h5>
             </div>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.5rem', lineHeight: 1.6 }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1rem', lineHeight: 1.6 }}>
               {t('admin.reports.monthlyResetConfirmBody')}
             </p>
+            <div style={{ background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: 9, padding: '0.6rem 0.9rem', marginBottom: '1.5rem', fontSize: '0.83rem', color: '#92400e', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 7 }}>
+              <i className="bi bi-calendar2-range"></i>
+              Report period: <span style={{ fontWeight: 800 }}>
+                {lastReset ? new Date(lastReset.resetAt).toLocaleDateString('en', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Inception'}
+              </span> → <span style={{ fontWeight: 800 }}>{currentMonthName} {currentYear}</span>
+            </div>
             <div className="d-flex gap-2 justify-content-end flex-wrap">
               <button type="button" onClick={() => setShowResetModal(false)}
                 style={{ padding: '0.55rem 1.25rem', borderRadius: 9, border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-secondary)', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem' }}>
@@ -382,6 +400,15 @@ export default function AdminReportsPage() {
       <div className="mb-4">
         <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('admin.reports.title')}</h4>
         <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>{t('admin.reports.subtitle')}</p>
+        {lastReset !== undefined && (
+          <div style={{ marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 6, background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 20, padding: '0.25rem 0.85rem', fontSize: '0.78rem', fontWeight: 600, color: '#1d4ed8' }}>
+            <i className="bi bi-calendar2-range"></i>
+            {lastReset
+              ? <>Current period: {new Date(lastReset.resetAt).toLocaleDateString('en', { day: '2-digit', month: 'short', year: 'numeric' })} → Today</>
+              : <>Current period: Inception → Today</>
+            }
+          </div>
+        )}
       </div>
 
       {/* Tabs */}
@@ -827,7 +854,12 @@ export default function AdminReportsPage() {
                 <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 6 }}>
                   {t('admin.reports.monthlyReportTitle')}
                 </div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#fff', lineHeight: 1.2, marginBottom: 8 }}>
+                <div style={{ fontSize: '1.3rem', fontWeight: 900, color: '#fff', lineHeight: 1.25, marginBottom: 8 }}>
+                  {lastReset
+                    ? new Date(lastReset.resetAt).toLocaleDateString('en', { day: '2-digit', month: 'short', year: 'numeric' })
+                    : 'Inception'
+                  }
+                  <span style={{ color: 'rgba(255,255,255,0.5)', margin: '0 8px', fontWeight: 400 }}>→</span>
                   {currentMonthName} {currentYear}
                 </div>
                 <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.85rem', margin: 0, lineHeight: 1.6 }}>
@@ -875,11 +907,10 @@ export default function AdminReportsPage() {
                   Monthly Reset — How it works
                 </div>
                 <ul style={{ margin: 0, padding: '0 0 0 1.1rem', color: 'var(--text-secondary)', fontSize: '0.83rem', lineHeight: 1.7 }}>
-                  <li>Generates a comprehensive PDF of <strong>{currentMonthName} {currentYear}</strong>'s analytics data</li>
-                  <li>Saves the PDF to disk and records the snapshot in the archive below</li>
-                  <li>Downloads the PDF to your browser immediately</li>
+                  <li>Exports <strong>all data from {lastReset ? new Date(lastReset.resetAt).toLocaleDateString('en', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Inception'} → today</strong> as a comprehensive PDF covering: Overview, By Type, Premium Wallet, Agents, Plan Popularity, Monthly Breakdown</li>
+                  <li><strong>Resets all analytics to zero</strong> — the dashboard will only count data created from this moment forward</li>
+                  <li>Saves the PDF to the archive below for re-download at any time</li>
                   <li><strong>Does NOT delete</strong> any business data (payments, claims, applications remain intact)</li>
-                  <li>You can re-download any archived PDF at any time from the table below</li>
                 </ul>
               </div>
             </div>

@@ -3,6 +3,7 @@ package com.insurance.portal.controller;
 import com.insurance.portal.model.*;
 import com.insurance.portal.model.enums.*;
 import com.insurance.portal.repository.*;
+import java.time.format.DateTimeFormatter;
 import com.itextpdf.kernel.colors.ColorConstants;
 import com.itextpdf.kernel.colors.DeviceRgb;
 import com.itextpdf.kernel.font.PdfFont;
@@ -51,6 +52,7 @@ public class MonthlyReportController {
     private final UserRepository userRepo;
     private final InsurancePackageRepository packageRepo;
     private final MonthlyReportSnapshotRepository snapshotRepo;
+    private final AnalyticsResetRepository resetRepo;
 
     @Value("${app.upload.dir:./uploads}")
     private String uploadDir;
@@ -89,57 +91,69 @@ public class MonthlyReportController {
 
     // ─────────────────────────────────────────────────────────────────────────
     // POST /admin/reports/monthly-reset
-    // Generates the current month's PDF, saves it to disk, records a snapshot,
-    // and returns the PDF bytes so the browser can download it immediately.
+    // Exports ALL data since the last reset as a comprehensive PDF (covering
+    // overview, by type, wallet, agents, plan popularity, and monthly analytics),
+    // archives the report, records the new reset baseline, and returns the PDF.
+    // After this call the analytics dashboards start from zero (only data
+    // created after this moment will be counted).
     // ─────────────────────────────────────────────────────────────────────────
     @PostMapping("/monthly-reset")
     @Transactional
     public ResponseEntity<byte[]> monthlyReset() throws Exception {
 
         LocalDateTime now = LocalDateTime.now();
-        int y = now.getYear();
-        int m = now.getMonthValue();
 
-        byte[] pdf = buildMonthlyReportPdf(y, m);
+        // ── Determine the period start (the previous reset, or null = all-time) ──
+        AnalyticsResetRecord lastReset = resetRepo.findTopByOrderByResetAtDesc().orElse(null);
+        LocalDateTime periodStart      = (lastReset != null) ? lastReset.getResetAt() : null;
 
-        // ── Compute summary stats for the snapshot record ─────────────────
-        LocalDateTime periodStart = LocalDateTime.of(y, m, 1, 0, 0, 0);
+        // ── Build comprehensive period PDF ────────────────────────────────
+        byte[] pdf = buildFullPeriodReportPdf(periodStart, now);
 
-        List<Payment>          allPayments = paymentRepo.findAll();
-        List<Claim>            allClaims   = claimRepo.findAll();
-        List<PolicyApplication> allApps    = appRepo.findAll();
+        // ── Compute summary stats for snapshot ────────────────────────────
+        LocalDateTime effectiveFrom = (periodStart != null) ? periodStart
+                : LocalDateTime.of(2000, 1, 1, 0, 0, 0);
+
+        List<Payment>           allPayments = paymentRepo.findAll();
+        List<Claim>             allClaims   = claimRepo.findAll();
+        List<PolicyApplication> allApps     = appRepo.findAll();
 
         BigDecimal revenue = allPayments.stream()
                 .filter(p -> p.getStatus() == PaymentStatus.VERIFIED
                         && p.getAmount() != null
                         && !"CLAIM_PAYOUT".equals(p.getPaymentType())
-                        && inMonth(p.getCreatedAt(), y, m))
+                        && inPeriod(p.getCreatedAt(), effectiveFrom, now))
                 .map(Payment::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         BigDecimal claimsPaid = allClaims.stream()
                 .filter(c -> c.getStatus() == ClaimStatus.APPROVED
                         && c.getAmount() != null
-                        && inMonth(c.getCreatedAt(), y, m))
+                        && inPeriod(c.getCreatedAt(), effectiveFrom, now))
                 .map(Claim::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        int totalApps    = (int) allApps.stream().filter(a -> inMonth(a.getCreatedAt(), y, m)).count();
-        int newPolicies  = (int) allApps.stream().filter(a -> a.getStatus() == ApplicationStatus.APPROVED && inMonth(a.getCreatedAt(), y, m)).count();
-        int totalClaimsM = (int) allClaims.stream().filter(c -> inMonth(c.getCreatedAt(), y, m)).count();
+        int totalApps    = (int) allApps.stream().filter(a -> inPeriod(a.getCreatedAt(), effectiveFrom, now)).count();
+        int newPolicies  = (int) allApps.stream().filter(a -> a.getStatus() == ApplicationStatus.APPROVED
+                && inPeriod(a.getCreatedAt(), effectiveFrom, now)).count();
+        int totalClaimsM = (int) allClaims.stream().filter(c -> inPeriod(c.getCreatedAt(), effectiveFrom, now)).count();
         int totalCust    = userRepo.findAllByRole(Role.CUSTOMER).size();
+        int y = now.getYear();
+        int m = now.getMonthValue();
 
         // ── Save PDF to disk ──────────────────────────────────────────────
-        String pdfFilename = String.format("monthly-report-%d-%02d-%d.pdf", y, m, System.currentTimeMillis());
+        String pdfFilename = String.format("period-report-%d%02d-%d.pdf", y, m, System.currentTimeMillis());
         Path dir = Paths.get(uploadDir, "monthly-reports");
         Files.createDirectories(dir);
         Path filePath = dir.resolve(pdfFilename);
         Files.write(filePath, pdf);
 
         // ── Persist snapshot record ───────────────────────────────────────
+        LocalDateTime snapStart = (periodStart != null) ? periodStart
+                : LocalDateTime.of(2000, 1, 1, 0, 0, 0);
         MonthlyReportSnapshot snapshot = MonthlyReportSnapshot.builder()
                 .year(y).month(m)
-                .periodStart(periodStart)
+                .periodStart(snapStart)
                 .periodEnd(now)
                 .totalRevenue(revenue)
                 .totalClaimsPaid(claimsPaid)
@@ -152,11 +166,33 @@ public class MonthlyReportController {
                 .build();
         snapshotRepo.save(snapshot);
 
-        String attachment = String.format("monthly-report-%d-%02d.pdf", y, m);
+        // ── Record the analytics reset event ─────────────────────────────
+        resetRepo.save(AnalyticsResetRecord.builder()
+                .resetAt(now)
+                .periodStart(periodStart)
+                .pdfPath(filePath.toAbsolutePath().toString())
+                .build());
+
+        String attachment = String.format("period-report-%d-%02d.pdf", y, m);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + attachment + "\"")
                 .contentType(MediaType.APPLICATION_PDF)
                 .body(pdf);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // GET /admin/reports/last-reset
+    // Returns the timestamp of the most recent reset and the period start date.
+    // The frontend uses this to display "Current period: X → today".
+    // ─────────────────────────────────────────────────────────────────────────
+    @GetMapping("/last-reset")
+    public ResponseEntity<Map<String, Object>> getLastReset() {
+        return resetRepo.findTopByOrderByResetAtDesc().map(r -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("resetAt",     r.getResetAt());
+            m.put("periodStart", r.getPeriodStart());
+            return ResponseEntity.ok(m);
+        }).orElse(ResponseEntity.ok(null));
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -482,11 +518,347 @@ public class MonthlyReportController {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    // Comprehensive Period PDF Builder
+    // Covers every section shown in the dashboard: overview, by type, wallet,
+    // agents, plan popularity, and monthly application analytics.
+    // ─────────────────────────────────────────────────────────────────────────
+    private byte[] buildFullPeriodReportPdf(LocalDateTime from, LocalDateTime to) throws Exception {
+        DateTimeFormatter dateFmt = DateTimeFormatter.ofPattern("dd MMM yyyy");
+        DateTimeFormatter dtFmt   = DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm");
+
+        String fromLabel   = (from == null) ? "Inception" : from.format(dateFmt);
+        String toLabel     = to.format(dateFmt);
+        String periodLabel = fromLabel + " \u2013 " + toLabel;
+        String generatedAt = to.format(dtFmt);
+
+        LocalDateTime effectiveFrom = (from != null) ? from : LocalDateTime.of(2000, 1, 1, 0, 0, 0);
+
+        // ── Data ──────────────────────────────────────────────────────────
+        List<Payment>           allPayments = paymentRepo.findAll();
+        List<Claim>             allClaims   = claimRepo.findAll();
+        List<PolicyApplication> allApps     = appRepo.findAll();
+        List<User>              agents      = userRepo.findAllByRole(Role.AGENT);
+        List<InsurancePackage>  packages    = packageRepo.findAll();
+
+        List<Payment> periodPayments = allPayments.stream()
+                .filter(p -> p.getStatus() == PaymentStatus.VERIFIED
+                        && p.getAmount() != null
+                        && !"CLAIM_PAYOUT".equals(p.getPaymentType())
+                        && inPeriod(p.getCreatedAt(), effectiveFrom, to))
+                .toList();
+
+        List<Claim> periodClaims = allClaims.stream()
+                .filter(c -> inPeriod(c.getCreatedAt(), effectiveFrom, to)).toList();
+        List<Claim> approvedClaims = periodClaims.stream()
+                .filter(c -> c.getStatus() == ClaimStatus.APPROVED && c.getAmount() != null).toList();
+
+        List<PolicyApplication> periodApps = allApps.stream()
+                .filter(a -> inPeriod(a.getCreatedAt(), effectiveFrom, to)).toList();
+
+        // ── Aggregate ────────────────────────────────────────────────────
+        BigDecimal totalRevenue    = periodPayments.stream().map(Payment::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalClaimsPaid = approvedClaims.stream().map(Claim::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal netProfit       = totalRevenue.subtract(totalClaimsPaid);
+        double lossRatio    = totalRevenue.compareTo(BigDecimal.ZERO) > 0
+                ? totalClaimsPaid.multiply(BigDecimal.valueOf(100)).divide(totalRevenue, 2, RoundingMode.HALF_UP).doubleValue() : 0;
+        double profitMargin = totalRevenue.compareTo(BigDecimal.ZERO) > 0
+                ? netProfit.multiply(BigDecimal.valueOf(100)).divide(totalRevenue, 2, RoundingMode.HALF_UP).doubleValue() : 0;
+
+        long approvedApps  = periodApps.stream().filter(a -> a.getStatus() == ApplicationStatus.APPROVED).count();
+        long pendingApps   = periodApps.stream().filter(a -> a.getStatus() == ApplicationStatus.PENDING || a.getStatus() == ApplicationStatus.VERIFIED).count();
+        long rejectedApps  = periodApps.stream().filter(a -> a.getStatus() == ApplicationStatus.REJECTED).count();
+        long approvedClaimsCount = periodClaims.stream().filter(c -> c.getStatus() == ClaimStatus.APPROVED).count();
+        long pendingClaims  = periodClaims.stream().filter(c -> c.getStatus() == ClaimStatus.PENDING || c.getStatus() == ClaimStatus.VERIFIED).count();
+        long rejectedClaims = periodClaims.stream().filter(c -> c.getStatus() == ClaimStatus.REJECTED).count();
+
+        // Revenue / claims by type
+        Map<String, BigDecimal> revenueByType = new TreeMap<>();
+        for (Payment p : periodPayments) {
+            if (p.getApplication() != null && p.getApplication().getInsurancePackage() != null)
+                revenueByType.merge(p.getApplication().getInsurancePackage().getType(), p.getAmount(), BigDecimal::add);
+        }
+        Map<String, BigDecimal> claimsByType = new TreeMap<>();
+        for (Claim c : approvedClaims) {
+            String type = (c.getApplication() != null && c.getApplication().getInsurancePackage() != null)
+                    ? c.getApplication().getInsurancePackage().getType() : "OTHER";
+            claimsByType.merge(type, c.getAmount(), BigDecimal::add);
+        }
+
+        // Agent performance
+        List<Map<String, Object>> agentStats = agents.stream().map(agent -> {
+            long handled  = periodApps.stream().filter(a -> a.getAgent() != null && a.getAgent().getId().equals(agent.getId())).count();
+            long approved = periodApps.stream().filter(a -> a.getAgent() != null && a.getAgent().getId().equals(agent.getId()) && a.getStatus() == ApplicationStatus.APPROVED).count();
+            long claims   = periodClaims.stream().filter(c -> c.getAgent() != null && c.getAgent().getId().equals(agent.getId())).count();
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("name",     agent.getName());
+            m.put("type",     agent.getInsuranceType() != null ? agent.getInsuranceType() : "ALL");
+            m.put("handled",  handled);
+            m.put("approved", approved);
+            m.put("claims",   claims);
+            m.put("rate",     handled > 0 ? Math.round((double) approved / handled * 1000.0) / 10.0 : 0.0);
+            return m;
+        }).filter(m -> (long) m.get("handled") > 0 || (long) m.get("claims") > 0)
+          .sorted((a, b) -> Long.compare((long) b.get("handled"), (long) a.get("handled")))
+          .toList();
+
+        // Package popularity
+        List<Map<String, Object>> pkgStats = packages.stream().map(pkg -> {
+            long count = periodApps.stream()
+                    .filter(a -> a.getInsurancePackage() != null && a.getInsurancePackage().getId().equals(pkg.getId())).count();
+            BigDecimal rev = periodPayments.stream()
+                    .filter(p -> p.getApplication() != null && p.getApplication().getInsurancePackage() != null
+                            && p.getApplication().getInsurancePackage().getId().equals(pkg.getId()))
+                    .map(Payment::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("name",  pkg.getName());
+            m.put("type",  pkg.getType());
+            m.put("count", count);
+            m.put("rev",   rev);
+            return m;
+        }).filter(m -> (long) m.get("count") > 0)
+          .sorted((a, b) -> Long.compare((long) b.get("count"), (long) a.get("count")))
+          .toList();
+
+        // Monthly breakdown list within the period
+        List<LocalDateTime> monthStarts = new ArrayList<>();
+        LocalDateTime cursor = effectiveFrom.withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        while (!cursor.isAfter(to)) { monthStarts.add(cursor); cursor = cursor.plusMonths(1); }
+
+        // ── Build PDF ─────────────────────────────────────────────────────
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PdfDocument pdfDoc = new PdfDocument(new PdfWriter(baos));
+        Document doc = new Document(pdfDoc);
+        doc.setMargins(36, 40, 36, 40);
+
+        PdfFont bold    = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);
+        PdfFont regular = PdfFontFactory.createFont(StandardFonts.HELVETICA);
+        PdfFont oblique = PdfFontFactory.createFont(StandardFonts.HELVETICA_OBLIQUE);
+
+        // Header
+        Table header = new Table(UnitValue.createPercentArray(new float[]{58, 42})).useAllAvailableWidth();
+        header.addCell(new Cell()
+                .add(new Paragraph("DIGITAL INSURANCE CLAIMS AND PREMIUMS").setFont(bold).setFontSize(12).setFontColor(BLUE).setMarginBottom(2))
+                .add(new Paragraph("PORTAL — MYANMAR").setFont(bold).setFontSize(9).setFontColor(NAVY).setMarginBottom(3))
+                .add(new Paragraph("\u1012\u1005\u103a\u1002\u1000\u103a\u1010\u101a\u103a \u1021\u102c\u1019\u1001\u1036 \u1010\u1031\u102c\u1004\u103a\u1038\u1006\u102d\u102f\u1019\u103a\u1014\u103e\u1004\u1037\u103a \u1000\u103c\u1031\u102c\u1004\u103a\u1038\u1004\u103d\u1031 \u1015\u1031\u102c\u103a\u1010\u101a\u103a \u2014 \u1019\u103c\u1014\u103a\u1019\u102c").setFont(oblique).setFontSize(7.5f).setFontColor(GRAY))
+                .setBorder(Border.NO_BORDER).setPadding(4));
+        header.addCell(new Cell()
+                .add(new Paragraph("PERIOD ANALYTICS REPORT").setFont(bold).setFontSize(10).setFontColor(BLUE).setTextAlignment(TextAlignment.RIGHT).setMarginBottom(2))
+                .add(new Paragraph("(Monthly Reset Export)").setFont(oblique).setFontSize(8f).setFontColor(GRAY).setTextAlignment(TextAlignment.RIGHT).setMarginBottom(5))
+                .add(new Paragraph("From: " + fromLabel).setFont(bold).setFontSize(8f).setFontColor(NAVY).setTextAlignment(TextAlignment.RIGHT).setMarginBottom(2))
+                .add(new Paragraph("  To: " + toLabel).setFont(bold).setFontSize(8f).setFontColor(NAVY).setTextAlignment(TextAlignment.RIGHT).setMarginBottom(2))
+                .add(new Paragraph("Generated: " + generatedAt).setFont(regular).setFontSize(8).setFontColor(GRAY).setTextAlignment(TextAlignment.RIGHT))
+                .setBorder(Border.NO_BORDER).setPadding(4));
+        doc.add(header);
+
+        Table bar = new Table(UnitValue.createPercentArray(new float[]{100})).useAllAvailableWidth();
+        bar.addCell(new Cell()
+                .add(new Paragraph("PERIOD REPORT: " + periodLabel.toUpperCase())
+                        .setFont(bold).setFontSize(10).setFontColor(ColorConstants.WHITE).setTextAlignment(TextAlignment.CENTER))
+                .setBackgroundColor(BLUE).setPadding(6).setBorder(Border.NO_BORDER));
+        doc.add(bar);
+        doc.add(new Paragraph("").setMarginBottom(6));
+
+        // S1: Executive Summary
+        sectionHeader(doc, bold, "SECTION 1: EXECUTIVE FINANCIAL SUMMARY   (\u1018\u100a\u103a\u1078\u102c\u101b\u1031\u102c \u1021\u1000\u103b\u1031\u102c\u1038\u1001\u103b\u102f\u1015\u103a)");
+        Table sumTable = new Table(UnitValue.createPercentArray(new float[]{34, 33, 33})).useAllAvailableWidth();
+        addSummaryCell(sumTable, bold, regular, "PREMIUM INCOME (\u1000\u103a\u1004\u103a\u1038\u1004\u103d\u1031)", fmt(totalRevenue) + " MMK", GREEN);
+        addSummaryCell(sumTable, bold, regular, "CLAIM PAYOUT (\u1011\u103d\u1000\u103a\u1004\u103d\u1031)", fmt(totalClaimsPaid) + " MMK", RED);
+        DeviceRgb profitColor = netProfit.compareTo(BigDecimal.ZERO) >= 0 ? GREEN : RED;
+        addSummaryCell(sumTable, bold, regular, "NET PROFIT (\u1021\u1019\u103c\u1010\u103a/\u1021\u1006\u102f\u1036\u1038)", (netProfit.compareTo(BigDecimal.ZERO) >= 0 ? "+" : "") + fmt(netProfit) + " MMK", profitColor);
+        doc.add(sumTable);
+        doc.add(new Paragraph("").setMarginBottom(4));
+        Table kpi = new Table(UnitValue.createPercentArray(new float[]{50, 50})).useAllAvailableWidth();
+        DeviceRgb lrColor = lossRatio < 60 ? GREEN : lossRatio < 80 ? AMBER : RED;
+        DeviceRgb pmColor = profitMargin >= 20 ? GREEN : profitMargin >= 0 ? AMBER : RED;
+        addKpiCell(kpi, bold, regular, "Loss Ratio", String.format("%.1f%%", lossRatio), lossRatio < 60 ? "Good" : lossRatio < 80 ? "Caution" : "High Risk", lrColor);
+        addKpiCell(kpi, bold, regular, "Profit Margin", String.format("%.1f%%", profitMargin), profitMargin >= 20 ? "Good" : profitMargin >= 0 ? "Low" : "Loss", pmColor);
+        doc.add(kpi);
+        doc.add(new Paragraph("").setMarginBottom(8));
+
+        // S2: Application & Claim Statistics
+        sectionHeader(doc, bold, "SECTION 2: APPLICATION & CLAIM STATISTICS   (\u101c\u103b\u103e\u1031\u102c\u1006\u103c\u102c\u1014\u103e\u1004\u1037\u103a \u1021\u1015\u102d\u102f\u1004\u103a\u1038 Claim \u1005\u102c\u101b\u1004\u103a)");
+        Table statsTable = new Table(UnitValue.createPercentArray(new float[]{50, 50})).useAllAvailableWidth();
+        Table appsInner = new Table(UnitValue.createPercentArray(new float[]{60, 40})).useAllAvailableWidth();
+        tableHeaderRow(appsInner, bold, NAVY, new String[]{"Applications (\u101c\u103b\u103e\u1031\u102c\u1006\u103c\u102c)", "Count"});
+        tableRow(appsInner, regular, "Total Applications", String.valueOf(periodApps.size()));
+        tableRow(appsInner, regular, "  \u2714 Approved", String.valueOf(approvedApps));
+        tableRow(appsInner, regular, "  \u23f3 Pending",  String.valueOf(pendingApps));
+        tableRow(appsInner, regular, "  \u2716 Rejected", String.valueOf(rejectedApps));
+        Table claimsInner = new Table(UnitValue.createPercentArray(new float[]{60, 40})).useAllAvailableWidth();
+        tableHeaderRow(claimsInner, bold, NAVY, new String[]{"Claims", "Count"});
+        tableRow(claimsInner, regular, "Total Claims",    String.valueOf(periodClaims.size()));
+        tableRow(claimsInner, regular, "  \u2714 Approved", String.valueOf(approvedClaimsCount));
+        tableRow(claimsInner, regular, "  \u23f3 Pending",  String.valueOf(pendingClaims));
+        tableRow(claimsInner, regular, "  \u2716 Rejected", String.valueOf(rejectedClaims));
+        statsTable.addCell(new Cell().add(appsInner).setBorder(Border.NO_BORDER).setPaddingRight(6));
+        statsTable.addCell(new Cell().add(claimsInner).setBorder(Border.NO_BORDER).setPaddingLeft(6));
+        doc.add(statsTable);
+        doc.add(new Paragraph("").setMarginBottom(8));
+
+        // S3: By Insurance Type
+        if (!revenueByType.isEmpty() || !claimsByType.isEmpty()) {
+            sectionHeader(doc, bold, "SECTION 3: FINANCIAL BREAKDOWN BY INSURANCE TYPE   (\u1021\u102c\u1019\u1001\u1036 \u1021\u1019\u103b\u102d\u102f\u1021\u1005\u102c\u1021\u101c\u102d\u102f\u1000\u103a)");
+            Table typeTable = new Table(UnitValue.createPercentArray(new float[]{28, 24, 24, 24})).useAllAvailableWidth();
+            tableHeaderRow(typeTable, bold, NAVY, new String[]{"Insurance Type", "Premium Income (MMK)", "Claim Payout (MMK)", "Net Profit (MMK)"});
+            Set<String> allTypes = new TreeSet<>();
+            allTypes.addAll(revenueByType.keySet()); allTypes.addAll(claimsByType.keySet());
+            BigDecimal gRev = BigDecimal.ZERO, gClaim = BigDecimal.ZERO;
+            for (String type : allTypes) {
+                BigDecimal rev = revenueByType.getOrDefault(type, BigDecimal.ZERO);
+                BigDecimal clm = claimsByType.getOrDefault(type, BigDecimal.ZERO);
+                BigDecimal pft = rev.subtract(clm);
+                gRev = gRev.add(rev); gClaim = gClaim.add(clm);
+                typeTable.addCell(cellOf(type, bold, 8.5f));
+                typeTable.addCell(cellOf(fmt(rev), regular, 8.5f).setFontColor(GREEN));
+                typeTable.addCell(cellOf(clm.compareTo(BigDecimal.ZERO) > 0 ? fmt(clm) : "\u2014", regular, 8.5f).setFontColor(clm.compareTo(BigDecimal.ZERO) > 0 ? RED : GRAY));
+                typeTable.addCell(cellOf((pft.compareTo(BigDecimal.ZERO) >= 0 ? "+" : "") + fmt(pft), bold, 8.5f).setFontColor(pft.compareTo(BigDecimal.ZERO) >= 0 ? GREEN : RED));
+            }
+            BigDecimal gProfit = gRev.subtract(gClaim);
+            typeTable.addCell(new Cell().add(new Paragraph("TOTAL").setFont(bold).setFontSize(8.5f)).setBackgroundColor(LIGHT).setPadding(4));
+            typeTable.addCell(new Cell().add(new Paragraph(fmt(gRev)).setFont(bold).setFontSize(8.5f).setFontColor(GREEN)).setBackgroundColor(LIGHT).setPadding(4));
+            typeTable.addCell(new Cell().add(new Paragraph(fmt(gClaim)).setFont(bold).setFontSize(8.5f).setFontColor(RED)).setBackgroundColor(LIGHT).setPadding(4));
+            typeTable.addCell(new Cell().add(new Paragraph((gProfit.compareTo(BigDecimal.ZERO) >= 0 ? "+" : "") + fmt(gProfit)).setFont(bold).setFontSize(8.5f).setFontColor(gProfit.compareTo(BigDecimal.ZERO) >= 0 ? GREEN : RED)).setBackgroundColor(LIGHT).setPadding(4));
+            doc.add(typeTable);
+            doc.add(new Paragraph("").setMarginBottom(8));
+        }
+
+        // S4: Premium Wallet Summary
+        sectionHeader(doc, bold, "SECTION 4: PREMIUM WALLET SUMMARY   (\u1015\u101b\u102e\u1019\u102e\u101a\u1036 \u1015\u102d\u102f\u1000\u103a\u1006\u1036\u1015\u102f\u1038 \u1021\u1000\u103b\u1031\u102c\u1038\u1001\u103b\u102f\u1015\u103a)");
+        {
+            BigDecimal balance = totalRevenue.subtract(totalClaimsPaid);
+            Table wTable = new Table(UnitValue.createPercentArray(new float[]{34, 33, 33})).useAllAvailableWidth();
+            addSummaryCell(wTable, bold, regular, "TOTAL INFLOW \u2014 Premiums", fmt(totalRevenue) + " MMK", GREEN);
+            addSummaryCell(wTable, bold, regular, "TOTAL OUTFLOW \u2014 Claims", fmt(totalClaimsPaid) + " MMK", RED);
+            DeviceRgb wc = balance.compareTo(BigDecimal.ZERO) >= 0 ? GREEN : RED;
+            addSummaryCell(wTable, bold, regular, "WALLET BALANCE (Net)", (balance.compareTo(BigDecimal.ZERO) >= 0 ? "+" : "") + fmt(balance) + " MMK", wc);
+            doc.add(wTable);
+            // Top contributors
+            Map<Long, Object[]> custMap = new LinkedHashMap<>();
+            for (Payment p : periodPayments) {
+                if (p.getCustomer() == null) continue;
+                Long cid = p.getCustomer().getId();
+                custMap.computeIfAbsent(cid, id -> new Object[]{ p.getCustomer().getName(), BigDecimal.ZERO, 0 });
+                Object[] row = custMap.get(cid);
+                row[1] = ((BigDecimal) row[1]).add(p.getAmount());
+                row[2] = (int) row[2] + 1;
+            }
+            List<Object[]> topCusts = custMap.values().stream()
+                    .sorted((a, b) -> ((BigDecimal) b[1]).compareTo((BigDecimal) a[1]))
+                    .limit(10).toList();
+            if (!topCusts.isEmpty()) {
+                doc.add(new Paragraph("").setMarginBottom(4));
+                doc.add(new Paragraph("Top Premium Contributors").setFont(bold).setFontSize(9).setFontColor(NAVY).setMarginBottom(4));
+                Table cTable = new Table(UnitValue.createPercentArray(new float[]{50, 30, 20})).useAllAvailableWidth();
+                tableHeaderRow(cTable, bold, NAVY, new String[]{"Customer", "Total Paid (MMK)", "Payments"});
+                for (Object[] row : topCusts) {
+                    cTable.addCell(cellOf((String) row[0], bold, 8.5f));
+                    cTable.addCell(cellOf(fmt((BigDecimal) row[1]), regular, 8.5f).setFontColor(GREEN));
+                    cTable.addCell(cellOf(String.valueOf(row[2]), regular, 8.5f));
+                }
+                doc.add(cTable);
+            }
+            doc.add(new Paragraph("").setMarginBottom(8));
+        }
+
+        // S5: Agent Performance
+        sectionHeader(doc, bold, "SECTION 5: AGENT PERFORMANCE   (Agent \u101c\u102f\u1015\u103a\u1006\u1031\u102c\u1004\u103a\u1019\u103e\u1000\u103a)");
+        if (agentStats.isEmpty()) {
+            doc.add(new Paragraph("No agent activity recorded for this period.").setFont(oblique).setFontSize(9).setFontColor(GRAY).setMarginBottom(8));
+        } else {
+            Table aTable = new Table(UnitValue.createPercentArray(new float[]{30, 18, 14, 14, 14, 10})).useAllAvailableWidth();
+            tableHeaderRow(aTable, bold, NAVY, new String[]{"Agent", "Type", "Applications", "Approved", "Claims", "Rate"});
+            for (Map<String, Object> a : agentStats) {
+                double rate = (double) a.get("rate");
+                DeviceRgb rc = rate >= 70 ? GREEN : rate >= 40 ? AMBER : RED;
+                aTable.addCell(cellOf((String) a.get("name"), bold, 8.5f));
+                aTable.addCell(cellOf((String) a.get("type"), regular, 8.5f));
+                aTable.addCell(cellOf(String.valueOf(a.get("handled")), regular, 8.5f));
+                aTable.addCell(cellOf(String.valueOf(a.get("approved")), regular, 8.5f).setFontColor(GREEN));
+                aTable.addCell(cellOf(String.valueOf(a.get("claims")), regular, 8.5f).setFontColor(AMBER));
+                aTable.addCell(new Cell().add(new Paragraph(String.format("%.1f%%", rate)).setFont(bold).setFontSize(8.5f).setFontColor(rc)).setPadding(4));
+            }
+            doc.add(aTable);
+            doc.add(new Paragraph("").setMarginBottom(8));
+        }
+
+        // S6: Package Popularity
+        sectionHeader(doc, bold, "SECTION 6: PLAN POPULARITY   (Plan \u101b\u1031\u1015\u1014\u103a\u1038\u1005\u102c\u101b\u1019\u103e\u1000\u103a)");
+        if (pkgStats.isEmpty()) {
+            doc.add(new Paragraph("No package applications recorded for this period.").setFont(oblique).setFontSize(9).setFontColor(GRAY).setMarginBottom(8));
+        } else {
+            Table pTable = new Table(UnitValue.createPercentArray(new float[]{40, 22, 18, 20})).useAllAvailableWidth();
+            tableHeaderRow(pTable, bold, NAVY, new String[]{"Package Name", "Type", "Applications", "Revenue (MMK)"});
+            for (Map<String, Object> p : pkgStats) {
+                pTable.addCell(cellOf((String) p.get("name"), bold, 8.5f));
+                pTable.addCell(cellOf((String) p.get("type"), regular, 8.5f));
+                pTable.addCell(cellOf(String.valueOf(p.get("count")), regular, 8.5f));
+                pTable.addCell(cellOf(fmt((BigDecimal) p.get("rev")), regular, 8.5f).setFontColor(GREEN));
+            }
+            doc.add(pTable);
+            doc.add(new Paragraph("").setMarginBottom(8));
+        }
+
+        // S7: Monthly Breakdown — Application Analytics
+        if (!monthStarts.isEmpty()) {
+            sectionHeader(doc, bold, "SECTION 7: MONTHLY BREAKDOWN \u2014 APPLICATION ANALYTICS   (\u101c\u1005\u1031\u102c\u1001\u103c\u102c\u1038\u1005\u102d\u1014\u103a\u1016\u102c)");
+            Table mTable = new Table(UnitValue.createPercentArray(new float[]{20, 22, 22, 22, 14})).useAllAvailableWidth();
+            tableHeaderRow(mTable, bold, NAVY, new String[]{"Month", "Revenue (MMK)", "Claims (MMK)", "Net (MMK)", "Applications"});
+            DateTimeFormatter mFmt = DateTimeFormatter.ofPattern("MMM yyyy");
+            BigDecimal gRev = BigDecimal.ZERO, gClaim = BigDecimal.ZERO; long gApps = 0;
+            for (LocalDateTime ms : monthStarts) {
+                LocalDateTime me   = ms.plusMonths(1).minusNanos(1);
+                LocalDateTime from2 = ms.isBefore(effectiveFrom) ? effectiveFrom : ms;
+                LocalDateTime to2   = me.isAfter(to)             ? to             : me;
+                BigDecimal mRev = periodPayments.stream()
+                        .filter(p -> p.getCreatedAt() != null && !p.getCreatedAt().isBefore(from2) && !p.getCreatedAt().isAfter(to2))
+                        .map(Payment::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal mClaim = approvedClaims.stream()
+                        .filter(c -> c.getCreatedAt() != null && !c.getCreatedAt().isBefore(from2) && !c.getCreatedAt().isAfter(to2))
+                        .map(Claim::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+                long mApps = periodApps.stream()
+                        .filter(a -> a.getCreatedAt() != null && !a.getCreatedAt().isBefore(from2) && !a.getCreatedAt().isAfter(to2))
+                        .count();
+                BigDecimal mNet = mRev.subtract(mClaim);
+                gRev = gRev.add(mRev); gClaim = gClaim.add(mClaim); gApps += mApps;
+                mTable.addCell(cellOf(ms.format(mFmt), bold, 8.5f));
+                mTable.addCell(cellOf(mRev.compareTo(BigDecimal.ZERO) > 0 ? fmt(mRev) : "\u2014", regular, 8.5f).setFontColor(mRev.compareTo(BigDecimal.ZERO) > 0 ? GREEN : GRAY));
+                mTable.addCell(cellOf(mClaim.compareTo(BigDecimal.ZERO) > 0 ? fmt(mClaim) : "\u2014", regular, 8.5f).setFontColor(mClaim.compareTo(BigDecimal.ZERO) > 0 ? RED : GRAY));
+                mTable.addCell(cellOf((mNet.compareTo(BigDecimal.ZERO) >= 0 ? "+" : "") + fmt(mNet), bold, 8.5f).setFontColor(mNet.compareTo(BigDecimal.ZERO) >= 0 ? GREEN : RED));
+                mTable.addCell(cellOf(String.valueOf(mApps), regular, 8.5f));
+            }
+            BigDecimal gNet = gRev.subtract(gClaim);
+            mTable.addCell(new Cell().add(new Paragraph("TOTAL").setFont(bold).setFontSize(8.5f)).setBackgroundColor(LIGHT).setPadding(4));
+            mTable.addCell(new Cell().add(new Paragraph(fmt(gRev)).setFont(bold).setFontSize(8.5f).setFontColor(GREEN)).setBackgroundColor(LIGHT).setPadding(4));
+            mTable.addCell(new Cell().add(new Paragraph(fmt(gClaim)).setFont(bold).setFontSize(8.5f).setFontColor(RED)).setBackgroundColor(LIGHT).setPadding(4));
+            mTable.addCell(new Cell().add(new Paragraph((gNet.compareTo(BigDecimal.ZERO) >= 0 ? "+" : "") + fmt(gNet)).setFont(bold).setFontSize(8.5f).setFontColor(gNet.compareTo(BigDecimal.ZERO) >= 0 ? GREEN : RED)).setBackgroundColor(LIGHT).setPadding(4));
+            mTable.addCell(new Cell().add(new Paragraph(String.valueOf(gApps)).setFont(bold).setFontSize(8.5f)).setBackgroundColor(LIGHT).setPadding(4));
+            doc.add(mTable);
+            doc.add(new Paragraph("").setMarginBottom(8));
+        }
+
+        // Footer
+        Table footer = new Table(UnitValue.createPercentArray(new float[]{100})).useAllAvailableWidth();
+        footer.addCell(new Cell()
+                .add(new Paragraph("This report is auto-generated by the Digital Insurance Claims and Premiums Portal \u2014 Myanmar.\n"
+                        + "Generated on: " + generatedAt + "   |   Period: " + periodLabel)
+                        .setFont(oblique).setFontSize(7.5f).setFontColor(GRAY).setTextAlignment(TextAlignment.CENTER))
+                .setBackgroundColor(LIGHT).setPadding(8).setBorder(new SolidBorder(LIGHT, 1)));
+        doc.add(footer);
+        doc.close();
+        return baos.toByteArray();
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
     // Helpers
     // ─────────────────────────────────────────────────────────────────────────
 
     private static boolean inMonth(LocalDateTime dt, int year, int month) {
         return dt != null && dt.getYear() == year && dt.getMonthValue() == month;
+    }
+
+    /** True when dt falls within [from, to] inclusive. */
+    private static boolean inPeriod(LocalDateTime dt, LocalDateTime from, LocalDateTime to) {
+        return dt != null && !dt.isBefore(from) && !dt.isAfter(to);
     }
 
     private static String fmt(BigDecimal v) {
