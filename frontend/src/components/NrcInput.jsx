@@ -2,17 +2,12 @@ import { useTranslation } from 'react-i18next'
 import { NRC_DATA, NRC_CITIZEN_TYPES, getTownships, resolveToCode, findTownship } from '../data/nrcData'
 
 /**
- * Myanmar NRC input component — bilingual, language-aware.
+ * Myanmar NRC input component — language-aware.
  *
- * Responds to the app's EN ↔ မြန်မာ toggle:
- *   EN  mode → English labels & codes first, Myanmar in parentheses
- *   မြန်မာ mode → Myanmar labels & codes first, English in parentheses
+ * EN  mode → English-only labels, English preview (10/MADANA(N)241890)
+ * မြန်မာ mode → Myanmar-only labels, Myanmar preview (၁၀/မဒန(နိုင်)၂၄၁၈၉၀)
  *
  * Stored format (language-independent): "10/မဒန(နိုင်)241890"
- *
- * Preview:
- *   မြန်မာ  ၁၀/မဒန(နိုင်)၂၄၁၈၉၀
- *   English  10/MADANA(N)241890
  *
  * Props
  *   value    : NRC string (controlled)
@@ -26,7 +21,6 @@ export default function NrcInput({ value, onChange, required, readOnly }) {
 
   const parsed = parseNrc(value || '')
 
-  // Migrate legacy full-name township to code on the fly
   const resolvedCode = parsed.state
     ? resolveToCode(parsed.state, parsed.township)
     : parsed.township
@@ -45,65 +39,31 @@ export default function NrcInput({ value, onChange, required, readOnly }) {
     ? { background: 'var(--bg-secondary)', cursor: 'not-allowed', color: 'var(--text-muted)' }
     : {}
 
-  // Convert Arabic digits → Myanmar digits
+  // Convert Arabic ↔ Myanmar digits
   const toMM = str => (str || '').replace(/[0-9]/g, d => '၀၁၂၃၄၅၆၇၈၉'[d])
-  // Convert Myanmar digits → Arabic digits
-  const toAR = str => (str || '').replace(/[၀-၉]/g, d => '၀၁၂၃၄၅၆၇၈၉'.indexOf(d))
+  const toAR = str => (str || '').replace(/[၀-၉]/g, d => String('၀၁၂၃၄၅၆၇၈၉'.indexOf(d)))
 
-  // ── State dropdown option label ───────────────────────────────────
-  const stateLabel = (key, stateData) =>
-    isEn
-      ? `${key}/ — ${stateData.engState}`
-      : `${key}/ — ${stateData.stateName}`
-
-  // ── Township dropdown option label ────────────────────────────────
-  const townshipLabel = t =>
-    isEn
-      ? `${t.engCode} — ${t.engName} (${t.code} — ${t.name})`
-      : `${t.code} — ${t.name} (${t.engCode} — ${t.engName})`
-
-  // ── Citizen type option label ─────────────────────────────────────
-  const citizenLabel = ct =>
-    isEn
-      ? `${ct.engValue} — ${ct.label.split(' — ')[1]?.split(' (')[0] ?? ct.engValue} (${ct.value})`
-      : `${ct.value} (${ct.engValue})`
-
-  // ── Myanmar preview ───────────────────────────────────────────────
-  const mmPreview = (() => {
+  // ── Build preview string for the active language ──────────────────
+  const preview = (() => {
     if (!parsed.state && !resolvedCode && !parsed.type && !parsed.digits) return ''
-    let s = ''
-    if (parsed.state)  s += toMM(parsed.state) + '/'
-    if (resolvedCode)  s += resolvedCode
-    if (parsed.type)   s += `(${parsed.type})`
-    if (parsed.digits) s += toMM(parsed.digits)
-    return s
+    if (isEn) {
+      let s = ''
+      if (parsed.state)         s += parsed.state + '/'
+      if (townshipObj?.engCode) s += townshipObj.engCode
+      else if (resolvedCode)    s += resolvedCode
+      if (citizenObj?.engValue) s += `(${citizenObj.engValue})`
+      else if (parsed.type)     s += `(${parsed.type})`
+      if (parsed.digits)        s += toAR(parsed.digits)
+      return s
+    } else {
+      let s = ''
+      if (parsed.state)  s += toMM(parsed.state) + '/'
+      if (resolvedCode)  s += resolvedCode
+      if (parsed.type)   s += `(${parsed.type})`
+      if (parsed.digits) s += toMM(parsed.digits)
+      return s
+    }
   })()
-
-  // ── English preview ───────────────────────────────────────────────
-  const enPreview = (() => {
-    if (!parsed.state && !resolvedCode && !parsed.type && !parsed.digits) return ''
-    let s = ''
-    if (parsed.state)         s += parsed.state + '/'
-    if (townshipObj?.engCode) s += townshipObj.engCode
-    else if (resolvedCode)    s += resolvedCode
-    if (citizenObj?.engValue) s += `(${citizenObj.engValue})`
-    else if (parsed.type)     s += `(${parsed.type})`
-    if (parsed.digits)        s += toAR(parsed.digits)
-    return s
-  })()
-
-  const hasPreview = mmPreview || enPreview
-
-  // ── Which preview row goes first based on language ────────────────
-  const previewRows = isEn
-    ? [
-        { label: t('nrc.enLabel'), text: enPreview },
-        { label: t('nrc.mmLabel'), text: mmPreview },
-      ]
-    : [
-        { label: t('nrc.mmLabel'), text: mmPreview },
-        { label: t('nrc.enLabel'), text: enPreview },
-      ]
 
   return (
     <div>
@@ -112,7 +72,7 @@ export default function NrcInput({ value, onChange, required, readOnly }) {
         {/* ── State number ── */}
         <select
           className="form-select-custom"
-          style={{ width: 160, flexShrink: 0, ...inputStyle }}
+          style={{ width: 155, flexShrink: 0, ...inputStyle }}
           value={parsed.state}
           disabled={readOnly}
           required={required && !readOnly}
@@ -120,14 +80,16 @@ export default function NrcInput({ value, onChange, required, readOnly }) {
         >
           <option value="">{t('nrc.statePlaceholder')}</option>
           {Object.entries(NRC_DATA).map(([k, v]) => (
-            <option key={k} value={k}>{stateLabel(k, v)}</option>
+            <option key={k} value={k}>
+              {isEn ? `${k}/ — ${v.engState}` : `${k}/ — ${v.stateName}`}
+            </option>
           ))}
         </select>
 
         {/* ── Township ── */}
         <select
           className="form-select-custom"
-          style={{ flex: '1 1 240px', minWidth: 200, ...inputStyle }}
+          style={{ flex: '1 1 200px', minWidth: 180, ...inputStyle }}
           value={resolvedCode}
           disabled={readOnly || !parsed.state}
           required={required && !readOnly}
@@ -136,7 +98,9 @@ export default function NrcInput({ value, onChange, required, readOnly }) {
           <option value="">{t('nrc.townshipPlaceholder')}</option>
           {townships.map(tp => (
             <option key={tp.code} value={tp.code}>
-              {townshipLabel(tp)}
+              {isEn
+                ? `${tp.engCode} — ${tp.engName}`
+                : `${tp.code} — ${tp.name}`}
             </option>
           ))}
         </select>
@@ -144,7 +108,7 @@ export default function NrcInput({ value, onChange, required, readOnly }) {
         {/* ── Citizen type ── */}
         <select
           className="form-select-custom"
-          style={{ width: 120, flexShrink: 0, ...inputStyle }}
+          style={{ width: 110, flexShrink: 0, ...inputStyle }}
           value={parsed.type}
           disabled={readOnly}
           required={required && !readOnly}
@@ -153,7 +117,7 @@ export default function NrcInput({ value, onChange, required, readOnly }) {
           <option value="">{t('nrc.typePlaceholder')}</option>
           {NRC_CITIZEN_TYPES.map(ct => (
             <option key={ct.value} value={ct.value}>
-              {citizenLabel(ct)}
+              {isEn ? ct.engValue : ct.value}
             </option>
           ))}
         </select>
@@ -171,17 +135,15 @@ export default function NrcInput({ value, onChange, required, readOnly }) {
         />
       </div>
 
-      {/* ── Live dual preview ── */}
-      {hasPreview && (
-        <div style={{ marginTop: 6, fontSize: '0.78rem', fontFamily: 'monospace' }}>
-          {previewRows.map(row => (
-            <div key={row.label} style={{ color: 'var(--text-muted)', marginTop: 1 }}>
-              <span style={{ marginRight: 4 }}>{row.label}:</span>
-              <strong style={{ color: 'var(--text-primary)', letterSpacing: '0.04em' }}>
-                {row.text || '—'}
-              </strong>
-            </div>
-          ))}
+      {/* ── Live preview ── */}
+      {preview && (
+        <div style={{ marginTop: 6, fontSize: '0.78rem', fontFamily: 'monospace', color: 'var(--text-muted)' }}>
+          <span style={{ marginRight: 4 }}>
+            {isEn ? 'NRC:' : 'မှတ်ပုံတင်:'}
+          </span>
+          <strong style={{ color: 'var(--text-primary)', letterSpacing: '0.04em' }}>
+            {preview}
+          </strong>
         </div>
       )}
 
