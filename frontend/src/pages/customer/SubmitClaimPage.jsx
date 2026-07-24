@@ -25,18 +25,29 @@ export default function SubmitClaimPage() {
   const signatureRef = useRef()
   const { user } = useAuth()
 
+  const [verifiedPaymentIds, setVerifiedPaymentIds] = useState(new Set())
+
   useEffect(() => {
     Promise.all([
       api.get('/customer/applications?status=APPROVED').catch(() => ({ data: [] })),
       api.get('/customer/claims').catch(() => ({ data: [] })),
-    ]).then(([appsRes, claimsRes]) => {
+      api.get('/customer/payments').catch(() => ({ data: [] })),
+    ]).then(([appsRes, claimsRes, paymentsRes]) => {
       setActivePolicies(Array.isArray(appsRes.data) ? appsRes.data : [])
       const claims = Array.isArray(claimsRes.data) ? claimsRes.data : []
       setClaimedIds(new Set(claims.map(c => c.applicationId)))
+      const payments = Array.isArray(paymentsRes.data) ? paymentsRes.data : []
+      setVerifiedPaymentIds(new Set(
+        payments.filter(p => p.status === 'VERIFIED').map(p => p.applicationId)
+      ))
     })
   }, [])
 
-  const availablePolicies = activePolicies.filter(p => !claimedIds.has(p.id))
+  // Policies that already have a claim
+  // Policies eligible to submit a claim: approved + verified payment + no existing claim
+  const availablePolicies = activePolicies.filter(p => !claimedIds.has(p.id) && verifiedPaymentIds.has(p.id))
+  // Policies approved but payment not yet verified
+  const pendingPaymentPolicies = activePolicies.filter(p => !claimedIds.has(p.id) && !verifiedPaymentIds.has(p.id))
 
   const selectedPolicy = activePolicies.find(p => String(p.id) === String(form.applicationId))
   const maxClaimAmount = selectedPolicy?.coverageAmount ? Number(selectedPolicy.coverageAmount) : null
@@ -172,8 +183,15 @@ export default function SubmitClaimPage() {
                 {activePolicies.length === 0 && (
                   <small style={{ color: 'var(--danger)', fontSize: '0.8rem', marginTop: 4, display: 'block' }}>{t('submitClaim.noPolicies')}</small>
                 )}
-                {activePolicies.length > 0 && availablePolicies.length === 0 && (
+                {activePolicies.length > 0 && availablePolicies.length === 0 && pendingPaymentPolicies.length === 0 && (
                   <small style={{ color: 'var(--danger)', fontSize: '0.8rem', marginTop: 4, display: 'block' }}>{t('submitClaim.allClaimed')}</small>
+                )}
+                {pendingPaymentPolicies.length > 0 && availablePolicies.length === 0 && (
+                  <div style={{ marginTop: 8, padding: '0.7rem 0.9rem', borderRadius: 8, background: '#fef3c7', border: '1px solid #fcd34d', fontSize: '0.83rem', color: '#92400e' }}>
+                    <i className="bi bi-credit-card me-2"></i>
+                    <strong>{t('submitClaim.paymentRequiredTitle')}</strong><br />
+                    <span>{t('submitClaim.paymentRequiredDesc')}</span>
+                  </div>
                 )}
               </div>
 

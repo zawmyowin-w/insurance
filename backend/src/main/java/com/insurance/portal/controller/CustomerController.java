@@ -321,6 +321,8 @@ public class CustomerController {
             return ResponseEntity.badRequest().body(Map.of("message", "Claims can only be submitted for APPROVED policies"));
         if (claimRepo.existsByApplication_Id(app.getId()))
             return ResponseEntity.badRequest().body(Map.of("message", "A claim has already been submitted for this policy. Only one claim is allowed per policy."));
+        if (!paymentRepo.existsByApplication_IdAndStatus(app.getId(), PaymentStatus.VERIFIED))
+            return ResponseEntity.badRequest().body(Map.of("message", "You must have at least one verified payment before submitting a claim for this policy"));
 
         // Validate that claim amount does not exceed the policy coverage amount
         BigDecimal claimAmt;

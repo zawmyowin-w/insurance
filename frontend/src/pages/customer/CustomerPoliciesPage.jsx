@@ -69,11 +69,19 @@ export default function CustomerPoliciesPage() {
   const [loading, setLoading] = useState(true)
   const [certPolicy, setCertPolicy] = useState(null)
   const [renewing, setRenewing] = useState(null)
+  const [verifiedPaymentIds, setVerifiedPaymentIds] = useState(new Set())
 
   const fetchPolicies = () => {
-    api.get('/customer/policies')
-      .then(res => setPolicies(Array.isArray(res.data) ? res.data : []))
-      .catch(() => setPolicies([]))
+    Promise.all([
+      api.get('/customer/policies').catch(() => ({ data: [] })),
+      api.get('/customer/payments').catch(() => ({ data: [] })),
+    ]).then(([policiesRes, paymentsRes]) => {
+      setPolicies(Array.isArray(policiesRes.data) ? policiesRes.data : [])
+      const payments = Array.isArray(paymentsRes.data) ? paymentsRes.data : []
+      setVerifiedPaymentIds(new Set(
+        payments.filter(p => p.status === 'VERIFIED').map(p => p.applicationId)
+      ))
+    }).catch(() => setPolicies([]))
       .finally(() => setLoading(false))
   }
   useEffect(() => { fetchPolicies() }, [])
@@ -205,9 +213,18 @@ export default function CustomerPoliciesPage() {
                         ? <span className="spinner-border spinner-border-sm"></span>
                         : <><i className="bi bi-download me-1"></i>PDF</>}
                     </button>
-                    <Link to="/customer/submit-claim" className="btn-outline-custom" style={{ textDecoration: 'none', padding: '0.4rem 0.85rem', fontSize: '0.85rem' }}>
-                      <i className="bi bi-file-earmark-plus me-1"></i>{t('policies.claim')}
-                    </Link>
+                    {verifiedPaymentIds.has(policy.id) ? (
+                      <Link to="/customer/submit-claim" className="btn-outline-custom" style={{ textDecoration: 'none', padding: '0.4rem 0.85rem', fontSize: '0.85rem' }}>
+                        <i className="bi bi-file-earmark-plus me-1"></i>{t('policies.claim')}
+                      </Link>
+                    ) : (
+                      <span
+                        title={t('policies.claimPaymentRequired')}
+                        style={{ padding: '0.4rem 0.85rem', borderRadius: 8, border: '1.5px solid #fcd34d', background: '#fef9c3', color: '#92400e', fontSize: '0.82rem', fontWeight: 600, cursor: 'not-allowed', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                      >
+                        <i className="bi bi-credit-card me-1"></i>{t('policies.payFirst')}
+                      </span>
+                    )}
                     <button onClick={() => handleRenew(policy.id)} disabled={renewing === policy.id} style={{ padding: '0.4rem 0.85rem', borderRadius: 8, border: '1.5px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600 }}>
                       {renewing === policy.id ? <span className="spinner-border spinner-border-sm"></span> : <><i className="bi bi-arrow-repeat me-1"></i>{t('policies.renew')}</>}
                     </button>
