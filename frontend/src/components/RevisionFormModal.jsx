@@ -286,8 +286,8 @@ function RevisionField({ field, value, file, existingFilePath, onValue, onFile, 
       </label>
 
       {(field.fieldType === 'NAME' || field.fieldType === 'EMAIL') && (
-        <input className="form-control-custom w-100" value={value || ''}
-          onChange={e => onValue(e.target.value)} />
+        <input className="form-control-custom w-100" value={value || ''} readOnly
+          style={{ background: '#f0fdf4', borderColor: '#86efac', color: 'var(--text-primary)', cursor: 'not-allowed' }} />
       )}
       {field.fieldType === 'TEXT' && (
         <input className="form-control-custom w-100" value={value || ''}
