@@ -178,6 +178,7 @@ public class CustomerController {
                                                @AuthenticationPrincipal UserDetails principal,
                                                @RequestParam(required = false) String formData,
                                                @RequestParam(required = false) String coverageAmount,
+                                               @RequestParam(required = false) String duration,
                                                HttpServletRequest request) {
         User user = getUser(principal);
         PolicyApplication app = appRepo.findById(id)
@@ -189,10 +190,13 @@ public class CustomerController {
                 && app.getStatus() != ApplicationStatus.REJECTED)
             return ResponseEntity.badRequest().body(Map.of("message", "Only PENDING, REVISION_REQUESTED, or REJECTED applications can be edited"));
 
+        InsurancePackage pkg = app.getInsurancePackage();
+        BigDecimal effectiveCoverage = app.getCoverageAmount();
+        int effectiveDuration = app.getDuration() != null ? app.getDuration() : 1;
+
         if (coverageAmount != null && !coverageAmount.isBlank()) {
             try {
                 BigDecimal newCoverage = new BigDecimal(coverageAmount);
-                InsurancePackage pkg = app.getInsurancePackage();
                 if (pkg != null) {
                     if (pkg.getCoverageMin() != null && newCoverage.compareTo(pkg.getCoverageMin()) < 0)
                         return ResponseEntity.badRequest().body(Map.of("message",
@@ -201,13 +205,29 @@ public class CustomerController {
                         return ResponseEntity.badRequest().body(Map.of("message",
                                 "Coverage must not exceed " + pkg.getCoverageMax().toPlainString() + " MMK"));
                 }
-                BigDecimal premium = policyService.calculatePremium(newCoverage, pkg != null ? pkg.getPremiumRate() : null,
-                        app.getDuration(), app.getRiskLevel());
                 app.setCoverageAmount(newCoverage);
-                if (premium != null) app.setPremiumAmount(premium);
+                effectiveCoverage = newCoverage;
             } catch (NumberFormatException e) {
                 return ResponseEntity.badRequest().body(Map.of("message", "Invalid coverage amount"));
             }
+        }
+
+        if (duration != null && !duration.isBlank()) {
+            try {
+                int newDuration = Integer.parseInt(duration);
+                if (newDuration < 1)
+                    return ResponseEntity.badRequest().body(Map.of("message", "Duration must be at least 1 year"));
+                app.setDuration(newDuration);
+                effectiveDuration = newDuration;
+            } catch (NumberFormatException e) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Invalid duration"));
+            }
+        }
+
+        if (coverageAmount != null || duration != null) {
+            BigDecimal premium = policyService.calculatePremium(effectiveCoverage,
+                    pkg != null ? pkg.getPremiumRate() : null, effectiveDuration, app.getRiskLevel());
+            if (premium != null) app.setPremiumAmount(premium);
         }
 
         if (formData != null) {

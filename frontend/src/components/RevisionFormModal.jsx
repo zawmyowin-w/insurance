@@ -15,7 +15,8 @@ export default function RevisionFormModal({ show, onClose, type, item, onRevised
   const [fieldFiles, setFieldFiles] = useState({})
   const [submitting, setSubmitting] = useState(false)
   const [coverage, setCoverage] = useState('')
-  const [pkgLimits, setPkgLimits] = useState(null) // { coverageMin, coverageMax }
+  const [duration, setDuration] = useState(1)
+  const [pkgLimits, setPkgLimits] = useState(null) // { coverageMin, coverageMax, durationTiers }
 
   // Load template, pre-populate formData, and fetch package limits
   useEffect(() => {
@@ -24,16 +25,19 @@ export default function RevisionFormModal({ show, onClose, type, item, onRevised
     if (!pkgId) { setTemplate(null); return }
     const formType = type === 'application' ? 'APPLICATION' : 'CLAIM'
     setTemplateLoading(true)
-    // Pre-fill coverage from current application value
     setCoverage(item.coverageAmount != null ? String(item.coverageAmount) : '')
+    setDuration(item.duration != null ? item.duration : 1)
     Promise.all([
       api.get(`/forms/public?packageId=${pkgId}&formType=${formType}`),
       api.get('/packages/public'),
     ]).then(([formRes, pkgRes]) => {
         setTemplate(formRes.data)
-        // Find package limits
         const pkg = pkgRes.data?.find(p => p.id === pkgId)
-        if (pkg) setPkgLimits({ min: pkg.coverageMin, max: pkg.coverageMax })
+        if (pkg) setPkgLimits({
+          min: pkg.coverageMin,
+          max: pkg.coverageMax,
+          durationTiers: pkg.durationTiers || [],
+        })
         // Pre-populate values from existing formData
         let existing = {}
         try { if (item.formData) existing = JSON.parse(item.formData) } catch {}
@@ -103,6 +107,7 @@ export default function RevisionFormModal({ show, onClose, type, item, onRevised
       const fd = new FormData()
       fd.append('formData', JSON.stringify(formDataObj))
       if (type === 'application' && coverage) fd.append('coverageAmount', coverage)
+      if (type === 'application' && duration) fd.append('duration', String(duration))
       Object.entries(fieldFiles).forEach(([fieldId, file]) => {
         if (file) fd.append(`file_${fieldId}`, file)
       })
@@ -192,25 +197,70 @@ export default function RevisionFormModal({ show, onClose, type, item, onRevised
             </div>
           )}
 
-          {/* Coverage Amount — applications only */}
+          {/* Coverage + Duration — applications only */}
           {type === 'application' && (
-            <div style={{ marginBottom: '1.25rem' }}>
-              <label className="form-label-custom">
-                Coverage Amount (MMK)<span style={{ color: '#dc2626', marginLeft: 2 }}>*</span>
-              </label>
-              <input
-                type="number"
-                className="form-control-custom w-100"
-                value={coverage}
-                min={pkgLimits?.min ?? undefined}
-                max={pkgLimits?.max ?? undefined}
-                onChange={e => setCoverage(e.target.value)}
-              />
-              {pkgLimits && (
-                <small style={{ color: 'var(--text-muted)', fontSize: '0.78rem', marginTop: 2, display: 'block' }}>
-                  Range: {Number(pkgLimits.min).toLocaleString()} – {Number(pkgLimits.max).toLocaleString()} MMK
-                </small>
-              )}
+            <div style={{
+              background: 'var(--bg-secondary, #f5f8ff)',
+              border: '1px solid var(--border)',
+              borderRadius: 12,
+              padding: '1rem 1.1rem',
+              marginBottom: '1.25rem',
+            }}>
+              <div style={{ fontWeight: 700, fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '0.75rem', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                <i className="bi bi-sliders me-1"></i>Coverage Details
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.9rem' }}>
+                {/* Coverage Amount */}
+                <div>
+                  <label className="form-label-custom" style={{ marginBottom: '0.35rem' }}>
+                    Coverage Amount (MMK)<span style={{ color: '#dc2626', marginLeft: 2 }}>*</span>
+                  </label>
+                  <input
+                    type="number"
+                    className="form-control-custom w-100"
+                    value={coverage}
+                    min={pkgLimits?.min ?? undefined}
+                    max={pkgLimits?.max ?? undefined}
+                    onChange={e => setCoverage(e.target.value)}
+                  />
+                  {pkgLimits && (
+                    <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: 3, display: 'block' }}>
+                      {Number(pkgLimits.min).toLocaleString()} – {Number(pkgLimits.max).toLocaleString()} MMK
+                    </small>
+                  )}
+                </div>
+                {/* Duration */}
+                <div>
+                  <label className="form-label-custom" style={{ marginBottom: '0.35rem' }}>
+                    Duration (Years)<span style={{ color: '#dc2626', marginLeft: 2 }}>*</span>
+                  </label>
+                  {pkgLimits?.durationTiers?.length > 0 ? (
+                    <select
+                      className="form-select-custom w-100"
+                      value={duration}
+                      onChange={e => setDuration(Number(e.target.value))}
+                    >
+                      {pkgLimits.durationTiers.map(t => (
+                        <option key={t.years} value={t.years}>
+                          {t.years} {t.years === 1 ? 'Year' : 'Years'}
+                          {t.premiumRate ? ` — ${(t.premiumRate * 100).toFixed(1)}%/yr` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="number"
+                      className="form-control-custom w-100"
+                      value={duration}
+                      min={1}
+                      onChange={e => setDuration(Number(e.target.value))}
+                    />
+                  )}
+                  <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: 3, display: 'block' }}>
+                    Current: {item.duration} {item.duration === 1 ? 'year' : 'years'}
+                  </small>
+                </div>
+              </div>
             </div>
           )}
 
