@@ -177,6 +177,7 @@ public class CustomerController {
     public ResponseEntity<?> reviseApplication(@PathVariable Long id,
                                                @AuthenticationPrincipal UserDetails principal,
                                                @RequestParam(required = false) String formData,
+                                               @RequestParam(required = false) String coverageAmount,
                                                HttpServletRequest request) {
         User user = getUser(principal);
         PolicyApplication app = appRepo.findById(id)
@@ -187,6 +188,27 @@ public class CustomerController {
                 && app.getStatus() != ApplicationStatus.PENDING
                 && app.getStatus() != ApplicationStatus.REJECTED)
             return ResponseEntity.badRequest().body(Map.of("message", "Only PENDING, REVISION_REQUESTED, or REJECTED applications can be edited"));
+
+        if (coverageAmount != null && !coverageAmount.isBlank()) {
+            try {
+                BigDecimal newCoverage = new BigDecimal(coverageAmount);
+                InsurancePackage pkg = app.getInsurancePackage();
+                if (pkg != null) {
+                    if (pkg.getCoverageMin() != null && newCoverage.compareTo(pkg.getCoverageMin()) < 0)
+                        return ResponseEntity.badRequest().body(Map.of("message",
+                                "Coverage must be at least " + pkg.getCoverageMin().toPlainString() + " MMK"));
+                    if (pkg.getCoverageMax() != null && newCoverage.compareTo(pkg.getCoverageMax()) > 0)
+                        return ResponseEntity.badRequest().body(Map.of("message",
+                                "Coverage must not exceed " + pkg.getCoverageMax().toPlainString() + " MMK"));
+                }
+                BigDecimal premium = policyService.calculatePremium(newCoverage, pkg != null ? pkg.getPremiumRate() : null,
+                        app.getDuration(), app.getRiskLevel());
+                app.setCoverageAmount(newCoverage);
+                if (premium != null) app.setPremiumAmount(premium);
+            } catch (NumberFormatException e) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Invalid coverage amount"));
+            }
+        }
 
         if (formData != null) {
             try {

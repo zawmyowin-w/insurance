@@ -14,33 +14,40 @@ export default function RevisionFormModal({ show, onClose, type, item, onRevised
   const [fieldValues, setFieldValues] = useState({})
   const [fieldFiles, setFieldFiles] = useState({})
   const [submitting, setSubmitting] = useState(false)
+  const [coverage, setCoverage] = useState('')
+  const [pkgLimits, setPkgLimits] = useState(null) // { coverageMin, coverageMax }
 
-  // Load template and pre-populate from item.formData
+  // Load template, pre-populate formData, and fetch package limits
   useEffect(() => {
     if (!show || !item) return
     const pkgId = item.packageId
     if (!pkgId) { setTemplate(null); return }
     const formType = type === 'application' ? 'APPLICATION' : 'CLAIM'
     setTemplateLoading(true)
-    api.get(`/forms/public?packageId=${pkgId}&formType=${formType}`)
-      .then(res => {
-        setTemplate(res.data)
+    // Pre-fill coverage from current application value
+    setCoverage(item.coverageAmount != null ? String(item.coverageAmount) : '')
+    Promise.all([
+      api.get(`/forms/public?packageId=${pkgId}&formType=${formType}`),
+      api.get('/packages/public'),
+    ]).then(([formRes, pkgRes]) => {
+        setTemplate(formRes.data)
+        // Find package limits
+        const pkg = pkgRes.data?.find(p => p.id === pkgId)
+        if (pkg) setPkgLimits({ min: pkg.coverageMin, max: pkg.coverageMax })
         // Pre-populate values from existing formData
         let existing = {}
         try { if (item.formData) existing = JSON.parse(item.formData) } catch {}
         const initialValues = {}
-        if (res.data?.fields) {
-          res.data.fields.forEach(field => {
+        if (formRes.data?.fields) {
+          formRes.data.fields.forEach(field => {
             const val = existing[String(field.id)]
             if (val !== undefined && val !== null) {
-              // For checkbox fields, parse JSON array if needed
               if (field.fieldType === 'CHECKBOX') {
                 if (Array.isArray(val)) initialValues[String(field.id)] = val
                 else { try { const p = JSON.parse(val); initialValues[String(field.id)] = Array.isArray(p) ? p : []; } catch { initialValues[String(field.id)] = [] } }
               } else if (field.fieldType !== 'IMAGE_UPLOAD' && field.fieldType !== 'PDF_UPLOAD') {
                 initialValues[String(field.id)] = val
               }
-              // File fields: keep existing path as-is (shown as "existing file")
             }
           })
         }
@@ -95,6 +102,7 @@ export default function RevisionFormModal({ show, onClose, type, item, onRevised
 
       const fd = new FormData()
       fd.append('formData', JSON.stringify(formDataObj))
+      if (type === 'application' && coverage) fd.append('coverageAmount', coverage)
       Object.entries(fieldFiles).forEach(([fieldId, file]) => {
         if (file) fd.append(`file_${fieldId}`, file)
       })
@@ -180,6 +188,28 @@ export default function RevisionFormModal({ show, onClose, type, item, onRevised
                 <div style={{ fontSize: '0.85rem', color: '#78350f' }}>
                   <span style={{ fontWeight: 700 }}>Agent: </span>{item.agentNote}
                 </div>
+              )}
+            </div>
+          )}
+
+          {/* Coverage Amount — applications only */}
+          {type === 'application' && (
+            <div style={{ marginBottom: '1.25rem' }}>
+              <label className="form-label-custom">
+                Coverage Amount (MMK)<span style={{ color: '#dc2626', marginLeft: 2 }}>*</span>
+              </label>
+              <input
+                type="number"
+                className="form-control-custom w-100"
+                value={coverage}
+                min={pkgLimits?.min ?? undefined}
+                max={pkgLimits?.max ?? undefined}
+                onChange={e => setCoverage(e.target.value)}
+              />
+              {pkgLimits && (
+                <small style={{ color: 'var(--text-muted)', fontSize: '0.78rem', marginTop: 2, display: 'block' }}>
+                  Range: {Number(pkgLimits.min).toLocaleString()} – {Number(pkgLimits.max).toLocaleString()} MMK
+                </small>
               )}
             </div>
           )}
