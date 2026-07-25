@@ -243,7 +243,6 @@ export default function RevisionFormModal({ show, onClose, type, item, onRevised
                       {pkgLimits.durationTiers.map(t => (
                         <option key={t.years} value={t.years}>
                           {t.years} {t.years === 1 ? 'Year' : 'Years'}
-                          {t.premiumRate ? ` — ${(t.premiumRate * 100).toFixed(1)}%/yr` : ''}
                         </option>
                       ))}
                     </select>
