@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import api from '../services/api'
 import { toast } from 'react-toastify'
+import NrcInput from './NrcInput'
 
 /**
  * Modal for customer to edit and resubmit a REVISION_REQUESTED application or claim.
@@ -284,9 +285,27 @@ function RevisionField({ field, value, file, existingFilePath, onValue, onFile, 
         {field.fieldLabel}{field.required && <span style={{ color: '#dc2626', marginLeft: 2 }}>*</span>}
       </label>
 
+      {(field.fieldType === 'NAME' || field.fieldType === 'EMAIL') && (
+        <input className="form-control-custom w-100" value={value || ''}
+          onChange={e => onValue(e.target.value)} />
+      )}
       {field.fieldType === 'TEXT' && (
         <input className="form-control-custom w-100" value={value || ''}
           onChange={e => onValue(e.target.value)} />
+      )}
+      {field.fieldType === 'PHONE' && (
+        <input type="tel" className="form-control-custom w-100" value={value || ''}
+          placeholder="+95 9xxxxxxxx"
+          onChange={e => onValue(e.target.value)} />
+      )}
+      {field.fieldType === 'DATE' && (
+        <input type="date" className="form-control-custom w-100"
+          value={value || ''}
+          max={new Date().toISOString().split('T')[0]}
+          onChange={e => onValue(e.target.value)} />
+      )}
+      {field.fieldType === 'NRC' && (
+        <NrcInput value={value || ''} required={field.required} onChange={onValue} />
       )}
       {field.fieldType === 'TEXTAREA' && (
         <textarea rows={3} className="form-control-custom w-100" style={{ resize: 'vertical' }}
