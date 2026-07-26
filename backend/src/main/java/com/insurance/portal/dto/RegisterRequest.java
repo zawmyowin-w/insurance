@@ -11,11 +11,22 @@ public class RegisterRequest {
     @NotBlank
     private String name;
 
+    /**
+     * Gmail-only.
+     * Username: 6–30 chars, a-z / 0-9 / dots, must start and end with letter or digit.
+     * Domain:   exactly gmail.com (lowercase, already normalized by the time it arrives).
+     *
+     * Full rules (leading/trailing/consecutive dots, blacklist, MX) are enforced
+     * in EmailValidationService and EmailValidationUtil — the pattern here is a
+     * lightweight safety net at the DTO layer.
+     *
+     * Max total length: username(30) + @gmail.com(10) = 40 chars.
+     */
     @NotBlank @Email
-    @Size(max = 30, message = "Email must not exceed 30 characters")
+    @Size(max = 40, message = "Email must not exceed 40 characters")
     @Pattern(
-        regexp = "^[a-z][a-z0-9.]*@[a-z0-9.-]+\\.[a-z]{2,}$",
-        message = "Email must be lowercase only, use letters/digits/dots only (no special characters), max 30 characters"
+        regexp = "^[a-z0-9][a-z0-9.]{4,28}[a-z0-9]@gmail\\.com$|^[a-z0-9]{6,7}@gmail\\.com$",
+        message = "Only valid Gmail addresses (@gmail.com) are accepted"
     )
     private String email;
 
@@ -25,4 +36,10 @@ public class RegisterRequest {
 
     private String phone;
     private String address;
+
+    /**
+     * Honeypot field — must be absent or empty.
+     * Real users never see or interact with this field; bots commonly fill it in.
+     */
+    private String website;
 }

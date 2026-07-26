@@ -1,30 +1,165 @@
 /**
  * Shared validation constants and helpers used across all roles.
+ *
+ * EMAIL: Gmail-only validation
+ *   - Domain must be exactly gmail.com (case-insensitive)
+ *   - Username: 6–30 characters, a-z / 0-9 / dots only
+ *   - No leading, trailing, or consecutive dots
+ *   - No spaces anywhere
+ *   - Exactly one @ symbol
+ *   - Case-insensitive (normalize to lowercase before checking)
+ *   - Common fake/test usernames are blacklisted
  */
 
 // ── Email ─────────────────────────────────────────────────────────────────
-// Rules:
-//   - local part: starts with a lowercase letter, then lowercase letters/digits/dots only
-//   - domain: lowercase letters, digits, dots, hyphens (standard domain chars)
-//   - TLD: lowercase letters only, min 2
-//   - no uppercase anywhere
-//   - no special characters in the local part (no _%+- etc.)
-//   - total length ≤ 30 characters
-export const EMAIL_PATTERN = /^[a-z][a-z0-9.]*@[a-z0-9.-]+\.[a-z]{2,}$/
-export const EMAIL_MAX_LENGTH = 30
 
-export const EMAIL_ERROR = {
-  en: 'Email must be lowercase only, use letters/digits/dots only (no special chars), max 30 characters',
-  my: 'အီးမေးလ်သည် သေးစာလုံးများသာ ဖြစ်ရမည်၊ စာလုံး/ဂဏန်း/dot (.) သာ သုံးနိုင်ပြီး အများဆုံး ၃၀ လုံးသာ ဖြစ်ရမည်',
+export const GMAIL_DOMAIN = 'gmail.com'
+export const GMAIL_USERNAME_MIN = 6
+export const GMAIL_USERNAME_MAX = 30
+/** Total max = username(30) + @gmail.com(10) */
+export const EMAIL_MAX_LENGTH = 40
+
+/** Kept for legacy callers — matches a valid normalized Gmail address */
+export const EMAIL_PATTERN = /^[a-z0-9][a-z0-9.]{4,28}[a-z0-9]@gmail\.com$|^[a-z0-9]{6,30}@gmail\.com$/
+
+/** Normalize: trim + lowercase */
+export function normalizeEmail(raw) {
+  return typeof raw === 'string' ? raw.trim().toLowerCase() : ''
 }
 
-export function isEmailValid(email) {
-  return (
-    typeof email === 'string' &&
-    email.length > 0 &&
-    email.length <= EMAIL_MAX_LENGTH &&
-    EMAIL_PATTERN.test(email)
-  )
+/**
+ * Known test / disposable / spam Gmail usernames that are blocked.
+ * (Temp-mail services use their own domains, so @gmail.com already blocks them.)
+ */
+const BLACKLISTED_USERNAMES = new Set([
+  'test', 'admin', 'noreply', 'no.reply', 'donotreply', 'do.not.reply',
+  'fake', 'spam', 'trash', 'disposable', 'temp', 'temporary',
+  'test123', 'test.user', 'example', 'sample', 'demo', 'guest',
+  'anonymous', 'abuse', 'postmaster', 'webmaster', 'info', 'support',
+  'contact', 'hello', 'mail', 'email', 'user', 'account',
+])
+
+/**
+ * Returns a bilingual error object { en, my } describing the first rule
+ * violation, or null if the email is valid.
+ *
+ * @param {string} rawEmail – the raw string from the input (before normalization)
+ */
+export function getEmailValidationError(rawEmail) {
+  // Rule 1-2: required, not empty
+  if (rawEmail === undefined || rawEmail === null || rawEmail === '') {
+    return {
+      en: 'Email is required.',
+      my: 'အီးမေးလ် ဖြည့်သွင်းရန် လိုအပ်ပါသည်။',
+    }
+  }
+
+  // Rule 3: no leading/trailing spaces
+  if (rawEmail !== rawEmail.trim()) {
+    return {
+      en: 'Email must not have spaces at the start or end.',
+      my: 'အီးမေးလ် ရှေ့နှင့် နောက်တွင် Space မပါရပါ။',
+    }
+  }
+
+  const email = rawEmail.toLowerCase() // Rule 12: case-insensitive
+
+  // Rule 4 & 6: exactly one @
+  const atCount = (email.match(/@/g) || []).length
+  if (atCount === 0) {
+    return {
+      en: 'Email must contain the @ symbol.',
+      my: 'အီးမေးလ်တွင် @ သင်္ကေတ ပါရမည်။',
+    }
+  }
+  if (atCount > 1) {
+    return {
+      en: 'Email must contain exactly one @ symbol.',
+      my: '@ သင်္ကေတ တစ်ခုတည်းသာ ပါဝင်ရမည်။',
+    }
+  }
+
+  const [username, domain] = email.split('@')
+
+  // Rules 5, 13, 14: domain must be exactly gmail.com
+  if (!domain || domain !== 'gmail.com') {
+    const typos = ['gmail.co', 'gamil.com', 'gmail.cm', 'gmal.com', 'gmial.com',
+                   'gmail.con', 'gmail.coom', 'gmaill.com', 'gmai.com']
+    const hint = typos.includes(domain)
+      ? { en: `Did you mean @gmail.com? "${domain}" looks like a typo.`,
+          my: `@gmail.com ဟု ဆိုလိုပါသလား? "${domain}" မှားနေပါသည်။` }
+      : { en: 'Only @gmail.com addresses are accepted.',
+          my: '@gmail.com Domain သာ လက်ခံပါသည်။' }
+    return hint
+  }
+
+  // Rules 8-9: leading/trailing dot (checked before length for precise error messages)
+  if (username.startsWith('.')) {
+    return {
+      en: 'Gmail username must not start with a dot.',
+      my: 'Gmail username Dot (.) ဖြင့် မစရပါ။',
+    }
+  }
+  if (username.endsWith('.')) {
+    return {
+      en: 'Gmail username must not end with a dot.',
+      my: 'Gmail username Dot (.) ဖြင့် မဆုံးရပါ။',
+    }
+  }
+
+  // Rule 7: username length 6–30
+  if (username.length < GMAIL_USERNAME_MIN) {
+    return {
+      en: `Gmail username must be at least ${GMAIL_USERNAME_MIN} characters (yours: ${username.length}).`,
+      my: `Gmail username အနည်းဆုံး ${GMAIL_USERNAME_MIN} လုံး ဖြစ်ရမည်။ (${username.length} လုံးသာ ရှိသည်)`,
+    }
+  }
+  if (username.length > GMAIL_USERNAME_MAX) {
+    return {
+      en: `Gmail username must not exceed ${GMAIL_USERNAME_MAX} characters (yours: ${username.length}).`,
+      my: `Gmail username အများဆုံး ${GMAIL_USERNAME_MAX} လုံးသာ ဖြစ်ရမည်။`,
+    }
+  }
+
+  // Rules 8, 11: only a-z, 0-9, dots — no special characters
+  if (!/^[a-z0-9.]+$/.test(username)) {
+    return {
+      en: 'Gmail username may only contain letters (a-z), numbers (0-9), and dots (.).',
+      my: 'Gmail username တွင် အက္ခရာ (a-z)၊ ဂဏန်း (0-9) နှင့် Dot (.) သာ ပါနိုင်သည်။',
+    }
+  }
+
+  // Rule 10: no consecutive dots
+  if (username.includes('..')) {
+    return {
+      en: 'Gmail username must not contain consecutive dots (..).',
+      my: 'Gmail username တွင် Dot နှစ်လုံးဆက်တိုက် (..) မဖြစ်ရပါ။',
+    }
+  }
+
+  // Rules 15-17: blacklist (fake, test, temp usernames)
+  if (BLACKLISTED_USERNAMES.has(username)) {
+    return {
+      en: 'This email address is not allowed. Please use your real Gmail address.',
+      my: 'ဤ Email လိပ်စာကို ခွင့်မပြုပါ။ သင်၏ Gmail လိပ်စာအမှန်ကို ထည့်သွင်းပါ။',
+    }
+  }
+
+  return null // ✓ Valid
+}
+
+/**
+ * Returns true if the email passes all Gmail validation rules.
+ * Accepts un-normalized input — normalizes internally for the check.
+ */
+export function isEmailValid(rawEmail) {
+  return getEmailValidationError(rawEmail) === null
+}
+
+/** Backward-compatible single error string (English) */
+export const EMAIL_ERROR = {
+  en: 'Please enter a valid Gmail address (yourname@gmail.com)',
+  my: 'မှန်ကန်သော Gmail လိပ်စာ ထည့်သွင်းပါ (yourname@gmail.com)',
 }
 
 // ── Phone ─────────────────────────────────────────────────────────────────

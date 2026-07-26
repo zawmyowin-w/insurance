@@ -1,5 +1,13 @@
-import { useState, useRef, useEffect } from 'react'
-import { issueOtp, otpSecondsLeft } from '../services/otpService'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import {
+  resendOtp,
+  otpSecondsLeft,
+  getOtpAttemptsLeft,
+  getOtpResendsLeft,
+  isOtpLocked,
+  MAX_OTP_ATTEMPTS,
+  MAX_OTP_RESENDS,
+} from '../services/otpService'
 import { toast } from 'react-toastify'
 
 const BOX_COUNT = 6
@@ -14,14 +22,27 @@ export function useOtpInput(email, purpose, t) {
   const [digits, setDigits] = useState(Array(BOX_COUNT).fill(''))
   const [seconds, setSeconds] = useState(() => otpSecondsLeft(email, purpose))
   const [resending, setResending] = useState(false)
+
+  // Attempt / resend counters (mirror localStorage into React state for reactivity)
+  const [attemptsLeft, setAttemptsLeft] = useState(() => getOtpAttemptsLeft(email, purpose))
+  const [resendsLeft, setResendsLeft]   = useState(() => getOtpResendsLeft(email, purpose))
+  const [locked, setLocked]             = useState(() => isOtpLocked(email, purpose))
+
   const inputs = useRef([])
 
+  // Countdown timer
   useEffect(() => {
     const id = setInterval(() => setSeconds(otpSecondsLeft(email, purpose)), 1000)
     return () => clearInterval(id)
   }, [email, purpose])
 
   const focus = i => inputs.current[i]?.focus()
+
+  /** Call this after each failed verify attempt to update UI counters. */
+  const refreshAttemptCounters = useCallback(() => {
+    setAttemptsLeft(getOtpAttemptsLeft(email, purpose))
+    setLocked(isOtpLocked(email, purpose))
+  }, [email, purpose])
 
   const handleChange = (i, val) => {
     const ch = val.replace(/\D/g, '').slice(-1)
@@ -47,16 +68,43 @@ export function useOtpInput(email, purpose, t) {
   }
 
   const handleResend = async () => {
+    if (resendsLeft <= 0) {
+      toast.error(
+        t('otp.resendLimitReached') ||
+        `Maximum resend limit (${MAX_OTP_RESENDS}) reached. Please start over.`,
+        { autoClose: false }
+      )
+      return
+    }
+
     setResending(true)
     try {
-      await issueOtp(email, purpose)
+      await resendOtp(email, purpose)
+      // Refresh counters — resend resets attempt count
+      setAttemptsLeft(MAX_OTP_ATTEMPTS)
+      setLocked(false)
+      setResendsLeft(getOtpResendsLeft(email, purpose))
       setSeconds(300)
       setDigits(Array(BOX_COUNT).fill(''))
       focus(0)
-      toast.success(t('otp.resent'))
+      const left = getOtpResendsLeft(email, purpose)
+      toast.success(
+        left > 0
+          ? `${t('otp.resent') || 'New code sent!'} (${left} resend${left === 1 ? '' : 's'} remaining)`
+          : (t('otp.resent') || 'New code sent! This is your last resend.')
+      )
     } catch (err) {
-      const detail = err?.emailjsDetail || err?.message || ''
-      toast.error(`${t('otp.sendError')} — ${detail}`, { autoClose: false })
+      if (err.code === 'resend_limit_exceeded') {
+        setResendsLeft(0)
+        toast.error(
+          t('otp.resendLimitReached') ||
+          `Maximum resend limit (${MAX_OTP_RESENDS}) reached. Please start registration again.`,
+          { autoClose: false }
+        )
+      } else {
+        const detail = err?.emailjsDetail || err?.message || ''
+        toast.error(`${t('otp.sendError') || 'Could not resend code'} — ${detail}`, { autoClose: false })
+      }
     } finally {
       setResending(false)
     }
@@ -70,5 +118,9 @@ export function useOtpInput(email, purpose, t) {
     digits, setDigits, seconds, resending,
     inputs, mm, ss, code, BOX_COUNT,
     handleChange, handleKeyDown, handlePaste, handleResend, focus,
+    // Counters & state for attempt / resend UI
+    attemptsLeft, resendsLeft, locked,
+    refreshAttemptCounters,
+    MAX_OTP_ATTEMPTS, MAX_OTP_RESENDS,
   }
 }

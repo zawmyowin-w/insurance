@@ -5,8 +5,12 @@ import com.insurance.portal.model.User;
 import com.insurance.portal.model.enums.Role;
 import com.insurance.portal.repository.UserRepository;
 import com.insurance.portal.security.JwtTokenProvider;
+import com.insurance.portal.service.EmailValidationService;
+import com.insurance.portal.util.EmailValidationUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
@@ -20,9 +24,13 @@ import org.springframework.web.multipart.MultipartFile;
 import com.insurance.portal.util.FileStorageUtil;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
+@Slf4j
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
@@ -32,6 +40,34 @@ public class AuthController {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider tokenProvider;
+    private final EmailValidationService emailValidationService;
+
+    // ── Rate limiting (in-memory, per IP) ────────────────────────────────────
+    // Registration: max 10 attempts per IP per 15 minutes
+    // Email validation: max 30 calls per IP per 15 minutes
+    private static final ConcurrentHashMap<String, List<Long>> REG_ATTEMPTS   = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, List<Long>> VALID_ATTEMPTS = new ConcurrentHashMap<>();
+    private static final int  REG_MAX      = 10;
+    private static final int  VALID_MAX    = 30;
+    private static final long WINDOW_MS    = 15 * 60_000L;
+
+    private String clientIp(HttpServletRequest req) {
+        String xff = req.getHeader("X-Forwarded-For");
+        return (xff != null && !xff.isBlank()) ? xff.split(",")[0].trim() : req.getRemoteAddr();
+    }
+
+    /** Returns true and records attempt if under limit; returns false if rate-limited. */
+    private boolean checkRateLimit(ConcurrentHashMap<String, List<Long>> store, String key, int max) {
+        long now = System.currentTimeMillis();
+        List<Long> times = store.compute(key, (k, list) -> {
+            if (list == null) list = new ArrayList<>();
+            list.removeIf(t -> now - t > WINDOW_MS);
+            return list;
+        });
+        if (times.size() >= max) return false;
+        times.add(now);
+        return true;
+    }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest req) {
@@ -42,23 +78,95 @@ public class AuthController {
         return ResponseEntity.ok(new AuthResponse(token, UserResponse.from(user)));
     }
 
+    /**
+     * Full server-side email validation (Rules 1-17 + MX record check, Rules 18-19).
+     * Called by the frontend before check-email / OTP issue.
+     * Rate-limited to 30 calls per IP per 15 minutes (Rule 31).
+     */
+    @GetMapping("/validate-email")
+    public ResponseEntity<?> validateEmail(@RequestParam String email,
+                                           HttpServletRequest request) {
+        // Rate limit
+        String ip = clientIp(request);
+        if (!checkRateLimit(VALID_ATTEMPTS, ip, VALID_MAX)) {
+            log.warn("[RateLimit] validate-email blocked for IP: {}", ip);
+            return ResponseEntity.status(429).body(new ErrorResponse(
+                "Too many requests. Please wait a few minutes before trying again."));
+        }
+
+        // Normalize (Rules 3, 12)
+        String normalized = EmailValidationUtil.normalize(email);
+
+        // Full format + blacklist validation (Rules 1-17)
+        EmailValidationService.Result result = emailValidationService.validate(normalized);
+        if (!result.valid()) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(result.errorMessage()));
+        }
+
+        return ResponseEntity.ok(Map.of("valid", true, "normalizedEmail", normalized));
+    }
+
     /** Check whether an email address is available (not yet registered). */
     @GetMapping("/check-email")
     public ResponseEntity<?> checkEmail(@RequestParam String email) {
-        if (userRepository.existsByEmail(email)) {
+        // Normalize before lookup (Rule 12)
+        String normalized = EmailValidationUtil.normalize(email);
+        if (userRepository.existsByEmail(normalized)) {
             return ResponseEntity.status(409).body(new ErrorResponse("Email already in use"));
         }
         return ResponseEntity.ok(Map.of("available", true));
     }
 
+    /**
+     * Create a verified customer account.
+     *
+     * Security controls applied here (Rules 21-22, 30-34):
+     *   - Honeypot field check (Rule 30): 'website' must be absent/empty
+     *   - Rate limiting (Rule 31): max 10 registration attempts per IP per 15 min
+     *   - Email normalization (Rule 12): toLowerCase + trim
+     *   - Email uniqueness (Rules 21-22): DB unique constraint + pre-check
+     *   - Full Gmail validation (Rules 1-17): via EmailValidationUtil
+     *   - SQL injection (Rule 32): JPA parameterized queries — never raw SQL
+     *   - XSS (Rule 33): no HTML rendered from stored user input; sanitized at presentation layer
+     *   - Account activated immediately on registration (Rule 40): active = true
+     *     (account was OTP-verified by the frontend before reaching this endpoint)
+     */
     @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest req) {
-        if (userRepository.existsByEmail(req.getEmail())) {
-            return ResponseEntity.badRequest().body(new ErrorResponse("Email already in use"));
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest req,
+                                      HttpServletRequest request) {
+        // Rule 30: Honeypot — bots fill in the 'website' field; real users don't
+        if (req.getWebsite() != null && !req.getWebsite().isBlank()) {
+            log.warn("[Honeypot] Bot registration detected from IP: {}", clientIp(request));
+            // Return a neutral 400 — don't reveal what triggered it
+            return ResponseEntity.badRequest().body(new ErrorResponse("Invalid request"));
         }
+
+        // Rule 31: Rate limiting
+        String ip = clientIp(request);
+        if (!checkRateLimit(REG_ATTEMPTS, ip, REG_MAX)) {
+            log.warn("[RateLimit] register blocked for IP: {}", ip);
+            return ResponseEntity.status(429).body(new ErrorResponse(
+                "Too many registration attempts. Please wait 15 minutes and try again."));
+        }
+
+        // Rules 12, 3: Normalize email
+        String email = EmailValidationUtil.normalize(req.getEmail());
+
+        // Rules 1-17: Full Gmail validation (safety net — frontend also validates)
+        String validationError = EmailValidationUtil.validate(email);
+        if (validationError != null) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(validationError));
+        }
+
+        // Rules 21-22: Uniqueness check
+        if (userRepository.existsByEmail(email)) {
+            return ResponseEntity.status(409).body(new ErrorResponse("Email already in use"));
+        }
+
+        // Rule 40: Account is activated immediately — OTP verification was completed on the frontend
         User user = User.builder()
                 .name(req.getName())
-                .email(req.getEmail())
+                .email(email)
                 .password(passwordEncoder.encode(req.getPassword()))
                 .role(Role.CUSTOMER)
                 .phone(req.getPhone())
@@ -66,6 +174,7 @@ public class AuthController {
                 .active(true)
                 .build();
         userRepository.save(user);
+        log.info("[Auth] New customer registered: {}", email);
         String token = tokenProvider.generateToken(user.getEmail());
         return ResponseEntity.ok(new AuthResponse(token, UserResponse.from(user)));
     }
