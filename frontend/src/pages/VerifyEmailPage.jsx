@@ -233,7 +233,7 @@ export default function VerifyEmailPage() {
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           gap: '0.4rem', color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.88rem',
         }}>
-          <i className="bi bi-arrow-left"></i> {t('auth.backToRegister') || 'Back to Register'}
+          <i className="bi bi-arrow-left"></i> Back to Register
         </Link>
       </div>
     </div>
