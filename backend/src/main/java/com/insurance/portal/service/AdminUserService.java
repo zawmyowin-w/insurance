@@ -8,6 +8,7 @@ import com.insurance.portal.repository.*;
 import com.insurance.portal.util.EmailValidationUtil;
 import com.insurance.portal.util.FileStorageUtil;
 import com.insurance.portal.util.PasswordValidationUtil;
+import com.insurance.portal.util.PhoneValidationUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -49,12 +50,22 @@ public class AdminUserService {
                     "\"" + taken.get().getName() + "\" သည် " + insuranceType + " type ကို ယူထားပြီးဖြစ်သည်။ Insurance type တစ်မျိုးလျှင် agent တစ်ယောက်သာ ရပါသည်။"));
         }
 
+        String agentPhone = req.containsKey("phone") ? req.get("phone").toString() : null;
+        if (agentPhone != null && !agentPhone.isBlank()) {
+            String phoneErr = PhoneValidationUtil.validate(agentPhone);
+            if (phoneErr != null)
+                return ResponseEntity.badRequest().body(Map.of("message", phoneErr));
+            agentPhone = PhoneValidationUtil.normalize(agentPhone);
+            if (userRepo.existsByPhone(agentPhone))
+                return ResponseEntity.status(409).body(Map.of("message", PhoneValidationUtil.DUPLICATE_ERROR));
+        }
+
         User agent = User.builder()
                 .name(req.get("name").toString())
                 .email(email)
                 .password(passwordEncoder.encode(password))
                 .role(Role.AGENT)
-                .phone(req.containsKey("phone") ? req.get("phone").toString() : null)
+                .phone(agentPhone)
                 .address(req.containsKey("address") ? req.get("address").toString() : null)
                 .insuranceType(insuranceType)
                 .active(true)
@@ -74,12 +85,22 @@ public class AdminUserService {
         if (!PasswordValidationUtil.isStrong(password))
             return ResponseEntity.badRequest().body(Map.of("message", PasswordValidationUtil.ERROR_MESSAGE));
 
+        String adminPhone = req.containsKey("phone") ? req.get("phone").toString() : null;
+        if (adminPhone != null && !adminPhone.isBlank()) {
+            String phoneErr = PhoneValidationUtil.validate(adminPhone);
+            if (phoneErr != null)
+                return ResponseEntity.badRequest().body(Map.of("message", phoneErr));
+            adminPhone = PhoneValidationUtil.normalize(adminPhone);
+            if (userRepo.existsByPhone(adminPhone))
+                return ResponseEntity.status(409).body(Map.of("message", PhoneValidationUtil.DUPLICATE_ERROR));
+        }
+
         User admin = User.builder()
                 .name(req.get("name").toString())
                 .email(email)
                 .password(passwordEncoder.encode(password))
                 .role(Role.ADMIN)
-                .phone(req.containsKey("phone") ? req.get("phone").toString() : null)
+                .phone(adminPhone)
                 .address(req.containsKey("address") ? req.get("address").toString() : null)
                 .active(true)
                 .build();
@@ -98,7 +119,15 @@ public class AdminUserService {
                 return ResponseEntity.badRequest().body(Map.of("message", "Email already in use"));
             user.setEmail(req.getEmail());
         }
-        if (req.getPhone() != null) user.setPhone(req.getPhone());
+        if (req.getPhone() != null && !req.getPhone().isBlank()) {
+            String phoneErr = PhoneValidationUtil.validate(req.getPhone());
+            if (phoneErr != null)
+                return ResponseEntity.badRequest().body(Map.of("message", phoneErr));
+            String normalizedPhone = PhoneValidationUtil.normalize(req.getPhone());
+            if (userRepo.existsByPhoneAndIdNot(normalizedPhone, id))
+                return ResponseEntity.status(409).body(Map.of("message", PhoneValidationUtil.DUPLICATE_ERROR));
+            user.setPhone(normalizedPhone);
+        }
         if (req.getAddress() != null) user.setAddress(req.getAddress());
         if (user.getRole() == Role.AGENT && req.getInsuranceType() != null && !req.getInsuranceType().isBlank()) {
             String newType = req.getInsuranceType();

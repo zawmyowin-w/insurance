@@ -7,6 +7,7 @@ import com.insurance.portal.repository.UserRepository;
 import com.insurance.portal.security.JwtTokenProvider;
 import com.insurance.portal.service.EmailValidationService;
 import com.insurance.portal.util.EmailValidationUtil;
+import com.insurance.portal.util.PhoneValidationUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -163,13 +164,28 @@ public class AuthController {
             return ResponseEntity.status(409).body(new ErrorResponse("Email already in use"));
         }
 
+        // Phone validation
+        String phone = req.getPhone();
+        if (phone != null && !phone.isBlank()) {
+            String phoneError = PhoneValidationUtil.validate(phone);
+            if (phoneError != null) {
+                return ResponseEntity.badRequest().body(new ErrorResponse(phoneError));
+            }
+            phone = PhoneValidationUtil.normalize(phone);
+            if (userRepository.existsByPhone(phone)) {
+                return ResponseEntity.status(409).body(new ErrorResponse(PhoneValidationUtil.DUPLICATE_ERROR));
+            }
+        } else {
+            return ResponseEntity.badRequest().body(new ErrorResponse(PhoneValidationUtil.REQUIRED_ERROR));
+        }
+
         // Rule 40: Account is activated immediately — OTP verification was completed on the frontend
         User user = User.builder()
                 .name(req.getName())
                 .email(email)
                 .password(passwordEncoder.encode(req.getPassword()))
                 .role(Role.CUSTOMER)
-                .phone(req.getPhone())
+                .phone(phone)
                 .address(req.getAddress())
                 .active(true)
                 .build();
@@ -246,6 +262,19 @@ public class AuthController {
                     "Agent profiles can only be updated by an admin. Please contact your administrator."));
         }
 
+        // Phone validation helper (shared by ADMIN and CUSTOMER paths)
+        if (req.getPhone() != null && !req.getPhone().isBlank()) {
+            String phoneErr = PhoneValidationUtil.validate(req.getPhone());
+            if (phoneErr != null) {
+                return ResponseEntity.badRequest().body(new ErrorResponse(phoneErr));
+            }
+            String normalizedPhone = PhoneValidationUtil.normalize(req.getPhone());
+            if (userRepository.existsByPhoneAndIdNot(normalizedPhone, user.getId())) {
+                return ResponseEntity.status(409).body(new ErrorResponse(PhoneValidationUtil.DUPLICATE_ERROR));
+            }
+            req.setPhone(normalizedPhone);
+        }
+
         if (user.getRole() == Role.ADMIN) {
             if (req.getName() != null && !req.getName().isBlank()) user.setName(req.getName());
             if (req.getEmail() != null && !req.getEmail().isBlank() && !req.getEmail().equalsIgnoreCase(user.getEmail())) {
@@ -257,12 +286,12 @@ public class AuthController {
                 }
                 user.setEmail(req.getEmail());
             }
-            if (req.getPhone() != null) user.setPhone(req.getPhone());
+            if (req.getPhone() != null && !req.getPhone().isBlank()) user.setPhone(req.getPhone());
             if (req.getAddress() != null) user.setAddress(req.getAddress());
         } else {
             // CUSTOMER — name and email are locked (core identity); phone, address
             // (and password below) may change.
-            if (req.getPhone() != null) user.setPhone(req.getPhone());
+            if (req.getPhone() != null && !req.getPhone().isBlank()) user.setPhone(req.getPhone());
             if (req.getAddress() != null) user.setAddress(req.getAddress());
         }
 

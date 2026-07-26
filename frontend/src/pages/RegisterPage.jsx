@@ -7,6 +7,7 @@ import api from '../services/api'
 import {
   EMAIL_MAX_LENGTH, EMAIL_ERROR,
   getEmailValidationError, normalizeEmail,
+  getPhoneValidationError, isPhoneValid,
   passwordStrengthLevel, isStrongPassword,
 } from '../utils/validation'
 import PasswordStrengthWidget from '../components/PasswordStrengthWidget'
@@ -23,6 +24,7 @@ export default function RegisterPage() {
   const [agree, setAgree] = useState(false)
   const [pwdFocused, setPwdFocused] = useState(false)
   const [emailTouched, setEmailTouched] = useState(false)
+  const [phoneTouched, setPhoneTouched] = useState(false)
 
   const lang = i18n.language?.startsWith('my') ? 'my' : 'en'
 
@@ -31,12 +33,25 @@ export default function RegisterPage() {
     setForm(f => ({ ...f, [name]: value }))
   }
 
-  const handleEmailBlur = () => {
-    setEmailTouched(true)
+  const handlePhoneChange = e => {
+    let val = e.target.value
+    if (!val) { setForm(f => ({ ...f, phone: '' })); return }
+    if (!val.startsWith('+959')) { setForm(f => ({ ...f, phone: '+959' })); return }
+    // Only allow digits after +959
+    const prefix = '+959'
+    const rest = val.slice(4).replace(/\D/g, '')
+    setForm(f => ({ ...f, phone: prefix + rest }))
+  }
+
+  const handleEmailBlur = () => setEmailTouched(true)
+  const handlePhoneBlur = () => {
+    if (form.phone === '+959') setForm(f => ({ ...f, phone: '' }))
+    setPhoneTouched(true)
   }
 
   const emailError   = emailTouched ? getEmailValidationError(form.email) : null
   const emailValid   = emailError === null
+  const phoneError   = phoneTouched ? getPhoneValidationError(form.phone) : null
   const allRulesPassed = isStrongPassword(form.password)
   const { level, label: strengthLabel, color: strengthColor } = passwordStrengthLevel(form.password)
 
@@ -53,9 +68,15 @@ export default function RegisterPage() {
       return
     }
 
+    setPhoneTouched(true)
     const emailErr = getEmailValidationError(normalizedEmail)
     if (emailErr) {
       toast.error(emailErr[lang])
+      return
+    }
+    const phoneErr = getPhoneValidationError(form.phone)
+    if (phoneErr) {
+      toast.error(phoneErr[lang])
       return
     }
     if (!allRulesPassed) { toast.error(t('auth.pwdWeak')); return }
@@ -63,7 +84,7 @@ export default function RegisterPage() {
     if (!agree) { toast.error(t('auth.mustAgree')); return }
 
     setLoading(true)
-    const payload = { name: form.name, email: normalizedEmail, address: form.address, password: form.password }
+    const payload = { name: form.name, email: normalizedEmail, phone: form.phone, address: form.address, password: form.password }
 
     // Step 1: Server-side Gmail format + blacklist + MX record validation
     try {
@@ -163,7 +184,36 @@ export default function RegisterPage() {
                 </p>
               )}
             </div>
-            <div className="col-12">
+            <div className="col-12 col-sm-6">
+              <label className="form-label-custom">{t('auth.phone')} *</label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  name="phone" type="tel" required
+                  className="form-control-custom w-100"
+                  placeholder="+959xxxxxxxx"
+                  value={form.phone}
+                  onChange={handlePhoneChange}
+                  onFocus={() => { if (!form.phone) setForm(f => ({ ...f, phone: '+959' })) }}
+                  onBlur={handlePhoneBlur}
+                  style={phoneError ? { borderColor: '#ef4444' } : undefined}
+                />
+                {phoneTouched && !phoneError && form.phone && form.phone !== '+959' && (
+                  <span style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: '#16a34a', fontSize: '1rem' }}>
+                    <i className="bi bi-check-circle-fill" />
+                  </span>
+                )}
+              </div>
+              {phoneError ? (
+                <p style={{ fontSize: '0.76rem', color: '#ef4444', margin: '0.25rem 0 0', lineHeight: 1.4 }}>
+                  <i className="bi bi-exclamation-circle me-1" />{phoneError[lang]}
+                </p>
+              ) : (
+                <p style={{ fontSize: '0.73rem', color: 'var(--text-muted)', margin: '0.2rem 0 0' }}>
+                  {lang === 'my' ? '+959 ဖြင့်စပြီး ဂဏန်း 7–10 လုံး ဖြည့်ပါ' : 'Start with +959 then 7–10 digits'}
+                </p>
+              )}
+            </div>
+            <div className="col-12 col-sm-6">
               <label className="form-label-custom">{t('auth.address')}</label>
               <input name="address" className="form-control-custom w-100"
                 placeholder="Yangon, Myanmar" value={form.address} onChange={handleChange} />

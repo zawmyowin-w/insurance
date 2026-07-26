@@ -314,9 +314,171 @@ export const EMAIL_ERROR = {
 }
 
 // ── Phone ─────────────────────────────────────────────────────────────────
+
+/**
+ * Comprehensive Myanmar phone number validation.
+ *
+ * Rules enforced:
+ *  1. Required
+ *  2. Trim leading/trailing spaces before validation
+ *  3. Must start with exactly +959
+ *  4. No spaces anywhere (leading, trailing, internal)
+ *  5. Only '+' at the very start (once); no other special characters
+ *  6. No letters (English/Myanmar), emoji, or Unicode symbols
+ *  7. After +959: digits 0–9 only, length 7–10
+ *  8. No double country code (+95959…)
+ *  9. Fake numbers blocked: all-same digit (111111111, 000000000…)
+ * 10. Sequential numbers blocked: 123456789, 987654321…
+ *
+ * DB uniqueness is enforced server-side.
+ *
+ * @param {string} rawPhone – raw value from the input (not yet trimmed)
+ * @returns {{ en: string, my: string } | null}  error object or null if valid
+ */
+export function getPhoneValidationError(rawPhone) {
+  // ① Required
+  if (rawPhone === undefined || rawPhone === null || rawPhone === '') {
+    return {
+      en: 'Phone number is required.',
+      my: 'ဖုန်းနံပါတ် ဖြည့်သွင်းရန် လိုအပ်ပါသည်။',
+    }
+  }
+
+  // ② Trim leading/trailing spaces
+  const phone = rawPhone.trim()
+
+  if (phone === '') {
+    return {
+      en: 'Phone number is required.',
+      my: 'ဖုန်းနံပါတ် ဖြည့်သွင်းရန် လိုအပ်ပါသည်။',
+    }
+  }
+
+  // ③ No internal spaces
+  if (/\s/.test(phone)) {
+    return {
+      en: 'Phone number must not contain any spaces (including in the middle).',
+      my: 'ဖုန်းနံပါတ်တွင် Space မပါရပါ။ (ရှေ့၊ နောက်၊ အလယ် မည်သည့်နေရာတွင်မဆို)',
+    }
+  }
+
+  // ④ No special characters (hyphen, underscore, dot, slash, backslash, parens, comma, hash, asterisk…)
+  if (/[-_./\\(),"'#*@!$%^&=<>?|;:`~]/.test(phone)) {
+    return {
+      en: "Phone number must not contain special characters (-, _, ., /, \\, (, ), ,, #, * etc.).",
+      my: 'ဖုန်းနံပါတ်တွင် -, _, ., /, \\, (, ), ,, #, * နှင့် အခြား Special Characters မပါရပါ။',
+    }
+  }
+
+  // ⑤ Only digits and one leading '+' allowed  (catches letters, Myanmar, emoji, Unicode)
+  if (/[^+0-9]/.test(phone)) {
+    return {
+      en: 'Phone number must contain only digits (0–9) after +959. Letters, Myanmar characters, emoji and symbols are not allowed.',
+      my: '+959 နောက်တွင် ဂဏန်း (0-9) များသာ ပါရမည်။ အင်္ဂလိပ်စာ၊ မြန်မာစာ၊ Emoji နှင့် Symbol များ လက်မခံပါ။',
+    }
+  }
+
+  // ⑥ '+' only at start, only once
+  const plusCount = (phone.match(/\+/g) || []).length
+  if (plusCount > 1) {
+    return {
+      en: "The '+' symbol may only appear once, at the beginning of the number.",
+      my: "'+' သင်္ကေတကို အစတွင် တစ်ကြိမ်သာ အသုံးပြုခွင့်ရှိသည်။",
+    }
+  }
+  if (plusCount === 1 && !phone.startsWith('+')) {
+    return {
+      en: "The '+' symbol must be at the very start of the phone number.",
+      my: "'+' သင်္ကေတသည် ဖုန်းနံပါတ် အစတွင်သာ ဖြစ်ရမည်။",
+    }
+  }
+
+  // ⑦ Must start with +959 (not 09, 959, +95 alone, +9509…, etc.)
+  if (!phone.startsWith('+959')) {
+    if (phone.startsWith('09')) {
+      return {
+        en: 'Phone number must start with +959. The format "09..." is not accepted.',
+        my: 'ဖုန်းနံပါတ်သည် +959 ဖြင့်သာ စရမည်။ "09..." Format ကို လက်မခံပါ။',
+      }
+    }
+    if (phone.startsWith('959') || (phone.startsWith('+95') && !phone.startsWith('+959'))) {
+      return {
+        en: 'Phone number must start with +959. The format "959..." or "+95..." (without the trailing 9) is not accepted.',
+        my: 'ဖုန်းနံပါတ်သည် +959 ဖြင့်သာ စရမည်။ 959... သို့မဟုတ် +95... (9 မပါဘဲ) Format ကို လက်မခံပါ။',
+      }
+    }
+    return {
+      en: 'Phone number must start with +959 (Myanmar mobile country code).',
+      my: 'ဖုန်းနံပါတ်သည် +959 ဖြင့်သာ စရမည်။',
+    }
+  }
+
+  const digits = phone.slice(4) // everything after +959
+
+  // ⑧ No double country code: +95959… or +959095…
+  if (digits.startsWith('95') || digits.startsWith('059') || digits.startsWith('09')) {
+    return {
+      en: 'Phone number contains a duplicated country code (+95959…). Enter only the subscriber digits after +959.',
+      my: '+95959… ကဲ့သို့ Country Code ထပ်နေသော Format များကို လက်မခံပါ။ +959 နောက်တွင် ဂဏန်းများသာ ဖြည့်ပါ။',
+    }
+  }
+
+  // ⑨ Digits after prefix must be digits only (guard)
+  if (!/^\d*$/.test(digits)) {
+    return {
+      en: 'Only digits (0–9) are allowed after +959.',
+      my: '+959 နောက်တွင် ဂဏန်း (0-9) များသာ ဖြည့်ရမည်။',
+    }
+  }
+
+  // ⑩ Length: 7–10 digits after +959
+  if (digits.length < 7) {
+    return {
+      en: `Phone number is too short. +959 must be followed by 7–10 digits (you entered ${digits.length}).`,
+      my: `ဖုန်းနံပါတ် တိုနေသည်။ +959 နောက် ဂဏန်း 7 မှ 10 လုံးအထိ ဖြည့်ရမည်။ (${digits.length} လုံးသာ ဖြည့်ထားသည်)`,
+    }
+  }
+  if (digits.length > 10) {
+    return {
+      en: `Phone number is too long. +959 must be followed by 7–10 digits (you entered ${digits.length}).`,
+      my: `ဖုန်းနံပါတ် ရှည်နေသည်။ +959 နောက် ဂဏန်း 7 မှ 10 လုံးအထိသာ ဖြည့်ရမည်။ (${digits.length} လုံး ဖြည့်ထားသည်)`,
+    }
+  }
+
+  // ⑪ Fake number: all same digit (111111111, 000000000, 999999999…)
+  if (/^(\d)\1+$/.test(digits)) {
+    return {
+      en: 'Phone number appears to be fake (all same digits). Please enter a real phone number.',
+      my: 'ဖုန်းနံပါတ်မှာ Fake ဖြစ်နေသည် (ဂဏန်းတူများသာ)။ စစ်မှန်သော ဖုန်းနံပါတ် ဖြည့်ပါ။',
+    }
+  }
+
+  // ⑫ Sequential digits (123456789, 987654321…)
+  let asc = true, desc = true
+  for (let i = 1; i < digits.length; i++) {
+    if (Number(digits[i]) !== Number(digits[i - 1]) + 1) asc = false
+    if (Number(digits[i]) !== Number(digits[i - 1]) - 1) desc = false
+    if (!asc && !desc) break
+  }
+  if (asc || desc) {
+    return {
+      en: 'Phone number appears to be sequential (e.g. 123456789). Please enter a real phone number.',
+      my: '123456789, 987654321 ကဲ့သို့ အစဉ်လိုက် ဂဏန်းများကို လက်မခံပါ။ စစ်မှန်သော ဖုန်းနံပါတ် ဖြည့်ပါ။',
+    }
+  }
+
+  return null // ✓ Valid
+}
+
+/** Returns true if the phone passes all format rules (not DB-uniqueness). */
+export function isPhoneValid(rawPhone) {
+  return getPhoneValidationError(rawPhone) === null
+}
+
+/** Legacy pattern kept for any callers not yet migrated. */
 export const PHONE_PATTERN = /^\+959\d{7,10}$/
-export const PHONE_ERROR =
-  'Phone must start with +959 followed by 7–10 more digits (e.g. +9591234567)'
+/** Legacy error string. */
+export const PHONE_ERROR = 'Phone must start with +959 followed by 7–10 digits (e.g. +9591234567)'
 
 // ── Password ──────────────────────────────────────────────────────────────
 export const PWD_RULES = [
@@ -361,9 +523,12 @@ export function passwordStrengthLevel(pwd) {
   return              { level: 4, label: 'Strong', color: '#16a34a' }
 }
 
-/** Normalise a phone input: always starts with "+95", blocks prefix deletion. */
+/**
+ * Normalise a phone input — locks the mandatory +959 prefix so the user
+ * cannot accidentally delete it while typing.
+ */
 export function normalisePhone(newVal) {
   if (!newVal) return newVal
-  if (!newVal.startsWith('+95')) return '+95'
+  if (!newVal.startsWith('+959')) return '+959'
   return newVal
 }

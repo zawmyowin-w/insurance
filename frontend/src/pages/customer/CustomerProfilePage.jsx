@@ -6,19 +6,22 @@ import { useAuth } from '../../context/AuthContext'
 import ProfileAvatar from '../../components/ProfileAvatar'
 import PasswordStrengthWidget from '../../components/PasswordStrengthWidget'
 import { issueOtp, verifyOtp, otpSecondsLeft } from '../../services/otpService'
-import { PHONE_PATTERN, PHONE_ERROR, isStrongPassword } from '../../utils/validation'
+import { getPhoneValidationError, isPhoneValid, isStrongPassword } from '../../utils/validation'
 
 const OTP_TYPE = 'profile-change'
 const OTP_BOX_COUNT = 6
 
 function handlePhoneChange(val, setter) {
   if (!val) { setter(''); return }
-  if (!val.startsWith('+95')) { setter('+95'); return }
-  setter(val)
+  if (!val.startsWith('+959')) { setter('+959'); return }
+  const prefix = '+959'
+  const rest = val.slice(4).replace(/\D/g, '')
+  setter(prefix + rest)
 }
 
 export default function CustomerProfilePage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const lang = i18n.language?.startsWith('my') ? 'my' : 'en'
   const { user, setUser } = useAuth()
   const [editMode, setEditMode] = useState(false)
   const [address, setAddress] = useState(user?.address || '')
@@ -151,9 +154,10 @@ export default function CustomerProfilePage() {
 
   const handleProfileSubmit = async e => {
     e.preventDefault()
-    // Treat "+95" alone (no digits after) as empty phone
-    const phoneVal = phone === '+95' ? '' : phone
-    if (phoneVal && !PHONE_PATTERN.test(phoneVal)) { toast.error(PHONE_ERROR); return }
+    // Treat "+959" alone (prefix only, no digits) as empty
+    const phoneVal = phone === '+959' ? '' : phone
+    const phoneErr = getPhoneValidationError(phoneVal)
+    if (phoneErr) { toast.error(phoneErr[lang] ?? phoneErr.en); return }
     setSavingProfile(true)
     try {
       if (pendingPhotoFile) {
@@ -202,7 +206,8 @@ export default function CustomerProfilePage() {
     } finally { setSavingPwd(false) }
   }
 
-  const phoneInvalid = phone && phone !== '+95' && !PHONE_PATTERN.test(phone)
+  const phoneError = getPhoneValidationError(phone === '+959' ? '' : phone)
+  const phoneInvalid = !!(phone && phone !== '+959' && phoneError)
 
   return (
     <div className="fade-in">
@@ -255,16 +260,19 @@ export default function CustomerProfilePage() {
                     value={phone}
                     placeholder="+959xxxxxxxx"
                     onChange={e => handlePhoneChange(e.target.value, setPhone)}
-                    onFocus={() => { if (!phone) setPhone('+95') }}
-                    onBlur={() => { if (phone === '+95') setPhone('') }}
+                    onFocus={() => { if (!phone) setPhone('+959') }}
+                    onBlur={() => { if (phone === '+959') setPhone('') }}
                     onKeyDown={e => { if (e.key === 'Enter') e.preventDefault() }}
                     style={{
                       ...(phoneInvalid ? { borderColor: '#ef4444' } : undefined),
                       ...(!editMode ? { opacity: 0.6, cursor: 'not-allowed' } : undefined),
                     }}
                   />
-                  {editMode && phoneInvalid && (
-                    <p style={{ fontSize: '0.76rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{PHONE_ERROR}</p>
+                  {editMode && phoneInvalid && phoneError && (
+                    <p style={{ fontSize: '0.76rem', color: '#ef4444', margin: '0.25rem 0 0' }}>
+                      <i className="bi bi-exclamation-circle me-1" />
+                      {phoneError[lang] ?? phoneError.en}
+                    </p>
                   )}
                   {editMode && (
                     <p style={{ fontSize: '0.74rem', color: 'var(--text-muted)', margin: '0.2rem 0 0' }}>

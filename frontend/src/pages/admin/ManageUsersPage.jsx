@@ -8,7 +8,7 @@ import ProfileAvatar from '../../components/ProfileAvatar'
 import PasswordStrengthWidget from '../../components/PasswordStrengthWidget'
 import {
   EMAIL_MAX_LENGTH, EMAIL_ERROR, isEmailValid,
-  PHONE_PATTERN, PHONE_ERROR, isStrongPassword,
+  getPhoneValidationError, isPhoneValid, isStrongPassword,
 } from '../../utils/validation'
 
 const EMPTY_FORM = { name: '', email: '', phone: '', address: '', password: '', insuranceType: 'LIFE' }
@@ -17,12 +17,15 @@ const PAGE_SIZE = 10
 
 function handlePhoneChange(val, setter) {
   if (!val) { setter(''); return }
-  if (!val.startsWith('+95')) { setter('+95'); return }
-  setter(val)
+  if (!val.startsWith('+959')) { setter('+959'); return }
+  const prefix = '+959'
+  const rest = val.slice(4).replace(/\D/g, '')
+  setter(prefix + rest)
 }
 
 export default function ManageUsersPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const lang = i18n.language?.startsWith('my') ? 'my' : 'en'
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const fromDashboard = searchParams.get('action') === 'create'
@@ -93,8 +96,9 @@ export default function ManageUsersPage() {
   const handleCreate = async e => {
     e.preventDefault()
     if (!isEmailValid(createForm.email)) { toast.error(EMAIL_ERROR.en); return }
-    const phoneVal = createForm.phone === '+95' ? '' : createForm.phone
-    if (phoneVal && !PHONE_PATTERN.test(phoneVal)) { toast.error(PHONE_ERROR); return }
+    const phoneVal = createForm.phone === '+959' ? '' : createForm.phone
+    const phoneErr = getPhoneValidationError(phoneVal)
+    if (phoneErr) { toast.error(phoneErr[lang] ?? phoneErr.en); return }
     if (!isStrongPassword(createForm.password)) {
       toast.error(t('admin.users.passwordStrengthError'))
       return
@@ -142,8 +146,9 @@ export default function ManageUsersPage() {
   const handleEditSubmit = async e => {
     e.preventDefault()
     if (!isEmailValid(editForm.email)) { toast.error(EMAIL_ERROR.en); return }
-    const phoneVal = editForm.phone === '+95' ? '' : editForm.phone
-    if (phoneVal && !PHONE_PATTERN.test(phoneVal)) { toast.error(PHONE_ERROR); return }
+    const phoneVal = editForm.phone === '+959' ? '' : editForm.phone
+    const phoneErr = getPhoneValidationError(phoneVal)
+    if (phoneErr) { toast.error(phoneErr[lang] ?? phoneErr.en); return }
     if (editForm.newPassword && !isStrongPassword(editForm.newPassword)) {
       toast.error(t('admin.users.passwordStrengthError'))
       return
@@ -234,11 +239,14 @@ export default function ManageUsersPage() {
                 <label className="form-label-custom">{t('admin.users.phone')}</label>
                 <input className="form-control-custom w-100" placeholder="+959xxxxxxxx" value={createForm.phone}
                   onChange={e => handlePhoneChange(e.target.value, v => setCreateForm(f => ({ ...f, phone: v })))}
-                  onFocus={() => { if (!createForm.phone) setCreateForm(f => ({ ...f, phone: '+95' })) }}
-                  onBlur={() => { if (createForm.phone === '+95') setCreateForm(f => ({ ...f, phone: '' })) }}
-                  style={createForm.phone && createForm.phone !== '+95' && !PHONE_PATTERN.test(createForm.phone) ? { borderColor: '#ef4444' } : undefined} />
-                {createForm.phone && createForm.phone !== '+95' && !PHONE_PATTERN.test(createForm.phone) && (
-                  <p style={{ fontSize: '0.76rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{PHONE_ERROR}</p>
+                  onFocus={() => { if (!createForm.phone) setCreateForm(f => ({ ...f, phone: '+959' })) }}
+                  onBlur={() => { if (createForm.phone === '+959') setCreateForm(f => ({ ...f, phone: '' })) }}
+                  style={createForm.phone && createForm.phone !== '+959' && getPhoneValidationError(createForm.phone) ? { borderColor: '#ef4444' } : undefined} />
+                {createForm.phone && createForm.phone !== '+959' && getPhoneValidationError(createForm.phone) && (
+                  <p style={{ fontSize: '0.76rem', color: '#ef4444', margin: '0.25rem 0 0' }}>
+                    <i className="bi bi-exclamation-circle me-1" />
+                    {(getPhoneValidationError(createForm.phone))[lang] ?? (getPhoneValidationError(createForm.phone)).en}
+                  </p>
                 )}
               </div>
               {activeTab === 'AGENT' && (
@@ -459,11 +467,14 @@ export default function ManageUsersPage() {
                   <label className="form-label-custom">{t('admin.users.phone')}</label>
                   <input className="form-control-custom w-100" placeholder="+959xxxxxxxx" value={editForm.phone}
                     onChange={e => handlePhoneChange(e.target.value, v => setEditForm(f => ({ ...f, phone: v })))}
-                    onFocus={() => { if (!editForm.phone) setEditForm(f => ({ ...f, phone: '+95' })) }}
-                    onBlur={() => { if (editForm.phone === '+95') setEditForm(f => ({ ...f, phone: '' })) }}
-                    style={editForm.phone && editForm.phone !== '+95' && !PHONE_PATTERN.test(editForm.phone) ? { borderColor: '#ef4444' } : undefined} />
-                  {editForm.phone && editForm.phone !== '+95' && !PHONE_PATTERN.test(editForm.phone) && (
-                    <p style={{ fontSize: '0.76rem', color: '#ef4444', margin: '0.25rem 0 0' }}>{PHONE_ERROR}</p>
+                    onFocus={() => { if (!editForm.phone) setEditForm(f => ({ ...f, phone: '+959' })) }}
+                    onBlur={() => { if (editForm.phone === '+959') setEditForm(f => ({ ...f, phone: '' })) }}
+                    style={editForm.phone && editForm.phone !== '+959' && getPhoneValidationError(editForm.phone) ? { borderColor: '#ef4444' } : undefined} />
+                  {editForm.phone && editForm.phone !== '+959' && getPhoneValidationError(editForm.phone) && (
+                    <p style={{ fontSize: '0.76rem', color: '#ef4444', margin: '0.25rem 0 0' }}>
+                      <i className="bi bi-exclamation-circle me-1" />
+                      {(getPhoneValidationError(editForm.phone))[lang] ?? (getPhoneValidationError(editForm.phone)).en}
+                    </p>
                   )}
                 </div>
                 {editingUser.role === 'AGENT' && (
