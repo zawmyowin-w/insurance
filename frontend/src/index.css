@@ -272,41 +272,49 @@ body {
 /* ─── Logo image in navbar ─── */
 .navbar-logo-wrap {
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 1px 6px rgba(37,99,235,0.18), 0 0 0 1.5px rgba(37,99,235,0.10);
 }
 .navbar-logo-img {
-  width: 40px;
-  height: 40px;
+  width: 34px;
+  height: 34px;
   object-fit: contain;
   display: block;
-  filter: drop-shadow(0 2px 6px rgba(79,70,229,0.3));
 }
-[data-theme="dark"] .navbar-logo-img {
-  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5));
+[data-theme="dark"] .navbar-logo-wrap {
+  background: #1e293b;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.45), 0 0 0 1.5px rgba(96,165,250,0.18);
 }
 
 /* ─── Auth page logo ─── */
 .auth-logo-wrap {
-  width: 96px;
-  height: 96px;
+  width: 88px;
+  height: 88px;
   margin: 0 auto 1.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 4px 20px rgba(37,99,235,0.20), 0 0 0 2px rgba(37,99,235,0.10);
 }
 .auth-logo-img {
-  width: 96px;
-  height: 96px;
+  width: 76px;
+  height: 76px;
   object-fit: contain;
   display: block;
-  filter: drop-shadow(0 6px 18px rgba(79,70,229,0.3));
 }
-[data-theme="dark"] .auth-logo-img {
-  filter: drop-shadow(0 6px 18px rgba(0,0,0,0.5));
+[data-theme="dark"] .auth-logo-wrap {
+  background: #1e293b;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4), 0 0 0 2px rgba(96,165,250,0.18);
 }
 
 .navbar-brand-text {
