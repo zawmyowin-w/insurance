@@ -229,11 +229,11 @@ export default function VerifyEmailPage() {
         </form>
 
         <div className="divider"></div>
-        <Link to="/login" style={{
+        <Link to="/register" style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           gap: '0.4rem', color: 'var(--text-secondary)', textDecoration: 'none', fontSize: '0.88rem',
         }}>
-          <i className="bi bi-arrow-left"></i> {t('auth.backToLogin') || 'Back to Login'}
+          <i className="bi bi-arrow-left"></i> {t('auth.backToRegister') || 'Back to Register'}
         </Link>
       </div>
     </div>
