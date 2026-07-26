@@ -4,48 +4,76 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
- * Gmail-only email validation.
+ * Email validation — accepts any real domain (not Gmail-only).
  *
  * Rules enforced:
  *   1.  Required — not null/blank.
- *   2.  No leading/trailing spaces.
- *   3.  Case-insensitive — normalize to lowercase before validating.
- *   4.  Exactly one '@' symbol.
- *   5.  Domain must be exactly 'gmail.com'.
- *   6.  Username: 6–30 characters.
- *   7.  Username: only lowercase letters, digits, dots.
- *   8.  Username must not start with a dot.
- *   9.  Username must not end with a dot.
- *  10.  No consecutive dots ('..').
- *  11.  No special characters (covered by rule 7).
- *  15-17. Common fake/test/temp usernames are blacklisted.
+ *   2.  No spaces anywhere (leading, trailing, internal).
+ *   3.  Lowercase only — uppercase letters (A-Z) not accepted.
+ *   4.  Must not start or end with '@'.
+ *   5.  Exactly one '@' symbol.
+ *   6.  Username (before @): 6–30 characters.
+ *   7.  Username must start with a letter (a-z) or number (0-9).
+ *   8.  Username must not end with . _ -
+ *   9.  Username: only a-z, 0-9, ., _, - allowed; blocks +#$%&!?*() etc.
+ *  10.  No consecutive dots (..) in username.
+ *  11.  No consecutive underscores (__) in username.
+ *  12.  No consecutive hyphens (--) in username.
+ *  13.  No mixed consecutive special characters: ._ _. .- -.
+ *  14.  Numeric-only username blocked (e.g. 123456@...).
+ *  15.  Reserved/blacklisted usernames blocked (admin, root, system, test …).
+ *  16.  Domain must start with a letter or number.
+ *  17.  Domain must not contain underscore (_).
+ *  18.  Domain must contain at least one dot.
+ *  19.  Each domain label must not start or end with hyphen (-).
+ *  20.  TLD (last domain segment): 2–6 letters only.
+ *  21.  Disposable/temp-mail domains blocked.
  *
- * Used wherever a user email is created or changed (registration, agent
- * creation, profile edits). Not applied on login so existing accounts are
- * never locked out.
+ * Applied on registration, agent/admin creation, and profile e-mail updates.
+ * Not applied on login so existing accounts are never locked out.
  */
 public final class EmailValidationUtil {
-
-    /** Allowed chars in Gmail username */
-    private static final Pattern USERNAME_CHARS = Pattern.compile("^[a-z0-9.]+$");
 
     private static final int USERNAME_MIN = 6;
     private static final int USERNAME_MAX = 30;
 
-    /** Blacklisted Gmail usernames (fake, test, spam, temp) */
-    private static final Set<String> BLACKLIST = Set.of(
-        "test", "admin", "noreply", "no.reply", "donotreply", "do.not.reply",
+    /** Allowed characters in the username part */
+    private static final Pattern USERNAME_CHARS = Pattern.compile("^[a-z0-9._-]+$");
+
+    /** Reserved/blacklisted usernames */
+    private static final Set<String> RESERVED_USERNAMES = Set.of(
+        "admin", "root", "system", "test",
+        "noreply", "no.reply", "donotreply", "do.not.reply",
         "fake", "spam", "trash", "disposable", "temp", "temporary",
         "test123", "test.user", "example", "sample", "demo", "guest",
         "anonymous", "abuse", "postmaster", "webmaster", "info", "support",
         "contact", "hello", "mail", "email", "user", "account"
     );
 
-    /** Convenience constant for callers that only need one generic message */
+    /** Common disposable / temporary email domains */
+    private static final Set<String> DISPOSABLE_DOMAINS = Set.of(
+        "mailinator.com", "guerrillamail.com", "tempmail.com", "temp-mail.org",
+        "yopmail.com", "10minutemail.com", "trashmail.com", "fakeinbox.com",
+        "sharklasers.com", "spam4.me", "maildrop.cc", "getnada.com",
+        "dispostable.com", "mailnull.com", "spamgourmet.com", "throwam.com",
+        "discardmail.com", "discard.email", "spamex.com", "getairmail.com",
+        "incognitomail.com", "jetable.com", "meltmail.com", "pookmail.com",
+        "wegwerfmail.de", "wegwerfmail.net", "wegwerfmail.org",
+        "trashmail.at", "trashmail.io", "trashmail.me", "trashmail.net",
+        "guerrillamail.info", "guerrillamail.biz", "guerrillamail.de",
+        "guerrillamail.net", "guerrillamail.org", "grr.la",
+        "mohmal.com", "filzmail.com", "spamavert.com", "spaminator.de",
+        "spammotel.com", "spamspot.com", "zetmail.com", "noclickemail.com",
+        "spamfree24.org", "deadaddress.com", "spamgob.com", "mailnew.com",
+        "sogetthis.com", "privymail.de", "wpdfs.com"
+    );
+
+    /** Generic error for callers that only need one message */
     public static final String ERROR_MESSAGE =
-        "Only valid Gmail addresses (@gmail.com) are accepted. " +
-        "Username must be 6–30 characters using letters, numbers, and dots only " +
-        "(no leading/trailing/consecutive dots).";
+        "Please enter a valid email address. " +
+        "Username (before @) must be 6–30 characters using a-z, 0-9, dots, underscores, or hyphens " +
+        "(must start and end with a letter or number; no consecutive or mixed special characters). " +
+        "Domain must have a valid TLD (2–6 letters). Disposable and reserved addresses are not accepted.";
 
     private EmailValidationUtil() {}
 
@@ -53,7 +81,7 @@ public final class EmailValidationUtil {
 
     /**
      * Normalise an email address: trim whitespace and convert to lowercase.
-     * Always call this before persisting or comparing.
+     * Always call this before persisting or comparing email addresses.
      */
     public static String normalize(String raw) {
         return (raw == null) ? null : raw.trim().toLowerCase();
@@ -61,66 +89,154 @@ public final class EmailValidationUtil {
 
     /**
      * Full validation. Returns a specific English error message, or {@code null}
-     * if the email is valid (after normalization).
+     * if the email is valid.
      *
-     * @param rawEmail  The raw input (may be un-normalized).
+     * Validates the raw input — no silent normalization is applied.
+     *
+     * @param rawEmail  The raw input string (may be un-normalized).
      */
     public static String validate(String rawEmail) {
-        // Rule 1-2: required, not blank
+
+        // ① Required
         if (rawEmail == null || rawEmail.isEmpty()) {
             return "Email is required.";
         }
-        if (!rawEmail.equals(rawEmail.trim())) {
-            return "Email must not have leading or trailing spaces.";
+
+        // ② No spaces anywhere
+        if (rawEmail.chars().anyMatch(Character::isWhitespace)) {
+            return "Email must not contain any spaces (including at the start or end).";
         }
 
-        final String email = rawEmail.toLowerCase(); // Rule 3: case-insensitive
+        // ③ Lowercase only
+        if (!rawEmail.equals(rawEmail.toLowerCase())) {
+            return "Email must be lowercase only. Uppercase letters (A–Z) are not accepted.";
+        }
 
-        // Rule 4: exactly one @
+        final String email = rawEmail; // confirmed: lowercase, no spaces
+
+        // ④ Must not start with @
+        if (email.startsWith("@")) {
+            return "Email must not start with @.";
+        }
+
+        // ⑤ Must not end with @
+        if (email.endsWith("@")) {
+            return "Email must not end with @.";
+        }
+
+        // ⑥ Exactly one @
         long atCount = email.chars().filter(c -> c == '@').count();
         if (atCount == 0) return "Email must contain the @ symbol.";
         if (atCount > 1)  return "Email must contain exactly one @ symbol.";
 
-        int atIdx = email.indexOf('@');
+        int    atIdx    = email.indexOf('@');
         String username = email.substring(0, atIdx);
         String domain   = email.substring(atIdx + 1);
 
-        // Rules 5, 13, 14: domain must be exactly gmail.com
-        if (!"gmail.com".equals(domain)) {
-            return "Only @gmail.com email addresses are accepted (got: @" + domain + ").";
-        }
+        // ══ Username rules ════════════════════════════════════════════════════
 
-        // Rules 8, 9: leading/trailing dot (checked before length for precise error messages)
-        if (username.startsWith(".")) {
-            return "Gmail username must not start with a dot.";
-        }
-        if (username.endsWith(".")) {
-            return "Gmail username must not end with a dot.";
-        }
-
-        // Rule 6: username length
+        // ⑥ Username length 6–30
         if (username.length() < USERNAME_MIN) {
-            return "Gmail username must be at least " + USERNAME_MIN + " characters " +
-                   "(yours has " + username.length() + ").";
+            return "Username (before @) must be at least " + USERNAME_MIN +
+                   " characters (yours: " + username.length() + ").";
         }
         if (username.length() > USERNAME_MAX) {
-            return "Gmail username must not exceed " + USERNAME_MAX + " characters " +
-                   "(yours has " + username.length() + ").";
+            return "Username (before @) must not exceed " + USERNAME_MAX +
+                   " characters (yours: " + username.length() + ").";
         }
 
-        // Rule 7, 11: only letters, digits, dots
+        // ⑦ Must start with letter or number
+        char first = username.charAt(0);
+        if (!Character.isLetterOrDigit(first)) {
+            return "Username must start with a letter (a–z) or number (0–9).";
+        }
+
+        // ⑧ Must not end with . _ -
+        char last = username.charAt(username.length() - 1);
+        if (last == '.' || last == '_' || last == '-') {
+            String charName = last == '.' ? "dot (.)" : last == '_' ? "underscore (_)" : "hyphen (-)";
+            return "Username must not end with a " + charName + ".";
+        }
+
+        // ⑨ Allowed characters: a-z, 0-9, . _ -
         if (!USERNAME_CHARS.matcher(username).matches()) {
-            return "Gmail username may only contain letters (a–z), numbers (0–9), and dots (.).";
+            return "Username may only contain letters (a–z), numbers (0–9), dots (.), " +
+                   "underscores (_), or hyphens (-). " +
+                   "Special characters like +, #, $, %, &, !, ?, *, (, ) are not allowed.";
         }
 
-        // Rule 10: no consecutive dots
+        // ⑩ No consecutive dots
         if (username.contains("..")) {
-            return "Gmail username must not contain consecutive dots (..).";
+            return "Username must not contain consecutive dots (..).";
         }
 
-        // Rules 15-17: blacklist
-        if (BLACKLIST.contains(username)) {
-            return "This email address is not allowed. Please use your real Gmail address.";
+        // ⑪ No consecutive underscores
+        if (username.contains("__")) {
+            return "Username must not contain consecutive underscores (__).";
+        }
+
+        // ⑫ No consecutive hyphens
+        if (username.contains("--")) {
+            return "Username must not contain consecutive hyphens (--).";
+        }
+
+        // ⑬ No mixed consecutive special characters: ._ _. .- -.
+        if (username.contains("._") || username.contains("_.") ||
+            username.contains(".-") || username.contains("-.")) {
+            return "Username must not contain mixed consecutive special characters " +
+                   "(e.g. ._, _., .-, -.).";
+        }
+
+        // ⑭ Numeric-only username blocked
+        if (username.chars().allMatch(Character::isDigit)) {
+            return "Username must not be numbers only. Include at least one letter (a–z).";
+        }
+
+        // ⑮ Reserved/blacklisted usernames
+        if (RESERVED_USERNAMES.contains(username)) {
+            return "This email address is not allowed. Please use a different email.";
+        }
+
+        // ══ Domain rules ══════════════════════════════════════════════════════
+
+        // ⑯ Domain must start with letter or number
+        if (domain.isEmpty() || !Character.isLetterOrDigit(domain.charAt(0))) {
+            return "Email domain must start with a letter or number.";
+        }
+
+        // ⑰ Domain must not contain underscore
+        if (domain.contains("_")) {
+            return "Email domain must not contain underscores (_).";
+        }
+
+        // ⑱ Domain must have at least one dot
+        if (!domain.contains(".")) {
+            return "Email domain must contain at least one dot (e.g. example.com).";
+        }
+
+        String[] labels = domain.split("\\.", -1);
+
+        // ⑲ Each label: non-empty, no leading/trailing hyphen
+        for (String label : labels) {
+            if (label.isEmpty()) {
+                return "Email domain is not valid (contains consecutive dots or empty segments).";
+            }
+            if (label.startsWith("-") || label.endsWith("-")) {
+                return "Email domain labels must not start or end with a hyphen (-).";
+            }
+        }
+
+        // ⑳ TLD: 2–6 letters only
+        String tld = labels[labels.length - 1];
+        if (!tld.matches("[a-z]+") || tld.length() < 2 || tld.length() > 6) {
+            return "Email domain ending (TLD) must be 2–6 letters only " +
+                   "(e.g. com, net, org, mm, edu).";
+        }
+
+        // ㉑ Disposable/temp-mail domains
+        if (DISPOSABLE_DOMAINS.contains(domain)) {
+            return "Temporary or disposable email addresses are not allowed. " +
+                   "Please use a real email address.";
         }
 
         return null; // ✓ Valid

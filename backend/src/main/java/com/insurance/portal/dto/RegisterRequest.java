@@ -12,21 +12,21 @@ public class RegisterRequest {
     private String name;
 
     /**
-     * Gmail-only.
-     * Username: 6–30 chars, a-z / 0-9 / dots, must start and end with letter or digit.
-     * Domain:   exactly gmail.com (lowercase, already normalized by the time it arrives).
+     * Email — any real domain accepted (not Gmail-only).
+     * Username: 6–30 chars, a-z / 0-9 / . / _ / -, must start and end with letter or digit.
+     * Domain:   any domain with a valid TLD (2–6 letters).
      *
-     * Full rules (leading/trailing/consecutive dots, blacklist, MX) are enforced
-     * in EmailValidationService and EmailValidationUtil — the pattern here is a
-     * lightweight safety net at the DTO layer.
+     * Full rules (consecutive/mixed special chars, reserved usernames, disposable
+     * domains, MX check) are enforced in EmailValidationUtil + EmailValidationService.
+     * This @Pattern is a lightweight safety net at the DTO layer only.
      *
-     * Max total length: username(30) + @gmail.com(10) = 40 chars.
+     * Max total length: username(30) + @(1) + domain(~60) = 100 chars.
      */
     @NotBlank @Email
-    @Size(max = 40, message = "Email must not exceed 40 characters")
+    @Size(max = 100, message = "Email must not exceed 100 characters")
     @Pattern(
-        regexp = "^[a-z0-9][a-z0-9.]{4,28}[a-z0-9]@gmail\\.com$|^[a-z0-9]{6,7}@gmail\\.com$",
-        message = "Only valid Gmail addresses (@gmail.com) are accepted"
+        regexp = "^[a-z0-9][a-z0-9._-]{4,28}[a-z0-9]@[a-z0-9][a-z0-9.-]+\\.[a-z]{2,6}$|^[a-z0-9]{6,30}@[a-z0-9][a-z0-9.-]+\\.[a-z]{2,6}$",
+        message = "Please enter a valid email address (lowercase, valid domain, 6-30 char username)"
     )
     private String email;
 

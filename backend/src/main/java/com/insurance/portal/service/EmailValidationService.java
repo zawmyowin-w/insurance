@@ -13,15 +13,12 @@ import java.util.Hashtable;
 /**
  * Server-side email validation service.
  *
- * Implements the full validation chain:
- *   1. Gmail format rules (delegated to EmailValidationUtil)
- *   2. Blacklist / fake-email check (delegated to EmailValidationUtil)
+ * Full validation chain:
+ *   1. Format + character rules (delegated to EmailValidationUtil).
+ *   2. Blacklist / reserved / disposable domain check (in EmailValidationUtil).
  *   3. DNS MX-record check — confirms the domain can actually receive mail.
- *      For @gmail.com this always passes; the check is a safety net if a
- *      non-gmail domain somehow bypasses frontend validation.
  *
- * Points 18-20 (domain existence, MX record, mail-server reachability)
- * are addressed here:
+ * Points 3a-3c (domain existence, MX record, reachability):
  *   - Domain existence: DNS lookup fails with NXDOMAIN → hasMxRecord = false.
  *   - MX record: we query the "MX" DNS record type explicitly.
  *   - Deliverability: OTP verification is the final deliverability proof.
@@ -34,8 +31,8 @@ public class EmailValidationService {
      * Full validation result. {@code valid} is true only when ALL checks pass.
      */
     public record Result(boolean valid, String errorMessage) {
-        static Result ok() { return new Result(true, null); }
-        static Result fail(String msg) { return new Result(false, msg); }
+        static Result ok()           { return new Result(true, null); }
+        static Result fail(String m) { return new Result(false, m); }
     }
 
     /**
@@ -44,21 +41,21 @@ public class EmailValidationService {
      * @param rawEmail  The raw email from the request (may be un-normalized).
      */
     public Result validate(String rawEmail) {
-        // Normalize first
+        // Normalize first (trim + lowercase)
         String email = EmailValidationUtil.normalize(rawEmail);
 
-        // Step 1 & 2: format + blacklist
+        // Step 1 & 2: format + blacklist + disposable check
         String formatError = EmailValidationUtil.validate(email);
         if (formatError != null) {
             return Result.fail(formatError);
         }
 
-        // Step 3: MX record check (Rules 18-19)
+        // Step 3: MX record check
         String domain = email.substring(email.indexOf('@') + 1);
         if (!hasMxRecord(domain)) {
             return Result.fail(
-                "The email domain '" + domain + "' does not have a valid mail server. " +
-                "Please use a real Gmail address."
+                "The email domain '" + domain + "' does not appear to have a valid mail server. " +
+                "Please use a real, deliverable email address."
             );
         }
 
@@ -68,9 +65,9 @@ public class EmailValidationService {
     /**
      * Checks whether the given domain has at least one MX record in DNS.
      * Returns {@code true} on any DNS error to avoid blocking legitimate users
-     * if the DNS resolver is temporarily unavailable.
+     * when the DNS resolver is temporarily unavailable.
      *
-     * @param domain  e.g. "gmail.com"
+     * @param domain  e.g. "example.com"
      */
     public boolean hasMxRecord(String domain) {
         Hashtable<String, String> env = new Hashtable<>();
@@ -91,10 +88,12 @@ public class EmailValidationService {
             return hasMx;
         } catch (NamingException e) {
             // Fail open — DNS unavailability should not block valid registrations
-            log.warn("[EmailValidation] DNS MX lookup failed for '{}': {} — failing open", domain, e.getMessage());
+            log.warn("[EmailValidation] DNS MX lookup failed for '{}': {} — failing open",
+                     domain, e.getMessage());
             return true;
         } catch (Exception e) {
-            log.warn("[EmailValidation] Unexpected error during MX check for '{}': {}", domain, e.getMessage());
+            log.warn("[EmailValidation] Unexpected error during MX check for '{}': {}",
+                     domain, e.getMessage());
             return true;
         }
     }

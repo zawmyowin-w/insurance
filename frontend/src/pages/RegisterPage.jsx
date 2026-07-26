@@ -136,7 +136,7 @@ export default function RegisterPage() {
                 <input
                   name="email" type="email" required
                   className="form-control-custom w-100"
-                  placeholder="yourname@gmail.com"
+                  placeholder="yourname@example.com"
                   value={form.email} onChange={handleChange}
                   maxLength={EMAIL_MAX_LENGTH}
                   onBlur={handleEmailBlur}
@@ -159,7 +159,7 @@ export default function RegisterPage() {
               )}
               {!emailError && !emailTouched && (
                 <p style={{ fontSize: '0.73rem', color: 'var(--text-muted)', margin: '0.2rem 0 0' }}>
-                  {lang === 'my' ? '@gmail.com လိပ်စာသာ လက်ခံသည်' : 'Only @gmail.com addresses accepted'}
+                  {lang === 'my' ? 'စာလုံးအသေး (a-z) သာ • Username 6–30 လုံး • Domain မှန်ကန်ရမည်' : 'Lowercase only • Username 6–30 chars • Valid domain required'}
                 </p>
               )}
             </div>
