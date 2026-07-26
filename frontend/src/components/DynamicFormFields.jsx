@@ -77,7 +77,7 @@ function DynamicField({ field, value, file, onValue, onFile, onCheckboxOption, u
       )}
       {field.fieldType === 'PHONE' && (
         <input type="tel" className="form-control-custom w-100" value={value || ''}
-          placeholder="+95 9xxxxxxxx" required={field.required}
+          placeholder="+959xxxxxxxxx" required={field.required}
           onChange={e => onValue(e.target.value)} />
       )}
       {field.fieldType === 'TEXTAREA' && (

@@ -374,7 +374,7 @@ function RevisionField({ field, value, file, existingFilePath, onValue, onFile, 
       )}
       {field.fieldType === 'PHONE' && (
         <input type="tel" className="form-control-custom w-100" value={value || ''}
-          placeholder="+95 9xxxxxxxx"
+          placeholder="+959xxxxxxxxx"
           onChange={e => onValue(e.target.value)} />
       )}
       {field.fieldType === 'DATE' && (
