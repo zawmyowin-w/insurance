@@ -7,8 +7,9 @@ import api from '../services/api'
 import {
   EMAIL_MAX_LENGTH, EMAIL_ERROR,
   getEmailValidationError, normalizeEmail,
-  PWD_RULES, passwordStrengthLevel, isStrongPassword,
+  passwordStrengthLevel, isStrongPassword,
 } from '../utils/validation'
+import PasswordStrengthWidget from '../components/PasswordStrengthWidget'
 
 export default function RegisterPage() {
   const { t, i18n } = useTranslation()
@@ -186,6 +187,10 @@ export default function RegisterPage() {
                 }}>
                   <i className={`bi bi-eye${showPwd ? '-slash' : ''}`}></i>
                 </button>
+                <PasswordStrengthWidget
+                  password={form.password} lang={lang}
+                  popup show={pwdFocused || form.password.length > 0}
+                />
               </div>
 
               {/* Strength bar */}
@@ -205,38 +210,6 @@ export default function RegisterPage() {
                       {strengthLabel}
                     </p>
                   )}
-                </div>
-              )}
-
-              {/* Requirements checklist */}
-              {(pwdFocused || form.password.length > 0) && (
-                <div style={{
-                  marginTop: '0.6rem', padding: '0.75rem 1rem',
-                  background: 'var(--bg-secondary, #f8fafc)',
-                  border: '1px solid var(--border)', borderRadius: 10,
-                }}>
-                  {PWD_RULES.map(r => {
-                    const passed = r.test(form.password)
-                    return (
-                      <div key={r.key} style={{
-                        display: 'flex', alignItems: 'center', gap: '0.5rem',
-                        marginBottom: '0.3rem', fontSize: '0.82rem',
-                        color: passed ? '#16a34a' : 'var(--text-muted)',
-                        transition: 'color 0.2s',
-                      }}>
-                        <div style={{
-                          width: 16, height: 16, borderRadius: '50%', flexShrink: 0,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          background: passed ? '#16a34a' : 'transparent',
-                          border: `1.5px solid ${passed ? '#16a34a' : 'var(--text-muted)'}`,
-                          transition: 'all 0.2s',
-                        }}>
-                          {passed && <i className="bi bi-check" style={{ color: '#fff', fontSize: '0.6rem', lineHeight: 1 }}></i>}
-                        </div>
-                        {r.label[lang]}
-                      </div>
-                    )
-                  })}
                 </div>
               )}
             </div>

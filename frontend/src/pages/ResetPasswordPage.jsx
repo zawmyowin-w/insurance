@@ -127,10 +127,11 @@ export default function ResetPasswordPage() {
               }}>
                 <i className={`bi bi-eye${showPwd ? '-slash' : ''}`}></i>
               </button>
+              <PasswordStrengthWidget
+                password={password} lang={lang}
+                popup show={pwdFocused || password.length > 0}
+              />
             </div>
-            {(pwdFocused || password.length > 0) && (
-              <PasswordStrengthWidget password={password} lang={lang} compact />
-            )}
           </div>
 
           <div className="mb-3">

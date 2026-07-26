@@ -345,12 +345,15 @@ export default function CustomerProfilePage() {
                 </div>
                 <div className="mb-2">
                   <label className="form-label-custom">{t('profile.newPassword')}</label>
-                  <input type="password" className="form-control-custom w-100" value={pwd.newPassword}
-                    onChange={e => setPwd(p => ({ ...p, newPassword: e.target.value }))}
-                    onFocus={() => setPwdFocused(true)} onBlur={() => setPwdFocused(false)} />
-                  {(pwdFocused || pwd.newPassword.length > 0) && (
-                    <PasswordStrengthWidget password={pwd.newPassword} compact />
-                  )}
+                  <div style={{ position: 'relative' }}>
+                    <input type="password" className="form-control-custom w-100" value={pwd.newPassword}
+                      onChange={e => setPwd(p => ({ ...p, newPassword: e.target.value }))}
+                      onFocus={() => setPwdFocused(true)} onBlur={() => setPwdFocused(false)} />
+                    <PasswordStrengthWidget
+                      password={pwd.newPassword}
+                      popup show={pwdFocused || pwd.newPassword.length > 0}
+                    />
+                  </div>
                 </div>
                 <div className="mb-3">
                   <label className="form-label-custom">{t('profile.confirmNewPassword')}</label>
@@ -425,12 +428,15 @@ export default function CustomerProfilePage() {
 
                     <div className="mb-2">
                       <label className="form-label-custom">{t('profile.newPassword')}</label>
-                      <input type="password" className="form-control-custom w-100" value={otpPwd.newPassword}
-                        onChange={e => setOtpPwd(p => ({ ...p, newPassword: e.target.value }))}
-                        onFocus={() => setOtpPwdFocused(true)} onBlur={() => setOtpPwdFocused(false)} />
-                      {(otpPwdFocused || otpPwd.newPassword.length > 0) && (
-                        <PasswordStrengthWidget password={otpPwd.newPassword} compact />
-                      )}
+                      <div style={{ position: 'relative' }}>
+                        <input type="password" className="form-control-custom w-100" value={otpPwd.newPassword}
+                          onChange={e => setOtpPwd(p => ({ ...p, newPassword: e.target.value }))}
+                          onFocus={() => setOtpPwdFocused(true)} onBlur={() => setOtpPwdFocused(false)} />
+                        <PasswordStrengthWidget
+                          password={otpPwd.newPassword}
+                          popup show={otpPwdFocused || otpPwd.newPassword.length > 0}
+                        />
+                      </div>
                     </div>
                     <div className="mb-3">
                       <label className="form-label-custom">{t('profile.confirmNewPassword')}</label>
