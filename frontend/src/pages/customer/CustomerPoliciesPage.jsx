@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import { getTypeMeta } from '../../utils/typeMeta'
+import ConfirmModal from '../../components/ConfirmModal'
 
 const RISK_META = {
   LOW:    { color: '#16a34a', bg: '#f0fdf4', icon: 'bi-shield-check'       },
@@ -70,6 +71,7 @@ export default function CustomerPoliciesPage() {
   const [certPolicy, setCertPolicy] = useState(null)
   const [renewing, setRenewing] = useState(null)
   const [verifiedPaymentIds, setVerifiedPaymentIds] = useState(new Set())
+  const [renewConfirmId, setRenewConfirmId] = useState(null)
 
   const fetchPolicies = () => {
     Promise.all([
@@ -89,14 +91,21 @@ export default function CustomerPoliciesPage() {
   const [downloading, setDownloading] = useState(null)
 
   const handleRenew = async (id) => {
-    if (!window.confirm(t('policies.renewConfirm'))) return
+    setRenewConfirmId(id)
+  }
+
+  const doRenew = async () => {
+    const id = renewConfirmId
     setRenewing(id)
     try {
       await api.post(`/customer/applications/${id}/renew`)
       toast.success(t('policies.renewSuccess'))
     } catch (err) {
       toast.error(err.response?.data?.message || t('policies.renewFailed'))
-    } finally { setRenewing(null) }
+    } finally {
+      setRenewing(null)
+      setRenewConfirmId(null)
+    }
   }
 
   const handleDownloadCertificate = async (policy) => {
@@ -237,6 +246,19 @@ export default function CustomerPoliciesPage() {
       )}
 
       {certPolicy && <PolicyCertificate policy={certPolicy} onClose={() => setCertPolicy(null)} />}
+
+      <ConfirmModal
+        open={renewConfirmId !== null}
+        title={t('policies.renewConfirm')}
+        message=""
+        icon="bi-arrow-repeat"
+        confirmLabel={t('policies.renew')}
+        cancelLabel="Cancel"
+        variant="primary"
+        loading={renewing !== null}
+        onConfirm={doRenew}
+        onCancel={() => setRenewConfirmId(null)}
+      />
     </div>
   )
 }
