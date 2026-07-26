@@ -7,6 +7,7 @@ import { toast } from 'react-toastify'
 import AgentProfileCard from '../../components/AgentProfileCard'
 import DigitalSignatureCanvas from '../../components/DigitalSignatureCanvas'
 import DynamicFormFields from '../../components/DynamicFormFields'
+import { getPhoneValidationError } from '../../utils/validation'
 
 const CLAIM_TYPES = ['Accident', 'Hospitalization', 'Death Benefit', 'Property Damage', 'Vehicle Damage', 'Critical Illness', 'Other']
 
@@ -113,6 +114,10 @@ export default function SubmitClaimPage() {
           if (val === undefined || val === null || val === '' || (Array.isArray(val) && val.length === 0)) {
             toast.error(`"${field.fieldLabel}" is required`); return
           }
+        }
+        if (field.fieldType === 'PHONE') {
+          const phoneErr = getPhoneValidationError(val || '')
+          if (phoneErr) { toast.error(`"${field.fieldLabel}": ${phoneErr.en}`); return }
         }
       }
     }

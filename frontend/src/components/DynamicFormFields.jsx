@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import NrcInput from './NrcInput'
+import { getPhoneValidationError, normalisePhone } from '../utils/validation'
 
 /**
  * Shared dynamic form rendering used by ApplyPolicyPage, SubmitClaimPage, and RevisionFormModal.
@@ -31,6 +33,46 @@ export default function DynamicFormFields({ fields, fieldValues, fieldFiles, onV
         />
       ))}
     </div>
+  )
+}
+
+function PhoneField({ value, required, onValue }) {
+  const [error, setError] = useState(null)
+  const [touched, setTouched] = useState(false)
+  const handleChange = e => {
+    const normalized = normalisePhone(e.target.value)
+    onValue(normalized)
+    if (touched) setError(getPhoneValidationError(normalized))
+  }
+  const handleBlur = () => {
+    setTouched(true)
+    setError(getPhoneValidationError(value || ''))
+  }
+  const isInvalid = touched && error
+  const isValid   = touched && !error && value
+  return (
+    <>
+      <input
+        type="tel"
+        className="form-control-custom w-100"
+        style={isInvalid ? { borderColor: '#dc2626' } : isValid ? { borderColor: '#16a34a' } : {}}
+        value={value || ''}
+        placeholder="+959xxxxxxxxx"
+        required={required}
+        onChange={handleChange}
+        onBlur={handleBlur}
+      />
+      {isInvalid && (
+        <div style={{ color: '#dc2626', fontSize: '0.78rem', marginTop: 4 }}>
+          <i className="bi bi-exclamation-circle me-1"></i>{error.en}
+        </div>
+      )}
+      {isValid && (
+        <div style={{ color: '#16a34a', fontSize: '0.78rem', marginTop: 4 }}>
+          <i className="bi bi-check-circle me-1"></i>Valid Myanmar phone number
+        </div>
+      )}
+    </>
   )
 }
 
@@ -76,9 +118,7 @@ function DynamicField({ field, value, file, onValue, onFile, onCheckboxOption, u
           onChange={e => onValue(e.target.value)} />
       )}
       {field.fieldType === 'PHONE' && (
-        <input type="tel" className="form-control-custom w-100" value={value || ''}
-          placeholder="+959xxxxxxxxx" required={field.required}
-          onChange={e => onValue(e.target.value)} />
+        <PhoneField value={value} required={field.required} onValue={onValue} />
       )}
       {field.fieldType === 'TEXTAREA' && (
         <textarea rows={3} className="form-control-custom w-100" style={{ resize: 'vertical' }}

@@ -8,6 +8,7 @@ import AgentProfileCard from '../../components/AgentProfileCard'
 import DigitalSignatureCanvas from '../../components/DigitalSignatureCanvas'
 import DynamicFormFields from '../../components/DynamicFormFields'
 import { getTypeMeta } from '../../utils/typeMeta'
+import { getPhoneValidationError } from '../../utils/validation'
 
 export default function ApplyPolicyPage() {
   const { t } = useTranslation()
@@ -97,6 +98,19 @@ export default function ApplyPolicyPage() {
       Object.entries(fieldValues).forEach(([k, v]) => {
         formDataObj[k] = Array.isArray(v) ? JSON.stringify(v) : v
       })
+
+      // Validate PHONE fields before submitting
+      if (template?.fields) {
+        for (const field of template.fields) {
+          if (field.fieldType !== 'PHONE') continue
+          const phoneErr = getPhoneValidationError(fieldValues[String(field.id)] || '')
+          if (phoneErr) {
+            toast.error(`"${field.fieldLabel}": ${phoneErr.en}`)
+            setSubmitting(false)
+            return
+          }
+        }
+      }
 
       if (!signatureData) {
         toast.error(t('applyPolicy.sigMissing'))

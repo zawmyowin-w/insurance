@@ -2,6 +2,46 @@ import { useEffect, useState } from 'react'
 import api from '../services/api'
 import { toast } from 'react-toastify'
 import NrcInput from './NrcInput'
+import { getPhoneValidationError, normalisePhone } from '../utils/validation'
+
+function PhoneField({ value, onValue }) {
+  const [error, setError] = useState(null)
+  const [touched, setTouched] = useState(false)
+  const handleChange = e => {
+    const normalized = normalisePhone(e.target.value)
+    onValue(normalized)
+    if (touched) setError(getPhoneValidationError(normalized))
+  }
+  const handleBlur = () => {
+    setTouched(true)
+    setError(getPhoneValidationError(value || ''))
+  }
+  const isInvalid = touched && error
+  const isValid   = touched && !error && value
+  return (
+    <>
+      <input
+        type="tel"
+        className="form-control-custom w-100"
+        style={isInvalid ? { borderColor: '#dc2626' } : isValid ? { borderColor: '#16a34a' } : {}}
+        value={value || ''}
+        placeholder="+959xxxxxxxxx"
+        onChange={handleChange}
+        onBlur={handleBlur}
+      />
+      {isInvalid && (
+        <div style={{ color: '#dc2626', fontSize: '0.78rem', marginTop: 4 }}>
+          <i className="bi bi-exclamation-circle me-1"></i>{error.en}
+        </div>
+      )}
+      {isValid && (
+        <div style={{ color: '#16a34a', fontSize: '0.78rem', marginTop: 4 }}>
+          <i className="bi bi-check-circle me-1"></i>Valid Myanmar phone number
+        </div>
+      )}
+    </>
+  )
+}
 
 /**
  * Modal for customer to edit and resubmit a REVISION_REQUESTED application or claim.
@@ -373,9 +413,7 @@ function RevisionField({ field, value, file, existingFilePath, onValue, onFile, 
           onChange={e => onValue(e.target.value)} />
       )}
       {field.fieldType === 'PHONE' && (
-        <input type="tel" className="form-control-custom w-100" value={value || ''}
-          placeholder="+959xxxxxxxxx"
-          onChange={e => onValue(e.target.value)} />
+        <PhoneField value={value} onValue={onValue} />
       )}
       {field.fieldType === 'DATE' && (
         <input type="date" className="form-control-custom w-100"
