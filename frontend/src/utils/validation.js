@@ -62,7 +62,15 @@ export function getEmailValidationError(rawEmail) {
     }
   }
 
-  const email = rawEmail.toLowerCase() // Rule 12: case-insensitive
+  // Reject uppercase — lowercase only accepted
+  if (rawEmail !== rawEmail.toLowerCase()) {
+    return {
+      en: 'Email must be lowercase only. Please type in lowercase letters.',
+      my: 'Email တွင် စာလုံးအသေးသာ ဖြည့်ရပါမည်။ (Uppercase မသုံးရပါ)',
+    }
+  }
+
+  const email = rawEmail.toLowerCase()
 
   // Rule 4 & 6: exactly one @
   const atCount = (email.match(/@/g) || []).length

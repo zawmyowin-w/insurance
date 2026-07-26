@@ -30,10 +30,8 @@ export default function RegisterPage() {
     setForm(f => ({ ...f, [name]: value }))
   }
 
-  /** Normalize email (trim + lowercase) on blur so user sees the cleaned value */
   const handleEmailBlur = () => {
     setEmailTouched(true)
-    setForm(f => ({ ...f, email: normalizeEmail(f.email) }))
   }
 
   const emailError   = emailTouched ? getEmailValidationError(form.email) : null
@@ -45,9 +43,7 @@ export default function RegisterPage() {
     e.preventDefault()
     setEmailTouched(true)
 
-    // Normalize email before all checks
-    const normalizedEmail = normalizeEmail(form.email)
-    setForm(f => ({ ...f, email: normalizedEmail }))
+    const normalizedEmail = form.email.trim()
 
     // Honeypot check — bots fill in the hidden field
     if (form._website && form._website.trim() !== '') {
