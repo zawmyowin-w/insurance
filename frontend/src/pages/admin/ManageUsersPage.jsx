@@ -267,10 +267,11 @@ export default function ManageUsersPage() {
                     style={{ position: 'absolute', right: '0.65rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 0, lineHeight: 1 }}>
                     <i className={`bi bi-eye${showCreatePwd ? '-slash' : ''}`}></i>
                   </button>
+                  <PasswordStrengthWidget
+                    password={createForm.password}
+                    popup show={createPwdFocused || createForm.password.length > 0}
+                  />
                 </div>
-                {(createPwdFocused || createForm.password.length > 0) && (
-                  <PasswordStrengthWidget password={createForm.password} compact />
-                )}
               </div>
               <div className="col-12">
                 <label className="form-label-custom">{t('admin.users.address')}</label>
@@ -500,10 +501,11 @@ export default function ManageUsersPage() {
                       style={{ position: 'absolute', right: '0.65rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: 0, lineHeight: 1 }}>
                       <i className={`bi bi-eye${showEditPwd ? '-slash' : ''}`}></i>
                     </button>
+                    <PasswordStrengthWidget
+                      password={editForm.newPassword}
+                      popup show={editPwdFocused || editForm.newPassword.length > 0}
+                    />
                   </div>
-                  {(editPwdFocused || editForm.newPassword.length > 0) && (
-                    <PasswordStrengthWidget password={editForm.newPassword} compact />
-                  )}
                 </div>
               </div>
               <div className="d-flex gap-2 mt-3">
