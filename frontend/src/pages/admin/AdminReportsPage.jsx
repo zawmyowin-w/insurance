@@ -362,38 +362,85 @@ export default function AdminReportsPage() {
 
       {/* ── Reset confirmation modal ── */}
       {showResetModal && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 9990, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
-          onClick={() => setShowResetModal(false)}>
-          <div style={{ background: 'var(--bg-primary)', borderRadius: 16, padding: '2rem', maxWidth: 480, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,.3)' }}
-            onClick={e => e.stopPropagation()}>
-            <div className="d-flex align-items-center gap-2 mb-3">
-              <div style={{ width: 40, height: 40, borderRadius: 12, background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <i className="bi bi-arrow-counterclockwise" style={{ color: '#d97706', fontSize: '1.2rem' }}></i>
+        <>
+          <style>{`
+            @keyframes resetBackdropIn { from { opacity:0 } to { opacity:1 } }
+            @keyframes resetCardIn { from { opacity:0; transform:scale(0.92) translateY(16px) } to { opacity:1; transform:scale(1) translateY(0) } }
+            .reset-modal-card { animation: resetCardIn 0.24s cubic-bezier(.34,1.4,.64,1) both; }
+            .reset-modal-backdrop { animation: resetBackdropIn 0.18s ease; }
+            .reset-btn-cancel:hover { background: var(--bg-secondary) !important; }
+            .reset-btn-confirm { transition: filter .15s, transform .1s, box-shadow .15s; }
+            .reset-btn-confirm:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 8px 20px rgba(180,83,9,0.35) !important; }
+            .reset-btn-confirm:active:not(:disabled) { filter: brightness(.95); transform: translateY(0); }
+          `}</style>
+          <div
+            className="reset-modal-backdrop"
+            style={{ position: 'fixed', inset: 0, zIndex: 9990, background: 'rgba(15,23,42,0.5)', backdropFilter: 'blur(5px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
+            onClick={() => setShowResetModal(false)}
+          >
+            <div
+              className="reset-modal-card"
+              style={{ background: 'var(--bg-card, var(--bg-primary))', borderRadius: 24, padding: '2.25rem', maxWidth: 460, width: '100%', boxShadow: '0 32px 80px rgba(15,23,42,0.22), 0 4px 16px rgba(15,23,42,0.1)' }}
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Icon */}
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
+                <div style={{ position: 'relative', width: 80, height: 80 }}>
+                  <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'rgba(217,119,6,0.12)', animation: 'resetBackdropIn .3s ease' }} />
+                  <div style={{ position: 'absolute', inset: 6, borderRadius: '50%', background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <i className="bi bi-arrow-counterclockwise" style={{ color: '#d97706', fontSize: '2rem' }} />
+                  </div>
+                </div>
               </div>
-              <h5 style={{ margin: 0, fontWeight: 800, color: 'var(--text-primary)' }}>{t('admin.reports.monthlyResetConfirmTitle')}</h5>
-            </div>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1rem', lineHeight: 1.6 }}>
-              {t('admin.reports.monthlyResetConfirmBody')}
-            </p>
-            <div style={{ background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: 9, padding: '0.6rem 0.9rem', marginBottom: '1.5rem', fontSize: '0.83rem', color: '#92400e', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 7 }}>
-              <i className="bi bi-calendar2-range"></i>
-              Report period: <span style={{ fontWeight: 800 }}>
-                {lastReset ? new Date(lastReset.resetAt).toLocaleDateString('en', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Inception'}
-              </span> → <span style={{ fontWeight: 800 }}>{currentMonthName} {currentYear}</span>
-            </div>
-            <div className="d-flex gap-2 justify-content-end flex-wrap">
-              <button type="button" onClick={() => setShowResetModal(false)}
-                style={{ padding: '0.55rem 1.25rem', borderRadius: 9, border: '1px solid var(--border)', background: 'var(--bg-secondary)', color: 'var(--text-secondary)', fontWeight: 600, cursor: 'pointer', fontSize: '0.85rem' }}>
-                {t('admin.reports.monthlyResetCancel')}
-              </button>
-              <button type="button" onClick={handleReset}
-                style={{ padding: '0.55rem 1.25rem', borderRadius: 9, border: 'none', background: 'linear-gradient(135deg, #d97706, #b45309)', color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <i className="bi bi-file-earmark-pdf-fill"></i>
-                {t('admin.reports.monthlyResetConfirm')}
-              </button>
+
+              {/* Title */}
+              <h5 style={{ margin: '0 0 0.6rem', fontWeight: 800, fontSize: '1.2rem', color: 'var(--text-primary)', textAlign: 'center' }}>
+                {t('admin.reports.monthlyResetConfirmTitle')}
+              </h5>
+
+              {/* Body */}
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', lineHeight: 1.7, margin: '0 0 1.25rem', textAlign: 'center' }}>
+                {t('admin.reports.monthlyResetConfirmBody')}
+              </p>
+
+              {/* Date range badge */}
+              <div style={{ background: 'linear-gradient(135deg, #fffbeb, #fef3c7)', border: '1.5px solid #fcd34d', borderRadius: 12, padding: '0.75rem 1rem', marginBottom: '1.75rem', fontSize: '0.85rem', color: '#92400e', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                <i className="bi bi-calendar2-range" style={{ fontSize: '1rem' }} />
+                <span>Report period:</span>
+                <span style={{ fontWeight: 800, color: '#78350f' }}>
+                  {lastReset ? new Date(lastReset.resetAt).toLocaleDateString('en', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Inception'}
+                </span>
+                <span style={{ opacity: 0.6 }}>→</span>
+                <span style={{ fontWeight: 800, color: '#78350f' }}>{currentMonthName} {currentYear}</span>
+              </div>
+
+              {/* Divider */}
+              <div style={{ height: 1, background: 'var(--border-color, #e2e8f0)', marginBottom: '1.5rem' }} />
+
+              {/* Actions */}
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowResetModal(false)}
+                  className="reset-btn-cancel"
+                  style={{ flex: 1, padding: '0.7rem 1rem', borderRadius: 12, border: '1.5px solid var(--border-color, #e2e8f0)', background: 'transparent', color: 'var(--text-primary)', fontWeight: 600, cursor: 'pointer', fontSize: '0.88rem', transition: 'background .15s' }}
+                >
+                  <i className="bi bi-x-lg me-2" />
+                  {t('admin.reports.monthlyResetCancel')}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="reset-btn-confirm"
+                  style={{ flex: 1.4, padding: '0.7rem 1rem', borderRadius: 12, border: 'none', background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 55%, #b45309 100%)', color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: '0.88rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, boxShadow: '0 4px 14px rgba(180,83,9,0.25)' }}
+                >
+                  <i className="bi bi-file-earmark-pdf-fill" />
+                  {t('admin.reports.monthlyResetConfirm')}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </>
       )}
 
       {/* Header */}
