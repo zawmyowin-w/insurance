@@ -359,7 +359,7 @@ export default function CustomerProfilePage() {
                       onFocus={() => setPwdFocused(true)} onBlur={() => setPwdFocused(false)} />
                     <PasswordStrengthWidget
                       password={pwd.newPassword}
-                      popup show={pwdFocused || pwd.newPassword.length > 0}
+                      popup show={(pwdFocused || pwd.newPassword.length > 0) && !isStrongPassword(pwd.newPassword)}
                     />
                   </div>
                 </div>
@@ -442,7 +442,7 @@ export default function CustomerProfilePage() {
                           onFocus={() => setOtpPwdFocused(true)} onBlur={() => setOtpPwdFocused(false)} />
                         <PasswordStrengthWidget
                           password={otpPwd.newPassword}
-                          popup show={otpPwdFocused || otpPwd.newPassword.length > 0}
+                          popup show={(otpPwdFocused || otpPwd.newPassword.length > 0) && !isStrongPassword(otpPwd.newPassword)}
                         />
                       </div>
                     </div>

@@ -239,7 +239,7 @@ export default function RegisterPage() {
                 </button>
                 <PasswordStrengthWidget
                   password={form.password} lang={lang}
-                  popup show={pwdFocused || form.password.length > 0}
+                  popup show={(pwdFocused || form.password.length > 0) && !allRulesPassed}
                 />
               </div>
 

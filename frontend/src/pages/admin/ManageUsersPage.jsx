@@ -277,7 +277,7 @@ export default function ManageUsersPage() {
                   </button>
                   <PasswordStrengthWidget
                     password={createForm.password}
-                    popup show={createPwdFocused || createForm.password.length > 0}
+                    popup show={(createPwdFocused || createForm.password.length > 0) && !isStrongPassword(createForm.password)}
                   />
                 </div>
               </div>
@@ -514,7 +514,7 @@ export default function ManageUsersPage() {
                     </button>
                     <PasswordStrengthWidget
                       password={editForm.newPassword}
-                      popup show={editPwdFocused || editForm.newPassword.length > 0}
+                      popup show={(editPwdFocused || editForm.newPassword.length > 0) && !isStrongPassword(editForm.newPassword)}
                     />
                   </div>
                 </div>
