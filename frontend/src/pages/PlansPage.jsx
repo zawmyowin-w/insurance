@@ -704,11 +704,13 @@ function PlanDetailModal({ plan, onClose, onApply, user, t, freqLabel }) {
           <button onClick={onClose} className="btn-outline-custom" style={{ fontSize: '0.88rem' }}>
             {t('plans.closeBtn')}
           </button>
-          <button onClick={onApply} className="btn-primary-custom"
-            style={{ justifyContent: 'center', background: meta.color, borderColor: meta.color, minWidth: 150 }}>
-            <i className="bi bi-check-circle me-2"></i>
-            {user ? t('plans.applyBtn') : t('plans.loginToApply')}
-          </button>
+          {user?.role !== 'ADMIN' && (
+            <button onClick={onApply} className="btn-primary-custom"
+              style={{ justifyContent: 'center', background: meta.color, borderColor: meta.color, minWidth: 150 }}>
+              <i className="bi bi-check-circle me-2"></i>
+              {user ? t('plans.applyBtn') : t('plans.loginToApply')}
+            </button>
+          )}
         </div>
       </div>
     </div>
