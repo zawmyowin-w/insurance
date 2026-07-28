@@ -623,7 +623,7 @@ export default function AdminAutoCheckPage() {
             }}>
             {running === 'verify'
                ? <><span className="spinner-border spinner-border-sm"></span> {t('admin.autoCheck.runningLabel')}</>
-              : <><i className="bi bi-shield-check"></i> {t('admin.autoCheck.runNow')}</>}
+              : <><i className="bi bi-shield-check"></i> {t('admin.autoCheck.typeAutoVerify')}</>}
           </button>
           <button type="button" onClick={() => trigger('reminder')} disabled={running !== null}
             style={{
@@ -635,7 +635,7 @@ export default function AdminAutoCheckPage() {
             }}>
             {running === 'reminder'
                ? <><span className="spinner-border spinner-border-sm"></span> {t('admin.autoCheck.sendingLabel')}</>
-              : <><i className="bi bi-bell"></i> {t('admin.autoCheck.runNow')}</>}
+              : <><i className="bi bi-bell"></i> {t('admin.autoCheck.typeReminder')}</>}
           </button>
         </div>
       </div>
