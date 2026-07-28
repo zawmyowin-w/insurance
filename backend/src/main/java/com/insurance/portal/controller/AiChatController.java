@@ -58,8 +58,13 @@ public class AiChatController {
 
     private String buildContext(List<InsuranceType> types, List<?> packages) {
         var sb = new StringBuilder();
-        sb.append("You are an AI assistant for Digital Insurance Claim and Premiums (DICP), a Myanmar-based insurance portal. ");
-        sb.append("Answer questions about insurance types, plans, and benefits helpfully and concisely in the same language the user writes in (English or Myanmar/Burmese).\n\n");
+        sb.append("You are an AI assistant for Digital Insurance Claim and Premiums (DICP), a Myanmar-based insurance portal.\n");
+        sb.append("IMPORTANT LANGUAGE RULE: Always reply in the SAME language the user writes in.\n");
+        sb.append("- If the user writes in Myanmar/Burmese → reply fully in Myanmar/Burmese.\n");
+        sb.append("- If the user writes in English → reply in English.\n");
+        sb.append("- If mixed → prefer Myanmar/Burmese.\n\n");
+        sb.append("You can help users: view insurance plans, understand benefits, get plan recommendations, and learn how to apply.\n");
+        sb.append("When recommending or describing a plan, always use the EXACT plan name as listed below so the chat UI can show an Apply button.\n\n");
 
         sb.append("=== Available Insurance Types ===\n");
         for (var t : types) {
@@ -77,15 +82,22 @@ public class AiChatController {
         for (var p : packages) {
             try {
                 var pr = com.insurance.portal.dto.PackageResponse.from((com.insurance.portal.model.InsurancePackage) p);
-                sb.append("• ").append(pr.getName()).append(" [").append(pr.getType()).append("]");
-                if (pr.getDescription() != null) sb.append(": ").append(pr.getDescription());
+                sb.append("• ID:").append(pr.getId()).append(" | Name: ").append(pr.getName())
+                  .append(" | Type: ").append(pr.getType());
+                if (pr.getDescription() != null && !pr.getDescription().isBlank())
+                    sb.append(" | Description: ").append(pr.getDescription());
                 if (pr.getCoverageMin() != null && pr.getCoverageMax() != null)
                     sb.append(" | Coverage: ").append(pr.getCoverageMin()).append("–").append(pr.getCoverageMax()).append(" MMK");
+                if (pr.getPremiumRate() != null)
+                    sb.append(" | Premium Rate: ").append(pr.getPremiumRate()).append("%");
+                if (pr.getBenefits() != null && !pr.getBenefits().isEmpty())
+                    sb.append(" | Benefits: ").append(String.join(", ", pr.getBenefits()));
                 sb.append("\n");
             } catch (Exception ignored) {}
         }
 
-        sb.append("\nKeep answers concise. If you don't know something specific, guide the user to contact an agent or browse the Plans page.");
+        sb.append("\nHow to apply: Register → choose a plan → submit application → agent approves → pay premium → policy issued.\n");
+        sb.append("Keep answers concise and helpful. When asked for a recommendation, ask about the user's needs (type, coverage, budget) then suggest the best matching plan by name.");
         return sb.toString();
     }
 
