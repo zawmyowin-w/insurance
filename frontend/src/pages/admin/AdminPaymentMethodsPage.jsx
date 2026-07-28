@@ -233,7 +233,7 @@ export default function AdminPaymentMethodsPage() {
                   <div className="d-flex align-items-center gap-3">
                     <div style={{ position: 'relative' }}>
                       {m.hasLogo ? (
-                        <img src={`/api/admin/payment-methods/${m.id}/logo`}
+                        <img src={`/api/payment-methods/${m.id}/logo`}
                           alt={m.name} style={{ width: 52, height: 52, borderRadius: '50%', objectFit: 'cover', border: `3px solid ${m.color}40` }} />
                       ) : (
                         <div style={{ width: 52, height: 52, borderRadius: '50%', background: m.color || '#64748b', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: '1.25rem' }}>
@@ -260,7 +260,7 @@ export default function AdminPaymentMethodsPage() {
                   <div className="d-flex gap-3 align-items-center">
                     {m.hasQr ? (
                       <div style={{ textAlign: 'center' }}>
-                        <img src={`/api/admin/payment-methods/${m.id}/qr`}
+                        <img src={`/api/payment-methods/${m.id}/qr`}
                           alt="QR" style={{ width: 80, height: 80, objectFit: 'contain', borderRadius: 8, border: '1.5px solid var(--border)', background: '#fff', padding: 4 }} />
                         <div style={{ fontSize: '0.65rem', color: '#16a34a', marginTop: 2, fontWeight: 700 }}>{t('admin.paymentMethods.qrPresent')}</div>
                       </div>
