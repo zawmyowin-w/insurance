@@ -20,6 +20,7 @@ const EMPTY = {
   coverageMax: '',
   maxClaimAmount: '',
   durationTiers: [{ years: 1, premiumRate: '' }],
+  ageBands: [],
   paymentFrequency: 'MONTHLY',
   paymentIntervalMonths: 1,
   benefitsList: [''],
@@ -114,6 +115,11 @@ export default function ManagePackagesPage() {
   const addTier = () => setForm(f => ({ ...f, durationTiers: [...f.durationTiers, { years: '', premiumRate: '' }] }))
   const removeTier = i => setForm(f => ({ ...f, durationTiers: f.durationTiers.length > 1 ? f.durationTiers.filter((_, idx) => idx !== i) : f.durationTiers }))
 
+  // Age Bands
+  const handleAgeBandChange = (i, field, v) => setForm(f => { const bands = [...f.ageBands]; bands[i] = { ...bands[i], [field]: v }; return { ...f, ageBands: bands } })
+  const addAgeBand = () => setForm(f => ({ ...f, ageBands: [...f.ageBands, { minAge: '', maxAge: '', premiumRate: '' }] }))
+  const removeAgeBand = i => setForm(f => ({ ...f, ageBands: f.ageBands.filter((_, idx) => idx !== i) }))
+
   const handlePaymentFreq = e => {
     const freq = e.target.value
     const opt = PAYMENT_FREQ_OPTIONS.find(o => o.value === freq)
@@ -134,6 +140,10 @@ export default function ManagePackagesPage() {
         return
       }
 
+      const validAgeBands = (form.ageBands || [])
+        .filter(b => b.minAge !== '' && b.maxAge !== '' && b.premiumRate !== '')
+        .map(b => ({ minAge: Number(b.minAge), maxAge: Number(b.maxAge), premiumRate: Number(b.premiumRate) }))
+
       const payload = {
         name: form.name,
         type: form.type,
@@ -142,6 +152,7 @@ export default function ManagePackagesPage() {
         coverageMax: Number(form.coverageMax),
         maxClaimAmount: form.maxClaimAmount ? Number(form.maxClaimAmount) : null,
         durationTiers: validTiers,
+        ageBands: validAgeBands,
         paymentFrequency: form.paymentFrequency,
         paymentIntervalMonths: Number(form.paymentIntervalMonths),
         benefits: form.benefitsList.map(b => b.trim()).filter(Boolean),
@@ -182,6 +193,7 @@ export default function ManagePackagesPage() {
       durationTiers: tiers,
       paymentFrequency: pkg.paymentFrequency || 'MONTHLY',
       paymentIntervalMonths: pkg.paymentIntervalMonths || (freqOpt?.months ?? 1),
+      ageBands: Array.isArray(pkg.ageBands) ? pkg.ageBands.map(b => ({ minAge: b.minAge, maxAge: b.maxAge, premiumRate: b.premiumRate })) : [],
       benefitsList: (pkg.benefits || []).length ? pkg.benefits : [''],
       requiredDocuments: (pkg.requiredDocuments || []).length ? pkg.requiredDocuments : [''],
       eligibility: pkg.eligibility || '',
@@ -449,7 +461,106 @@ export default function ManagePackagesPage() {
                 )}
               </div>
 
-              {/* ④ Payment Schedule */}
+              {/* ④ Age-Based Premium Rates */}
+              <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+                <SectionHeader id="agebands" icon="bi-person-badge"
+                  label={t('admin.packages.secAgeBandsLabel')}
+                  badge={form.ageBands.filter(b => b.minAge !== '' && b.maxAge !== '' && b.premiumRate !== '').length > 0
+                    ? t('admin.packages.ageBandsBadge', { count: form.ageBands.filter(b => b.minAge !== '' && b.maxAge !== '' && b.premiumRate !== '').length })
+                    : null} />
+                {openSection === 'agebands' && (
+                  <div style={{ padding: '1rem' }}>
+                    <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
+                      <i className="bi bi-info-circle me-1"></i>
+                      {t('admin.packages.ageBandsHint')}
+                    </p>
+                    {form.ageBands.length === 0 ? (
+                      <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', background: 'var(--bg-secondary)', borderRadius: 8, padding: '0.65rem 1rem', marginBottom: '0.75rem' }}>
+                        <i className="bi bi-dash-circle me-1"></i>
+                        {t('admin.packages.ageBandsNoneNote')}
+                      </div>
+                    ) : (
+                      <div style={{ overflowX: 'auto', marginBottom: '0.75rem' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                          <thead>
+                            <tr style={{ background: 'var(--bg-secondary)' }}>
+                              <th style={thStyle}>{t('admin.packages.ageBandsMinAgeHeader')}</th>
+                              <th style={thStyle}>{t('admin.packages.ageBandsMaxAgeHeader')}</th>
+                              <th style={thStyle}>{t('admin.packages.ageBandsRateHeader')}</th>
+                              {midCoverage && <th style={thStyle}>{t('admin.packages.ageBandsAnnualHeader')}</th>}
+                              {midCoverage && <th style={thStyle}>{t('admin.packages.ageBandsPerPayHeader', { freq: freqLabel })}</th>}
+                              <th style={{ ...thStyle, width: 40 }}></th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {form.ageBands.map((band, i) => {
+                              const calc = midCoverage && band.premiumRate ? calcPremium(midCoverage, band.premiumRate, form.paymentIntervalMonths) : null
+                              return (
+                                <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
+                                  <td style={tdStyle}>
+                                    <div className="d-flex align-items-center gap-2">
+                                      <input type="number" min="0" max="120" className="form-control-custom"
+                                        style={{ width: 80 }} placeholder="e.g. 18" value={band.minAge}
+                                        onChange={e => handleAgeBandChange(i, 'minAge', e.target.value)} />
+                                      <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>{t('admin.packages.ageYearsUnit')}</span>
+                                    </div>
+                                  </td>
+                                  <td style={tdStyle}>
+                                    <div className="d-flex align-items-center gap-2">
+                                      <input type="number" min="0" max="120" className="form-control-custom"
+                                        style={{ width: 80 }} placeholder="e.g. 35" value={band.maxAge}
+                                        onChange={e => handleAgeBandChange(i, 'maxAge', e.target.value)} />
+                                      <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>{t('admin.packages.ageYearsUnit')}</span>
+                                    </div>
+                                  </td>
+                                  <td style={tdStyle}>
+                                    <div className="d-flex align-items-center gap-2">
+                                      <input type="number" min="0" max="100" step="0.001" className="form-control-custom"
+                                        style={{ width: 100 }} placeholder="e.g. 1.5" value={band.premiumRate}
+                                        onChange={e => handleAgeBandChange(i, 'premiumRate', e.target.value)} />
+                                      <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>%</span>
+                                    </div>
+                                  </td>
+                                  {midCoverage && (
+                                    <td style={tdStyle}>
+                                      <span style={{ color: calc ? 'var(--primary)' : 'var(--text-muted)', fontWeight: calc ? 700 : 400 }}>
+                                        {calc ? fmt(calc.annual) : '—'}
+                                      </span>
+                                    </td>
+                                  )}
+                                  {midCoverage && (
+                                    <td style={tdStyle}>
+                                      <span style={{ color: calc ? '#16a34a' : 'var(--text-muted)', fontWeight: calc ? 700 : 400 }}>
+                                        {calc ? fmt(calc.perPayment) : '—'}
+                                      </span>
+                                    </td>
+                                  )}
+                                  <td style={tdStyle}>
+                                    <button type="button" onClick={() => removeAgeBand(i)}
+                                      style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer' }}>
+                                      <i className="bi bi-trash"></i>
+                                    </button>
+                                  </td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                    <button type="button" onClick={addAgeBand} style={{ fontSize: '0.82rem', color: 'var(--primary)', background: 'none', border: '1.5px dashed var(--primary)', borderRadius: 8, padding: '0.35rem 0.9rem', cursor: 'pointer', fontWeight: 600 }}>
+                      <i className="bi bi-plus me-1"></i>{t('admin.packages.addAgeBandBtn')}
+                    </button>
+                    {midCoverage && form.ageBands.length > 0 && (
+                      <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.5rem', marginBottom: 0 }}>
+                        {t('admin.packages.ageBandsMidpointNote', { amount: fmt(midCoverage) })}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* ⑤ Payment Schedule */}
               <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
                 <SectionHeader id="payment" icon="bi-credit-card"
                   label={t('admin.packages.sec4Label')}
@@ -720,13 +831,20 @@ function PackageDetailModal({ pkg, onClose, onEdit }) {
   const { t } = useTranslation()
   const freqLabel = t(`admin.packages.freq${pkg.paymentFrequency}`) || pkg.paymentFrequency || '—'
   const tiers = Array.isArray(pkg.durationTiers) && pkg.durationTiers.length > 0 ? pkg.durationTiers : []
+  const ageBands = Array.isArray(pkg.ageBands) && pkg.ageBands.length > 0 ? pkg.ageBands : []
   const [calcCoverage, setCalcCoverage] = useState('')
   const [calcDuration, setCalcDuration] = useState(tiers[0]?.years || '')
+  const [calcAge, setCalcAge] = useState('')
   const [showTerms, setShowTerms] = useState(false)
 
   const selectedTier = tiers.find(tier => String(tier.years) === String(calcDuration)) || tiers[0]
-  const calcResult = calcCoverage && selectedTier?.premiumRate
-    ? calcPremium(calcCoverage, selectedTier.premiumRate, pkg.paymentIntervalMonths || 1) : null
+  // Age band lookup: find a band whose minAge <= calcAge <= maxAge
+  const matchedAgeBand = calcAge !== ''
+    ? ageBands.find(b => Number(calcAge) >= Number(b.minAge) && Number(calcAge) <= Number(b.maxAge))
+    : null
+  const effectivePremiumRate = matchedAgeBand ? matchedAgeBand.premiumRate : selectedTier?.premiumRate
+  const calcResult = calcCoverage && effectivePremiumRate
+    ? calcPremium(calcCoverage, effectivePremiumRate, pkg.paymentIntervalMonths || 1) : null
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 9998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} onClick={onClose}>
@@ -806,6 +924,44 @@ function PackageDetailModal({ pkg, onClose, onEdit }) {
             </div>
           )}
 
+          {/* Age Bands Table */}
+          {ageBands.length > 0 && (
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '0.6rem' }}>
+                <i className="bi bi-person-badge me-1" style={{ color: '#7c3aed' }}></i>
+                {t('admin.packages.ageBandsDetailHeader')}
+              </div>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem' }}>
+                  <thead>
+                    <tr style={{ background: 'var(--bg-secondary)' }}>
+                      <th style={thStyle}>{t('admin.packages.ageBandsMinAgeHeader')}</th>
+                      <th style={thStyle}>{t('admin.packages.ageBandsMaxAgeHeader')}</th>
+                      <th style={thStyle}>{t('admin.packages.ageBandsRateHeader')}</th>
+                      <th style={thStyle}>{t('admin.packages.ageBandsAnnualHeader')}</th>
+                      <th style={thStyle}>{t('admin.packages.ageBandsPerPayHeader', { freq: freqLabel })}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {ageBands.map((band, i) => {
+                      const mid = pkg.coverageMin && pkg.coverageMax ? (Number(pkg.coverageMin) + Number(pkg.coverageMax)) / 2 : null
+                      const c = mid ? calcPremium(mid, band.premiumRate, pkg.paymentIntervalMonths || 1) : null
+                      return (
+                        <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
+                          <td style={tdStyle}><strong>{band.minAge} {t('admin.packages.ageYearsUnit')}</strong></td>
+                          <td style={tdStyle}><strong>{band.maxAge} {t('admin.packages.ageYearsUnit')}</strong></td>
+                          <td style={tdStyle}><span style={{ color: '#7c3aed', fontWeight: 700 }}>{(band.premiumRate * 100).toFixed(2)}%</span></td>
+                          <td style={tdStyle}>{c ? `MMK ${fmt(c.annual)}` : '—'}</td>
+                          <td style={tdStyle}><strong style={{ color: '#16a34a' }}>{c ? `MMK ${fmt(c.perPayment)}` : '—'}</strong></td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
           {/* Premium Calculator */}
           {tiers.length > 0 && (
             <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, padding: '1rem' }}>
@@ -838,6 +994,23 @@ function PackageDetailModal({ pkg, onClose, onEdit }) {
                     ))}
                   </select>
                 </div>
+                {ageBands.length > 0 && (
+                  <div className="col-12">
+                    <label style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 4 }}>
+                      {t('admin.packages.calcAgeLabel')}
+                    </label>
+                    <input type="number" min="0" max="120" className="form-control-custom w-100"
+                      placeholder={t('admin.packages.calcAgePlaceholder')}
+                      value={calcAge} onChange={e => setCalcAge(e.target.value)} />
+                    {calcAge !== '' && (
+                      <p style={{ fontSize: '0.72rem', margin: '0.25rem 0 0', color: matchedAgeBand ? '#7c3aed' : 'var(--text-muted)', fontWeight: matchedAgeBand ? 700 : 400 }}>
+                        {matchedAgeBand
+                          ? <><i className="bi bi-check-circle me-1"></i>{t('admin.packages.calcAgeRateRow', { age: calcAge })}: {(matchedAgeBand.premiumRate * 100).toFixed(2)}%</>
+                          : <><i className="bi bi-info-circle me-1"></i>{t('admin.packages.calcNoAgeBand')}</>}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
 
               {calcResult ? (() => {
@@ -861,8 +1034,8 @@ function PackageDetailModal({ pkg, onClose, onEdit }) {
                     <div style={{ padding: '0.75rem 1rem' }}>
                       {[
                         { icon: 'bi-calculator', label: t('admin.packages.calcCoverageRow'), value: `MMK ${fmt(calcCoverage)}`, color: '#1d4ed8' },
-                        { icon: 'bi-percent', label: t('admin.packages.calcRateRow', { years }), value: `${(selectedTier?.premiumRate * 100).toFixed(3)}% / year`, color: '#7c3aed' },
-                        { icon: 'bi-calendar-year', label: t('admin.packages.calcAnnualRow'), value: `MMK ${fmt(calcResult.annual)}`, color: '#d97706', formula: `(${fmt(calcCoverage)} × ${(selectedTier?.premiumRate * 100).toFixed(3)}%)` },
+                        { icon: 'bi-percent', label: matchedAgeBand ? t('admin.packages.calcAgeRateRow', { age: calcAge }) : t('admin.packages.calcRateRow', { years }), value: `${(effectivePremiumRate * 100).toFixed(3)}% / year`, color: matchedAgeBand ? '#7c3aed' : '#7c3aed' },
+                        { icon: 'bi-calendar-year', label: t('admin.packages.calcAnnualRow'), value: `MMK ${fmt(calcResult.annual)}`, color: '#d97706', formula: `(${fmt(calcCoverage)} × ${(effectivePremiumRate * 100).toFixed(3)}%)` },
                         { icon: 'bi-calendar-range', label: t('admin.packages.calcTotalRow', { years }), value: `MMK ${fmt(totalPremium)}`, color: '#dc2626', formula: `(${fmt(calcResult.annual)} × ${years} ${t('admin.packages.yearsUnit')})`, highlight: true },
                       ].map((row, i) => (
                         <div key={i} style={{

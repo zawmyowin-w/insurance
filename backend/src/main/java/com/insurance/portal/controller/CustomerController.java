@@ -104,7 +104,9 @@ public class CustomerController {
         int dur = Integer.parseInt(duration);
 
         String riskLevel = policyService.calculateRisk(pkg.getType(), commonInfo, extraInfo);
-        BigDecimal premiumAmount = policyService.calculatePremium(coverage, pkg.getPremiumRate(), dur, riskLevel);
+        BigDecimal ageBandRate = policyService.getAgeBandRate(pkg.getAgeBandsJson(), commonInfo);
+        BigDecimal effectiveRate = ageBandRate != null ? ageBandRate : pkg.getPremiumRate();
+        BigDecimal premiumAmount = policyService.calculatePremium(coverage, effectiveRate, dur, riskLevel);
         String policyNumber = policyService.generatePolicyNumber(pkg.getType());
 
         List<User> agents = userRepo.findAllByRoleAndActive(Role.AGENT, true);
@@ -225,8 +227,11 @@ public class CustomerController {
         }
 
         if (coverageAmount != null || duration != null) {
-            BigDecimal premium = policyService.calculatePremium(effectiveCoverage,
-                    pkg != null ? pkg.getPremiumRate() : null, effectiveDuration, app.getRiskLevel());
+            BigDecimal ageRate = pkg != null
+                    ? policyService.getAgeBandRate(pkg.getAgeBandsJson(), app.getCommonInfo()) : null;
+            BigDecimal rateForUpdate = ageRate != null ? ageRate : (pkg != null ? pkg.getPremiumRate() : null);
+            BigDecimal premium = policyService.calculatePremium(effectiveCoverage, rateForUpdate,
+                    effectiveDuration, app.getRiskLevel());
             if (premium != null) app.setPremiumAmount(premium);
         }
 

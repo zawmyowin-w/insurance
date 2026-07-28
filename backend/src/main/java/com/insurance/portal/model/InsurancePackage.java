@@ -77,6 +77,10 @@ public class InsurancePackage {
     @Column(name = "required_documents", columnDefinition = "TEXT")
     private String requiredDocumentsJson;
 
+    // Age-based premium bands: JSON array [{minAge, maxAge, premiumRate}]
+    @Column(name = "age_bands", columnDefinition = "TEXT")
+    private String ageBandsJson;
+
     // Terms, rules, and policy conditions
     @Column(name = "terms_and_conditions", columnDefinition = "TEXT")
     private String termsAndConditions;

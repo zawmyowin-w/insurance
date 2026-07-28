@@ -29,6 +29,7 @@ public class PackageResponse {
 
     // New fields
     private List<Map<String, Object>> durationTiers;
+    private List<Map<String, Object>> ageBands;
     private String paymentFrequency;
     private Integer paymentIntervalMonths;
     private BigDecimal maxClaimAmount;
@@ -95,6 +96,18 @@ public class PackageResponse {
             }
         } catch (Exception e) {
             dto.setRequiredDocuments(List.of());
+        }
+
+        // Parse age bands JSON
+        try {
+            if (pkg.getAgeBandsJson() != null && !pkg.getAgeBandsJson().isBlank()) {
+                dto.setAgeBands(MAPPER.readValue(pkg.getAgeBandsJson(),
+                        new TypeReference<List<Map<String, Object>>>() {}));
+            } else {
+                dto.setAgeBands(List.of());
+            }
+        } catch (Exception e) {
+            dto.setAgeBands(List.of());
         }
 
         return dto;

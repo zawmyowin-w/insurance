@@ -1,10 +1,14 @@
 package com.insurance.portal.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Year;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -69,6 +73,34 @@ public class PolicyService {
                 .multiply(BigDecimal.valueOf(duration))
                 .multiply(BigDecimal.valueOf(multiplier))
                 .setScale(2, RoundingMode.HALF_UP);
+    }
+
+    /**
+     * Looks up the premium rate for an applicant from a package's age bands.
+     * Returns null if ageBandsJson is empty or no band matches the applicant's age.
+     * Age is derived from the "dob" field (ISO date) in commonInfoJson.
+     */
+    public BigDecimal getAgeBandRate(String ageBandsJson, String commonInfoJson) {
+        if (ageBandsJson == null || ageBandsJson.isBlank()) return null;
+        try {
+            int age = -1;
+            if (commonInfoJson != null) {
+                Matcher m = Pattern.compile("\"dob\"\\s*:\\s*\"(\\d{4})-").matcher(commonInfoJson);
+                if (m.find()) age = Year.now().getValue() - Integer.parseInt(m.group(1));
+            }
+            if (age < 0) return null;
+            ObjectMapper mapper = new ObjectMapper();
+            List<Map<String, Object>> bands = mapper.readValue(ageBandsJson,
+                    new TypeReference<List<Map<String, Object>>>() {});
+            for (Map<String, Object> band : bands) {
+                int minAge = ((Number) band.get("minAge")).intValue();
+                int maxAge = ((Number) band.get("maxAge")).intValue();
+                if (age >= minAge && age <= maxAge) {
+                    return new BigDecimal(band.get("premiumRate").toString());
+                }
+            }
+        } catch (Exception ignored) {}
+        return null;
     }
 
     /**

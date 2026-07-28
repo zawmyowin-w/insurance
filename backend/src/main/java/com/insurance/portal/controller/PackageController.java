@@ -127,6 +127,11 @@ public class PackageController {
             try { pkg.setRequiredDocumentsJson(MAPPER.writeValueAsString(docs)); } catch (Exception ignored) {}
         }
 
+        if (req.containsKey("ageBands")) {
+            Object ab = req.get("ageBands");
+            try { pkg.setAgeBandsJson(MAPPER.writeValueAsString(ab)); } catch (Exception ignored) {}
+        }
+
         return pkg;
     }
 
