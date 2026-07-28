@@ -1,9 +1,11 @@
 package com.insurance.portal.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.insurance.portal.model.*;
 import com.insurance.portal.model.enums.*;
 import com.insurance.portal.repository.*;
+import com.insurance.portal.util.FileStorageUtil;
 import com.insurance.portal.util.PremiumScheduleUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,8 +15,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.file.Files;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -36,7 +45,25 @@ public class AutoCheckService {
     @Value("${OPENAI_API_KEY:}")
     private String openAiApiKey;
 
+    @Value("${XAI_API_KEY:}")
+    private String xaiApiKey;
+
+    @Value("${app.upload.dir:./uploads}")
+    private String uploadDir;
+
     private final SchedulerSettingsRepository schedulerSettingsRepo;
+
+    // ── Receipt verification result from AI vision ────────────────────────────
+    private record ReceiptVerificationResult(
+            boolean isPaymentReceipt,
+            String  detectedMethod,
+            boolean methodMatches,
+            String  detectedLastSix,
+            boolean lastSixMatch,
+            String  detectedAmount,
+            boolean amountMatches,
+            String  reason
+    ) {}
 
     /** Fetches scheduler settings once; callers use the returned object for all fields. */
     private SchedulerSettings getSchedulerSettings() {
@@ -110,14 +137,53 @@ public class AutoCheckService {
             return Map.of("paymentId", p.getId(), "outcome", "SKIPPED",
                     "reason", "No payment screenshot uploaded");
 
-        // Amount must match expected installment (within 1% tolerance)
+        // Expected installment amount — used for all amount checks below
         BigDecimal expected = expectedInstallmentAmount(app);
+
+        // Declared payment amount must match expected installment (within 1% tolerance)
         if (expected != null && p.getAmount() != null) {
             BigDecimal diff      = p.getAmount().subtract(expected).abs();
             BigDecimal tolerance = expected.multiply(BigDecimal.valueOf(0.01));
             if (diff.compareTo(tolerance) > 0)
                 return Map.of("paymentId", p.getId(), "outcome", "SKIPPED",
                         "reason", String.format("Amount mismatch: paid=%s expected=%s", p.getAmount(), expected));
+        }
+
+        // Transaction amount (what the customer actually transferred) must also match expected
+        if (p.getTransactionAmount() != null && expected != null) {
+            BigDecimal txDiff      = p.getTransactionAmount().subtract(expected).abs();
+            BigDecimal txTolerance = expected.multiply(BigDecimal.valueOf(0.01));
+            if (txDiff.compareTo(txTolerance) > 0)
+                return Map.of("paymentId", p.getId(), "outcome", "SKIPPED",
+                        "reason", String.format("Transaction amount mismatch: transferred=%s expected=%s",
+                                p.getTransactionAmount(), expected));
+        }
+
+        // AI Vision: verify the receipt image content
+        if (isXaiAvailable()) {
+            ReceiptVerificationResult aiResult = verifyReceiptWithAi(p, expected);
+            if (aiResult != null) {
+                if (!aiResult.isPaymentReceipt())
+                    return Map.of("paymentId", p.getId(), "outcome", "SKIPPED",
+                            "reason", "AI: ပြေစာပုံသည် ငွေလွှဲပြေစာမဟုတ်ပါ — " + aiResult.reason());
+                if (!aiResult.methodMatches())
+                    return Map.of("paymentId", p.getId(), "outcome", "SKIPPED",
+                            "reason", String.format(
+                                    "AI: Payment method မကိုက်ညီ — မျှော်မှန်း: %s | စစ်ဆေးတွေ့ရှိ: %s",
+                                    p.getPaymentMethod(), aiResult.detectedMethod()));
+                if (!aiResult.lastSixMatch())
+                    return Map.of("paymentId", p.getId(), "outcome", "SKIPPED",
+                            "reason", String.format(
+                                    "AI: Transaction ID ဂဏန်း ၆ လုံး မကိုက်ညီ — ဖြည့်သွင်း: %s | ပြေစာတွင်: %s",
+                                    p.getTransactionLastSixDigits(), aiResult.detectedLastSix()));
+                if (!aiResult.amountMatches())
+                    return Map.of("paymentId", p.getId(), "outcome", "SKIPPED",
+                            "reason", String.format(
+                                    "AI: ပြေစာတွင်ပါသော ပမာဏ မကိုက်ညီ — မျှော်မှန်း: %s MMK | ပြေစာတွင်: %s",
+                                    expected, aiResult.detectedAmount()));
+                log.info("[AutoCheck] ✅ AI receipt verified for payment {}: method={} lastSix={} amount={}",
+                        p.getId(), aiResult.detectedMethod(), aiResult.detectedLastSix(), aiResult.detectedAmount());
+            }
         }
 
         // ✅ All checks passed — auto-verify
@@ -346,10 +412,159 @@ public class AutoCheckService {
     }
 
     // ──────────────────────────────────────────────────────────────────────────
+    // AI Vision — xAI receipt verification
+    // ──────────────────────────────────────────────────────────────────────────
+    public boolean isXaiAvailable() {
+        return xaiApiKey != null && !xaiApiKey.isBlank();
+    }
+
+    /**
+     * Uses xAI's vision model to verify a payment receipt image.
+     * Checks: (1) it is a real receipt, (2) payment method matches, (3) last-6-digit
+     * transaction ID matches, (4) transfer amount matches.
+     * Returns null on any error so the caller falls back to non-AI approval.
+     */
+    private ReceiptVerificationResult verifyReceiptWithAi(Payment payment, BigDecimal expectedAmount) {
+        try {
+            // Resolve the screenshot file safely
+            File uploadRoot = new File(uploadDir).getCanonicalFile();
+            File screenshot = new File(uploadRoot, payment.getScreenshotPath()).getCanonicalFile();
+            if (!screenshot.toPath().startsWith(uploadRoot.toPath()) || !screenshot.exists()) {
+                log.warn("[AutoCheck] Screenshot file not found on disk: {}", payment.getScreenshotPath());
+                return null;
+            }
+
+            // Encode to base64 data-URL
+            byte[] bytes     = Files.readAllBytes(screenshot.toPath());
+            String base64    = Base64.getEncoder().encodeToString(bytes);
+            String mime      = FileStorageUtil.contentTypeFor(payment.getScreenshotPath());
+            String dataUrl   = "data:" + mime + ";base64," + base64;
+
+            // Build the expected values for the prompt
+            String expMethod  = payment.getPaymentMethod() != null
+                    ? payment.getPaymentMethod().replace("_", " ") : "unknown";
+            String expLastSix = payment.getTransactionLastSixDigits() != null
+                    ? payment.getTransactionLastSixDigits() : "N/A";
+            String expAmt     = expectedAmount != null ? expectedAmount.toPlainString() : "N/A";
+
+            boolean hasLastSix = payment.getTransactionLastSixDigits() != null
+                    && !payment.getTransactionLastSixDigits().isBlank();
+
+            String prompt = String.format("""
+                You are a strict payment receipt verifier for a Myanmar digital insurance portal.
+                Analyze this image carefully and respond ONLY with a valid JSON object — no markdown, no extra text.
+
+                Expected payment details:
+                - Payment service / method: %s  (possible values: KBZ Pay, Wave Pay, AYA Pay, CB Pay)
+                - Last 6 digits of transaction reference ID: %s
+                - Transfer amount: %s MMK
+
+                Instructions:
+                1. Determine whether the image is a payment/transfer receipt or slip.
+                2. Identify the payment service shown (KBZ Pay logo, Wave Money branding, etc.).
+                3. Extract the transaction/reference ID and get its last 6 digits.
+                4. Extract the transfer amount shown on the receipt.
+                5. For lastSixMatch: if expected last-six is "N/A" set it to null (cannot verify).
+                6. For amountMatches: allow up to 1%% tolerance.
+                7. If a field cannot be found, use null for that field and null for its match boolean.
+
+                Respond with exactly this JSON shape:
+                {
+                  "isPaymentReceipt": <true|false>,
+                  "detectedMethod": "<service name or null>",
+                  "methodMatches": <true|false|null>,
+                  "detectedLastSix": "<6 digits or null>",
+                  "lastSixMatch": <true|false|null>,
+                  "detectedAmount": "<amount string or null>",
+                  "amountMatches": <true|false|null>,
+                  "reason": "<one-sentence summary>"
+                }
+                """, expMethod, hasLastSix ? expLastSix : "N/A", expAmt);
+
+            // Call xAI vision API (grok-2-vision-1212)
+            String reqBody = objectMapper.writeValueAsString(Map.of(
+                    "model", "grok-2-vision-1212",
+                    "messages", List.of(Map.of(
+                            "role", "user",
+                            "content", List.of(
+                                    Map.of("type", "text", "text", prompt),
+                                    Map.of("type", "image_url", "image_url", Map.of("url", dataUrl))
+                            )
+                    )),
+                    "max_tokens", 400,
+                    "temperature", 0.1
+            ));
+
+            HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.x.ai/v1/chat/completions"))
+                    .header("Content-Type", "application/json")
+                    .header("Authorization", "Bearer " + xaiApiKey)
+                    .POST(HttpRequest.BodyPublishers.ofString(reqBody))
+                    .timeout(Duration.ofSeconds(40))
+                    .build();
+
+            HttpResponse<String> resp = HttpClient.newHttpClient()
+                    .send(req, HttpResponse.BodyHandlers.ofString());
+
+            JsonNode root    = objectMapper.readTree(resp.body());
+            String   content = root.path("choices").path(0).path("message").path("content").asText("").trim();
+            if (content.isBlank()) {
+                log.warn("[AutoCheck] Empty xAI vision response for payment {}", payment.getId());
+                return null;
+            }
+
+            // Strip markdown fences if the model wraps the JSON
+            if (content.startsWith("```")) {
+                content = content.replaceAll("(?s)^```[a-z]*\\n?", "").replaceAll("```\\s*$", "").trim();
+            }
+
+            JsonNode j = objectMapper.readTree(content);
+
+            boolean isReceipt    = j.path("isPaymentReceipt").asBoolean(false);
+            String  detMethod    = j.path("detectedMethod").isNull()  ? null : j.path("detectedMethod").asText(null);
+            String  detLastSix   = j.path("detectedLastSix").isNull() ? null : j.path("detectedLastSix").asText(null);
+            String  detAmount    = j.path("detectedAmount").isNull()  ? null : j.path("detectedAmount").asText(null);
+            String  reason       = j.path("reason").asText("");
+
+            // For match booleans: null / missing → benefit of the doubt (true)
+            boolean methodMatch  = resolveMatchBool(j, "methodMatches",  true);
+            boolean lastSixMatch = resolveMatchBool(j, "lastSixMatch",   true);
+            boolean amountMatch  = resolveMatchBool(j, "amountMatches",  true);
+
+            log.info("[AutoCheck] AI receipt check payment {}: isReceipt={} method={}/{} lastSix={}/{} amount={}/{}",
+                    payment.getId(), isReceipt,
+                    expMethod, detMethod,
+                    expLastSix, detLastSix,
+                    expAmt, detAmount);
+
+            return new ReceiptVerificationResult(
+                    isReceipt, detMethod, methodMatch,
+                    detLastSix, lastSixMatch,
+                    detAmount, amountMatch, reason);
+
+        } catch (Exception e) {
+            log.warn("[AutoCheck] AI vision check skipped for payment {} — {}", payment.getId(), e.getMessage());
+            return null; // on error: skip AI, let the payment proceed to human review if needed
+        }
+    }
+
+    /** Resolves a JSON boolean that may be true/false/null/missing. Null or missing → defaultVal. */
+    private boolean resolveMatchBool(JsonNode node, String field, boolean defaultVal) {
+        JsonNode n = node.path(field);
+        if (n.isNull() || n.isMissingNode()) return defaultVal;
+        return n.asBoolean(defaultVal);
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
     // AI — direct OpenAI REST API call (no Spring AI library needed)
     // ──────────────────────────────────────────────────────────────────────────
     public boolean isAiAvailable() {
         return openAiApiKey != null && !openAiApiKey.isBlank();
+    }
+
+    /** True when any AI backend (OpenAI or xAI) is configured. */
+    public boolean isAnyAiAvailable() {
+        return isAiAvailable() || isXaiAvailable();
     }
 
     @SuppressWarnings("unchecked")
@@ -460,7 +675,7 @@ public class AutoCheckService {
             logRepo.save(AutoCheckLog.builder()
                     .checkType(checkType).status(status).summary(summary)
                     .totalChecked(total).affectedCount(affected)
-                    .aiAssisted(isAiAvailable())
+                    .aiAssisted(isAnyAiAvailable())
                     .details(objectMapper.writeValueAsString(details))
                     .build());
         } catch (Exception e) {

@@ -33,6 +33,9 @@ public class AdminAutoCheckController {
     @Value("${OPENAI_API_KEY:}")
     private String openAiKey;
 
+    @Value("${XAI_API_KEY:}")
+    private String xaiKey;
+
     // ── Status / settings ────────────────────────────────────────────
     @GetMapping("/status")
     @Transactional(readOnly = true)
@@ -175,6 +178,8 @@ public class AdminAutoCheckController {
     }
 
     private boolean isAiEnabled() {
-        return openAiKey != null && !openAiKey.isBlank() && !openAiKey.startsWith("sk-placeholder");
+        boolean hasOpenAi = openAiKey != null && !openAiKey.isBlank() && !openAiKey.startsWith("sk-placeholder");
+        boolean hasXai    = xaiKey    != null && !xaiKey.isBlank();
+        return hasOpenAi || hasXai;
     }
 }
