@@ -36,6 +36,7 @@ public class AdminController {
     private final InsurancePackageRepository packageRepo;
     private final InsuranceTypeRepository insuranceTypeRepo;
     private final NotificationService notifService;
+    private final AnalyticsResetRepository resetRepo;
 
     // ── Insurance Types CRUD ──────────────────────────────────────────
 
@@ -104,12 +105,19 @@ public class AdminController {
         stats.put("verifiedClaims",        claimRepo.countByStatus(ClaimStatus.VERIFIED));
         stats.put("totalPackages",         packageRepo.count());
 
-        LocalDateTime startOfMonth = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime startOfMonth  = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime lastResetTime = resetRepo.findTopByOrderByResetAtDesc()
+                .map(com.insurance.portal.model.AnalyticsResetRecord::getResetAt)
+                .orElse(LocalDateTime.MIN);
+        // Use whichever is later: start-of-calendar-month OR last analytics reset
+        // This ensures the dashboard revenue card zeros out immediately after a reset.
+        LocalDateTime revenueCutoff = lastResetTime.isAfter(startOfMonth) ? lastResetTime : startOfMonth;
         BigDecimal monthlyRevenue = paymentRepo.findAll().stream()
                 .filter(p -> p.getStatus() == PaymentStatus.VERIFIED
                         && p.getAmount() != null
                         && p.getCreatedAt() != null
-                        && !p.getCreatedAt().isBefore(startOfMonth))
+                        && !p.getCreatedAt().isBefore(revenueCutoff)
+                        && !"CLAIM_PAYOUT".equals(p.getPaymentType()))
                 .map(Payment::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
         stats.put("monthlyRevenue", monthlyRevenue);
