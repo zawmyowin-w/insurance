@@ -1446,28 +1446,22 @@ function WalletTab({ wallet, walletLoaded }) {
 
   return (
     <div className="fade-in d-flex flex-column gap-4">
-      <div className="card-custom" style={{ background: balance >= 0 ? 'linear-gradient(135deg, #064e3b, #065f46, #047857)' : 'linear-gradient(135deg, #7f1d1d, #991b1b)', border: 'none', padding: '1.5rem' }}>
+      <div className="card-custom" style={{ background: 'linear-gradient(135deg, #1e3a5f, #1d4ed8, #2563eb)', border: 'none', padding: '1.5rem' }}>
         <div className="row align-items-center g-3">
           <div className="col-12 col-md-5">
-            <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>{t('admin.reports.walletBalance')}</div>
-            <div style={{ fontSize: '2rem', fontWeight: 900, color: '#fff', lineHeight: 1 }}>{balance.toLocaleString()}</div>
+            <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>{t('admin.reports.customerPremiumIncome')}</div>
+            <div style={{ fontSize: '2rem', fontWeight: 900, color: '#fff', lineHeight: 1 }}>{inflow.toLocaleString()}</div>
             <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.8rem', marginTop: 4 }}>MMK</div>
-            <div style={{ marginTop: 10, display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.12)', borderRadius: 8, padding: '0.3rem 0.7rem' }}>
-              <i className={`bi bi-${balance >= 0 ? 'check-circle-fill' : 'exclamation-triangle-fill'}`} style={{ color: balance >= 0 ? '#6ee7b7' : '#fca5a5', fontSize: '0.85rem' }}></i>
-              <span style={{ fontSize: '0.78rem', color: '#fff', fontWeight: 600 }}>{balance >= 0 ? t('admin.reports.profitable') : t('admin.reports.lossMaking')}</span>
-            </div>
           </div>
           <div className="col-12 col-md-7">
             <div className="row g-2">
               {[
-                { l: t('admin.reports.customerPremiumIncome'), v: inflow, icon: 'bi-arrow-down-circle', c: '#6ee7b7' },
-                { l: t('admin.reports.claimPayout'), v: claims, icon: 'bi-arrow-up-circle', c: '#fca5a5' },
-                { l: t('admin.reports.walletBalanceChange'), v: balance, icon: 'bi-wallet2', c: balance >= 0 ? '#86efac' : '#fca5a5' },
+                { l: t('admin.reports.totalCustomers'), v: customers.length, icon: 'bi-people', c: '#93c5fd', isCount: true },
               ].map(x => (
                 <div key={x.l} className="col-6">
                   <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 10, padding: '0.65rem 0.75rem' }}>
                     <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.45)', marginBottom: 2 }}>{x.l}</div>
-                    <div style={{ fontWeight: 800, color: x.c, fontSize: '0.95rem' }}>{x.v.toLocaleString()} MMK</div>
+                    <div style={{ fontWeight: 800, color: x.c, fontSize: '0.95rem' }}>{x.isCount ? x.v : `${x.v.toLocaleString()} MMK`}</div>
                   </div>
                 </div>
               ))}
@@ -1479,9 +1473,9 @@ function WalletTab({ wallet, walletLoaded }) {
       <div className="card-custom">
         <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
           <i className="bi bi-bar-chart me-2" style={{ color: 'var(--primary)' }}></i>
-          {t('admin.reports.monthlyPremiumVsClaims')}
+          {t('admin.reports.premiumRevenue')}
         </h6>
-        <GroupedBarChart data1={monIn} data2={monOut} label1={t('admin.reports.premiumRevenue')} label2={t('admin.reports.claimPayout')} height={200} />
+        <BarChart data={monIn} color="var(--primary)" height={200} />
       </div>
 
       <div className="card-custom p-0">
