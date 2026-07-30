@@ -26,6 +26,7 @@ export default function ApplyPolicyPage() {
   const [selectedPlan, setSelectedPlan] = useState(null)
   const [coverage, setCoverage] = useState('')
   const [duration, setDuration] = useState(1)
+  const [dob, setDob] = useState('')
   const [notes, setNotes] = useState('')
 
   const [template, setTemplate] = useState(null)
@@ -78,6 +79,7 @@ export default function ApplyPolicyPage() {
     setSelectedPlan(plan)
     setCoverage(String(plan.coverageMin || ''))
     setDuration((plan.durationTiers?.[0]?.years) || 1)
+    setDob('')
     setStep(2)
   }
 
@@ -125,12 +127,21 @@ export default function ApplyPolicyPage() {
         ...formDataObj,
       }
 
+      // Validate DOB is provided when plan has age bands
+      if (hasAgeBands && !dob) {
+        toast.error(t('applyPolicy.dobRequired'))
+        setSubmitting(false)
+        return
+      }
+
       const fd = new FormData()
       fd.append('packageId', selectedPlan.id)
       fd.append('coverageAmount', coverage)
       fd.append('duration', duration)
       fd.append('notes', notes)
       fd.append('formData', JSON.stringify(mergedFormData))
+      // Send DOB as commonInfo so the backend can look up the age-band rate
+      if (dob) fd.append('commonInfo', JSON.stringify({ dob }))
 
       Object.entries(fieldFiles).forEach(([fieldId, file]) => {
         if (file) fd.append(`file_${fieldId}`, file)
@@ -149,8 +160,19 @@ export default function ApplyPolicyPage() {
   const filteredPlans = typeFilter === 'ALL' ? plans : plans.filter(p => p.type === typeFilter)
   const durations = selectedPlan?.durationTiers?.map(t => t.years) || []
   const selectedTier = selectedPlan?.durationTiers?.find(t => t.years === duration)
-  const premium = selectedTier && coverage
-    ? Math.round(Number(coverage) * selectedTier.premiumRate * duration)
+  const hasAgeBands = (selectedPlan?.ageBands?.length ?? 0) > 0
+
+  // Derive age from DOB and find matching age-band rate
+  const applicantAge = dob
+    ? new Date().getFullYear() - new Date(dob).getFullYear()
+    : null
+  const matchedBand = (hasAgeBands && applicantAge != null)
+    ? selectedPlan.ageBands.find(b => applicantAge >= b.minAge && applicantAge <= b.maxAge)
+    : null
+  const effectiveRate = matchedBand?.premiumRate ?? selectedTier?.premiumRate ?? null
+
+  const premium = effectiveRate != null && coverage
+    ? Math.round(Number(coverage) * effectiveRate * duration)
     : null
   const meta2 = selectedPlan ? getTypeMeta(selectedPlan.type) : {}
 
@@ -325,6 +347,37 @@ export default function ApplyPolicyPage() {
                       ))}
                     </select>
                   </div>
+
+                  {/* Age-based pricing: show DOB field when the package has age bands */}
+                  {hasAgeBands && (
+                    <div className="col-12">
+                      <div style={{ padding: '0.6rem 0.85rem', borderRadius: 8, background: `${meta2.color}15`, border: `1px solid ${meta2.color}40`, marginBottom: '0.5rem', fontSize: '0.8rem', color: meta2.color, fontWeight: 600 }}>
+                        <i className="bi bi-person-badge me-2"></i>{t('applyPolicy.agePricing')}
+                      </div>
+                      <label className="form-label-custom">
+                        {t('applyPolicy.dateOfBirth')} <span style={{ color: 'var(--danger, #ef4444)' }}>*</span>
+                      </label>
+                      <input
+                        type="date"
+                        className="form-control-custom w-100"
+                        value={dob}
+                        max={new Date().toISOString().split('T')[0]}
+                        onChange={e => setDob(e.target.value)}
+                      />
+                      {dob && !matchedBand && (
+                        <small style={{ color: '#ef4444', fontSize: '0.75rem' }}>
+                          <i className="bi bi-exclamation-triangle me-1"></i>{t('applyPolicy.noAgeBandMatch')}
+                        </small>
+                      )}
+                      {dob && matchedBand && (
+                        <small style={{ color: '#16a34a', fontSize: '0.75rem' }}>
+                          <i className="bi bi-check-circle me-1"></i>
+                          {t('applyPolicy.ageGroup')}: {matchedBand.minAge}–{matchedBand.maxAge} {t('applyPolicy.yrs')} &nbsp;·&nbsp;
+                          {t('applyPolicy.ageBandRate')}: {(matchedBand.premiumRate * 100).toFixed(2)}%/{t('applyPolicy.year')}
+                        </small>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -417,18 +470,25 @@ export default function ApplyPolicyPage() {
                   [t('applyPolicy.type'), selectedPlan.type],
                   [t('applyPolicy.coverage'), coverage ? Number(coverage).toLocaleString() + ' MMK' : '—'],
                   [t('applyPolicy.duration'), `${duration} ${duration > 1 ? t('applyPolicy.years') : t('applyPolicy.year')}`],
-                  [t('applyPolicy.rate'), `${(selectedPlan.premiumRate * 100).toFixed(1)}%/${t('applyPolicy.year')}`],
+                  // Show age band rate if matched, otherwise fall back to tier rate
+                  ...(hasAgeBands
+                    ? [[t('applyPolicy.dateOfBirth'), dob || '—'],
+                       matchedBand
+                         ? [t('applyPolicy.ageBandRate'), `${(matchedBand.premiumRate * 100).toFixed(2)}% (${matchedBand.minAge}–${matchedBand.maxAge} ${t('applyPolicy.yrs')})`]
+                         : [t('applyPolicy.rate'), dob ? `— (${t('applyPolicy.noAgeBandMatch')})` : '—']]
+                    : [[t('applyPolicy.rate'), `${((effectiveRate ?? selectedPlan.premiumRate) * 100).toFixed(1)}%/${t('applyPolicy.year')}`]]
+                  ),
                   ...(selectedPlan.minPolicyTerm || selectedPlan.policyTerm ? [[t('applyPolicy.policyTerm'), selectedPlan.minPolicyTerm && selectedPlan.policyTerm ? `${selectedPlan.minPolicyTerm} – ${selectedPlan.policyTerm} ${t('applyPolicy.yrs')}` : selectedPlan.policyTerm ? `${t('applyPolicy.upTo')} ${selectedPlan.policyTerm} ${t('applyPolicy.yrs')}` : `${t('applyPolicy.from')} ${selectedPlan.minPolicyTerm} ${t('applyPolicy.yrs')}`]] : []),
                 ].map(([l, v]) => (
-                  <div key={l} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: 'var(--text-muted)' }}>{l}</span>
-                    <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{v}</span>
+                  <div key={l} style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                    <span style={{ color: 'var(--text-muted)', flexShrink: 0 }}>{l}</span>
+                    <span style={{ fontWeight: 600, color: 'var(--text-primary)', textAlign: 'right' }}>{v}</span>
                   </div>
                 ))}
                 <div style={{ borderTop: '1px solid var(--border)', paddingTop: '0.6rem', marginTop: '0.25rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '1rem' }}>
                     <span>{t('applyPolicy.estPremium')}</span>
-                    <span style={{ color: 'var(--primary)' }}>
+                    <span style={{ color: hasAgeBands && dob && !matchedBand ? 'var(--text-muted)' : 'var(--primary)' }}>
                       {premium ? Number(premium).toLocaleString() + ' MMK' : '—'}
                     </span>
                   </div>
@@ -453,6 +513,18 @@ export default function ApplyPolicyPage() {
               <ReviewRow label={t('applyPolicy.type')} value={selectedPlan.type} />
               <ReviewRow label={t('applyPolicy.coverage')} value={Number(coverage).toLocaleString() + ' MMK'} />
               <ReviewRow label={t('applyPolicy.duration')} value={`${duration} ${duration > 1 ? t('applyPolicy.years') : t('applyPolicy.year')}`} />
+              {hasAgeBands && dob && (
+                <ReviewRow
+                  label={t('applyPolicy.dateOfBirth')}
+                  value={new Date(dob).toLocaleDateString()}
+                />
+              )}
+              {hasAgeBands && matchedBand && (
+                <ReviewRow
+                  label={t('applyPolicy.ageBandRate')}
+                  value={`${(matchedBand.premiumRate * 100).toFixed(2)}% (${t('applyPolicy.ageGroup')}: ${matchedBand.minAge}–${matchedBand.maxAge} ${t('applyPolicy.yrs')})`}
+                />
+              )}
               <ReviewRow label={t('applyPolicy.estPremium')} value={premium ? Number(premium).toLocaleString() + ' MMK' : '—'} />
               {notes && <ReviewRow label={t('applyPolicy.notes')} value={notes} />}
               {signatureData && (

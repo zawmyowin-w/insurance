@@ -1,28 +1,33 @@
-# Digital Insurance Claim and Premiums Portal
+# Digital Insurance & Claims Portal
 
-A full-stack digital insurance platform for Myanmar, supporting policy applications, claims processing, premium scheduling, AI-assisted chat, and multi-role dashboards (customer, agent, admin).
+A full-stack digital insurance platform for Myanmar, supporting policy applications, claims, premium payments, agent management, and an AI-powered insurance assistant.
 
 ## Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | React 18 + Vite, Bootstrap 5, i18next (EN/MM) |
-| Backend | Java 17, Spring Boot 3, Maven |
-| Database | MySQL 8 (self-managed, data in `.mysql/`) |
-| Auth | JWT (signed with `SESSION_SECRET`) |
+| Frontend | React 18 + Vite, Bootstrap 5, React Router v6 |
+| Backend | Java 17 / Spring Boot 3, Maven |
+| Database | MySQL 8 (self-managed, project-local) |
+| Auth | JWT (signed with `SESSION_SECRET` Replit secret) |
 | AI | xAI API (`XAI_API_KEY`) |
-| Email | EmailJS (OTP + password reset) |
+| Email | EmailJS (OTP / password reset) |
 
-## How to run
+## Running on Replit
 
-Two workflows run in parallel (use the **Project** run button):
+Two workflows run in parallel (both start automatically):
 
-- **Start application** — `cd frontend && npm install && npm run dev` → port 5000
-- **Backend** — `cd backend && bash start-backend.sh` → port 8080/api
+- **Backend** — `cd backend && bash start-backend.sh`
+  - Initializes and starts a project-local MySQL instance under `.mysql/`
+  - Creates the `insurance_portal` database automatically
+  - Seeds default insurance types, packages, agents, and customers on first run
+  - API available at `http://localhost:8080/api`
 
-`start-backend.sh` automatically initialises and starts a project-local MySQL instance (data persisted under `.mysql/`) if no external MySQL is available.
+- **Start application** — `cd frontend && npm install && npm run dev`
+  - Vite dev server on port 5000
+  - Proxies `/api` calls to the backend automatically
 
-## Default login
+## Default Login
 
 | Role | Email | Password |
 |------|-------|----------|
@@ -30,35 +35,19 @@ Two workflows run in parallel (use the **Project** run button):
 
 Demo agents and customers are seeded automatically on first run.
 
-## Environment variables
+## Environment & Secrets
 
-Managed in Replit's environment (`.replit` `[userenv.shared]` + Secrets):
+| Variable | Where | Notes |
+|----------|-------|-------|
+| `SESSION_SECRET` | Replit Secret | Used as JWT signing key |
+| `XAI_API_KEY` | Replit Secret | Enables AI Assistant + Auto Check; app works without it |
+| `VITE_EMAILJS_SERVICE_ID` | Replit Secret | Required for OTP/password-reset emails |
+| `VITE_EMAILJS_PUBLIC_KEY` | Replit Secret | Required for OTP/password-reset emails |
+| `VITE_EMAILJS_VERIFY_TEMPLATE` | Replit Secret | EmailJS template ID for OTP |
+| `VITE_EMAILJS_RESET_TEMPLATE` | Replit Secret | EmailJS template ID for password reset |
+| `CORS_ALLOWED_ORIGINS` | `.replit` userenv | Pre-configured for this Repl's dev domain |
+| `VITE_GOOGLE_CLIENT_ID` | `.replit` userenv | Pre-configured Google OAuth client ID |
 
-| Key | Where | Purpose |
-|-----|-------|---------|
-| `SESSION_SECRET` | Replit Secret | JWT signing key |
-| `CORS_ALLOWED_ORIGINS` | Shared env | Comma-separated allowed origins for CORS |
-| `VITE_GOOGLE_CLIENT_ID` | Shared env | Google OAuth client ID |
-| `XAI_API_KEY` | Replit Secret (optional) | AI assistant / auto-check features |
-| `VITE_EMAILJS_*` | Replit Secret (optional) | OTP and password-reset emails |
+## User Preferences
 
-## Key directories
-
-```
-backend/src/main/java/com/insurance/portal/
-  config/        — CORS, security, data seeder
-  controller/    — REST endpoints
-  service/       — business logic
-  model/         — JPA entities
-  util/          — PDF, file storage, premium schedule helpers
-
-frontend/src/
-  pages/         — route-level page components
-  components/    — shared UI components
-  services/      — Axios API calls
-  locales/       — EN + MM translation files
-```
-
-## User preferences
-
-_None recorded yet._
+_(Add any preferences here for the agent to follow.)_

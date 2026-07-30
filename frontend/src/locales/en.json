@@ -704,7 +704,13 @@
     "year": "year",
     "years": "years",
     "premiumRate": "premium rate",
-    "changeLabel": "Change"
+    "changeLabel": "Change",
+    "dateOfBirth": "Date of Birth",
+    "dobRequired": "Date of birth is required for age-based pricing",
+    "ageBandRate": "Age Band Rate",
+    "ageGroup": "Age Group",
+    "noAgeBandMatch": "Your age does not match any pricing band for this plan",
+    "agePricing": "This plan uses age-based pricing"
   },
   "agent": {
     "layout": {
