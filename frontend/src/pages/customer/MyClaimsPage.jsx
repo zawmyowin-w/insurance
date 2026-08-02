@@ -2,8 +2,27 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
+import { toast } from 'react-toastify'
 import FormDetailModal from '../../components/FormDetailModal'
 import RevisionFormModal from '../../components/RevisionFormModal'
+
+async function downloadPayoutVoucher(claimId, setDownloading) {
+  setDownloading(claimId)
+  try {
+    const res = await api.get(`/customer/claims/${claimId}/payout-voucher`, { responseType: 'blob' })
+    const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `payout_voucher_claim_${claimId}.pdf`
+    document.body.appendChild(a)
+    a.click()
+    setTimeout(() => { URL.revokeObjectURL(url); document.body.removeChild(a) }, 200)
+  } catch {
+    toast.error('Failed to download payout voucher')
+  } finally {
+    setDownloading(null)
+  }
+}
 
 export default function MyClaimsPage() {
   const { t } = useTranslation()
@@ -11,6 +30,7 @@ export default function MyClaimsPage() {
   const [loading, setLoading] = useState(true)
   const [viewItem, setViewItem] = useState(null)
   const [reviseItem, setReviseItem] = useState(null)
+  const [downloading, setDownloading] = useState(null)
 
   const fetchClaims = () => {
     api.get('/customer/claims')
@@ -105,6 +125,17 @@ export default function MyClaimsPage() {
                           fontWeight: 600, fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: 4
                         }}>
                           <i className="bi bi-pencil-square"></i> {t('myClaims.editResubmitBtn')}
+                        </button>
+                      )}
+                      {claim.status === 'APPROVED' && (
+                        <button
+                          onClick={() => downloadPayoutVoucher(claim.id, setDownloading)}
+                          disabled={downloading === claim.id}
+                          style={{ padding: '0.4rem 0.9rem', borderRadius: 8, border: 'none', background: '#16a34a', color: '#fff', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: 4 }}
+                        >
+                          {downloading === claim.id
+                            ? <span className="spinner-border spinner-border-sm"></span>
+                            : <><i className="bi bi-file-earmark-arrow-down-fill"></i> ငွေထုတ်ပြေစာ PDF</>}
                         </button>
                       )}
                     </div>

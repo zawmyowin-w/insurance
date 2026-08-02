@@ -130,6 +130,32 @@ public class PdfController {
         return buildClaimPdf(claim);
     }
 
+    // ── Payout Voucher PDF (admin) ─────────────────────────────────────
+    @GetMapping("/admin/claims/{id}/payout-voucher")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<byte[]> adminPayoutVoucher(@PathVariable Long id) {
+        Claim claim = claimRepo.findById(id).orElseThrow();
+        if (claim.getStatus() != com.insurance.portal.model.enums.ClaimStatus.APPROVED)
+            return ResponseEntity.badRequest().build();
+        return buildPayoutVoucherPdf(claim);
+    }
+
+    // ── Payout Voucher PDF (customer) ──────────────────────────────────
+    @GetMapping("/customer/claims/{id}/payout-voucher")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<byte[]> customerPayoutVoucher(@PathVariable Long id,
+            @AuthenticationPrincipal UserDetails principal) {
+        User customer = userRepo.findByEmail(principal.getUsername()).orElseThrow();
+        Claim claim = claimRepo.findById(id).orElseThrow();
+        if (!claim.getCustomer().getId().equals(customer.getId()))
+            return ResponseEntity.status(403).build();
+        if (claim.getStatus() != com.insurance.portal.model.enums.ClaimStatus.APPROVED)
+            return ResponseEntity.badRequest().build();
+        return buildPayoutVoucherPdf(claim);
+    }
+
     // ── Policy Contract PDF (admin) ────────────────────────────────────
     @GetMapping("/admin/applications/{id}/policy-contract")
     @PreAuthorize("hasRole('ADMIN')")
@@ -967,5 +993,197 @@ public class PdfController {
 
     private Map.Entry<String, String> entry(String k, String v) {
         return Map.entry(k, v != null ? v : "—");
+    }
+
+    // ── Payout Voucher PDF builder ─────────────────────────────────────
+    private ResponseEntity<byte[]> buildPayoutVoucherPdf(Claim claim) {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            PdfWriter writer = new PdfWriter(baos);
+            PdfDocument pdf = new PdfDocument(writer);
+            Document doc = new Document(pdf);
+            doc.setMargins(36, 44, 36, 44);
+
+            PdfFont bold    = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);
+            PdfFont regular = PdfFontFactory.createFont(StandardFonts.HELVETICA);
+            PdfFont oblique = PdfFontFactory.createFont(StandardFonts.HELVETICA_OBLIQUE);
+
+            DeviceRgb navy        = new DeviceRgb(15, 23, 42);
+            DeviceRgb green       = new DeviceRgb(22, 163, 74);
+            DeviceRgb greenDark   = new DeviceRgb(14, 116, 52);
+            DeviceRgb greenLight  = new DeviceRgb(240, 253, 244);
+            DeviceRgb greenBorder = new DeviceRgb(134, 239, 172);
+            DeviceRgb gray        = new DeviceRgb(71, 85, 105);
+            DeviceRgb lightSlate  = new DeviceRgb(241, 245, 249);
+            DeviceRgb blue        = new DeviceRgb(29, 78, 175);
+            DeviceRgb red         = new DeviceRgb(220, 38, 38);
+
+            var customer = claim.getCustomer();
+            var app      = claim.getApplication();
+            var pkg      = app != null ? app.getInsurancePackage() : null;
+
+            java.time.format.DateTimeFormatter dtFmt = java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm");
+            java.time.format.DateTimeFormatter dateFmt = java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy");
+            String issueDate = java.time.LocalDate.now().format(dateFmt);
+            String policyNum = app != null && app.getPolicyNumber() != null ? app.getPolicyNumber() : "N/A";
+            String voucherRef = String.format("VOUCHER-%05d-%s", claim.getId(),
+                    java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd")));
+            String approvedDateStr = claim.getUpdatedAt() != null ? claim.getUpdatedAt().format(dtFmt) : issueDate;
+
+            // ── HEADER ───────────────────────────────────────────────────
+            Table headerTable = new Table(UnitValue.createPercentArray(new float[]{65, 35})).useAllAvailableWidth();
+            headerTable.addCell(new Cell()
+                    .add(new Paragraph("DIGITAL INSURANCE CLAIMS AND PREMIUMS").setFont(bold).setFontSize(11).setFontColor(green).setMarginBottom(2))
+                    .add(new Paragraph("PORTAL — MYANMAR").setFont(bold).setFontSize(9).setFontColor(navy).setMarginBottom(3))
+                    .add(new Paragraph("ဒစ်ဂျစ်တယ် အာမခံ တောင်းဆိုမှုနှင့် ကြေးငွေ ပေါ်တယ် — မြန်မာ").setFont(oblique).setFontSize(8).setFontColor(gray))
+                    .setBorder(Border.NO_BORDER).setPadding(4));
+            headerTable.addCell(new Cell()
+                    .add(new Paragraph("CLAIM PAYOUT VOUCHER").setFont(bold).setFontSize(11).setFontColor(green).setTextAlignment(TextAlignment.RIGHT).setMarginBottom(2))
+                    .add(new Paragraph("လျော်ကြေး ငွေထုတ်ရန် ပြေစာ").setFont(oblique).setFontSize(8.5f).setFontColor(gray).setTextAlignment(TextAlignment.RIGHT).setMarginBottom(4))
+                    .add(new Paragraph("Voucher: " + voucherRef).setFont(bold).setFontSize(8).setFontColor(navy).setTextAlignment(TextAlignment.RIGHT).setMarginBottom(2))
+                    .add(new Paragraph("Issued: " + issueDate).setFont(regular).setFontSize(8).setFontColor(gray).setTextAlignment(TextAlignment.RIGHT))
+                    .setBorder(Border.NO_BORDER).setPadding(4));
+            doc.add(headerTable);
+
+            // Green title bar
+            doc.add(new Table(UnitValue.createPercentArray(new float[]{100})).useAllAvailableWidth()
+                    .addCell(new Cell()
+                            .add(new Paragraph("CLAIM PAYOUT VOUCHER — MYANMAR (လျော်ကြေး ငွေထုတ်ရန် ပြေစာ — မြန်မာ)")
+                                    .setFont(bold).setFontSize(11).setFontColor(ColorConstants.WHITE)
+                                    .setTextAlignment(TextAlignment.CENTER))
+                            .setBackgroundColor(green).setPadding(7).setBorder(Border.NO_BORDER)));
+
+            // APPROVED banner
+            doc.add(new Paragraph("✓ CLAIM APPROVED — PAYOUT AUTHORISED   (တောင်းဆိုမှု အတည်ပြုပြီး — ငွေထုတ်ပေးရန် ခွင့်ပြုပြီး)")
+                    .setFont(bold).setFontSize(9.5f).setFontColor(greenDark)
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setBackgroundColor(greenLight)
+                    .setPaddingTop(5).setPaddingBottom(5).setMarginBottom(12));
+
+            // ── PAYOUT AMOUNT BOX ──────────────────────────────────────
+            Table amountBox = new Table(UnitValue.createPercentArray(new float[]{100})).useAllAvailableWidth();
+            String amountStr = claim.getAmount() != null
+                    ? String.format("%,.0f MMK", claim.getAmount().doubleValue())
+                    : "N/A";
+            amountBox.addCell(new Cell()
+                    .add(new Paragraph("AUTHORISED PAYOUT AMOUNT  (ခွင့်ပြုသော လျော်ကြေးပမာဏ)").setFont(bold).setFontSize(9).setFontColor(greenDark).setMarginBottom(4).setTextAlignment(TextAlignment.CENTER))
+                    .add(new Paragraph(amountStr).setFont(bold).setFontSize(26).setFontColor(green).setTextAlignment(TextAlignment.CENTER).setMarginBottom(4))
+                    .add(new Paragraph("Claim ID: #" + claim.getId() + "   |   Policy No: " + policyNum + "   |   Type: " + (claim.getClaimType() != null ? claim.getClaimType() : "N/A")).setFont(regular).setFontSize(8).setFontColor(gray).setTextAlignment(TextAlignment.CENTER))
+                    .setBackgroundColor(greenLight).setBorder(new SolidBorder(greenBorder, 2)).setPadding(14).setMarginBottom(14));
+            doc.add(amountBox);
+
+            // ── SECTION 1: RECIPIENT INFORMATION ─────────────────────────
+            doc.add(new Paragraph("SECTION 1: RECIPIENT INFORMATION   (အပိုင်း ၁: ငွေလက်ခံသူ သတင်းအချက်အလက်)")
+                    .setFont(bold).setFontSize(9.5f).setFontColor(green)
+                    .setBackgroundColor(lightSlate).setPadding(5).setMarginTop(4).setMarginBottom(5));
+            addMetaTable(doc, bold, regular, lightSlate, java.util.List.of(
+                    entry("Full Name  (နာမည်အပြည့်)",        customer != null ? customer.getName() : "N/A"),
+                    entry("Email Address  (အီးမေးလ်)",       customer != null ? customer.getEmail() : "N/A"),
+                    entry("Phone  (ဖုန်းနံပါတ်)",            customer != null && customer.getPhone() != null ? customer.getPhone() : "N/A"),
+                    entry("Address  (လိပ်စာ)",               customer != null && customer.getAddress() != null ? customer.getAddress() : "N/A"),
+                    entry("Claim ID  (တောင်းဆိုမှု ID)",     "#" + claim.getId())
+            ));
+
+            // ── SECTION 2: POLICY & CLAIM DETAILS ────────────────────────
+            doc.add(new Paragraph("SECTION 2: POLICY & CLAIM DETAILS   (အပိုင်း ၂: ပါလစီနှင့် တောင်းဆိုမှု အသေးစိတ်)")
+                    .setFont(bold).setFontSize(9.5f).setFontColor(green)
+                    .setBackgroundColor(lightSlate).setPadding(5).setMarginTop(8).setMarginBottom(5));
+            addMetaTable(doc, bold, regular, lightSlate, java.util.List.of(
+                    entry("Policy Number  (ပါလစီနံပါတ်)",          policyNum),
+                    entry("Insurance Plan  (အာမခံ Plan)",           pkg != null ? pkg.getName() : "N/A"),
+                    entry("Insurance Type  (အာမခံ အမျိုးအစား)",    pkg != null ? pkg.getType() : "N/A"),
+                    entry("Claim ID  (တောင်းဆိုမှု ID)",            "#" + claim.getId()),
+                    entry("Claim Type  (တောင်းဆိုမှု အမျိုးအစား)",  claim.getClaimType() != null ? claim.getClaimType() : "N/A"),
+                    entry("Incident Date  (ဖြစ်ပွားသောနေ့)",        claim.getIncidentDate() != null ? claim.getIncidentDate().format(dateFmt) : "N/A"),
+                    entry("Claim Submitted  (တောင်းဆိုမှု တင်ပြသောနေ့)", claim.getCreatedAt() != null ? claim.getCreatedAt().format(dtFmt) : "N/A"),
+                    entry("Approved On  (အတည်ပြုသောနေ့)",           approvedDateStr),
+                    entry("Voucher Reference  (ပြေစာ ကိုးကားနံပါတ်)", voucherRef)
+            ));
+
+            // ── SECTION 3: ADMIN APPROVAL ─────────────────────────────────
+            doc.add(new Paragraph("SECTION 3: APPROVAL AUTHORITY   (အပိုင်း ၃: ခွင့်ပြုချက် ပေးသူ)")
+                    .setFont(bold).setFontSize(9.5f).setFontColor(green)
+                    .setBackgroundColor(lightSlate).setPadding(5).setMarginTop(8).setMarginBottom(5));
+            // Resolve the admin who approved (adminSignedAt / use claim updatedAt)
+            String adminNote = claim.getAdminNote() != null && !claim.getAdminNote().isBlank() ? claim.getAdminNote() : "—";
+            addMetaTable(doc, bold, regular, lightSlate, java.util.List.of(
+                    entry("Approved By  (ခွင့်ပြုသူ)",        "Insurance Portal Administrator"),
+                    entry("Organisation  (အဖွဲ့အစည်း)",       "Digital Insurance Claims and Premiums Portal — Myanmar"),
+                    entry("Approval Date  (ခွင့်ပြုသောနေ့)",   approvedDateStr),
+                    entry("Admin Remarks  (Admin မှတ်ချက်)",   adminNote)
+            ));
+
+            // Admin signature
+            if (claim.getAdminSignature() != null) {
+                doc.add(new Paragraph("").setMarginTop(8));
+                Table sigBox = new Table(UnitValue.createPercentArray(new float[]{55, 45})).useAllAvailableWidth();
+                Cell sigCell = new Cell()
+                        .add(new Paragraph("AUTHORISING SIGNATURE  (ခွင့်ပြုလက်မှတ်)").setFont(bold).setFontSize(9).setFontColor(blue).setMarginBottom(8))
+                        .add(new Paragraph("[ DIGITALLY APPROVED ]").setFont(bold).setFontSize(10).setFontColor(green)
+                                .setTextAlignment(TextAlignment.CENTER)
+                                .setBackgroundColor(new DeviceRgb(239, 246, 255))
+                                .setPadding(6).setBorder(new SolidBorder(blue, 0.8f)).setMarginBottom(4))
+                        .setBackgroundColor(new DeviceRgb(239, 246, 255))
+                        .setBorder(new SolidBorder(blue, 1)).setPadding(10);
+                addSignatureImage(sigCell, claim.getAdminSignature());
+                sigBox.addCell(sigCell);
+                sigBox.addCell(new Cell()
+                        .add(new Paragraph("Voucher Ref:").setFont(bold).setFontSize(8).setFontColor(gray))
+                        .add(new Paragraph(voucherRef).setFont(regular).setFontSize(8).setFontColor(navy).setMarginBottom(6))
+                        .add(new Paragraph("Claim ID:").setFont(bold).setFontSize(8).setFontColor(gray))
+                        .add(new Paragraph("#" + claim.getId()).setFont(regular).setFontSize(8).setFontColor(navy).setMarginBottom(6))
+                        .add(new Paragraph("Policy No:").setFont(bold).setFontSize(8).setFontColor(gray))
+                        .add(new Paragraph(policyNum).setFont(regular).setFontSize(8).setFontColor(navy).setMarginBottom(6))
+                        .add(new Paragraph("Issued:").setFont(bold).setFontSize(8).setFontColor(gray))
+                        .add(new Paragraph(issueDate).setFont(regular).setFontSize(8).setFontColor(navy))
+                        .setBorder(Border.NO_BORDER).setPaddingLeft(12));
+                doc.add(sigBox);
+            }
+
+            // ── SECTION 4: COLLECTION INSTRUCTIONS ───────────────────────
+            doc.add(new Paragraph("SECTION 4: COLLECTION INSTRUCTIONS   (အပိုင်း ၄: ငွေထုတ်ရန် လမ်းညွှန်ချက်)")
+                    .setFont(bold).setFontSize(9.5f).setFontColor(green)
+                    .setBackgroundColor(lightSlate).setPadding(5).setMarginTop(10).setMarginBottom(5));
+            String instructions =
+                    "1. Present this original voucher (printed or digital) together with a valid government-issued photo ID (NRC or Passport) " +
+                    "at the designated insurance office during working hours (Mon–Fri, 9:00 AM – 5:00 PM).\n" +
+                    "   ဤပြေစာ (ပုံနှိပ်ထားသော သို့မဟုတ် ဒစ်ဂျစ်တယ်) နှင့် အစိုးရထုတ် မှတ်ပုံတင် (NRC သို့မဟုတ် နိုင်ငံကူးလက်မှတ်) ကို " +
+                    "ရုံးချိန်အတွင်း (တနင်္လာ–သောကြာ၊ နံနက် ၉:၀၀ – ညနေ ၅:၀၀) တင်ပြပါ။\n\n" +
+                    "2. This voucher is valid for 30 days from the issue date. Expired vouchers require admin reissuance.\n" +
+                    "   ဤပြေစာသည် ထုတ်ပေးသောနေ့မှ ရက် ၃၀ အတွင်း သာ သက်ဆိုင်ပါသည်။ သက်တမ်းကျော်ပါက Admin မှ ပြန်လည်ထုတ်ပေးရမည်။\n\n" +
+                    "3. The payout will be made in Myanmar Kyat (MMK) via the method agreed upon during the claims process.\n" +
+                    "   လျော်ကြေးငွေကို တောင်းဆိုမှုလုပ်ငန်းစဉ်တွင် သဘောတူထားသော နည်းလမ်းဖြင့် မြန်မာကျပ် (MMK) ဖြင့် ပေးသွားမည်ဖြစ်သည်။\n\n" +
+                    "4. Any alterations to this voucher will render it invalid. Contact the portal at admin@dicp.com.mm for queries.\n" +
+                    "   ဤပြေစာတွင် မည်သည့် ပြောင်းလဲမှုမဆို ပြုလုပ်ပါက အကျုံးမဝင်ပါ။ မေးမြန်းချက်များအတွက် admin@dicp.com.mm သို့ ဆက်သွယ်ပါ။";
+            doc.add(new Paragraph(instructions).setFont(regular).setFontSize(8.5f).setFontColor(gray).setMarginBottom(8));
+
+            // Validity box
+            doc.add(new Table(UnitValue.createPercentArray(new float[]{100})).useAllAvailableWidth()
+                    .addCell(new Cell()
+                            .add(new Paragraph("⚠  IMPORTANT: This voucher is VALID FOR 30 DAYS from " + issueDate +
+                                    ".  Present original ID when collecting payout.")
+                                    .setFont(bold).setFontSize(9).setFontColor(new DeviceRgb(146, 64, 14))
+                                    .setTextAlignment(TextAlignment.CENTER))
+                            .add(new Paragraph("အရေးကြီး: ဤပြေစာသည် " + issueDate + " မှ ရက် ၃၀ သာ သက်ဆိုင်သည်။ ငွေထုတ်ရာတွင် မူရင်း မှတ်ပုံတင် ယူဆောင်လာပါ။")
+                                    .setFont(oblique).setFontSize(8).setFontColor(new DeviceRgb(146, 64, 14))
+                                    .setTextAlignment(TextAlignment.CENTER))
+                            .setBackgroundColor(new DeviceRgb(254, 252, 232))
+                            .setBorder(new SolidBorder(new DeviceRgb(253, 211, 77), 1.5f)).setPadding(8).setMarginBottom(10)));
+
+            // ── FOOTER ─────────────────────────────────────────────────
+            doc.add(new Paragraph(
+                    "\nThis payout voucher was generated by the Digital Insurance Claims and Premiums Portal on " + issueDate +
+                    ".\nVoucher Ref: " + voucherRef + "  |  Claim ID: #" + claim.getId() +
+                    "  |  Policy No: " + policyNum + "  |  Amount: " + amountStr +
+                    "\nThis is an official computer-generated document. Digital signature verified by DICP Portal.")
+                    .setFont(oblique).setFontSize(7.5f).setFontColor(gray)
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setBorderTop(new SolidBorder(lightSlate, 0.5f)).setPaddingTop(8).setMarginTop(8));
+
+            doc.close();
+            return pdfResponse(baos.toByteArray(), "payout_voucher_claim_" + claim.getId() + ".pdf");
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 }

@@ -7,6 +7,24 @@ import FormDetailModal from '../../components/FormDetailModal'
 import DigitalSignatureCanvas from '../../components/DigitalSignatureCanvas'
 import { apiError } from '../../utils/apiError'
 
+async function downloadPayoutVoucher(claimId, setDownloading) {
+  setDownloading(claimId)
+  try {
+    const res = await api.get(`/admin/claims/${claimId}/payout-voucher`, { responseType: 'blob' })
+    const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `payout_voucher_claim_${claimId}.pdf`
+    document.body.appendChild(a)
+    a.click()
+    setTimeout(() => { URL.revokeObjectURL(url); document.body.removeChild(a) }, 200)
+  } catch {
+    toast.error('Failed to download payout voucher')
+  } finally {
+    setDownloading(null)
+  }
+}
+
 export default function AdminClaimsPage() {
   const { t } = useTranslation()
   const [searchParams] = useSearchParams()
@@ -21,6 +39,7 @@ export default function AdminClaimsPage() {
   const [submitting, setSubmitting] = useState(false)
   const [viewItem, setViewItem] = useState(null)
   const [signatureData, setSignatureData] = useState(null)
+  const [downloading, setDownloading] = useState(null)
 
   const fetchClaims = () => {
     api.get(`/admin/claims${filter !== 'ALL' ? `?status=${filter}` : ''}`)
@@ -111,9 +130,20 @@ export default function AdminClaimsPage() {
                     </button>
                     {claim.agentNote && <p style={{ color: '#1d4ed8', fontSize: '0.85rem', margin: '0.5rem 0 0' }}>{t('admin.claims.agentNote')}: {claim.agentNote}</p>}
                     {claim.status === 'APPROVED' && (
-                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginTop: '0.5rem', padding: '0.35rem 0.75rem', borderRadius: 8, background: '#f0fdf4', border: '1px solid #86efac', fontSize: '0.82rem', color: '#15803d', fontWeight: 600 }}>
-                        <i className="bi bi-arrow-up-right-circle-fill"></i>
-                        {t('admin.claims.payout')}: {Number(claim.amount).toLocaleString()} MMK — {t('admin.claims.recorded')}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: '0.6rem', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '0.35rem 0.75rem', borderRadius: 8, background: '#f0fdf4', border: '1px solid #86efac', fontSize: '0.82rem', color: '#15803d', fontWeight: 600 }}>
+                          <i className="bi bi-arrow-up-right-circle-fill"></i>
+                          {t('admin.claims.payout')}: {Number(claim.amount).toLocaleString()} MMK — {t('admin.claims.recorded')}
+                        </div>
+                        <button
+                          onClick={() => downloadPayoutVoucher(claim.id, setDownloading)}
+                          disabled={downloading === claim.id}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '0.35rem 0.85rem', borderRadius: 8, border: '1.5px solid #16a34a', background: '#16a34a', color: '#fff', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer' }}
+                        >
+                          {downloading === claim.id
+                            ? <span className="spinner-border spinner-border-sm"></span>
+                            : <><i className="bi bi-file-earmark-arrow-down-fill"></i> ငွေထုတ်ပြေစာ PDF</>}
+                        </button>
                       </div>
                     )}
                   </div>
