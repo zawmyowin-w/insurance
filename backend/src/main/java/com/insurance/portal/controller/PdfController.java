@@ -5,12 +5,16 @@ import com.insurance.portal.model.Claim;
 import com.insurance.portal.model.FormField;
 import com.insurance.portal.model.FormTemplate;
 import com.insurance.portal.model.PolicyApplication;
+import com.insurance.portal.model.PolicyTransfer;
 import com.insurance.portal.model.User;
 import com.insurance.portal.model.enums.FieldType;
 import com.insurance.portal.model.enums.FormType;
+import com.insurance.portal.model.enums.Role;
+import com.insurance.portal.model.enums.TransferStatus;
 import com.insurance.portal.repository.ClaimRepository;
 import com.insurance.portal.repository.FormTemplateRepository;
 import com.insurance.portal.repository.PolicyApplicationRepository;
+import com.insurance.portal.repository.PolicyTransferRepository;
 import com.insurance.portal.repository.UserRepository;
 import com.insurance.portal.model.Payment;
 import com.insurance.portal.model.enums.PaymentStatus;
@@ -58,6 +62,7 @@ public class PdfController {
     private final FormTemplateRepository templateRepo;
     private final UserRepository userRepo;
     private final PaymentRepository paymentRepo;
+    private final PolicyTransferRepository transferRepo;
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     // ── Application PDF (admin) ────────────────────────────────────────
@@ -128,6 +133,29 @@ public class PdfController {
         if (!claim.getCustomer().getId().equals(customer.getId()))
             return ResponseEntity.status(403).build();
         return buildClaimPdf(claim);
+    }
+
+    // ── Transfer Contract PDF (admin) ─────────────────────────────────
+    @GetMapping("/admin/policy-transfers/{id}/pdf")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<byte[]> adminTransferPdf(@PathVariable Long id) {
+        PolicyTransfer transfer = transferRepo.findById(id).orElseThrow();
+        return buildTransferContractPdf(transfer);
+    }
+
+    // ── Transfer Contract PDF (customer) ──────────────────────────────
+    @GetMapping("/customer/policy-transfers/{id}/pdf")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    @Transactional(readOnly = true)
+    public ResponseEntity<byte[]> customerTransferPdf(@PathVariable Long id,
+            @AuthenticationPrincipal UserDetails principal) {
+        User user = userRepo.findByEmail(principal.getUsername()).orElseThrow();
+        PolicyTransfer transfer = transferRepo.findById(id).orElseThrow();
+        boolean isSender   = transfer.getFromCustomer().getId().equals(user.getId());
+        boolean isReceiver = transfer.getToCustomer().getId().equals(user.getId());
+        if (!isSender && !isReceiver) return ResponseEntity.status(403).build();
+        return buildTransferContractPdf(transfer);
     }
 
     // ── Payout Voucher PDF (admin) ─────────────────────────────────────
@@ -982,6 +1010,261 @@ public class PdfController {
             doc.add(new Paragraph("Agent: " + agentNote).setFont(regularFont).setFontSize(10));
         if (adminNote != null && !adminNote.isBlank())
             doc.add(new Paragraph("Admin: " + adminNote).setFont(regularFont).setFontSize(10));
+    }
+
+    // ── Transfer Contract PDF builder ──────────────────────────────────
+    private ResponseEntity<byte[]> buildTransferContractPdf(PolicyTransfer transfer) {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            PdfWriter writer = new PdfWriter(baos);
+            PdfDocument pdf = new PdfDocument(writer);
+            Document doc = new Document(pdf);
+            doc.setMargins(36, 44, 36, 44);
+
+            PdfFont bold    = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);
+            PdfFont regular = PdfFontFactory.createFont(StandardFonts.HELVETICA);
+            PdfFont oblique = PdfFontFactory.createFont(StandardFonts.HELVETICA_OBLIQUE);
+
+            DeviceRgb navy      = new DeviceRgb(15, 23, 42);
+            DeviceRgb blue      = new DeviceRgb(29, 78, 175);
+            DeviceRgb blueLight = new DeviceRgb(239, 246, 255);
+            DeviceRgb green     = new DeviceRgb(22, 163, 74);
+            DeviceRgb gray      = new DeviceRgb(71, 85, 105);
+            DeviceRgb light     = new DeviceRgb(241, 245, 249);
+            DeviceRgb amber     = new DeviceRgb(217, 119, 6);
+            DeviceRgb red       = new DeviceRgb(220, 38, 38);
+
+            PolicyApplication app = transfer.getApplication();
+            User from = transfer.getFromCustomer();
+            User to   = transfer.getToCustomer();
+
+            java.time.format.DateTimeFormatter dateFmt = java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy");
+            java.time.format.DateTimeFormatter dtFmt   = java.time.format.DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm");
+            String issueDate = java.time.LocalDate.now().format(dateFmt);
+            String policyNum = app != null && app.getPolicyNumber() != null ? app.getPolicyNumber() : (app != null ? "APP-" + app.getId() : "N/A");
+            String contractRef = String.format("TRANSFER-%05d-%s", transfer.getId(),
+                    java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd")));
+
+            // Determine status label
+            String statusStr;
+            DeviceRgb statusColor;
+            switch (transfer.getStatus()) {
+                case APPROVED -> { statusStr = "APPROVED";  statusColor = green; }
+                case REJECTED -> { statusStr = "REJECTED";  statusColor = red; }
+                case PENDING_ADMIN_APPROVAL -> { statusStr = "PENDING ADMIN APPROVAL"; statusColor = blue; }
+                default -> { statusStr = "PENDING TRANSFEREE SIGNATURE"; statusColor = amber; }
+            }
+
+            // ── HEADER ─────────────────────────────────────────────────────
+            Table headerTable = new Table(UnitValue.createPercentArray(new float[]{65, 35})).useAllAvailableWidth();
+            headerTable.addCell(new Cell()
+                    .add(new Paragraph("DIGITAL INSURANCE CLAIMS AND PREMIUMS")
+                            .setFont(bold).setFontSize(11).setFontColor(blue).setMarginBottom(2))
+                    .add(new Paragraph("PORTAL — MYANMAR")
+                            .setFont(bold).setFontSize(9).setFontColor(navy).setMarginBottom(3))
+                    .add(new Paragraph("ဒစ်ဂျစ်တယ် အာမခံ တောင်းဆိုမှုနှင့် ကြေးငွေ ပေါ်တယ် — မြန်မာ")
+                            .setFont(oblique).setFontSize(8).setFontColor(gray))
+                    .setBorder(Border.NO_BORDER).setPadding(4));
+            headerTable.addCell(new Cell()
+                    .add(new Paragraph("POLICY OWNERSHIP TRANSFER CONTRACT")
+                            .setFont(bold).setFontSize(10).setFontColor(blue)
+                            .setTextAlignment(TextAlignment.RIGHT).setMarginBottom(2))
+                    .add(new Paragraph("အာမခံပိုင်ရှင်လွှဲပြောင်းခြင်း စာချုပ်")
+                            .setFont(oblique).setFontSize(8).setFontColor(gray)
+                            .setTextAlignment(TextAlignment.RIGHT).setMarginBottom(4))
+                    .add(new Paragraph("Ref: " + contractRef)
+                            .setFont(bold).setFontSize(8).setFontColor(navy)
+                            .setTextAlignment(TextAlignment.RIGHT).setMarginBottom(2))
+                    .add(new Paragraph("Issued: " + issueDate)
+                            .setFont(regular).setFontSize(8).setFontColor(gray)
+                            .setTextAlignment(TextAlignment.RIGHT))
+                    .setBorder(Border.NO_BORDER).setPadding(4));
+            doc.add(headerTable);
+            doc.add(new LineSeparator(new SolidLine(1f)).setMarginBottom(8));
+
+            // Status badge
+            doc.add(new Table(UnitValue.createPercentArray(new float[]{100})).useAllAvailableWidth()
+                    .addCell(new Cell()
+                            .add(new Paragraph("CONTRACT STATUS: " + statusStr)
+                                    .setFont(bold).setFontSize(10).setFontColor(statusColor)
+                                    .setTextAlignment(TextAlignment.CENTER))
+                            .setBackgroundColor(light)
+                            .setBorder(new SolidBorder(statusColor, 1.5f))
+                            .setPadding(6).setMarginBottom(12)));
+
+            // ── SECTION 1: Policy Details ───────────────────────────────────
+            doc.add(new Paragraph("SECTION 1: POLICY INFORMATION   (အပိုင်း ၁: ပါလစီ အချက်အလက်)")
+                    .setFont(bold).setFontSize(9.5f).setFontColor(blue)
+                    .setBackgroundColor(blueLight).setPadding(5).setMarginBottom(5));
+
+            Table policyTable = new Table(UnitValue.createPercentArray(new float[]{35, 65})).useAllAvailableWidth();
+            policyTable.addCell(labelCell("Policy Number", bold, gray, light));
+            policyTable.addCell(valueCell(policyNum, regular, navy));
+            policyTable.addCell(labelCell("Insurance Package", bold, gray, light));
+            policyTable.addCell(valueCell(app != null && app.getInsurancePackage() != null
+                    ? app.getInsurancePackage().getName() + " (" + app.getInsurancePackage().getType() + ")" : "N/A", regular, navy));
+            policyTable.addCell(labelCell("Coverage Amount", bold, gray, light));
+            policyTable.addCell(valueCell(app != null && app.getCoverageAmount() != null
+                    ? "MMK " + String.format("%,.2f", app.getCoverageAmount()) : "N/A", regular, navy));
+            policyTable.addCell(labelCell("Duration", bold, gray, light));
+            policyTable.addCell(valueCell(app != null && app.getDuration() != null
+                    ? app.getDuration() + " Year(s)" : "N/A", regular, navy));
+            doc.add(policyTable.setMarginBottom(12));
+
+            // ── SECTION 2: Parties ─────────────────────────────────────────
+            doc.add(new Paragraph("SECTION 2: TRANSFER PARTIES   (အပိုင်း ၂: လွှဲပြောင်းသူနှင့် လက်ခံသူ)")
+                    .setFont(bold).setFontSize(9.5f).setFontColor(blue)
+                    .setBackgroundColor(blueLight).setPadding(5).setMarginBottom(5));
+
+            Table partiesTable = new Table(UnitValue.createPercentArray(new float[]{50, 50})).useAllAvailableWidth();
+
+            // FROM column
+            Table fromTable = new Table(UnitValue.createPercentArray(new float[]{40, 60})).useAllAvailableWidth();
+            fromTable.addCell(new Cell(1,2).add(new Paragraph("TRANSFEROR (Current Owner) — လွှဲပြောင်းသူ")
+                    .setFont(bold).setFontSize(9).setFontColor(blue)).setBorder(Border.NO_BORDER).setPaddingBottom(3));
+            fromTable.addCell(labelCell("Name", bold, gray, light));
+            fromTable.addCell(valueCell(from != null ? from.getName() : "N/A", regular, navy));
+            fromTable.addCell(labelCell("Email", bold, gray, light));
+            fromTable.addCell(valueCell(from != null ? from.getEmail() : "N/A", regular, navy));
+            fromTable.addCell(labelCell("Phone", bold, gray, light));
+            fromTable.addCell(valueCell(from != null && from.getPhone() != null ? from.getPhone() : "—", regular, navy));
+
+            // TO column
+            Table toTable = new Table(UnitValue.createPercentArray(new float[]{40, 60})).useAllAvailableWidth();
+            toTable.addCell(new Cell(1,2).add(new Paragraph("TRANSFEREE (New Owner) — လက်ခံသူ")
+                    .setFont(bold).setFontSize(9).setFontColor(green)).setBorder(Border.NO_BORDER).setPaddingBottom(3));
+            toTable.addCell(labelCell("Name", bold, gray, light));
+            toTable.addCell(valueCell(to != null ? to.getName() : "N/A", regular, navy));
+            toTable.addCell(labelCell("Email", bold, gray, light));
+            toTable.addCell(valueCell(to != null ? to.getEmail() : "N/A", regular, navy));
+            toTable.addCell(labelCell("Phone", bold, gray, light));
+            toTable.addCell(valueCell(to != null && to.getPhone() != null ? to.getPhone() : "—", regular, navy));
+
+            partiesTable.addCell(new Cell().add(fromTable).setBorder(new SolidBorder(light, 0.5f)).setPadding(6));
+            partiesTable.addCell(new Cell().add(toTable).setBorder(new SolidBorder(light, 0.5f)).setPadding(6));
+            doc.add(partiesTable.setMarginBottom(12));
+
+            // ── SECTION 3: Transfer Details ────────────────────────────────
+            doc.add(new Paragraph("SECTION 3: TRANSFER DETAILS   (အပိုင်း ၃: လွှဲပြောင်းမှု အသေးစိတ်)")
+                    .setFont(bold).setFontSize(9.5f).setFontColor(blue)
+                    .setBackgroundColor(blueLight).setPadding(5).setMarginBottom(5));
+
+            Table detailsTable = new Table(UnitValue.createPercentArray(new float[]{35, 65})).useAllAvailableWidth();
+            detailsTable.addCell(labelCell("Relationship", bold, gray, light));
+            detailsTable.addCell(valueCell(transfer.getRelationship(), regular, navy));
+            detailsTable.addCell(labelCell("Reason for Transfer", bold, gray, light));
+            detailsTable.addCell(valueCell(transfer.getReason(), regular, navy));
+            detailsTable.addCell(labelCell("Transfer Requested", bold, gray, light));
+            detailsTable.addCell(valueCell(transfer.getCreatedAt() != null
+                    ? transfer.getCreatedAt().format(dtFmt) : "—", regular, navy));
+            if (transfer.getApprovedAt() != null) {
+                detailsTable.addCell(labelCell("Admin Decision", bold, gray, light));
+                detailsTable.addCell(valueCell(transfer.getApprovedAt().format(dtFmt)
+                        + (transfer.getApprovedBy() != null ? " by " + transfer.getApprovedBy().getName() : ""), regular, navy));
+            }
+            if (transfer.getAdminNote() != null && !transfer.getAdminNote().isBlank()) {
+                detailsTable.addCell(labelCell("Admin Note", bold, gray, light));
+                detailsTable.addCell(valueCell(transfer.getAdminNote(), regular, navy));
+            }
+            doc.add(detailsTable.setMarginBottom(12));
+
+            // ── SECTION 4: Legal Terms ─────────────────────────────────────
+            doc.add(new Paragraph("SECTION 4: TERMS & CONDITIONS   (အပိုင်း ၄: စည်းကမ်းချက်များ)")
+                    .setFont(bold).setFontSize(9.5f).setFontColor(blue)
+                    .setBackgroundColor(blueLight).setPadding(5).setMarginBottom(5));
+
+            String terms =
+                    "1. Upon admin approval of this transfer, all ownership rights and obligations under policy " + policyNum +
+                    " are permanently transferred to the Transferee named above.\n" +
+                    "   ဤလွှဲပြောင်းမှုကို Admin အတည်ပြုသည်နှင့်တပြိုင်နက် ပါလစီ " + policyNum + " ၏ ပိုင်ဆိုင်ခွင့်နှင့် တာဝန်များ အားလုံး လက်ခံသူထံ အပြီးတိုင် ရောက်ရှိသွားမည်ဖြစ်သည်။\n\n" +
+                    "2. The Transferor permanently relinquishes all rights to submit claims, receive payouts, or make decisions\n" +
+                    "   regarding the above policy upon approval.\n" +
+                    "   လွှဲပြောင်းသူသည် ထို ပါလစီနှင့်ပတ်သက်၍ တောင်းဆိုခွင့်၊ ငွေထုတ်ခွင့် နှင့် ဆုံးဖြတ်ပိုင်ခွင့်များကို အပြီးတိုင် စွန့်လွှတ်ပါသည်။\n\n" +
+                    "3. The Transferee assumes full responsibility for all remaining premium payment installments.\n" +
+                    "   လက်ခံသူသည် ကျန်ရှိသော ပရီမီယမ် ငွေပေးချေမှု အကြိမ်အားလုံးကို ဆက်ခံ တာဝန်ယူမည်ဖြစ်သည်။\n\n" +
+                    "4. This contract is legally binding once signed by both parties and approved by the authorized administrator.\n" +
+                    "   ဤစာချုပ်သည် နှစ်ဦးနှစ်ဖက် လက်မှတ်ထိုး၍ တာဝန်ရှိသော Admin က အတည်ပြုပြီးသည်နှင့် တရားဝင် အကျုံးဝင်မည်ဖြစ်သည်။";
+            doc.add(new Paragraph(terms).setFont(regular).setFontSize(8.5f).setFontColor(gray).setMarginBottom(12));
+
+            // ── SECTION 5: Signatures ──────────────────────────────────────
+            doc.add(new Paragraph("SECTION 5: DIGITAL SIGNATURES   (အပိုင်း ၅: ဒစ်ဂျစ်တယ် လက်မှတ်များ)")
+                    .setFont(bold).setFontSize(9.5f).setFontColor(blue)
+                    .setBackgroundColor(blueLight).setPadding(5).setMarginBottom(8));
+
+            Table sigTable = new Table(UnitValue.createPercentArray(new float[]{50, 50})).useAllAvailableWidth();
+
+            // FROM signature
+            Cell fromSigCell = new Cell().setBorder(new SolidBorder(light, 0.5f)).setPadding(8);
+            fromSigCell.add(new Paragraph("TRANSFEROR SIGNATURE — လွှဲပြောင်းသူ လက်မှတ်")
+                    .setFont(bold).setFontSize(8.5f).setFontColor(blue).setMarginBottom(4));
+            fromSigCell.add(new Paragraph(from != null ? from.getName() : "N/A").setFont(bold).setFontSize(9).setFontColor(navy));
+            fromSigCell.add(new Paragraph(from != null ? from.getEmail() : "").setFont(regular).setFontSize(8).setFontColor(gray).setMarginBottom(4));
+            if (transfer.getFromSignature() != null && !transfer.getFromSignature().isBlank()) {
+                try {
+                    int comma = transfer.getFromSignature().indexOf(',');
+                    if (comma > 0) {
+                        byte[] imgBytes = java.util.Base64.getDecoder().decode(transfer.getFromSignature().substring(comma + 1));
+                        Image sigImg = new Image(ImageDataFactory.create(imgBytes)).setWidth(160).setHeight(60);
+                        fromSigCell.add(sigImg);
+                    }
+                } catch (Exception ignored) {}
+                fromSigCell.add(new Paragraph("Signed: " + (transfer.getFromSignedAt() != null
+                        ? transfer.getFromSignedAt().format(dtFmt) : "—"))
+                        .setFont(oblique).setFontSize(8).setFontColor(green).setMarginTop(2));
+            } else {
+                fromSigCell.add(new Paragraph("Not yet signed").setFont(oblique).setFontSize(9).setFontColor(amber));
+            }
+            sigTable.addCell(fromSigCell);
+
+            // TO signature
+            Cell toSigCell = new Cell().setBorder(new SolidBorder(light, 0.5f)).setPadding(8);
+            toSigCell.add(new Paragraph("TRANSFEREE SIGNATURE — လက်ခံသူ လက်မှတ်")
+                    .setFont(bold).setFontSize(8.5f).setFontColor(green).setMarginBottom(4));
+            toSigCell.add(new Paragraph(to != null ? to.getName() : "N/A").setFont(bold).setFontSize(9).setFontColor(navy));
+            toSigCell.add(new Paragraph(to != null ? to.getEmail() : "").setFont(regular).setFontSize(8).setFontColor(gray).setMarginBottom(4));
+            if (transfer.getToSignature() != null && !transfer.getToSignature().isBlank()) {
+                try {
+                    int comma = transfer.getToSignature().indexOf(',');
+                    if (comma > 0) {
+                        byte[] imgBytes = java.util.Base64.getDecoder().decode(transfer.getToSignature().substring(comma + 1));
+                        Image sigImg = new Image(ImageDataFactory.create(imgBytes)).setWidth(160).setHeight(60);
+                        toSigCell.add(sigImg);
+                    }
+                } catch (Exception ignored) {}
+                toSigCell.add(new Paragraph("Signed: " + (transfer.getToSignedAt() != null
+                        ? transfer.getToSignedAt().format(dtFmt) : "—"))
+                        .setFont(oblique).setFontSize(8).setFontColor(green).setMarginTop(2));
+            } else {
+                toSigCell.add(new Paragraph("Not yet signed").setFont(oblique).setFontSize(9).setFontColor(amber));
+            }
+            sigTable.addCell(toSigCell);
+            doc.add(sigTable.setMarginBottom(12));
+
+            // ── FOOTER ─────────────────────────────────────────────────────
+            doc.add(new Paragraph(
+                    "\nThis policy ownership transfer contract was generated by the Digital Insurance Claims and Premiums Portal on " + issueDate +
+                    ".\nContract Ref: " + contractRef + "  |  Transfer ID: #" + transfer.getId() +
+                    "  |  Policy: " + policyNum + "  |  Status: " + statusStr +
+                    "\nThis is an official computer-generated document. Verified by DICP Portal.")
+                    .setFont(oblique).setFontSize(7.5f).setFontColor(gray)
+                    .setTextAlignment(TextAlignment.CENTER)
+                    .setBorderTop(new SolidBorder(light, 0.5f)).setPaddingTop(8).setMarginTop(8));
+
+            doc.close();
+            return pdfResponse(baos.toByteArray(), "transfer_contract_" + transfer.getId() + ".pdf");
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    private Cell labelCell(String text, PdfFont font, DeviceRgb color, DeviceRgb bg) {
+        return new Cell().add(new Paragraph(text).setFont(font).setFontSize(8.5f).setFontColor(color))
+                .setBackgroundColor(bg).setPadding(4).setBorder(new SolidBorder(bg, 0.3f));
+    }
+
+    private Cell valueCell(String text, PdfFont font, DeviceRgb color) {
+        return new Cell().add(new Paragraph(text != null ? text : "—").setFont(font).setFontSize(9f).setFontColor(color))
+                .setPadding(4).setBorder(new SolidBorder(new DeviceRgb(241, 245, 249), 0.3f));
     }
 
     private ResponseEntity<byte[]> pdfResponse(byte[] data, String filename) {

@@ -30,6 +30,7 @@ import ApplyPolicyPage from './pages/customer/ApplyPolicyPage'
 import SubmitClaimPage from './pages/customer/SubmitClaimPage'
 import CustomerProfilePage from './pages/customer/CustomerProfilePage'
 import SendFeedbackPage from './pages/customer/SendFeedbackPage'
+import PolicyTransferPage from './pages/customer/PolicyTransferPage'
 
 // Agent pages
 import AgentLoginPage from './pages/agent/AgentLoginPage'
@@ -58,6 +59,7 @@ import AdminFeedbackPage from './pages/admin/AdminFeedbackPage'
 import AdminPaymentMethodsPage from './pages/admin/AdminPaymentMethodsPage'
 import AdminPremiumSchedulePage from './pages/admin/AdminPremiumSchedulePage'
 import AdminAutoCheckPage from './pages/admin/AdminAutoCheckPage'
+import AdminPolicyTransfersPage from './pages/admin/AdminPolicyTransfersPage'
 
 export default function App() {
   return (
@@ -91,6 +93,7 @@ export default function App() {
               <Route path="submit-claim" element={<SubmitClaimPage />} />
               <Route path="payments" element={<MyPaymentsPage />} />
               <Route path="notifications" element={<CustomerNotificationsPage />} />
+              <Route path="policy-transfers" element={<PolicyTransferPage />} />
               <Route path="feedback" element={<SendFeedbackPage />} />
               <Route path="profile" element={<CustomerProfilePage />} />
             </Route>
@@ -122,6 +125,7 @@ export default function App() {
               <Route path="notifications" element={<AdminNotificationsPage />} />
               <Route path="feedback" element={<AdminFeedbackPage />} />
               <Route path="payment-methods" element={<AdminPaymentMethodsPage />} />
+              <Route path="policy-transfers" element={<AdminPolicyTransfersPage />} />
               <Route path="autocheck" element={<AdminAutoCheckPage />} />
               <Route path="reports" element={<AdminReportsPage />} />
               <Route path="profile" element={<AdminProfilePage />} />
