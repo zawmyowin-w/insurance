@@ -7,6 +7,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -42,6 +43,8 @@ public class ApplicationResponse {
     private int totalInstallments;
     private int documentCount;
     private LocalDateTime createdAt;
+    private LocalDate claimEligibleFrom;
+    private Integer claimWaitingPeriodMonths;
 
     public static ApplicationResponse from(PolicyApplication app) {
         ApplicationResponse dto = new ApplicationResponse();
@@ -95,6 +98,10 @@ public class ApplicationResponse {
         dto.setPremiumAmount(app.getPremiumAmount());
         dto.setDocumentCount(FileStorageUtil.fromJsonArray(app.getDocumentsPath()).size());
         dto.setCreatedAt(app.getCreatedAt());
+        dto.setClaimEligibleFrom(app.getClaimEligibleFrom());
+        if (app.getInsurancePackage() != null) {
+            dto.setClaimWaitingPeriodMonths(app.getInsurancePackage().getClaimWaitingPeriodMonths());
+        }
         return dto;
     }
 }

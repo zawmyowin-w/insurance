@@ -2,10 +2,12 @@ package com.insurance.portal.controller;
 
 import com.insurance.portal.dto.PaymentResponse;
 import com.insurance.portal.model.Payment;
+import com.insurance.portal.model.PolicyApplication;
 import com.insurance.portal.model.User;
 import com.insurance.portal.model.enums.NotificationType;
 import com.insurance.portal.model.enums.PaymentStatus;
 import com.insurance.portal.repository.PaymentRepository;
+import com.insurance.portal.repository.PolicyApplicationRepository;
 import com.insurance.portal.repository.UserRepository;
 import com.insurance.portal.service.NotificationService;
 import com.insurance.portal.util.FileStorageUtil;
@@ -16,6 +18,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
 
 import java.util.Comparator;
 import java.util.List;
@@ -30,6 +34,7 @@ public class AdminPaymentController {
     private final PaymentRepository paymentRepo;
     private final UserRepository userRepo;
     private final NotificationService notifService;
+    private final PolicyApplicationRepository appRepo;
 
     @GetMapping
     @Transactional(readOnly = true)
@@ -62,10 +67,28 @@ public class AdminPaymentController {
         payment.setVerifiedBy(admin != null ? admin.getName() : "Admin");
         if (req != null && req.get("note") != null) payment.setNotes(req.get("note"));
         paymentRepo.save(payment);
-        notifService.send(payment.getCustomer(),
-                "Payment Verified",
-                "Your payment of " + payment.getAmount() + " MMK has been verified. Thank you!",
-                NotificationType.PAYMENT);
+
+        // Set claimEligibleFrom on the application when this is the first verified payment
+        // and the package has a waiting period configured.
+        PolicyApplication app = payment.getApplication();
+        if (app != null && app.getClaimEligibleFrom() == null) {
+            boolean wasFirstVerified = !paymentRepo.existsByApplication_IdAndStatusAndIdNot(
+                    app.getId(), PaymentStatus.VERIFIED, payment.getId());
+            if (wasFirstVerified) {
+                Integer waitMonths = (app.getInsurancePackage() != null)
+                        ? app.getInsurancePackage().getClaimWaitingPeriodMonths() : null;
+                if (waitMonths != null && waitMonths > 0) {
+                    app.setClaimEligibleFrom(LocalDate.now().plusMonths(waitMonths));
+                    appRepo.save(app);
+                }
+            }
+        }
+
+        String notifMsg = "Your payment of " + payment.getAmount() + " MMK has been verified. Thank you!";
+        if (app != null && app.getClaimEligibleFrom() != null) {
+            notifMsg += " You will be eligible to submit a claim from " + app.getClaimEligibleFrom() + ".";
+        }
+        notifService.send(payment.getCustomer(), "Payment Verified", notifMsg, NotificationType.PAYMENT);
         return ResponseEntity.ok(PaymentResponse.from(payment));
     }
 

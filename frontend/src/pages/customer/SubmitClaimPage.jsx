@@ -45,8 +45,21 @@ export default function SubmitClaimPage() {
   }, [])
 
   // Policies that already have a claim
-  // Policies eligible to submit a claim: approved + verified payment + no existing claim
-  const availablePolicies = activePolicies.filter(p => !claimedIds.has(p.id) && verifiedPaymentIds.has(p.id))
+  // Helper: check if claim waiting period is active for a policy
+  const today = new Date().toISOString().split('T')[0]
+  const isInWaitingPeriod = p => {
+    if (!p.claimEligibleFrom) return false
+    return p.claimEligibleFrom > today
+  }
+
+  // Policies eligible to submit a claim: approved + verified payment + no existing claim + waiting period passed
+  const availablePolicies = activePolicies.filter(
+    p => !claimedIds.has(p.id) && verifiedPaymentIds.has(p.id) && !isInWaitingPeriod(p)
+  )
+  // Policies in waiting period (payment verified but waiting period not yet passed)
+  const waitingPeriodPolicies = activePolicies.filter(
+    p => !claimedIds.has(p.id) && verifiedPaymentIds.has(p.id) && isInWaitingPeriod(p)
+  )
   // Policies approved but payment not yet verified
   const pendingPaymentPolicies = activePolicies.filter(p => !claimedIds.has(p.id) && !verifiedPaymentIds.has(p.id))
 
@@ -191,7 +204,20 @@ export default function SubmitClaimPage() {
                 {activePolicies.length > 0 && availablePolicies.length === 0 && pendingPaymentPolicies.length === 0 && (
                   <small style={{ color: 'var(--danger)', fontSize: '0.8rem', marginTop: 4, display: 'block' }}>{t('submitClaim.allClaimed')}</small>
                 )}
-                {pendingPaymentPolicies.length > 0 && availablePolicies.length === 0 && (
+                {/* Waiting period notice */}
+                {waitingPeriodPolicies.length > 0 && (
+                  <div style={{ marginTop: 8, padding: '0.75rem 0.9rem', borderRadius: 8, background: '#eff6ff', border: '1px solid #93c5fd', fontSize: '0.83rem', color: '#1e40af' }}>
+                    <i className="bi bi-clock-history me-2"></i>
+                    <strong>{t('submitClaim.waitingPeriodTitle')}</strong>
+                    {waitingPeriodPolicies.map(p => (
+                      <div key={p.id} style={{ marginTop: '0.35rem', paddingLeft: '1.2rem', fontSize: '0.8rem' }}>
+                        <i className="bi bi-dot me-1"></i>
+                        <strong>{p.packageName}</strong> — {t('submitClaim.waitingPeriodEligibleFrom', { date: p.claimEligibleFrom })}
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {pendingPaymentPolicies.length > 0 && availablePolicies.length === 0 && waitingPeriodPolicies.length === 0 && (
                   <div style={{ marginTop: 8, padding: '0.7rem 0.9rem', borderRadius: 8, background: '#fef3c7', border: '1px solid #fcd34d', fontSize: '0.83rem', color: '#92400e' }}>
                     <i className="bi bi-credit-card me-2"></i>
                     <strong>{t('submitClaim.paymentRequiredTitle')}</strong><br />

@@ -69,6 +69,13 @@ public class InsurancePackage {
     @Column(name = "max_claim_amount", precision = 20, scale = 2)
     private BigDecimal maxClaimAmount;
 
+    /**
+     * Waiting period after first payment verification before a customer can submit a claim.
+     * Null or 0 means claims can be submitted immediately after payment verification.
+     */
+    @Column(name = "claim_waiting_period_months")
+    private Integer claimWaitingPeriodMonths;
+
     // Who can be a beneficiary
     @Column(name = "beneficiary_info", columnDefinition = "TEXT")
     private String beneficiaryInfo;

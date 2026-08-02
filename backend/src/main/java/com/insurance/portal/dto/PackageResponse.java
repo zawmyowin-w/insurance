@@ -36,6 +36,7 @@ public class PackageResponse {
     private String beneficiaryInfo;
     private List<String> requiredDocuments;
     private String termsAndConditions;
+    private Integer claimWaitingPeriodMonths;
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -58,6 +59,7 @@ public class PackageResponse {
         dto.setMaxClaimAmount(pkg.getMaxClaimAmount());
         dto.setBeneficiaryInfo(pkg.getBeneficiaryInfo());
         dto.setTermsAndConditions(pkg.getTermsAndConditions());
+        dto.setClaimWaitingPeriodMonths(pkg.getClaimWaitingPeriodMonths());
 
         // Parse benefits (newline-separated)
         try {

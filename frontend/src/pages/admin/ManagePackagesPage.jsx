@@ -19,6 +19,7 @@ const EMPTY = {
   coverageMin: '',
   coverageMax: '',
   maxClaimAmount: '',
+  claimWaitingPeriodMonths: '',
   durationTiers: [{ years: 1, premiumRate: '' }],
   ageBands: [],
   paymentFrequency: 'MONTHLY',
@@ -151,6 +152,7 @@ export default function ManagePackagesPage() {
         coverageMin: Number(form.coverageMin),
         coverageMax: Number(form.coverageMax),
         maxClaimAmount: form.maxClaimAmount ? Number(form.maxClaimAmount) : null,
+        claimWaitingPeriodMonths: form.claimWaitingPeriodMonths ? Number(form.claimWaitingPeriodMonths) : null,
         durationTiers: validTiers,
         ageBands: validAgeBands,
         paymentFrequency: form.paymentFrequency,
@@ -190,6 +192,7 @@ export default function ManagePackagesPage() {
       coverageMin: pkg.coverageMin || '',
       coverageMax: pkg.coverageMax || '',
       maxClaimAmount: pkg.maxClaimAmount || '',
+      claimWaitingPeriodMonths: pkg.claimWaitingPeriodMonths != null ? String(pkg.claimWaitingPeriodMonths) : '',
       durationTiers: tiers,
       paymentFrequency: pkg.paymentFrequency || 'MONTHLY',
       paymentIntervalMonths: pkg.paymentIntervalMonths || (freqOpt?.months ?? 1),
@@ -366,6 +369,30 @@ export default function ManagePackagesPage() {
                       <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0.25rem 0 0' }}>
                         {t('admin.packages.maxClaimHint')}
                       </p>
+                    </div>
+                    <div className="col-12">
+                      <label className="form-label-custom">{t('admin.packages.claimWaitingPeriodLabel')}</label>
+                      <div className="d-flex align-items-center gap-2">
+                        <input name="claimWaitingPeriodMonths" type="number" min="0" max="120"
+                          className="form-control-custom" style={{ maxWidth: 160 }}
+                          placeholder="0"
+                          value={form.claimWaitingPeriodMonths} onChange={handleChange} />
+                        <span style={{ fontSize: '0.88rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                          {t('admin.packages.claimWaitingPeriodUnit')}
+                        </span>
+                      </div>
+                      <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0.25rem 0 0' }}>
+                        {t('admin.packages.claimWaitingPeriodHint')}
+                      </p>
+                      {form.claimWaitingPeriodMonths > 0 && (
+                        <div style={{ marginTop: '0.4rem', display: 'inline-flex', alignItems: 'center', gap: 6, background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: 8, padding: '0.3rem 0.7rem', fontSize: '0.78rem', color: '#92400e' }}>
+                          <i className="bi bi-clock-history"></i>
+                          {t('admin.packages.claimWaitingPeriodPreview', {
+                            months: Number(form.claimWaitingPeriodMonths),
+                            years: (Number(form.claimWaitingPeriodMonths) / 12).toFixed(1)
+                          })}
+                        </div>
+                      )}
                     </div>
                     {form.coverageMin && form.coverageMax && (
                       <div className="col-12">
@@ -886,6 +913,20 @@ function PackageDetailModal({ pkg, onClose, onEdit }) {
             <div className="col-6 col-md-3">
               <DetailCard label={t('admin.packages.paymentFrequency')} value={freqLabel} icon="bi-credit-card" color="#7c3aed" />
             </div>
+            {pkg.claimWaitingPeriodMonths > 0 && (
+              <div className="col-12">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#fef3c7', border: '1px solid #fcd34d', borderRadius: 8, padding: '0.5rem 0.9rem', fontSize: '0.82rem', color: '#92400e' }}>
+                  <i className="bi bi-clock-history" style={{ flexShrink: 0 }}></i>
+                  <span>
+                    <strong>{t('admin.packages.claimWaitingPeriodLabel')}:</strong>{' '}
+                    {t('admin.packages.claimWaitingPeriodPreview', {
+                      months: pkg.claimWaitingPeriodMonths,
+                      years: (pkg.claimWaitingPeriodMonths / 12).toFixed(1)
+                    })}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Duration Tiers */}

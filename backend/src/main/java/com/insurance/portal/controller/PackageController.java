@@ -132,6 +132,15 @@ public class PackageController {
             try { pkg.setAgeBandsJson(MAPPER.writeValueAsString(ab)); } catch (Exception ignored) {}
         }
 
+        if (req.containsKey("claimWaitingPeriodMonths")) {
+            Object wp = req.get("claimWaitingPeriodMonths");
+            if (wp == null || wp.toString().isBlank() || wp.toString().equals("0")) {
+                pkg.setClaimWaitingPeriodMonths(null);
+            } else {
+                try { pkg.setClaimWaitingPeriodMonths(((Number) wp).intValue()); } catch (Exception ignored) {}
+            }
+        }
+
         return pkg;
     }
 

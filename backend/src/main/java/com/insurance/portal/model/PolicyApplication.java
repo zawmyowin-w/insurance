@@ -7,6 +7,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -115,6 +116,15 @@ public class PolicyApplication {
     /** Timestamp when the application was approved by admin */
     @Column(name = "approved_at")
     private LocalDateTime approvedAt;
+
+    /**
+     * Date from which the customer is eligible to submit a claim.
+     * Set automatically when the first payment is verified by admin,
+     * calculated as: firstPaymentVerifiedDate + package.claimWaitingPeriodMonths.
+     * Null means no waiting period was configured (claims allowed immediately after payment).
+     */
+    @Column(name = "claim_eligible_from")
+    private LocalDate claimEligibleFrom;
 
     /** JSON array of server-stored paths for uploaded supporting documents */
     @Column(name = "documents_path", columnDefinition = "TEXT")

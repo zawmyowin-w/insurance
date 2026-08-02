@@ -617,7 +617,9 @@
     "step4": "Receive notification of outcome",
     "step5": "Approved claims are paid out promptly",
     "coverageExceeded": "Claim amount cannot exceed coverage of {{amount}} MMK",
-    "maxLabel": "cannot exceed coverage amount {{amount}} MMK"
+    "maxLabel": "cannot exceed coverage amount {{amount}} MMK",
+    "waitingPeriodTitle": "Claim Waiting Period Active",
+    "waitingPeriodEligibleFrom": "eligible from {{date}}"
   },
   "feedback": {
     "title": "Send Feedback",
@@ -1233,6 +1235,10 @@
       "maxClaimLabel": "Max Claimable Amount (MMK)",
       "maxClaimPlaceholder": "Maximum claimable amount",
       "maxClaimHint": "Claimants cannot exceed this amount",
+      "claimWaitingPeriodLabel": "Claim Waiting Period (months)",
+      "claimWaitingPeriodUnit": "months after first payment verified",
+      "claimWaitingPeriodHint": "Leave blank or 0 for no waiting period — customers can claim immediately after payment is verified",
+      "claimWaitingPeriodPreview": "{{months}} months (≈ {{years}} years) waiting period",
       "coverageRangeLabel": "Coverage Range",
       "midpointLabel": "Midpoint",
       "sec3Label": "③ Duration & Premium Tiers",

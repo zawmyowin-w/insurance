@@ -371,6 +371,13 @@ public class CustomerController {
         if (!paymentRepo.existsByApplication_IdAndStatus(app.getId(), PaymentStatus.VERIFIED))
             return ResponseEntity.badRequest().body(Map.of("message", "You must have at least one verified payment before submitting a claim for this policy"));
 
+        // Validate waiting period: claim_eligible_from must be in the past (or null)
+        if (app.getClaimEligibleFrom() != null && LocalDate.now().isBefore(app.getClaimEligibleFrom())) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "message", "You cannot submit a claim yet. Your claim eligibility starts on " + app.getClaimEligibleFrom() + ". Please wait until that date."
+            ));
+        }
+
         // Validate that claim amount does not exceed the policy coverage amount
         BigDecimal claimAmt;
         try { claimAmt = new BigDecimal(amount); } catch (NumberFormatException e) {

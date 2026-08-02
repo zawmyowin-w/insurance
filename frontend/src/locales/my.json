@@ -617,6 +617,8 @@
     "step4": "ရလဒ်ကို အကြောင်းကြားချက် ရရှိမည်",
     "step5": "အတည်ပြုပါက တောင်းဆိုငွေ ချက်ချင်းပေးသည်",
     "coverageExceeded": "Claim ငွေပမာဏ သည် ကာကွယ်မှုပမာဏ {{amount}} ကျပ် ထက် မကျော်လွန်ရ",
+    "waitingPeriodTitle": "Claim တောင်းဆိုခွင့် စောင့်ဆိုင်းကာလ ကျင်သုံးနေဆဲ",
+    "waitingPeriodEligibleFrom": "{{date}} မှ စတင် claim တောင်းနိုင်မည်",
     "maxLabel": "ကာကွယ်မှုပမာဏ {{amount}} ကျပ် ထက် မကျော်လွန်ရ"
   },
   "feedback": {
@@ -1233,6 +1235,10 @@
       "maxClaimLabel": "အများဆုံး တောင်းဆိုနိုင်သောပမာဏ (ကျပ်)",
       "maxClaimPlaceholder": "အများဆုံး တောင်းဆိုနိုင်သောပမာဏ",
       "maxClaimHint": "ဤပမာဏထက်ပို၍ claim တောင်းဆိုခွင့်မရှိ",
+      "claimWaitingPeriodLabel": "Claim ကို စောင့်ဆိုင်းရမည့် ကာလ (လ)",
+      "claimWaitingPeriodUnit": "လ — ပထမဆုံး payment verified ပြီးနောက်",
+      "claimWaitingPeriodHint": "0 သို့မဟုတ် ဖျော်ဖြေ — payment verified ပြီးပြီးချင်း claim တောင်းနိုင်မည်",
+      "claimWaitingPeriodPreview": "{{months}} လ (≈ {{years}} နှစ်) စောင့်ဆိုင်းရမည်",
       "coverageRangeLabel": "ကာကွယ်မှု အကွာအဝေး",
       "midpointLabel": "အလယ်ပမာဏ",
       "sec3Label": "③ သက်တမ်း နှင့် ပရီမီယံ အဆင့်များ",
