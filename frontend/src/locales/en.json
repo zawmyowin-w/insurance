@@ -1038,7 +1038,11 @@
       "filterAll": "All",
       "filterPending": "Pending",
       "filterVerified": "Verified",
-      "filterRejected": "Rejected"
+      "filterRejected": "Rejected",
+      "tableLastSix": "Last 6 Digits",
+      "tableTxAmount": "Transfer Amount",
+      "txAmountLabel": "Transfer Amount",
+      "txLastSixLabel": "Last 6 Digits"
     },
     "paymentMethods": {
       "title": "Payment Methods",

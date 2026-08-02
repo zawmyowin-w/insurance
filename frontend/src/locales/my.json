@@ -1038,7 +1038,11 @@
       "filterAll": "အားလုံး",
       "filterPending": "စောင့်ဆိုင်းဆဲ",
       "filterVerified": "အတည်ပြုပြီး",
-      "filterRejected": "ငြင်းပယ်ပြီး"
+      "filterRejected": "ငြင်းပယ်ပြီး",
+      "tableLastSix": "နောက်ဆုံး ၆ လုံး",
+      "tableTxAmount": "လွှဲငွေပမာဏ",
+      "txAmountLabel": "လွှဲငွေပမာဏ",
+      "txLastSixLabel": "နောက်ဆုံး ၆ လုံး"
     },
     "paymentMethods": {
       "title": "ငွေပေးနည်းများ",

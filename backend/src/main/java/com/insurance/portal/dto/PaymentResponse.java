@@ -16,6 +16,8 @@ public class PaymentResponse {
     private String customerName;
     private String customerEmail;
     private BigDecimal amount;
+    private BigDecimal transactionAmount;
+    private String transactionLastSixDigits;
     private String paymentType;
     private String paymentMethod;
     private boolean hasScreenshot;
@@ -42,6 +44,8 @@ public class PaymentResponse {
             dto.setCustomerEmail(p.getCustomer().getEmail());
         }
         dto.setAmount(p.getAmount());
+        dto.setTransactionAmount(p.getTransactionAmount());
+        dto.setTransactionLastSixDigits(p.getTransactionLastSixDigits());
         dto.setPaymentType(p.getPaymentType());
         dto.setPaymentMethod(p.getPaymentMethod());
         dto.setHasScreenshot(p.getScreenshotPath() != null && !p.getScreenshotPath().isBlank());

@@ -101,7 +101,19 @@ export default function AdminPaymentsPage() {
             <table className="w-100">
               <thead>
                 <tr>
-                  {[t('admin.payments.tableId'), t('admin.payments.tableCustomer'), t('admin.payments.tablePolicy'), t('admin.payments.tableAmount'), t('admin.payments.tableMethod'), t('admin.payments.tableProof'), t('admin.payments.tableStatus'), t('admin.payments.tableSubmitted'), t('admin.payments.tableActions')].map(h => <th key={h}>{h}</th>)}
+                  {[
+                    t('admin.payments.tableId'),
+                    t('admin.payments.tableCustomer'),
+                    t('admin.payments.tablePolicy'),
+                    t('admin.payments.tableAmount'),
+                    t('admin.payments.tableTxAmount'),
+                    t('admin.payments.tableLastSix'),
+                    t('admin.payments.tableMethod'),
+                    t('admin.payments.tableProof'),
+                    t('admin.payments.tableStatus'),
+                    t('admin.payments.tableSubmitted'),
+                    t('admin.payments.tableActions'),
+                  ].map(h => <th key={h}>{h}</th>)}
                 </tr>
               </thead>
               <tbody>
@@ -113,7 +125,34 @@ export default function AdminPaymentsPage() {
                       <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{p.customerEmail}</div>
                     </td>
                     <td style={{ fontSize: '0.85rem' }}>{p.policyName} <span style={{ color: 'var(--text-muted)' }}>({p.policyNumber})</span></td>
-                    <td>{p.amount != null ? Number(p.amount).toLocaleString() : '—'}</td>
+                    {/* Expected installment amount */}
+                    <td style={{ fontSize: '0.85rem' }}>
+                      {p.amount != null ? Number(p.amount).toLocaleString() + ' MMK' : '—'}
+                    </td>
+                    {/* Actual transfer amount from customer */}
+                    <td style={{ fontSize: '0.85rem' }}>
+                      {p.transactionAmount != null ? (
+                        <span style={{
+                          fontWeight: 700,
+                          color: (p.amount != null && Math.abs(Number(p.transactionAmount) - Number(p.amount)) / Number(p.amount) > 0.01)
+                            ? '#dc2626' : '#16a34a'
+                        }}>
+                          {Number(p.transactionAmount).toLocaleString()} MMK
+                        </span>
+                      ) : <span style={{ color: 'var(--text-muted)' }}>—</span>}
+                    </td>
+                    {/* Last 6 digits of transaction ID */}
+                    <td style={{ fontSize: '0.85rem' }}>
+                      {p.transactionLastSixDigits ? (
+                        <code style={{
+                          background: 'var(--bg-secondary)', padding: '0.15rem 0.45rem',
+                          borderRadius: 5, fontSize: '0.82rem', fontWeight: 700,
+                          color: 'var(--text-primary)', letterSpacing: '0.08em',
+                        }}>
+                          ···{p.transactionLastSixDigits}
+                        </code>
+                      ) : <span style={{ color: 'var(--text-muted)' }}>—</span>}
+                    </td>
                     <td>
                       {p.paymentMethod ? (
                         <div className="d-flex align-items-center gap-2">
@@ -125,9 +164,9 @@ export default function AdminPaymentsPage() {
                     <td>
                       {p.hasScreenshot ? (
                         <button className="btn-outline-custom" style={{ padding: '0.3rem 0.7rem', fontSize: '0.78rem' }} onClick={() => openScreenshot(p)}>
-                          <i className="bi bi-image me-1"></i>View
+                          <i className="bi bi-image me-1"></i>{t('admin.payments.viewBtn')}
                         </button>
-                      ) : <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>None</span>}
+                      ) : <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{t('admin.payments.noneLabel')}</span>}
                     </td>
                     <td><span className={`badge-status badge-${p.status?.toLowerCase()}`}>{p.status}</span></td>
                     <td style={{ fontSize: '0.82rem' }}>{p.createdAt ? new Date(p.createdAt).toLocaleDateString() : '—'}</td>
@@ -161,9 +200,10 @@ export default function AdminPaymentsPage() {
         </div>
       )}
 
+      {/* Screenshot + transaction detail modal */}
       {screenshotFor && (
         <div className="modal show d-block modal-custom" tabIndex="-1" style={{ background: 'rgba(0,0,0,0.7)' }}>
-          <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: 560 }}>
             <div className="modal-content">
               <div className="modal-header">
                 <h5 className="modal-title" style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
@@ -171,6 +211,86 @@ export default function AdminPaymentsPage() {
                 </h5>
                 <button className="icon-btn" onClick={closeScreenshot}><i className="bi bi-x-lg"></i></button>
               </div>
+
+              {/* Transaction detail summary strip */}
+              <div style={{
+                display: 'flex', gap: '0.75rem', padding: '0.75rem 1.25rem',
+                background: 'var(--bg-secondary)', borderBottom: '1px solid var(--border)',
+                flexWrap: 'wrap',
+              }}>
+                {/* Last 6 digits */}
+                <div style={{ flex: 1, minWidth: 120 }}>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginBottom: 2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    {t('admin.payments.txLastSixLabel')}
+                  </div>
+                  {screenshotFor.transactionLastSixDigits ? (
+                    <code style={{
+                      fontSize: '1rem', fontWeight: 800, letterSpacing: '0.12em',
+                      color: 'var(--text-primary)', background: 'var(--bg-card)',
+                      padding: '0.2rem 0.55rem', borderRadius: 6, display: 'inline-block',
+                    }}>
+                      ···{screenshotFor.transactionLastSixDigits}
+                    </code>
+                  ) : <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>—</span>}
+                </div>
+
+                {/* Transfer amount */}
+                <div style={{ flex: 1, minWidth: 140 }}>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginBottom: 2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    {t('admin.payments.txAmountLabel')}
+                  </div>
+                  {screenshotFor.transactionAmount != null ? (
+                    <span style={{
+                      fontSize: '1rem', fontWeight: 800,
+                      color: (screenshotFor.amount != null &&
+                        Math.abs(Number(screenshotFor.transactionAmount) - Number(screenshotFor.amount)) / Number(screenshotFor.amount) > 0.01)
+                        ? '#dc2626' : '#16a34a',
+                    }}>
+                      {Number(screenshotFor.transactionAmount).toLocaleString()} MMK
+                    </span>
+                  ) : <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>—</span>}
+                  {screenshotFor.amount != null && (
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 1 }}>
+                      {t('admin.payments.tableAmount')}: {Number(screenshotFor.amount).toLocaleString()} MMK
+                    </div>
+                  )}
+                </div>
+
+                {/* Payment method */}
+                <div style={{ flex: 1, minWidth: 100 }}>
+                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginBottom: 2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    {t('admin.payments.method')}
+                  </div>
+                  {screenshotFor.paymentMethod ? (
+                    <div className="d-flex align-items-center gap-1">
+                      <PaymentMethodIcon method={screenshotFor.paymentMethod} size={18} />
+                      <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                        {PAYMENT_METHODS.find(m => m.id === screenshotFor.paymentMethod)?.label || screenshotFor.paymentMethod}
+                      </span>
+                    </div>
+                  ) : <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>—</span>}
+                </div>
+
+                {/* Amount match indicator */}
+                {screenshotFor.transactionAmount != null && screenshotFor.amount != null && (
+                  <div style={{ width: '100%' }}>
+                    {Math.abs(Number(screenshotFor.transactionAmount) - Number(screenshotFor.amount)) / Number(screenshotFor.amount) <= 0.01 ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.78rem', fontWeight: 700, color: '#16a34a',
+                        background: '#dcfce7', borderRadius: 7, padding: '0.3rem 0.7rem' }}>
+                        <i className="bi bi-check-circle-fill"></i>
+                        ငွေလွှဲပမာဏ တူညီပါသည် — Auto-verify ဖြတ်နိုင်ပြီ
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.78rem', fontWeight: 700, color: '#dc2626',
+                        background: '#fee2e2', borderRadius: 7, padding: '0.3rem 0.7rem' }}>
+                        <i className="bi bi-exclamation-triangle-fill"></i>
+                        ငွေလွှဲပမာဏ မတူညီ — Manual စစ်ဆေးရန်
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <div className="modal-body text-center">
                 {screenshotLoading ? (
                   <div className="spinner-border" style={{ color: 'var(--primary)' }}></div>
