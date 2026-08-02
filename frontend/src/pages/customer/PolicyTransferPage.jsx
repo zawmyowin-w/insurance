@@ -309,7 +309,7 @@ export default function PolicyTransferPage() {
                 <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: 6 }}>
                   By signing, you confirm this transfer request and agree to relinquish ownership upon approval.
                 </p>
-                <DigitalSignatureCanvas ref={fromSigRef} onSave={setFromSig} />
+                <DigitalSignatureCanvas ref={fromSigRef} onChange={setFromSig} />
               </div>
 
               <div className="d-flex gap-2 justify-content-end mt-3">
@@ -352,7 +352,7 @@ export default function PolicyTransferPage() {
               <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: 6 }}>
                 Sign to confirm you accept this policy transfer and its obligations.
               </p>
-              <DigitalSignatureCanvas ref={toSigRef} onSave={setToSig} />
+              <DigitalSignatureCanvas ref={toSigRef} onChange={setToSig} />
             </div>
 
             <div className="d-flex gap-2 justify-content-end">
