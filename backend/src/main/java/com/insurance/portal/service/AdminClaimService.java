@@ -3,11 +3,13 @@ package com.insurance.portal.service;
 import com.insurance.portal.dto.ClaimResponse;
 import com.insurance.portal.model.Claim;
 import com.insurance.portal.model.Payment;
+import com.insurance.portal.model.enums.ApplicationStatus;
 import com.insurance.portal.model.enums.ClaimStatus;
 import com.insurance.portal.model.enums.NotificationType;
 import com.insurance.portal.model.enums.PaymentStatus;
 import com.insurance.portal.repository.ClaimRepository;
 import com.insurance.portal.repository.PaymentRepository;
+import com.insurance.portal.repository.PolicyApplicationRepository;
 import com.insurance.portal.util.DigitalSignatureUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +25,7 @@ public class AdminClaimService {
 
     private final ClaimRepository claimRepo;
     private final PaymentRepository paymentRepo;
+    private final PolicyApplicationRepository appRepo;
     private final NotificationService notifService;
 
     @Transactional
@@ -39,6 +42,12 @@ public class AdminClaimService {
         claim.setAdminSignature(signature);
         claim.setAdminSignedAt(LocalDateTime.now());
         claimRepo.save(claim);
+
+        // Mark the policy as CLAIMED — no further claims allowed
+        if (claim.getApplication() != null) {
+            claim.getApplication().setStatus(ApplicationStatus.CLAIMED);
+            appRepo.save(claim.getApplication());
+        }
 
         paymentRepo.save(Payment.builder()
                 .application(claim.getApplication())

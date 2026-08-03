@@ -49,6 +49,7 @@ export default function ManageUsersPage() {
   const [editSaving, setEditSaving] = useState(false)
   const [insuranceTypes, setInsuranceTypes] = useState(['LIFE', 'HEALTH', 'VEHICLE', 'PROPERTY'])
   const [deleteModal, setDeleteModal] = useState({ open: false, id: null, loading: false })
+  const [previewModal, setPreviewModal] = useState({ open: false, user: null, summary: null, loading: false })
 
   const fetchInsuranceTypes = () => {
     api.get('/admin/insurance-types')
@@ -120,8 +121,20 @@ export default function ManageUsersPage() {
     } catch { toast.error(t('admin.users.failed')) }
   }
 
-  const handleDelete = id => {
-    setDeleteModal({ open: true, id, loading: false })
+  const handleDelete = async id => {
+    const user = users.find(u => u.id === id)
+    setPreviewModal({ open: true, user, summary: null, loading: true })
+    try {
+      const res = await api.get(`/admin/users/${id}/summary`)
+      setPreviewModal(m => ({ ...m, summary: res.data, loading: false }))
+    } catch {
+      setPreviewModal(m => ({ ...m, loading: false }))
+    }
+  }
+
+  const proceedToDelete = () => {
+    setDeleteModal({ open: true, id: previewModal.user?.id, loading: false })
+    setPreviewModal({ open: false, user: null, summary: null, loading: false })
   }
 
   const confirmDelete = async () => {
@@ -408,6 +421,126 @@ export default function ManageUsersPage() {
             </div>
           )}
         </>
+      )}
+
+      {/* ── Step 1: Data Preview Modal ───────────────────────── */}
+      {previewModal.open && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1050, overflowY: 'auto', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '2rem 1rem' }}>
+          <div style={{ background: 'var(--bg-card)', borderRadius: 12, width: '100%', maxWidth: 600, padding: '2rem', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }}>
+            <div className="d-flex align-items-center justify-content-between mb-3">
+              <h5 style={{ fontWeight: 700, margin: 0 }}>
+                <i className="bi bi-person-lines-fill me-2" style={{ color: '#1d4ed8' }}></i>
+                Review User Data Before Deleting
+              </h5>
+              <button onClick={() => setPreviewModal({ open: false, user: null, summary: null, loading: false })}
+                style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer', color: 'var(--text-secondary)' }}>×</button>
+            </div>
+
+            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '0.75rem 1rem', marginBottom: '1.25rem', fontSize: '0.85rem', color: '#dc2626' }}>
+              <i className="bi bi-exclamation-triangle-fill me-1"></i>
+              Deleting a <strong>customer</strong> permanently removes all their applications, claims, and payments. Deleting an <strong>agent</strong> removes them from all assigned cases. This action cannot be undone.
+            </div>
+
+            {previewModal.loading ? (
+              <div className="text-center py-4"><div className="spinner-border" style={{ color: 'var(--primary)' }}></div></div>
+            ) : previewModal.summary ? (
+              <>
+                {/* User info */}
+                <div style={{ background: 'var(--bg-secondary)', borderRadius: 8, padding: '0.75rem 1rem', marginBottom: '1rem' }}>
+                  <div style={{ fontWeight: 700, fontSize: '1rem' }}>{previewModal.summary.name}</div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{previewModal.summary.email}</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                    Role: {previewModal.summary.role} | Joined: {previewModal.summary.joinedAt ? new Date(previewModal.summary.joinedAt).toLocaleDateString() : '—'} |
+                    Status: <span style={{ color: previewModal.summary.active ? '#15803d' : '#dc2626', fontWeight: 600 }}>{previewModal.summary.active ? 'Active' : 'Inactive'}</span>
+                  </div>
+                </div>
+
+                {/* Customer stats */}
+                {previewModal.summary.role === 'CUSTOMER' && (
+                  <>
+                    <div className="row g-2 mb-3">
+                      {[
+                        { label: 'Applications', value: previewModal.summary.applicationCount, icon: 'bi-file-earmark-text', color: '#1d4ed8' },
+                        { label: 'Claims', value: previewModal.summary.claimCount, icon: 'bi-file-earmark-medical', color: '#d97706' },
+                        { label: 'Payments', value: previewModal.summary.paymentCount, icon: 'bi-credit-card', color: '#15803d' },
+                      ].map(stat => (
+                        <div key={stat.label} className="col-4">
+                          <div style={{ background: 'var(--bg-secondary)', borderRadius: 8, padding: '0.6rem', textAlign: 'center' }}>
+                            <i className={`bi ${stat.icon}`} style={{ color: stat.color, fontSize: '1.1rem' }}></i>
+                            <div style={{ fontWeight: 700, fontSize: '1.1rem', marginTop: 2 }}>{stat.value}</div>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{stat.label}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {previewModal.summary.applications?.length > 0 && (
+                      <div className="mb-3">
+                        <div style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: '0.4rem' }}>Applications (showing up to 5):</div>
+                        {previewModal.summary.applications.map(a => (
+                          <div key={a.id} style={{ fontSize: '0.82rem', padding: '0.35rem 0.6rem', borderRadius: 6, background: 'var(--bg-secondary)', marginBottom: 3, display: 'flex', justifyContent: 'space-between' }}>
+                            <span><span style={{ fontFamily: 'monospace', color: 'var(--primary)' }}>{a.policyNumber || `#${a.id}`}</span> — {a.packageName}</span>
+                            <span style={{ color: a.status === 'APPROVED' ? '#15803d' : a.status === 'REJECTED' ? '#dc2626' : '#d97706', fontWeight: 600 }}>{a.status}</span>
+                          </div>
+                        ))}
+                        {previewModal.summary.applicationCount > 5 && (
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 2 }}>…and {previewModal.summary.applicationCount - 5} more</div>
+                        )}
+                      </div>
+                    )}
+
+                    {previewModal.summary.claims?.length > 0 && (
+                      <div className="mb-3">
+                        <div style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: '0.4rem' }}>Claims (showing up to 5):</div>
+                        {previewModal.summary.claims.map(c => (
+                          <div key={c.id} style={{ fontSize: '0.82rem', padding: '0.35rem 0.6rem', borderRadius: 6, background: 'var(--bg-secondary)', marginBottom: 3, display: 'flex', justifyContent: 'space-between' }}>
+                            <span>Claim #{c.id} — {Number(c.amount).toLocaleString()} MMK</span>
+                            <span style={{ color: c.status === 'APPROVED' ? '#15803d' : c.status === 'REJECTED' ? '#dc2626' : '#d97706', fontWeight: 600 }}>{c.status}</span>
+                          </div>
+                        ))}
+                        {previewModal.summary.claimCount > 5 && (
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 2 }}>…and {previewModal.summary.claimCount - 5} more</div>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* Agent stats */}
+                {previewModal.summary.role === 'AGENT' && (
+                  <div className="mb-3">
+                    <div style={{ background: 'var(--bg-secondary)', borderRadius: 8, padding: '0.6rem 0.75rem', marginBottom: '0.75rem' }}>
+                      <span style={{ fontWeight: 700 }}>{previewModal.summary.assignedApplicationCount}</span>
+                      <span style={{ color: 'var(--text-secondary)', marginLeft: 4 }}>assigned application(s) — agent will be removed from these cases</span>
+                    </div>
+                    {previewModal.summary.assignedApplications?.map(a => (
+                      <div key={a.id} style={{ fontSize: '0.82rem', padding: '0.35rem 0.6rem', borderRadius: 6, background: 'var(--bg-secondary)', marginBottom: 3, display: 'flex', justifyContent: 'space-between' }}>
+                        <span><span style={{ fontFamily: 'monospace', color: 'var(--primary)' }}>{a.policyNumber || `#${a.id}`}</span> — {a.customerName}</span>
+                        <span style={{ color: a.status === 'APPROVED' ? '#15803d' : '#d97706', fontWeight: 600 }}>{a.status}</span>
+                      </div>
+                    ))}
+                    {previewModal.summary.assignedApplicationCount > 5 && (
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>…and {previewModal.summary.assignedApplicationCount - 5} more</div>
+                    )}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1rem' }}>Could not load user data.</div>
+            )}
+
+            <div className="d-flex gap-2 justify-content-end mt-3">
+              <button onClick={() => setPreviewModal({ open: false, user: null, summary: null, loading: false })}
+                style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, padding: '0.5rem 1.2rem', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                Cancel
+              </button>
+              <button onClick={proceedToDelete} disabled={previewModal.loading}
+                style={{ background: '#dc2626', color: 'white', border: 'none', borderRadius: 8, padding: '0.5rem 1.4rem', cursor: 'pointer', fontWeight: 600 }}>
+                <i className="bi bi-trash me-1"></i>Proceed to Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       <DeleteConfirmModal

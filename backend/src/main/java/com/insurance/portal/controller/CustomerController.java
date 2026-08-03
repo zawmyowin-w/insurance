@@ -549,7 +549,10 @@ public class CustomerController {
     @Transactional(readOnly = true)
     public List<?> getActivePolicies(@AuthenticationPrincipal UserDetails principal) {
         User user = getUser(principal);
-        return appRepo.findAllByCustomerAndStatus(user, ApplicationStatus.APPROVED).stream()
+        List<PolicyApplication> apps = new java.util.ArrayList<>();
+        apps.addAll(appRepo.findAllByCustomerAndStatus(user, ApplicationStatus.APPROVED));
+        apps.addAll(appRepo.findAllByCustomerAndStatus(user, ApplicationStatus.CLAIMED));
+        return apps.stream()
                 .sorted(Comparator.comparing(PolicyApplication::getCreatedAt).reversed())
                 .map(app -> {
                     Map<String, Object> m = new LinkedHashMap<>();
