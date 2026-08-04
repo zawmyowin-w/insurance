@@ -101,15 +101,25 @@ export default function ApplyPolicyPage() {
         formDataObj[k] = Array.isArray(v) ? JSON.stringify(v) : v
       })
 
-      // Validate PHONE fields before submitting
+      // Validate PHONE fields and required LABEL+radio fields before submitting
       if (template?.fields) {
         for (const field of template.fields) {
-          if (field.fieldType !== 'PHONE') continue
-          const phoneErr = getPhoneValidationError(fieldValues[String(field.id)] || '')
-          if (phoneErr) {
-            toast.error(`"${field.fieldLabel}": ${phoneErr.en}`)
-            setSubmitting(false)
-            return
+          if (field.fieldType === 'PHONE') {
+            const phoneErr = getPhoneValidationError(fieldValues[String(field.id)] || '')
+            if (phoneErr) {
+              toast.error(`"${field.fieldLabel}": ${phoneErr.en}`)
+              setSubmitting(false)
+              return
+            }
+          }
+          if (field.fieldType === 'LABEL' && field.required) {
+            let hasRadio = false
+            if (field.fieldOptions) { try { const p = JSON.parse(field.fieldOptions); hasRadio = Array.isArray(p) && p.length > 0 } catch {} }
+            if (hasRadio && !fieldValues[String(field.id)]) {
+              toast.error(`"${field.fieldLabel}" is required`)
+              setSubmitting(false)
+              return
+            }
           }
         }
       }
@@ -395,7 +405,15 @@ export default function ApplyPolicyPage() {
                     <i className="bi bi-ui-checks me-1"></i>{template.name}
                   </div>
                   <DynamicFormFields
-                    fields={template.fields.filter(f => !(f.fieldType === 'LABEL' && f.fieldLabel?.toLowerCase().includes('personal information')))}
+                    fields={template.fields.filter(f => {
+                      if (f.fieldType !== 'LABEL') return true
+                      // Always show LABEL+radio fields (they carry an answer)
+                      let hasRadio = false
+                      if (f.fieldOptions) { try { const p = JSON.parse(f.fieldOptions); hasRadio = Array.isArray(p) && p.length > 0 } catch {} }
+                      if (hasRadio) return true
+                      // Suppress plain section headers that duplicate the auto-filled Personal Information section
+                      return !f.fieldLabel?.toLowerCase().includes('personal information')
+                    })}
                     fieldValues={fieldValues}
                     fieldFiles={fieldFiles}
                     onValue={handleFieldValue}
@@ -540,12 +558,22 @@ export default function ApplyPolicyPage() {
               )}
 
               {/* Dynamic form summary */}
-              {template?.fields && template.fields.filter(f => f.fieldType !== 'LABEL').length > 0 && (
+              {template?.fields && template.fields.filter(f => {
+                if (f.fieldType !== 'LABEL') return true
+                let hasRadio = false
+                if (f.fieldOptions) { try { const p = JSON.parse(f.fieldOptions); hasRadio = Array.isArray(p) && p.length > 0 } catch {} }
+                return hasRadio
+              }).length > 0 && (
                 <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '1rem' }}>
                   <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
                     {t('applyPolicy.formDetails')}
                   </div>
-                  {template.fields.filter(f => f.fieldType !== 'LABEL').map(field => {
+                  {template.fields.filter(f => {
+                    if (f.fieldType !== 'LABEL') return true
+                    let hasRadio = false
+                    if (f.fieldOptions) { try { const p = JSON.parse(f.fieldOptions); hasRadio = Array.isArray(p) && p.length > 0 } catch {} }
+                    return hasRadio
+                  }).map(field => {
                     const val = fieldValues[String(field.id)]
                     const file = fieldFiles[String(field.id)]
                     let display = '—'

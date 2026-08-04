@@ -1477,6 +1477,7 @@
       "fieldType_RADIO_label": "Radio Button",
       "fieldType_RADIO_desc": "တစ်ခုသာ ရွေးနိုင်သော radio",
       "radioOptions": "Radio ရွေးချယ်ချက်များ (တစ်ကြောင်းတစ်ခု)",
+      "labelAddRadio": "ဤ Section တွင် Radio ရွေးချယ်ချက်များ ထည့်သွင်းရန်",
       "fieldType_IMAGE_UPLOAD_label": "ပုံ တင်ရန်",
       "fieldType_IMAGE_UPLOAD_desc": "JPG/PNG တင်ရန်",
       "fieldType_PDF_UPLOAD_label": "ဖိုင် တင်ရန်",

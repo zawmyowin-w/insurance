@@ -116,7 +116,13 @@ export default function SubmitClaimPage() {
 
     if (claimTemplate?.fields) {
       for (const field of claimTemplate.fields) {
-        if (field.fieldType === 'LABEL') continue
+        // Plain LABEL (section header) has no answer — skip.
+        // LABEL+radio fields are answer-bearing and must be validated when required.
+        if (field.fieldType === 'LABEL') {
+          let hasRadio = false
+          if (field.fieldOptions) { try { const p = JSON.parse(field.fieldOptions); hasRadio = Array.isArray(p) && p.length > 0 } catch {} }
+          if (!hasRadio) continue
+        }
         if (!field.required) continue
         const val = fieldValues[String(field.id)]
         const file = fieldFiles[String(field.id)]

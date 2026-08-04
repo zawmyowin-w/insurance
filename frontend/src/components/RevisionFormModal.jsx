@@ -122,7 +122,13 @@ export default function RevisionFormModal({ show, onClose, type, item, onRevised
     // Validate required fields
     if (template?.fields) {
       for (const field of template.fields) {
-        if (field.fieldType === 'LABEL' || !field.required) continue
+        // Plain LABEL (section header) has no answer; LABEL+radio is answer-bearing.
+        if (field.fieldType === 'LABEL') {
+          let hasRadio = false
+          if (field.fieldOptions) { try { const p = JSON.parse(field.fieldOptions); hasRadio = Array.isArray(p) && p.length > 0 } catch {} }
+          if (!hasRadio || !field.required) continue
+        }
+        if (field.fieldType !== 'LABEL' && !field.required) continue
         const val = fieldValues[String(field.id)]
         const file = fieldFiles[String(field.id)]
         const existingFile = existingFormData[String(field.id)]
@@ -368,13 +374,41 @@ function RevisionField({ field, value, file, existingFilePath, onValue, onFile, 
   const [viewingExisting, setViewingExisting] = useState(false)
 
   if (field.fieldType === 'LABEL') {
+    let labelOptions = []
+    if (field.fieldOptions) { try { labelOptions = JSON.parse(field.fieldOptions) } catch {} }
+    const hasLabelRadio = Array.isArray(labelOptions) && labelOptions.length > 0
     return (
       <div style={{
         padding: '0.6rem 0.9rem', borderRadius: 8,
         background: 'var(--bg-secondary)', borderLeft: '3px solid var(--primary)',
-        fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.9rem'
       }}>
-        {field.fieldLabel}
+        <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.9rem', marginBottom: hasLabelRadio ? '0.55rem' : 0 }}>
+          {field.fieldLabel}
+          {hasLabelRadio && field.required && <span style={{ color: '#dc2626', marginLeft: 4 }}>*</span>}
+        </div>
+        {hasLabelRadio && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem' }}>
+            {labelOptions.map(opt => (
+              <label key={opt} style={{
+                display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer',
+                padding: '0.3rem 0.75rem', borderRadius: 8,
+                border: value === opt ? '1.5px solid var(--primary)' : '1.5px solid var(--border)',
+                background: value === opt ? '#fff' : 'transparent',
+                fontSize: '0.85rem', color: 'var(--text-primary)',
+              }}>
+                <input
+                  type="radio"
+                  name={`rev_label_radio_${field.id}`}
+                  value={opt}
+                  checked={value === opt}
+                  required={field.required && !value}
+                  onChange={() => onValue(opt)}
+                />
+                {opt}
+              </label>
+            ))}
+          </div>
+        )}
       </div>
     )
   }

@@ -420,13 +420,28 @@ function FieldEditor({ field, index, onUpdate, onRemove, onMoveUp, onMoveDown, i
   const isRadio    = field.fieldType === 'RADIO'
   const hasOptions = isCheckbox || isRadio
 
+  // LABEL can optionally carry radio options (stored in fieldOptions)
+  let labelHasRadio = false
+  if (isLabel && field.fieldOptions) {
+    try { const p = JSON.parse(field.fieldOptions); labelHasRadio = Array.isArray(p) && p.length > 0 } catch {}
+  }
+
   let parsedOptions = ['Yes', 'No']
-  if (hasOptions && field.fieldOptions) {
+  if ((hasOptions || labelHasRadio) && field.fieldOptions) {
     try { parsedOptions = JSON.parse(field.fieldOptions) } catch {}
   }
 
   const updateOptions = (options) => {
     onUpdate('fieldOptions', JSON.stringify(options))
+  }
+
+  const toggleLabelRadio = (enabled) => {
+    if (enabled) {
+      onUpdate('fieldOptions', JSON.stringify(['Yes', 'No']))
+    } else {
+      onUpdate('fieldOptions', null)
+      onUpdate('required', false)
+    }
   }
 
   return (
@@ -451,14 +466,24 @@ function FieldEditor({ field, index, onUpdate, onRemove, onMoveUp, onMoveDown, i
         </select>
       </div>
 
-      {/* Checkbox / Radio options editor */}
-      {hasOptions && (
+      {/* LABEL — toggle to attach radio options */}
+      {isLabel && (
+        <div style={{ paddingLeft: 42, marginBottom: '0.5rem' }}>
+          <label style={{ fontSize: '0.79rem', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, margin: 0 }}>
+            <input type="checkbox" checked={labelHasRadio} onChange={e => toggleLabelRadio(e.target.checked)} />
+            {t('admin.formBuilder.labelAddRadio')}
+          </label>
+        </div>
+      )}
+
+      {/* Checkbox / Radio options editor (also shown for LABEL with radio) */}
+      {(hasOptions || labelHasRadio) && (
         <div style={{ paddingLeft: 42, marginBottom: '0.5rem' }}>
           <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: 4, fontWeight: 600 }}>
-            {isRadio ? t('admin.formBuilder.radioOptions') : t('admin.formBuilder.checkboxOptions')}
+            {isRadio || labelHasRadio ? t('admin.formBuilder.radioOptions') : t('admin.formBuilder.checkboxOptions')}
           </div>
           {/* Live preview of radio options */}
-          {isRadio && parsedOptions.length > 0 && (
+          {(isRadio || labelHasRadio) && parsedOptions.length > 0 && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.45rem' }}>
               {parsedOptions.map((opt, idx) => (
                 <span key={idx} style={{
@@ -484,7 +509,7 @@ function FieldEditor({ field, index, onUpdate, onRemove, onMoveUp, onMoveDown, i
       )}
 
       <div className="d-flex align-items-center justify-content-between" style={{ paddingLeft: 42 }}>
-        {!isLabel ? (
+        {(!isLabel || labelHasRadio) ? (
           <label style={{ fontSize: '0.79rem', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, margin: 0 }}>
             <input type="checkbox" checked={field.required} onChange={e => onUpdate('required', e.target.checked)} />
             {t('admin.formBuilder.required')}

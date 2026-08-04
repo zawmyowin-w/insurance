@@ -78,13 +78,45 @@ function PhoneField({ value, required, onValue }) {
 
 function DynamicField({ field, value, file, onValue, onFile, onCheckboxOption, user, autoFilledLabel }) {
   if (field.fieldType === 'LABEL') {
+    // Check if this section label carries radio options
+    let labelOptions = []
+    if (field.fieldOptions) {
+      try { labelOptions = JSON.parse(field.fieldOptions) } catch {}
+    }
+    const hasLabelRadio = Array.isArray(labelOptions) && labelOptions.length > 0
+
     return (
       <div style={{
         padding: '0.6rem 0.9rem', borderRadius: 8,
         background: 'var(--bg-secondary)', borderLeft: '3px solid var(--primary)',
-        fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.9rem',
       }}>
-        {field.fieldLabel}
+        <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.9rem', marginBottom: hasLabelRadio ? '0.55rem' : 0 }}>
+          {field.fieldLabel}
+          {hasLabelRadio && field.required && <span style={{ color: '#dc2626', marginLeft: 4 }}>*</span>}
+        </div>
+        {hasLabelRadio && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem' }}>
+            {labelOptions.map(opt => (
+              <label key={opt} style={{
+                display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer',
+                padding: '0.3rem 0.75rem', borderRadius: 8,
+                border: value === opt ? '1.5px solid var(--primary)' : '1.5px solid var(--border)',
+                background: value === opt ? '#fff' : 'transparent',
+                fontSize: '0.85rem', color: 'var(--text-primary)',
+              }}>
+                <input
+                  type="radio"
+                  name={`label_radio_${field.id}`}
+                  value={opt}
+                  checked={value === opt}
+                  required={field.required && !value}
+                  onChange={() => onValue(opt)}
+                />
+                {opt}
+              </label>
+            ))}
+          </div>
+        )}
       </div>
     )
   }

@@ -1477,6 +1477,7 @@
       "fieldType_RADIO_label": "Radio Button",
       "fieldType_RADIO_desc": "Single-choice radio options",
       "radioOptions": "Radio Options (one per line)",
+      "labelAddRadio": "Add radio options to this section",
       "fieldType_IMAGE_UPLOAD_label": "Image Upload",
       "fieldType_IMAGE_UPLOAD_desc": "JPG/PNG upload",
       "fieldType_PDF_UPLOAD_label": "File Upload",
