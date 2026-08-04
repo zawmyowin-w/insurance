@@ -73,7 +73,6 @@ function SettingsModal({ status, onClose, onSaved }) {
     enabled:             status?.enabled ?? true,
     reminderCron:        status?.reminderCron        ?? '0 30 1 * * *',
     revisionCleanupCron: status?.revisionCleanupCron ?? '0 0 3 * * *',
-    minPendingHours:     status?.minPendingHours     ?? 1,
   })
   const [reminderTime, setReminderTime] = useState(cronToMyanmarTime(form.reminderCron) ?? '08:00')
   const [cleanupTime,  setCleanupTime]  = useState(cronToMyanmarTime(form.revisionCleanupCron) ?? '09:30')
@@ -213,23 +212,6 @@ function SettingsModal({ status, onClose, onSaved }) {
             ))}
           </div>
 
-          {/* Min pending hours */}
-          <div style={{ background: '#f8fafc', borderRadius: 12, padding: '0.85rem 1rem', border: '1px solid #e2e8f0', marginBottom: '1rem' }}>
-            <label style={{ ...labelStyle, color: '#374151', marginBottom: 8 }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                width: 22, height: 22, borderRadius: 6, background: '#f5f3ff', marginRight: 6 }}>
-                <i className="bi bi-hourglass" style={{ color: '#7c3aed', fontSize: '0.72rem' }}></i>
-              </span>
-              {t('admin.autoCheck.minPendingHours')}
-            </label>
-            <input type="number" min={0} max={72} value={form.minPendingHours}
-              onChange={e => setForm(f => ({ ...f, minPendingHours: parseInt(e.target.value) || 0 }))}
-              style={{ ...inputStyle, width: 120, background: '#fff', border: '1.5px solid #d1d5db' }} />
-            <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: 6 }}>
-               {t('admin.autoCheck.minPendingDesc')}
-            </div>
-          </div>
-
           {/* Advanced cron */}
           <button type="button" onClick={() => setAdvanced(v => !v)}
             style={{ background: 'none', border: 'none', cursor: 'pointer',
@@ -294,7 +276,7 @@ function AdvertiseSection({ showToast }) {
   const { t } = useTranslation()
   const [types,     setTypes]     = useState([])
   const [packages,  setPackages]  = useState([])
-  const [selected,  setSelected]  = useState(null)   // { kind: 'type'|'package', item }
+  const [selectedItems, setSelectedItems] = useState([])  // [{ kind: 'type'|'package', item }]
   const [customMsg, setCustomMsg] = useState('')
   const [sending,   setSending]   = useState(false)
   const [history,   setHistory]   = useState([])
@@ -312,27 +294,41 @@ function AdvertiseSection({ showToast }) {
     }).finally(() => setLoadingItems(false))
   }, [])
 
+  const toggleItem = (kind, item) => {
+    setSelectedItems(prev => {
+      const exists = prev.some(s => s.kind === kind && s.item.id === item.id)
+      return exists
+        ? prev.filter(s => !(s.kind === kind && s.item.id === item.id))
+        : [...prev, { kind, item }]
+    })
+  }
+
   const handleBroadcast = async () => {
-    if (!selected) { showToast('❌ ' + t('admin.autoCheck.adSelectRequired'), false); return }
+    if (selectedItems.length === 0) { showToast('❌ ' + t('admin.autoCheck.adSelectRequired'), false); return }
     setSending(true)
     try {
-      const itemLabel = selected.kind === 'type' ? selected.item.name : selected.item.packageName
-      const defaultMsg = selected.kind === 'type'
-        ? t('admin.autoCheck.adDefaultMsgType', { name: itemLabel })
-        : t('admin.autoCheck.adDefaultMsgPkg',  { name: itemLabel })
+      const labels = selectedItems.map(s => s.kind === 'type' ? s.item.name : s.item.packageName)
+      const isSingle = selectedItems.length === 1
+      const title = isSingle
+        ? t('admin.autoCheck.adNotifTitle',      { name: labels[0] })
+        : t('admin.autoCheck.adNotifTitleMulti', { count: selectedItems.length })
+      const defaultMsg = isSingle
+        ? (selectedItems[0].kind === 'type'
+            ? t('admin.autoCheck.adDefaultMsgType',  { name: labels[0] })
+            : t('admin.autoCheck.adDefaultMsgPkg',   { name: labels[0] }))
+        : t('admin.autoCheck.adDefaultMsgMulti', { names: labels.join(', ') })
       const message = customMsg.trim() || defaultMsg
-      const title = t('admin.autoCheck.adNotifTitle', { name: itemLabel })
 
       await api.post('/admin/advertise/broadcast', {
         title,
         message,
-        itemKind: selected.kind,
-        itemId:   selected.item.id,
-        itemName: itemLabel,
+        itemKind: isSingle ? selectedItems[0].kind : 'multiple',
+        itemId:   isSingle ? selectedItems[0].item.id : null,
+        itemName: labels.join(', '),
       })
 
       showToast('✅ ' + t('admin.autoCheck.adBroadcastSent'))
-      setSelected(null); setCustomMsg('')
+      setSelectedItems([]); setCustomMsg('')
 
       // refresh history
       const h = await api.get('/admin/advertise/history').catch(() => ({ data: [] }))
@@ -374,10 +370,10 @@ function AdvertiseSection({ showToast }) {
           ) : (
             <div style={{ maxHeight: 220, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
               {allItems.map(({ kind, item, label, icon, color, bg }) => {
-                const isSelected = selected?.kind === kind && selected?.item?.id === item.id
+                const isSelected = selectedItems.some(s => s.kind === kind && s.item.id === item.id)
                 return (
                   <button key={`${kind}-${item.id}`} type="button"
-                    onClick={() => setSelected(isSelected ? null : { kind, item })}
+                    onClick={() => toggleItem(kind, item)}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 10,
                       padding: '0.5rem 0.75rem', borderRadius: 9,
@@ -396,7 +392,8 @@ function AdvertiseSection({ showToast }) {
                         {kind === 'type' ? t('admin.autoCheck.adKindType') : t('admin.autoCheck.adKindPackage')}
                       </div>
                     </div>
-                    {isSelected && <i className="bi bi-check-circle-fill" style={{ color, fontSize: '0.9rem', flexShrink: 0 }}></i>}
+                    <i className={`bi ${isSelected ? 'bi-check-circle-fill' : 'bi-circle'}`}
+                      style={{ color: isSelected ? color : 'var(--border)', fontSize: '0.9rem', flexShrink: 0 }}></i>
                   </button>
                 )
               })}
@@ -410,25 +407,40 @@ function AdvertiseSection({ showToast }) {
             textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
             {t('admin.autoCheck.adComposeMsg')}
           </div>
-          {selected && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8,
-              background: 'var(--bg-secondary)', borderRadius: 8, padding: '0.5rem 0.75rem' }}>
-              <i className={`bi ${selected.kind === 'type' ? 'bi-tags' : 'bi-box-seam'}`}
-                style={{ color: selected.kind === 'type' ? '#7c3aed' : '#0891b2' }}></i>
-              <span style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text-primary)' }}>
-                {selected.kind === 'type' ? selected.item.name : selected.item.packageName}
-              </span>
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginLeft: 'auto' }}>
-                {t('admin.autoCheck.adSelected')}
-              </span>
+          {selectedItems.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+              {selectedItems.map(s => {
+                const label = s.kind === 'type' ? s.item.name : s.item.packageName
+                const color = s.kind === 'type' ? '#7c3aed' : '#0891b2'
+                const icon  = s.kind === 'type' ? 'bi-tags' : 'bi-box-seam'
+                return (
+                  <div key={`${s.kind}-${s.item.id}`} style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                    background: 'var(--bg-secondary)', borderRadius: 20,
+                    padding: '0.22rem 0.55rem 0.22rem 0.4rem',
+                    border: `1.5px solid ${color}40`, fontSize: '0.78rem',
+                  }}>
+                    <i className={`bi ${icon}`} style={{ color, fontSize: '0.7rem' }}></i>
+                    <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{label}</span>
+                    <button type="button"
+                      onClick={() => setSelectedItems(prev => prev.filter(x => !(x.kind === s.kind && x.item.id === s.item.id)))}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer',
+                        color: '#94a3b8', padding: '0 1px', lineHeight: 1, fontSize: '0.75rem' }}>
+                      <i className="bi bi-x"></i>
+                    </button>
+                  </div>
+                )
+              })}
             </div>
           )}
           <textarea
             rows={4}
-            placeholder={selected
-              ? (selected.kind === 'type'
-                  ? t('admin.autoCheck.adDefaultMsgType', { name: selected.item.name })
-                  : t('admin.autoCheck.adDefaultMsgPkg',  { name: selected.item.packageName }))
+            placeholder={selectedItems.length > 0
+              ? (selectedItems.length === 1
+                  ? (selectedItems[0].kind === 'type'
+                      ? t('admin.autoCheck.adDefaultMsgType', { name: selectedItems[0].item.name })
+                      : t('admin.autoCheck.adDefaultMsgPkg',  { name: selectedItems[0].item.packageName }))
+                  : t('admin.autoCheck.adDefaultMsgMulti', { names: selectedItems.map(s => s.kind === 'type' ? s.item.name : s.item.packageName).join(', ') }))
               : t('admin.autoCheck.adMsgPlaceholder')}
             value={customMsg}
             onChange={e => setCustomMsg(e.target.value)}
@@ -439,14 +451,14 @@ function AdvertiseSection({ showToast }) {
               outline: 'none', marginBottom: 10,
             }}
           />
-          <button type="button" onClick={handleBroadcast} disabled={sending || !selected}
+          <button type="button" onClick={handleBroadcast} disabled={sending || selectedItems.length === 0}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
               padding: '0.55rem 1.4rem', borderRadius: 10, border: 'none', cursor: 'pointer',
-              background: (!selected || sending) ? '#e2e8f0' : 'linear-gradient(135deg, #16a34a, #15803d)',
-              color: (!selected || sending) ? '#94a3b8' : '#fff',
+              background: (!selectedItems.length || sending) ? '#e2e8f0' : 'linear-gradient(135deg, #16a34a, #15803d)',
+              color: (!selectedItems.length || sending) ? '#94a3b8' : '#fff',
               fontWeight: 700, fontSize: '0.85rem',
-              boxShadow: (!selected || sending) ? 'none' : '0 4px 12px rgba(22,163,74,0.35)',
+              boxShadow: (!selectedItems.length || sending) ? 'none' : '0 4px 12px rgba(22,163,74,0.35)',
             }}>
             {sending
               ? <><span className="spinner-border spinner-border-sm"></span> {t('admin.autoCheck.sendingLabel')}</>

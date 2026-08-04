@@ -1828,7 +1828,9 @@
       "adHistoryTitle": "Recent Advertisements",
       "adDefaultMsgType": "We are excited to introduce a new insurance type: {{name}}! Explore our plans and find coverage that fits your needs.",
       "adDefaultMsgPkg": "We have a great new insurance package available: {{name}}! Check it out and see how it can protect what matters most to you.",
-      "adNotifTitle": "New: {{name}}"
+      "adNotifTitle": "New: {{name}}",
+      "adNotifTitleMulti": "New Packages & Types ({{count}} selected)",
+      "adDefaultMsgMulti": "We are excited to share our latest insurance offerings: {{names}}. Explore the plans and find the right coverage for you today!"
     },
     "premiumSchedule": {
       "title": "Premium Payment Schedule",
