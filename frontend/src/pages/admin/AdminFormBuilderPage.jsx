@@ -8,7 +8,7 @@ import DeleteConfirmModal from '../../components/DeleteConfirmModal'
 
 const FIELD_TYPE_VALUES = [
   'LABEL', 'NAME', 'EMAIL', 'PHONE', 'TEXT',
-  'TEXTAREA', 'DATE', 'NRC', 'CHECKBOX', 'IMAGE_UPLOAD', 'PDF_UPLOAD',
+  'TEXTAREA', 'DATE', 'NRC', 'CHECKBOX', 'RADIO', 'IMAGE_UPLOAD', 'PDF_UPLOAD',
 ]
 
 const FIELD_ICONS = {
@@ -21,6 +21,7 @@ const FIELD_ICONS = {
   DATE:         'bi-calendar-date',
   NRC:          'bi-person-vcard',
   CHECKBOX:     'bi-check2-square',
+  RADIO:        'bi-ui-radios',
   IMAGE_UPLOAD: 'bi-image',
   PDF_UPLOAD:   'bi-file-earmark-pdf',
 }
@@ -414,15 +415,17 @@ function FieldEditor({ field, index, onUpdate, onRemove, onMoveUp, onMoveDown, i
   const { t } = useTranslation()
   const fieldTypes = getFieldTypes(t)
   const meta = fieldTypes.find(ft => ft.value === field.fieldType) || fieldTypes[0]
-  const isLabel = field.fieldType === 'LABEL'
+  const isLabel    = field.fieldType === 'LABEL'
   const isCheckbox = field.fieldType === 'CHECKBOX'
+  const isRadio    = field.fieldType === 'RADIO'
+  const hasOptions = isCheckbox || isRadio
 
-  let checkboxOptions = ['Yes', 'No']
-  if (isCheckbox && field.fieldOptions) {
-    try { checkboxOptions = JSON.parse(field.fieldOptions) } catch {}
+  let parsedOptions = ['Yes', 'No']
+  if (hasOptions && field.fieldOptions) {
+    try { parsedOptions = JSON.parse(field.fieldOptions) } catch {}
   }
 
-  const updateCheckboxOptions = (options) => {
+  const updateOptions = (options) => {
     onUpdate('fieldOptions', JSON.stringify(options))
   }
 
@@ -448,19 +451,34 @@ function FieldEditor({ field, index, onUpdate, onRemove, onMoveUp, onMoveDown, i
         </select>
       </div>
 
-      {/* Checkbox options editor */}
-      {isCheckbox && (
+      {/* Checkbox / Radio options editor */}
+      {hasOptions && (
         <div style={{ paddingLeft: 42, marginBottom: '0.5rem' }}>
           <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: 4, fontWeight: 600 }}>
-            {t('admin.formBuilder.checkboxOptions')}
+            {isRadio ? t('admin.formBuilder.radioOptions') : t('admin.formBuilder.checkboxOptions')}
           </div>
+          {/* Live preview of radio options */}
+          {isRadio && parsedOptions.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.45rem' }}>
+              {parsedOptions.map((opt, idx) => (
+                <span key={idx} style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                  padding: '0.2rem 0.6rem', borderRadius: 99,
+                  border: '1.5px solid var(--border)', background: '#fff',
+                  fontSize: '0.78rem', color: 'var(--text-secondary)',
+                }}>
+                  <i className="bi bi-circle" style={{ fontSize: '0.7rem' }}></i>{opt}
+                </span>
+              ))}
+            </div>
+          )}
           <textarea rows={2} className="form-control-custom w-100"
             style={{ fontSize: '0.82rem', resize: 'vertical', padding: '0.35rem 0.5rem' }}
             placeholder="Yes&#10;No"
-            value={checkboxOptions.join('\n')}
+            value={parsedOptions.join('\n')}
             onChange={e => {
               const opts = e.target.value.split('\n').filter(o => o.trim())
-              updateCheckboxOptions(opts.length ? opts : ['Yes', 'No'])
+              updateOptions(opts.length ? opts : ['Yes', 'No'])
             }} />
         </div>
       )}

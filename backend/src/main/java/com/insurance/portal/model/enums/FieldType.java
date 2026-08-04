@@ -8,6 +8,7 @@ public enum FieldType {
     TEXT,         // Single-line text input
     TEXTAREA,     // Multi-line text input
     CHECKBOX,     // Boolean checkbox (or multi-option checklist)
+    RADIO,        // Single-choice radio button group
     DATE,         // Date picker
     NRC,          // Myanmar NRC number format
     IMAGE_UPLOAD, // Image file upload
