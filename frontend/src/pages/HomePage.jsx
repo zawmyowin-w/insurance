@@ -109,7 +109,7 @@ export default function HomePage() {
           ) : insuranceTypes.length === 0 ? (
             <div className="text-center py-5" style={{ color: 'var(--text-muted)' }}>
               <i className="bi bi-shield" style={{ fontSize: '2.5rem', display: 'block', marginBottom: 10 }}></i>
-              <p>Insurance types are being configured. Please check back soon.</p>
+              <p>{t('home.configuring')}</p>
             </div>
           ) : (
             <div className="row g-4">
@@ -131,7 +131,7 @@ export default function HomePage() {
                       <div style={{ padding: '0 0.25rem' }}>
                         <h5 style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '0.4rem' }}>
                           {type.name.charAt(0) + type.name.slice(1).toLowerCase().replace(/_/g, ' ')}
-                          {' '}Insurance
+                          {' '}{t('home.typeNameSuffix')}
                         </h5>
                         {type.description ? (
                           <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '0.85rem', lineHeight: 1.55 }}>
@@ -149,7 +149,7 @@ export default function HomePage() {
                             {type.benefits && (
                               <div style={{ marginBottom: '0.6rem' }}>
                                 <div style={{ fontWeight: 700, fontSize: '0.74rem', color: '#16a34a', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                                  <i className="bi bi-check2-circle me-1"></i>Benefits
+                                  <i className="bi bi-check2-circle me-1"></i>{t('home.benefits')}
                                 </div>
                                 <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.6, whiteSpace: 'pre-wrap', background: '#f0fdf4', borderRadius: 8, padding: '0.5rem 0.6rem', border: '1px solid #bbf7d0' }}>
                                   {type.benefits}
@@ -159,7 +159,7 @@ export default function HomePage() {
                             {type.rules && (
                               <div>
                                 <div style={{ fontWeight: 700, fontSize: '0.74rem', color: '#f59e0b', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                                  <i className="bi bi-file-text me-1"></i>Rules & Conditions
+                                  <i className="bi bi-file-text me-1"></i>{t('home.rulesConditions')}
                                 </div>
                                 <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.6, whiteSpace: 'pre-wrap', background: '#fffbeb', borderRadius: 8, padding: '0.5rem 0.6rem', border: '1px solid #fde68a' }}>
                                   {type.rules}
@@ -179,7 +179,7 @@ export default function HomePage() {
                               onClick={e => { e.stopPropagation(); setExpandedType(isOpen ? null : type.id) }}
                               style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.76rem', color: meta.color, fontWeight: 600, padding: 0 }}
                             >
-                              {isOpen ? 'ပိတ်မည်' : 'အသေးစိတ် ▾'}
+                              {isOpen ? t('home.closeDetails') : t('home.showDetails')}
                             </button>
                           )}
                         </div>

@@ -53,7 +53,13 @@
     "step3Title": "Get Approved",
     "step3Desc": "Our agents verify and forward your application to admin. You will be notified once approved.",
     "step4Title": "You're Protected",
-    "step4Desc": "Make your premium payment and receive your official insurance contract as a PDF."
+    "step4Desc": "Make your premium payment and receive your official insurance contract as a PDF.",
+    "typeNameSuffix": "Insurance",
+    "benefits": "Benefits",
+    "rulesConditions": "Rules & Conditions",
+    "showDetails": "Details ▾",
+    "closeDetails": "Close",
+    "configuring": "Insurance types are being configured. Please check back soon."
   },
   "plans": {
     "title": "Plans & Premium Calculator",
