@@ -9,23 +9,20 @@ const STATUS_STYLE = {
   ERROR:    { bg: '#fee2e2', color: '#dc2626', icon: 'bi-x-circle-fill' },
 }
 const TYPE_META = {
-  AUTO_VERIFY:      { icon: 'bi-shield-check',  color: '#1d4ed8', labelKey: 'typeAutoVerify' },
   REMINDER:         { icon: 'bi-bell-fill',    color: '#d97706', labelKey: 'typeReminder' },
   REVISION_CLEANUP: { icon: 'bi-trash3-fill', color: '#dc2626', labelKey: 'typeCleanup' },
 }
 
 // Myanmar timezone offset = UTC+6:30
-// Convert "HH:MM" Myanmar time → Spring cron (UTC)
 function myanmarTimeToCron(hhmm) {
   const [h, m] = hhmm.split(':').map(Number)
-  let totalMin = h * 60 + m - (6 * 60 + 30)   // subtract UTC+6:30
+  let totalMin = h * 60 + m - (6 * 60 + 30)
   if (totalMin < 0) totalMin += 24 * 60
   const utcH = Math.floor(totalMin / 60) % 24
   const utcM = totalMin % 60
   return `0 ${utcM} ${utcH} * * *`
 }
 
-// Parse simple daily cron "0 MM HH * * *" → "HH:MM" Myanmar time
 function cronToMyanmarTime(cron) {
   try {
     const parts = cron.trim().split(/\s+/)
@@ -33,7 +30,7 @@ function cronToMyanmarTime(cron) {
     const utcH = parseInt(parts[2], 10)
     const utcM = parseInt(parts[1], 10)
     if (isNaN(utcH) || isNaN(utcM)) return null
-    let totalMin = utcH * 60 + utcM + 6 * 60 + 30   // add UTC+6:30
+    let totalMin = utcH * 60 + utcM + 6 * 60 + 30
     if (totalMin >= 24 * 60) totalMin -= 24 * 60
     const mmH = String(Math.floor(totalMin / 60)).padStart(2, '0')
     const mmM = String(totalMin % 60).padStart(2, '0')
@@ -74,21 +71,17 @@ function SettingsModal({ status, onClose, onSaved }) {
   const { t } = useTranslation()
   const [form, setForm] = useState({
     enabled:             status?.enabled ?? true,
-    verifyCron:          status?.verifyCron          ?? '0 30 2 * * *',
     reminderCron:        status?.reminderCron        ?? '0 30 1 * * *',
     revisionCleanupCron: status?.revisionCleanupCron ?? '0 0 3 * * *',
     minPendingHours:     status?.minPendingHours     ?? 1,
   })
-  // derived Myanmar-time display
-  const [verifyTime,   setVerifyTime]   = useState(cronToMyanmarTime(form.verifyCron)          ?? '09:00')
-  const [reminderTime, setReminderTime] = useState(cronToMyanmarTime(form.reminderCron)        ?? '08:00')
+  const [reminderTime, setReminderTime] = useState(cronToMyanmarTime(form.reminderCron) ?? '08:00')
   const [cleanupTime,  setCleanupTime]  = useState(cronToMyanmarTime(form.revisionCleanupCron) ?? '09:30')
   const [advanced,     setAdvanced]     = useState(false)
   const [saving,       setSaving]       = useState(false)
   const [err,          setErr]          = useState(null)
 
   const handleTimeChange = (field, cronField, time) => {
-    if (field === 'verify')   setVerifyTime(time)
     if (field === 'reminder') setReminderTime(time)
     if (field === 'cleanup')  setCleanupTime(time)
     setForm(f => ({ ...f, [cronField]: myanmarTimeToCron(time) }))
@@ -107,8 +100,7 @@ function SettingsModal({ status, onClose, onSaved }) {
   const inputStyle = {
     width: '100%', padding: '0.5rem 0.75rem', borderRadius: 8,
     border: '1.5px solid var(--border)', background: 'var(--bg-primary)',
-    color: 'var(--text-primary)', fontSize: '0.85rem',
-    outline: 'none',
+    color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none',
   }
   const labelStyle = { fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4, display: 'block' }
 
@@ -116,27 +108,20 @@ function SettingsModal({ status, onClose, onSaved }) {
     <div style={{
       position: 'fixed', inset: 0,
       background: 'rgba(15, 23, 42, 0.65)',
-      backdropFilter: 'blur(4px)',
-      WebkitBackdropFilter: 'blur(4px)',
+      backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       zIndex: 9000, padding: '1rem',
     }} onClick={e => e.target === e.currentTarget && onClose()}>
       <div style={{
-        background: '#ffffff',
-        borderRadius: 20, width: '100%', maxWidth: 560,
-        boxShadow: '0 25px 80px rgba(0,0,0,.35)',
-        maxHeight: '90vh', overflowY: 'auto',
-        border: 'none',
+        background: '#ffffff', borderRadius: 20, width: '100%', maxWidth: 560,
+        boxShadow: '0 25px 80px rgba(0,0,0,.35)', maxHeight: '90vh', overflowY: 'auto', border: 'none',
       }}>
-        {/* Gradient Header */}
         <div style={{
-          background: 'linear-gradient(135deg, #1d4ed8 0%, #4f46e5 60%, #7c3aed 100%)',
-          borderRadius: '20px 20px 0 0',
-          padding: '1.5rem 1.75rem',
+          background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 60%, #fbbf24 100%)',
+          borderRadius: '20px 20px 0 0', padding: '1.5rem 1.75rem',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           position: 'relative', overflow: 'hidden',
         }}>
-          {/* decorative circles */}
           <div style={{ position: 'absolute', width: 140, height: 140, borderRadius: '50%',
             background: 'rgba(255,255,255,0.07)', top: -40, right: 60, pointerEvents: 'none' }} />
           <div style={{ position: 'absolute', width: 80, height: 80, borderRadius: '50%',
@@ -152,7 +137,7 @@ function SettingsModal({ status, onClose, onSaved }) {
                 {t('admin.autoCheck.settingsTitle')}
               </div>
             </div>
-            <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.7)', marginLeft: 46 }}>
+            <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.8)', marginLeft: 46 }}>
               {t('admin.autoCheck.settingsTimezoneDesc')}
             </div>
           </div>
@@ -186,29 +171,25 @@ function SettingsModal({ status, onClose, onSaved }) {
                 style={{ opacity: 0, width: 0, height: 0, position: 'absolute' }} />
               <span style={{
                 position: 'absolute', inset: 0, borderRadius: 14, transition: '.25s',
-                background: form.enabled ? '#1d4ed8' : '#cbd5e1',
-                boxShadow: form.enabled ? '0 0 0 3px rgba(29,78,216,0.2)' : 'none',
+                background: form.enabled ? '#d97706' : '#cbd5e1',
+                boxShadow: form.enabled ? '0 0 0 3px rgba(217,119,6,0.2)' : 'none',
               }}>
                 <span style={{
                   position: 'absolute', width: 22, height: 22, borderRadius: '50%',
                   background: '#fff', top: 3, transition: '.25s',
-                  left: form.enabled ? 25 : 3,
-                  boxShadow: '0 2px 6px rgba(0,0,0,.25)',
+                  left: form.enabled ? 25 : 3, boxShadow: '0 2px 6px rgba(0,0,0,.25)',
                 }}></span>
               </span>
             </label>
           </div>
 
-          {/* Section label */}
-          <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#6366f1',
+          <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#d97706',
             textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.75rem' }}>
             <i className="bi bi-clock me-1"></i>Myanmar Time Schedule
           </div>
 
-          {/* Time pickers */}
           <div className="d-flex flex-column gap-3 mb-4">
             {[
-               { field: 'verify',   cronField: 'verifyCron',          label: t('admin.autoCheck.verifyTimeLabel'), icon: 'bi-shield-check', color: '#1d4ed8', bg: '#eff6ff', val: verifyTime },
                { field: 'reminder', cronField: 'reminderCron',        label: t('admin.autoCheck.reminderTimeLabel'), icon: 'bi-bell-fill', color: '#d97706', bg: '#fffbeb', val: reminderTime },
                { field: 'cleanup',  cronField: 'revisionCleanupCron', label: t('admin.autoCheck.cleanupTimeLabel'), icon: 'bi-trash3', color: '#dc2626', bg: '#fef2f2', val: cleanupTime },
             ].map(row => (
@@ -225,7 +206,7 @@ function SettingsModal({ status, onClose, onSaved }) {
                     onChange={e => handleTimeChange(row.field, row.cronField, e.target.value)}
                     style={{ ...inputStyle, flex: 1, background: '#fff', border: '1.5px solid #d1d5db' }} />
                   <span style={{ fontSize: '0.68rem', color: '#94a3b8', whiteSpace: 'nowrap', minWidth: 110 }}>
-                     {t('admin.autoCheck.cronLabel')}: <code style={{ fontSize: '0.68rem', color: '#4f46e5' }}>{form[row.cronField]}</code>
+                     {t('admin.autoCheck.cronLabel')}: <code style={{ fontSize: '0.68rem', color: '#d97706' }}>{form[row.cronField]}</code>
                   </span>
                 </div>
               </div>
@@ -249,17 +230,16 @@ function SettingsModal({ status, onClose, onSaved }) {
             </div>
           </div>
 
-          {/* Advanced: raw cron edit */}
+          {/* Advanced cron */}
           <button type="button" onClick={() => setAdvanced(v => !v)}
             style={{ background: 'none', border: 'none', cursor: 'pointer',
-              color: '#6366f1', fontSize: '0.75rem', padding: 0, marginBottom: 8, fontWeight: 600 }}>
+              color: '#d97706', fontSize: '0.75rem', padding: 0, marginBottom: 8, fontWeight: 600 }}>
             <i className={`bi bi-chevron-${advanced ? 'up' : 'down'} me-1`}></i>
              {t('admin.autoCheck.advancedCron')}
           </button>
           {advanced && (
             <div className="d-flex flex-column gap-2 mb-3" style={{ background: '#f8fafc', borderRadius: 12, padding: '1rem', border: '1px solid #e2e8f0' }}>
               {[
-                 { label: t('admin.autoCheck.verifyCronLabel'), key: 'verifyCron' },
                  { label: t('admin.autoCheck.reminderCronLabel'), key: 'reminderCron' },
                  { label: t('admin.autoCheck.cleanupCronLabel'), key: 'revisionCleanupCron' },
               ].map(row => (
@@ -267,13 +247,13 @@ function SettingsModal({ status, onClose, onSaved }) {
                   <label style={{ ...labelStyle, color: '#374151' }}>{row.label}</label>
                   <input value={form[row.key]}
                     onChange={e => setForm(f => ({ ...f, [row.key]: e.target.value }))}
-                    placeholder="0 30 2 * * *"
+                    placeholder="0 30 1 * * *"
                     style={{ ...inputStyle, background: '#fff', border: '1.5px solid #d1d5db' }} />
                 </div>
               ))}
               <div style={{ fontSize: '0.72rem', color: '#64748b', background: '#fff',
                 borderRadius: 8, padding: '0.5rem 0.75rem', border: '1px solid #e2e8f0' }}>
-                 {t('admin.autoCheck.cronFormat')}: <code style={{ color: '#4f46e5' }}>seconds minutes hours day month weekday</code><br />
+                 {t('admin.autoCheck.cronFormat')}: <code style={{ color: '#d97706' }}>seconds minutes hours day month weekday</code><br />
                  {t('admin.autoCheck.timezoneFormat')}
               </div>
             </div>
@@ -286,7 +266,6 @@ function SettingsModal({ status, onClose, onSaved }) {
             </div>
           )}
 
-          {/* Actions */}
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', paddingTop: '0.5rem', borderTop: '1px solid #f1f5f9', marginTop: 4 }}>
             <button type="button" onClick={onClose}
               style={{ padding: '0.55rem 1.4rem', borderRadius: 10, border: '1.5px solid #e2e8f0',
@@ -295,10 +274,10 @@ function SettingsModal({ status, onClose, onSaved }) {
             </button>
             <button type="button" onClick={save} disabled={saving}
               style={{ padding: '0.55rem 1.5rem', borderRadius: 10, border: 'none', cursor: 'pointer',
-                background: saving ? '#e2e8f0' : 'linear-gradient(135deg, #1d4ed8, #4f46e5)',
+                background: saving ? '#e2e8f0' : 'linear-gradient(135deg, #d97706, #f59e0b)',
                 color: saving ? '#64748b' : '#fff', fontWeight: 700, fontSize: '0.85rem',
                 display: 'inline-flex', alignItems: 'center', gap: 6,
-                boxShadow: saving ? 'none' : '0 4px 12px rgba(29,78,216,0.35)' }}>
+                boxShadow: saving ? 'none' : '0 4px 12px rgba(217,119,6,0.35)' }}>
               {saving
                 ? <><span className="spinner-border spinner-border-sm"></span> {t('admin.common.saving')}</>
                 : <><i className="bi bi-floppy-fill"></i> {t('admin.autoCheck.saveSettings')}</>}
@@ -310,13 +289,215 @@ function SettingsModal({ status, onClose, onSaved }) {
   )
 }
 
+// ─── Advertise Section ──────────────────────────────────────────────────────
+function AdvertiseSection({ showToast }) {
+  const { t } = useTranslation()
+  const [types,     setTypes]     = useState([])
+  const [packages,  setPackages]  = useState([])
+  const [selected,  setSelected]  = useState(null)   // { kind: 'type'|'package', item }
+  const [customMsg, setCustomMsg] = useState('')
+  const [sending,   setSending]   = useState(false)
+  const [history,   setHistory]   = useState([])
+  const [loadingItems, setLoadingItems] = useState(true)
+
+  useEffect(() => {
+    Promise.all([
+      api.get('/admin/insurance-types').catch(() => ({ data: [] })),
+      api.get('/admin/packages').catch(() => ({ data: [] })),
+      api.get('/admin/advertise/history').catch(() => ({ data: [] })),
+    ]).then(([t, p, h]) => {
+      setTypes(Array.isArray(t.data) ? t.data : [])
+      setPackages(Array.isArray(p.data) ? p.data : [])
+      setHistory(Array.isArray(h.data) ? h.data : [])
+    }).finally(() => setLoadingItems(false))
+  }, [])
+
+  const handleBroadcast = async () => {
+    if (!selected) { showToast('❌ ' + t('admin.autoCheck.adSelectRequired'), false); return }
+    setSending(true)
+    try {
+      const itemLabel = selected.kind === 'type' ? selected.item.name : selected.item.packageName
+      const defaultMsg = selected.kind === 'type'
+        ? t('admin.autoCheck.adDefaultMsgType', { name: itemLabel })
+        : t('admin.autoCheck.adDefaultMsgPkg',  { name: itemLabel })
+      const message = customMsg.trim() || defaultMsg
+      const title = t('admin.autoCheck.adNotifTitle', { name: itemLabel })
+
+      await api.post('/admin/advertise/broadcast', {
+        title,
+        message,
+        itemKind: selected.kind,
+        itemId:   selected.item.id,
+        itemName: itemLabel,
+      })
+
+      showToast('✅ ' + t('admin.autoCheck.adBroadcastSent'))
+      setSelected(null); setCustomMsg('')
+
+      // refresh history
+      const h = await api.get('/admin/advertise/history').catch(() => ({ data: [] }))
+      setHistory(Array.isArray(h.data) ? h.data : [])
+    } catch (e) {
+      showToast('❌ ' + (e?.response?.data?.message || t('admin.autoCheck.errorOccurred')), false)
+    } finally { setSending(false) }
+  }
+
+  const allItems = [
+    ...types.map(i => ({ kind: 'type', item: i, label: i.name, icon: 'bi-tags', color: '#7c3aed', bg: '#f5f3ff' })),
+    ...packages.map(i => ({ kind: 'package', item: i, label: i.packageName, icon: 'bi-box-seam', color: '#0891b2', bg: '#ecfeff' })),
+  ]
+
+  return (
+    <div className="card-custom mb-4">
+      {/* Header */}
+      <div className="d-flex align-items-center justify-content-between mb-3">
+        <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
+          <i className="bi bi-megaphone-fill me-2" style={{ color: '#16a34a' }}></i>
+          {t('admin.autoCheck.advertiseTitle')}
+        </h6>
+        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+          {t('admin.autoCheck.advertiseSubtitle')}
+        </span>
+      </div>
+
+      <div className="row g-3">
+        {/* Left: item picker */}
+        <div className="col-12 col-lg-5">
+          <div style={{ fontSize: '0.73rem', fontWeight: 700, color: 'var(--text-secondary)',
+            textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+            {t('admin.autoCheck.adPickItem')}
+          </div>
+          {loadingItems ? (
+            <div className="text-center py-3"><span className="spinner-border spinner-border-sm" style={{ color: 'var(--primary)' }}></span></div>
+          ) : allItems.length === 0 ? (
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{t('admin.autoCheck.adNoItems')}</div>
+          ) : (
+            <div style={{ maxHeight: 220, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {allItems.map(({ kind, item, label, icon, color, bg }) => {
+                const isSelected = selected?.kind === kind && selected?.item?.id === item.id
+                return (
+                  <button key={`${kind}-${item.id}`} type="button"
+                    onClick={() => setSelected(isSelected ? null : { kind, item })}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 10,
+                      padding: '0.5rem 0.75rem', borderRadius: 9,
+                      border: `1.5px solid ${isSelected ? color : 'var(--border)'}`,
+                      background: isSelected ? bg : 'var(--bg-primary)',
+                      cursor: 'pointer', textAlign: 'left', transition: 'all .15s',
+                    }}>
+                    <span style={{ width: 28, height: 28, borderRadius: 7, background: bg,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <i className={`bi ${icon}`} style={{ color, fontSize: '0.8rem' }}></i>
+                    </span>
+                    <div style={{ flex: 1, overflow: 'hidden' }}>
+                      <div style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text-primary)',
+                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</div>
+                      <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                        {kind === 'type' ? t('admin.autoCheck.adKindType') : t('admin.autoCheck.adKindPackage')}
+                      </div>
+                    </div>
+                    {isSelected && <i className="bi bi-check-circle-fill" style={{ color, fontSize: '0.9rem', flexShrink: 0 }}></i>}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Right: compose + send */}
+        <div className="col-12 col-lg-7">
+          <div style={{ fontSize: '0.73rem', fontWeight: 700, color: 'var(--text-secondary)',
+            textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+            {t('admin.autoCheck.adComposeMsg')}
+          </div>
+          {selected && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8,
+              background: 'var(--bg-secondary)', borderRadius: 8, padding: '0.5rem 0.75rem' }}>
+              <i className={`bi ${selected.kind === 'type' ? 'bi-tags' : 'bi-box-seam'}`}
+                style={{ color: selected.kind === 'type' ? '#7c3aed' : '#0891b2' }}></i>
+              <span style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text-primary)' }}>
+                {selected.kind === 'type' ? selected.item.name : selected.item.packageName}
+              </span>
+              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginLeft: 'auto' }}>
+                {t('admin.autoCheck.adSelected')}
+              </span>
+            </div>
+          )}
+          <textarea
+            rows={4}
+            placeholder={selected
+              ? (selected.kind === 'type'
+                  ? t('admin.autoCheck.adDefaultMsgType', { name: selected.item.name })
+                  : t('admin.autoCheck.adDefaultMsgPkg',  { name: selected.item.packageName }))
+              : t('admin.autoCheck.adMsgPlaceholder')}
+            value={customMsg}
+            onChange={e => setCustomMsg(e.target.value)}
+            style={{
+              width: '100%', padding: '0.6rem 0.85rem', borderRadius: 9,
+              border: '1.5px solid var(--border)', background: 'var(--bg-primary)',
+              color: 'var(--text-primary)', fontSize: '0.83rem', resize: 'vertical',
+              outline: 'none', marginBottom: 10,
+            }}
+          />
+          <button type="button" onClick={handleBroadcast} disabled={sending || !selected}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              padding: '0.55rem 1.4rem', borderRadius: 10, border: 'none', cursor: 'pointer',
+              background: (!selected || sending) ? '#e2e8f0' : 'linear-gradient(135deg, #16a34a, #15803d)',
+              color: (!selected || sending) ? '#94a3b8' : '#fff',
+              fontWeight: 700, fontSize: '0.85rem',
+              boxShadow: (!selected || sending) ? 'none' : '0 4px 12px rgba(22,163,74,0.35)',
+            }}>
+            {sending
+              ? <><span className="spinner-border spinner-border-sm"></span> {t('admin.autoCheck.sendingLabel')}</>
+              : <><i className="bi bi-megaphone"></i> {t('admin.autoCheck.adBroadcastBtn')}</>}
+          </button>
+          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 6 }}>
+            <i className="bi bi-info-circle me-1"></i>{t('admin.autoCheck.adBroadcastNote')}
+          </div>
+        </div>
+      </div>
+
+      {/* History */}
+      {history.length > 0 && (
+        <div style={{ marginTop: '1.25rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
+          <div style={{ fontSize: '0.73rem', fontWeight: 700, color: 'var(--text-secondary)',
+            textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+            {t('admin.autoCheck.adHistoryTitle')}
+          </div>
+          <div className="d-flex flex-column gap-2">
+            {history.slice(0, 5).map((h, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10,
+                background: 'var(--bg-secondary)', borderRadius: 8, padding: '0.6rem 0.85rem' }}>
+                <div style={{ width: 30, height: 30, borderRadius: 7, background: '#dcfce7',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <i className="bi bi-megaphone-fill" style={{ color: '#16a34a', fontSize: '0.8rem' }}></i>
+                </div>
+                <div style={{ flex: 1, overflow: 'hidden' }}>
+                  <div style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text-primary)',
+                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{h.title}</div>
+                  <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)',
+                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{h.message}</div>
+                </div>
+                <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                  {h.sentAt ? new Date(h.sentAt).toLocaleDateString() : '—'}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Main Page ──────────────────────────────────────────────────────────────
 export default function AdminAutoCheckPage() {
   const { t } = useTranslation()
   const [status,    setStatus]    = useState(null)
   const [logs,      setLogs]      = useState([])
   const [loading,   setLoading]   = useState(true)
-  const [running,   setRunning]   = useState(null)   // 'verify' | 'reminder' | null
+  const [running,   setRunning]   = useState(null)   // 'reminder' | null
   const [logType,   setLogType]   = useState('ALL')
   const [expandLog, setExpandLog] = useState(null)
   const [toast,     setToast]     = useState(null)
@@ -334,7 +515,6 @@ export default function AdminAutoCheckPage() {
 
   useEffect(() => { load() }, [load])
 
-  // auto-refresh every 30s
   useEffect(() => {
     const id = setInterval(load, 30000)
     return () => clearInterval(id)
@@ -348,16 +528,8 @@ export default function AdminAutoCheckPage() {
   const trigger = async (type) => {
     setRunning(type)
     try {
-      const url = type === 'verify'  ? '/admin/autocheck/run/verify'
-                : type === 'cleanup' ? '/admin/autocheck/run/cleanup'
-                :                      '/admin/autocheck/run/reminders'
-      const res = await api.post(url)
-      const d = res.data
-      if (type === 'verify') {
-       showToast(`✅ ${t('admin.autoCheck.verifyComplete', { verified: d.verified ?? 0, skipped: d.skipped ?? 0, errors: d.errors ?? 0 })}`)
-      } else {
-        showToast(`✅ ${t('admin.autoCheck.runComplete')}`)
-      }
+      const res = await api.post('/admin/autocheck/run/reminders')
+      showToast(`✅ ${t('admin.autoCheck.runComplete')}`)
       await load()
     } catch (e) {
       showToast('❌ ' + (e?.response?.data?.message || t('admin.autoCheck.errorOccurred')), false)
@@ -378,12 +550,9 @@ export default function AdminAutoCheckPage() {
     </div>
   )
 
-  const lastVerify   = status?.lastRuns?.AUTO_VERIFY
   const lastReminder = status?.lastRuns?.REMINDER
   const lastCleanup  = status?.lastRuns?.REVISION_CLEANUP
-
-  const verifyMM   = cronToMyanmarTime(status?.verifyCron)
-  const reminderMM = cronToMyanmarTime(status?.reminderCron)
+  const reminderMM   = cronToMyanmarTime(status?.reminderCron)
 
   return (
     <div className="fade-in">
@@ -415,7 +584,7 @@ export default function AdminAutoCheckPage() {
       <div className="d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
         <div>
           <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-            <i className="bi bi-robot me-2" style={{ color: 'var(--primary)' }}></i>
+            <i className="bi bi-bell-fill me-2" style={{ color: '#d97706' }}></i>
             {t('admin.autoCheck.title')}
           </h4>
           <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.88rem' }}>
@@ -435,17 +604,6 @@ export default function AdminAutoCheckPage() {
               display: 'inline-block', animation: status?.enabled ? 'pulse 2s infinite' : 'none' }}></span>
             {status?.enabled ? t('admin.autoCheck.statusActive') : t('admin.autoCheck.statusDisabled')}
           </span>
-          <span style={{
-            display: 'inline-flex', alignItems: 'center', gap: 5,
-            background: status?.aiEnabled ? '#eff6ff' : '#f8fafc',
-            color: status?.aiEnabled ? '#1d4ed8' : '#94a3b8',
-            border: `1px solid ${status?.aiEnabled ? '#bfdbfe' : '#e2e8f0'}`,
-            borderRadius: 8, padding: '0.35rem 0.85rem', fontWeight: 600, fontSize: '0.8rem',
-          }}>
-            <i className="bi bi-stars"></i>
-            {status?.aiEnabled ? t('admin.autoCheck.aiEnabledBadge') : t('admin.autoCheck.aiMissingBadge')}
-          </span>
-          {/* ← Edit settings button */}
           <button type="button" onClick={() => setShowEdit(true)}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -458,32 +616,30 @@ export default function AdminAutoCheckPage() {
         </div>
       </div>
 
-
       {/* Stats row */}
       <div className="row g-3 mb-4">
-        <div className="col-6 col-md-3">
-           <StatCard icon="bi-shield-check" label={t('admin.autoCheck.todayVerified')} value={status?.todayVerified ?? 0}
-             color="#1d4ed8" bg="#eff6ff" sub={t('admin.autoCheck.todayVerifiedSub')} />
-        </div>
-        <div className="col-6 col-md-3">
+        <div className="col-6 col-md-4">
           <StatCard icon="bi-bell-fill" label={t('admin.autoCheck.todayReminders')} value={status?.todayReminders ?? 0}
              color="#d97706" bg="#fffbeb" sub={t('admin.autoCheck.remindersSentSub')} />
         </div>
-        <div className="col-6 col-md-3">
-          <StatCard icon="bi-clock"
-             label={t('admin.autoCheck.verifyTime')}
-            value={verifyMM ?? '—'}
-            color="#7c3aed" bg="#f5f3ff"
-             sub={`${t('admin.autoCheck.myanmarTime')} • ${status?.verifyCron ?? ''}`} />
-        </div>
-        <div className="col-6 col-md-3">
+        <div className="col-6 col-md-4">
           <StatCard icon="bi-alarm"
              label={t('admin.autoCheck.reminderTime')}
             value={reminderMM ?? '—'}
             color="#0891b2" bg="#ecfeff"
              sub={`${t('admin.autoCheck.myanmarTime')} • ${status?.reminderCron ?? ''}`} />
         </div>
+        <div className="col-6 col-md-4">
+          <StatCard icon="bi-clock"
+             label={t('admin.autoCheck.currentMyanmarTime')}
+            value={status?.currentTimeMM?.slice(11, 16) ?? '—'}
+            color="#7c3aed" bg="#f5f3ff"
+             sub={status?.currentTimeMM ?? ''} />
+        </div>
       </div>
+
+      {/* Advertise Section */}
+      <AdvertiseSection showToast={showToast} />
 
       {/* Configuration + Last runs */}
       <div className="row g-4 mb-4">
@@ -503,11 +659,6 @@ export default function AdminAutoCheckPage() {
             </div>
             <div className="d-flex flex-column gap-3">
               {[
-                {
-                   label: t('admin.autoCheck.verifyTimeLabel'),
-                   value: verifyMM ? `${verifyMM} (${t('admin.autoCheck.myanmarTime')}) · ${status?.verifyCron}` : (status?.verifyCron ?? '—'),
-                  icon: 'bi-shield-check', color: '#1d4ed8'
-                },
                 {
                    label: t('admin.autoCheck.reminderTimeLabel'),
                    value: reminderMM ? `${reminderMM} (${t('admin.autoCheck.myanmarTime')}) · ${status?.reminderCron}` : (status?.reminderCron ?? '—'),
@@ -560,7 +711,6 @@ export default function AdminAutoCheckPage() {
             </h6>
             <div className="d-flex flex-column gap-3">
               {[
-                { key: 'AUTO_VERIFY',      data: lastVerify   },
                 { key: 'REMINDER',         data: lastReminder },
                 { key: 'REVISION_CLEANUP', data: lastCleanup  },
               ].map(({ key, data }) => {
@@ -585,7 +735,7 @@ export default function AdminAutoCheckPage() {
                              {t('admin.autoCheck.resultLabel')}: <b style={{ color: '#16a34a' }}>{data.affectedCount}</b>
                           </span>
                           {data.aiAssisted && (
-                            <span style={{ fontSize: '0.72rem', color: '#1d4ed8', fontWeight: 600 }}>
+                            <span style={{ fontSize: '0.72rem', color: '#d97706', fontWeight: 600 }}>
                                <i className="bi bi-stars me-1"></i>{t('admin.autoCheck.aiAssisted')}
                             </span>
                           )}
@@ -613,18 +763,6 @@ export default function AdminAutoCheckPage() {
            {t('admin.autoCheck.manualRunDesc')}
         </p>
         <div className="d-flex gap-3 flex-wrap">
-          <button type="button" onClick={() => trigger('verify')} disabled={running !== null}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              padding: '0.55rem 1.25rem', borderRadius: 10, border: 'none', cursor: 'pointer',
-              background: running === 'verify' ? '#e2e8f0' : 'linear-gradient(135deg, #1d4ed8, #2563eb)',
-              color: running === 'verify' ? '#64748b' : '#fff',
-              fontWeight: 700, fontSize: '0.85rem', transition: 'all .15s',
-            }}>
-            {running === 'verify'
-               ? <><span className="spinner-border spinner-border-sm"></span> {t('admin.autoCheck.runningLabel')}</>
-              : <><i className="bi bi-shield-check"></i> {t('admin.autoCheck.typeAutoVerify')}</>}
-          </button>
           <button type="button" onClick={() => trigger('reminder')} disabled={running !== null}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
@@ -649,7 +787,7 @@ export default function AdminAutoCheckPage() {
              {t('admin.autoCheck.logTableTitle')}
           </div>
           <div className="d-flex gap-1" style={{ background: 'var(--bg-secondary)', padding: '0.25rem', borderRadius: 8 }}>
-            {['ALL', 'AUTO_VERIFY', 'REMINDER', 'REVISION_CLEANUP'].map(filterType => (
+            {['ALL', 'REMINDER', 'REVISION_CLEANUP'].map(filterType => (
               <button key={filterType} type="button" onClick={() => setLogType(filterType)}
                 style={{
                   padding: '0.3rem 0.75rem', borderRadius: 6, border: 'none', cursor: 'pointer',
@@ -658,7 +796,7 @@ export default function AdminAutoCheckPage() {
                    color: logType === filterType ? 'var(--text-primary)' : 'var(--text-muted)',
                    boxShadow: logType === filterType ? '0 1px 3px rgba(0,0,0,.08)' : 'none',
                 }}>
-                 {filterType === 'ALL' ? t('admin.autoCheck.logAll') : filterType === 'AUTO_VERIFY' ? t('admin.autoCheck.filterVerify') : filterType === 'REMINDER' ? t('admin.autoCheck.filterReminder') : t('admin.autoCheck.filterCleanup')}
+                 {filterType === 'ALL' ? t('admin.autoCheck.logAll') : filterType === 'REMINDER' ? t('admin.autoCheck.filterReminder') : t('admin.autoCheck.filterCleanup')}
               </button>
             ))}
           </div>
@@ -691,7 +829,7 @@ export default function AdminAutoCheckPage() {
                       <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
                          {t('admin.autoCheck.checkedLabel')}: <b>{log.totalChecked}</b> · {t('admin.autoCheck.resultLabel')}: <b style={{ color: '#16a34a' }}>{log.affectedCount}</b>
                       </span>
-                       {log.aiAssisted && <i className="bi bi-stars" style={{ color: '#1d4ed8', fontSize: '0.85rem' }} title={t('admin.autoCheck.aiAssisted')}></i>}
+                       {log.aiAssisted && <i className="bi bi-stars" style={{ color: '#d97706', fontSize: '0.85rem' }} title={t('admin.autoCheck.aiAssisted')}></i>}
                       <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                         {log.createdAt ? new Date(log.createdAt).toLocaleString() : '—'}
                       </span>

@@ -923,7 +923,8 @@
       "notifications": "Notifications",
       "autoCheck": "Auto-Check",
       "reports": "Reports",
-      "myProfile": "My Profile"
+      "myProfile": "My Profile",
+      "reminder": "Reminder"
     },
     "dashboard": {
       "totalCustomers": "Total Customers",
@@ -1711,8 +1712,8 @@
       "resetting": "Saving & Downloading…"
     },
     "autoCheck": {
-      "title": "Auto-Check Scheduler",
-      "subtitle": "Automated payment verification and premium reminders",
+      "title": "Reminder",
+      "subtitle": "Scheduled reminders and customer advertisements",
       "statusActive": "Active",
       "statusDisabled": "Disabled",
       "editSettings": "Edit Settings",
@@ -1790,7 +1791,24 @@
       "statusSUCCESS": "Success",
       "statusPARTIAL": "Partial",
       "statusSKIPPED": "Skipped",
-      "statusERROR": "Error"
+      "statusERROR": "Error",
+      "advertiseTitle": "Advertise to Customers",
+      "advertiseSubtitle": "Broadcast new insurance types and packages to all customers",
+      "adPickItem": "Select item to advertise",
+      "adNoItems": "No insurance types or packages found",
+      "adComposeMsg": "Compose message",
+      "adMsgPlaceholder": "Select an item above to compose your message...",
+      "adSelected": "Selected",
+      "adKindType": "Insurance Type",
+      "adKindPackage": "Insurance Package",
+      "adBroadcastBtn": "Broadcast to All Customers",
+      "adBroadcastNote": "Notification will be sent to all active customers",
+      "adBroadcastSent": "Advertisement broadcast sent to all customers",
+      "adSelectRequired": "Please select an item to advertise",
+      "adHistoryTitle": "Recent Advertisements",
+      "adDefaultMsgType": "We are excited to introduce a new insurance type: {{name}}! Explore our plans and find coverage that fits your needs.",
+      "adDefaultMsgPkg": "We have a great new insurance package available: {{name}}! Check it out and see how it can protect what matters most to you.",
+      "adNotifTitle": "New: {{name}}"
     },
     "premiumSchedule": {
       "title": "Premium Payment Schedule",

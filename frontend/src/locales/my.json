@@ -923,7 +923,8 @@
       "notifications": "အကြောင်းကြားချက်များ",
       "autoCheck": "အလိုအလျောက် စစ်ဆေး",
       "reports": "အစီရင်ခံစာများ",
-      "myProfile": "ကိုယ်ရေးအချက်အလက်"
+      "myProfile": "ကိုယ်ရေးအချက်အလက်",
+      "reminder": "သတိပေးချက်"
     },
     "dashboard": {
       "totalCustomers": "Customer စုစုပေါင်း",
@@ -1711,8 +1712,8 @@
       "resetting": "သိမ်းဆည်းပြီး ဒေါင်းလုဒ်ဆွဲနေသည်…"
     },
     "autoCheck": {
-      "title": "အလိုအလျောက် စစ်ဆေးမှု Scheduler",
-      "subtitle": "ငွေပေးချေမှု အလိုအလျောက် စစ်ဆေးခြင်းနှင့် ပရီမီယံ သတိပေးချက်များ",
+      "title": "သတိပေးချက်",
+      "subtitle": "အချိန်ဇယားဆိုင်ရာ သတိပေးချက်များနှင့် customer များသို့ ကြော်ငြာများ",
       "statusActive": "တက်ကြွဆဲ",
       "statusDisabled": "ပိတ်ထား",
       "editSettings": "ဆက်တင်ပြင်ဆင်ရန်",
@@ -1790,7 +1791,24 @@
       "statusSUCCESS": "အောင်မြင်",
       "statusPARTIAL": "တစ်စိတ်တစ်ပိုင်း",
       "statusSKIPPED": "ကျော်သွား",
-      "statusERROR": "အမှား"
+      "statusERROR": "အမှား",
+      "advertiseTitle": "Customer များသို့ ကြော်ငြာပါ",
+      "advertiseSubtitle": "အသစ်သော အာမခံ အမျိုးအစားများနှင့် Package များကို Customer အားလုံးထံ ကြော်ငြာပါ",
+      "adPickItem": "ကြော်ငြာမည့် အရာကို ရွေးချယ်ပါ",
+      "adNoItems": "အာမခံ အမျိုးအစား သို့မဟုတ် Package မတွေ့ပါ",
+      "adComposeMsg": "မက်ဆေ့ချ် ရေးပါ",
+      "adMsgPlaceholder": "အထက်မှ အရာတစ်ခုကို ရွေးပြီး မက်ဆေ့ချ် ရေးပါ...",
+      "adSelected": "ရွေးထားပြီ",
+      "adKindType": "အာမခံ အမျိုးအစား",
+      "adKindPackage": "အာမခံ Package",
+      "adBroadcastBtn": "Customer အားလုံးထံ ကြော်ငြာပိုင်",
+      "adBroadcastNote": "အသက်ဝင်နေသော Customer အားလုံးထံ အကြောင်းကြားချက် ပေးပို့မည်",
+      "adBroadcastSent": "ကြော်ငြာ Customer အားလုံးထံ ပေးပို့ပြီးပါပြီ",
+      "adSelectRequired": "ကြော်ငြာမည့် အရာတစ်ခုကို ရွေးချယ်ပါ",
+      "adHistoryTitle": "မကြာသေးမီ ကြော်ငြာများ",
+      "adDefaultMsgType": "အသစ်သော အာမခံ အမျိုးအစား: {{name}} ကို မိတ်ဆက်ရပါတွင် ဝမ်းမြောက်ပါသည်! သင့်နှင့် သင့်တော်သော အစီအစဉ်ကို ရှာဖွေကြည့်ပါ။",
+      "adDefaultMsgPkg": "အသစ်သော အာမခံ Package တစ်ခု ရောက်ရှိလာပါပြီ: {{name}}! ကြည့်ရှုပြီး သင်အပ်နှံသည်များကို ကာကွယ်နည်းကို လေ့လာပါ။",
+      "adNotifTitle": "အသစ်: {{name}}"
     },
     "premiumSchedule": {
       "title": "ပရီမီယံ ငွေပေးချေ အချိန်ဇယား",

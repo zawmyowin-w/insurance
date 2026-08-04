@@ -18,7 +18,7 @@ export default function AdminLayout() {
     { to: '/admin/payment-methods',  icon: 'bi-qr-code',              label: t('admin.layout.paymentMethods')    },
     { to: '/admin/feedback',         icon: 'bi-chat-heart',           label: t('admin.layout.customerFeedback'), badge: true },
     { to: '/admin/notifications',    icon: 'bi-bell',                 label: t('admin.layout.notifications')     },
-    { to: '/admin/autocheck',        icon: 'bi-robot',                label: t('admin.layout.autoCheck')         },
+    { to: '/admin/autocheck',        icon: 'bi-bell-fill',            label: t('admin.layout.reminder')          },
     { to: '/admin/reports',          icon: 'bi-bar-chart-line',       label: t('admin.layout.reports')           },
     { to: '/admin/profile',          icon: 'bi-person-circle',        label: t('admin.layout.myProfile')         },
   ]

@@ -271,24 +271,6 @@ export default function AdminPaymentsPage() {
                   ) : <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>—</span>}
                 </div>
 
-                {/* Amount match indicator */}
-                {screenshotFor.transactionAmount != null && screenshotFor.amount != null && (
-                  <div style={{ width: '100%' }}>
-                    {Math.abs(Number(screenshotFor.transactionAmount) - Number(screenshotFor.amount)) / Number(screenshotFor.amount) <= 0.01 ? (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.78rem', fontWeight: 700, color: '#16a34a',
-                        background: '#dcfce7', borderRadius: 7, padding: '0.3rem 0.7rem' }}>
-                        <i className="bi bi-check-circle-fill"></i>
-                        ငွေလွှဲပမာဏ တူညီပါသည် — Auto-verify ဖြတ်နိုင်ပြီ
-                      </div>
-                    ) : (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.78rem', fontWeight: 700, color: '#dc2626',
-                        background: '#fee2e2', borderRadius: 7, padding: '0.3rem 0.7rem' }}>
-                        <i className="bi bi-exclamation-triangle-fill"></i>
-                        ငွေလွှဲပမာဏ မတူညီ — Manual စစ်ဆေးရန်
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
 
               <div className="modal-body text-center">
