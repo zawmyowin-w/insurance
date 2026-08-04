@@ -36,5 +36,12 @@ public class PremiumScheduleResponse {
         private String status;
         private Long paymentId;
         private String paymentStatus; // PENDING, VERIFIED, REJECTED (if payment exists)
+        /**
+         * Name of the customer who actually submitted this payment.
+         * Non-null only when the policy was transferred and the payment was made by
+         * the previous owner (i.e. different from the current application customer).
+         */
+        private String paidByName;
+        private Long paidByCustomerId;
     }
 }

@@ -141,6 +141,20 @@ public class PackageController {
             }
         }
 
+        // Transfer eligibility
+        if (req.containsKey("transferAllowed"))
+            pkg.setTransferAllowed(Boolean.TRUE.equals(req.get("transferAllowed")));
+        if (req.containsKey("transferEligibleAfterYears")) {
+            Object v = req.get("transferEligibleAfterYears");
+            if (v == null || v.toString().isBlank()) pkg.setTransferEligibleAfterYears(null);
+            else try { pkg.setTransferEligibleAfterYears(((Number) v).intValue()); } catch (Exception ignored) {}
+        }
+        if (req.containsKey("transferEligibleAfterMonths")) {
+            Object v = req.get("transferEligibleAfterMonths");
+            if (v == null || v.toString().isBlank()) pkg.setTransferEligibleAfterMonths(null);
+            else try { pkg.setTransferEligibleAfterMonths(((Number) v).intValue()); } catch (Exception ignored) {}
+        }
+
         return pkg;
     }
 

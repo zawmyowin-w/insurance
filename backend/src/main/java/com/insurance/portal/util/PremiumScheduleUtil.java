@@ -77,6 +77,8 @@ public class PremiumScheduleUtil {
             String status;
             Long paymentId = null;
             String paymentStatus = null;
+            String paidByName = null;
+            Long paidByCustomerId = null;
 
             if (p != null) {
                 paymentId = p.getId();
@@ -90,6 +92,13 @@ public class PremiumScheduleUtil {
                     // REJECTED — treat as still owing
                     status = dueDate.isBefore(today) ? "OVERDUE" : "DUE";
                 }
+                // Track payer identity for transferred policies:
+                // If the payment customer differs from the current application owner, record who paid.
+                if (p.getCustomer() != null && app.getCustomer() != null
+                        && !p.getCustomer().getId().equals(app.getCustomer().getId())) {
+                    paidByName = p.getCustomer().getName();
+                    paidByCustomerId = p.getCustomer().getId();
+                }
             } else {
                 if (dueDate.isBefore(today)) {
                     status = "OVERDUE";
@@ -101,7 +110,8 @@ public class PremiumScheduleUtil {
             }
 
             schedule.add(new PremiumScheduleResponse.InstallmentEntry(
-                    n, periodLabel, dueDate, installmentAmount, status, paymentId, paymentStatus));
+                    n, periodLabel, dueDate, installmentAmount, status, paymentId, paymentStatus,
+                    paidByName, paidByCustomerId));
         }
 
         PremiumScheduleResponse res = new PremiumScheduleResponse();

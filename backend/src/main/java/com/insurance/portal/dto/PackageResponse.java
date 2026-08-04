@@ -38,6 +38,11 @@ public class PackageResponse {
     private String termsAndConditions;
     private Integer claimWaitingPeriodMonths;
 
+    // Transfer eligibility
+    private boolean transferAllowed;
+    private Integer transferEligibleAfterYears;
+    private Integer transferEligibleAfterMonths;
+
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     public static PackageResponse from(InsurancePackage pkg) {
@@ -60,6 +65,9 @@ public class PackageResponse {
         dto.setBeneficiaryInfo(pkg.getBeneficiaryInfo());
         dto.setTermsAndConditions(pkg.getTermsAndConditions());
         dto.setClaimWaitingPeriodMonths(pkg.getClaimWaitingPeriodMonths());
+        dto.setTransferAllowed(pkg.isTransferAllowed());
+        dto.setTransferEligibleAfterYears(pkg.getTransferEligibleAfterYears());
+        dto.setTransferEligibleAfterMonths(pkg.getTransferEligibleAfterMonths());
 
         // Parse benefits (newline-separated)
         try {

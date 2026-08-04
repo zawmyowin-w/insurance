@@ -12,6 +12,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -90,12 +91,25 @@ public class AdminPolicyTransferController {
 
         // ── Re-assign policy ownership ───────────────────────────────
         app.setCustomer(newOwner);
+
+        // ── Claim eligibility: new owner can claim immediately ────────
+        // The previous customer already paid, so the new owner inherits the paid
+        // installments and may claim without re-waiting. Set claimEligibleFrom to
+        // today (or keep it if already in the past so no regression).
+        LocalDate today = LocalDate.now();
+        if (app.getClaimEligibleFrom() == null || app.getClaimEligibleFrom().isAfter(today)) {
+            app.setClaimEligibleFrom(today);
+        }
         appRepo.save(app);
 
-        // ── Re-assign future (PENDING) payments to new owner ─────────
+        // ── Payments: keep VERIFIED records under original owner ──────
+        // Only re-assign PENDING / REJECTED payments to the new owner.
+        // VERIFIED payments retain the original customer so payment history
+        // accurately shows who paid each installment.
         List<Payment> payments = paymentRepo.findAllByApplication_Id(app.getId());
         List<Payment> pendingPayments = payments.stream()
-                .filter(p -> p.getStatus() == PaymentStatus.PENDING)
+                .filter(p -> p.getStatus() == PaymentStatus.PENDING
+                          || p.getStatus() == PaymentStatus.REJECTED)
                 .toList();
         for (Payment p : pendingPayments) {
             p.setCustomer(newOwner);

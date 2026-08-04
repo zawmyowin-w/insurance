@@ -92,6 +92,29 @@ public class InsurancePackage {
     @Column(name = "terms_and_conditions", columnDefinition = "TEXT")
     private String termsAndConditions;
 
+    // ── Policy Transfer Eligibility ────────────────────────────────────
+    /**
+     * Whether ownership transfer is allowed for policies under this package.
+     * If false, customers cannot initiate any transfer request.
+     */
+    @Builder.Default
+    @Column(name = "transfer_allowed")
+    private boolean transferAllowed = false;
+
+    /**
+     * Minimum number of years the policy must be active (since approvedAt)
+     * before a transfer request is allowed.
+     */
+    @Column(name = "transfer_eligible_after_years")
+    private Integer transferEligibleAfterYears;
+
+    /**
+     * Additional months (on top of transferEligibleAfterYears) before transfer is allowed.
+     * Total minimum active period = transferEligibleAfterYears * 12 + transferEligibleAfterMonths months.
+     */
+    @Column(name = "transfer_eligible_after_months")
+    private Integer transferEligibleAfterMonths;
+
     @Builder.Default
     private boolean active = true;
 

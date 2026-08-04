@@ -464,6 +464,13 @@ export default function AdminPremiumSchedulePage() {
                                   {inst.paymentStatus && <span style={{ marginLeft: 4, fontWeight: 700 }}>({inst.paymentStatus})</span>}
                                 </div>
                               )}
+                              {inst.paidByName && (
+                                <div style={{ fontSize: '0.63rem', color: '#0369a1', marginTop: 3, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3 }}>
+                                  <i className="bi bi-person-fill-check"></i>
+                                  Paid by: {inst.paidByName}
+                                  <span style={{ fontWeight: 400, color: 'var(--text-muted)' }}>(prev. owner)</span>
+                                </div>
+                              )}
                             </div>
                           )
                         })}

@@ -31,6 +31,10 @@ const EMPTY = {
   termsAndConditions: '',
   beneficiaryInfo: '',
   active: true,
+  // Transfer eligibility
+  transferAllowed: false,
+  transferEligibleAfterYears: '',
+  transferEligibleAfterMonths: '',
 }
 
 function fmt(n) {
@@ -164,6 +168,10 @@ export default function ManagePackagesPage() {
         termsAndConditions: form.termsAndConditions || null,
         beneficiaryInfo: form.beneficiaryInfo || null,
         active: form.active,
+        // Transfer eligibility
+        transferAllowed: form.transferAllowed,
+        transferEligibleAfterYears: form.transferEligibleAfterYears !== '' ? Number(form.transferEligibleAfterYears) : null,
+        transferEligibleAfterMonths: form.transferEligibleAfterMonths !== '' ? Number(form.transferEligibleAfterMonths) : null,
       }
 
       if (editing) {
@@ -204,6 +212,10 @@ export default function ManagePackagesPage() {
       termsAndConditions: pkg.termsAndConditions || '',
       beneficiaryInfo: pkg.beneficiaryInfo || '',
       active: pkg.active !== false,
+      // Transfer eligibility
+      transferAllowed: pkg.transferAllowed === true,
+      transferEligibleAfterYears: pkg.transferEligibleAfterYears != null ? String(pkg.transferEligibleAfterYears) : '',
+      transferEligibleAfterMonths: pkg.transferEligibleAfterMonths != null ? String(pkg.transferEligibleAfterMonths) : '',
     })
     setShowForm(true)
     setOpenSection('basic')
@@ -723,6 +735,92 @@ export default function ManagePackagesPage() {
                       style={{ resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.8 }}
                       placeholder={t('admin.packages.termsPlaceholder')}
                       value={form.termsAndConditions} onChange={handleChange} />
+                  </div>
+                )}
+              </div>
+
+              {/* ⑪ Policy Ownership Transfer */}
+              <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+                <SectionHeader id="transfer" icon="bi-arrow-left-right"
+                  label="Policy Ownership Transfer"
+                  badge={form.transferAllowed ? 'Enabled' : 'Disabled'} />
+                {openSection === 'transfer' && (
+                  <div style={{ padding: '1rem' }}>
+                    <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+                      <i className="bi bi-info-circle me-1"></i>
+                      Configure whether customers holding policies under this package are allowed to transfer ownership to another registered customer.
+                    </p>
+
+                    {/* Enable / Disable toggle */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1.25rem', padding: '0.75rem 1rem', background: form.transferAllowed ? '#f0fdf4' : 'var(--bg-secondary)', border: `1px solid ${form.transferAllowed ? '#86efac' : 'var(--border)'}`, borderRadius: 10 }}>
+                      <label className="d-flex align-items-center gap-3" style={{ cursor: 'pointer', flex: 1, margin: 0 }}>
+                        <div style={{ position: 'relative' }}>
+                          <input type="checkbox" name="transferAllowed" checked={form.transferAllowed}
+                            onChange={handleChange} style={{ display: 'none' }} />
+                          <div onClick={() => setForm(f => ({ ...f, transferAllowed: !f.transferAllowed }))}
+                            style={{ width: 44, height: 24, borderRadius: 99, cursor: 'pointer', transition: 'background 0.2s', background: form.transferAllowed ? 'var(--primary)' : '#cbd5e1', display: 'flex', alignItems: 'center', padding: '0 3px', flexShrink: 0 }}>
+                            <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'transform 0.2s', transform: form.transferAllowed ? 'translateX(20px)' : 'translateX(0)' }}></div>
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: 700, fontSize: '0.9rem', color: form.transferAllowed ? '#15803d' : 'var(--text-secondary)' }}>
+                            {form.transferAllowed ? 'Ownership Transfer Enabled' : 'Ownership Transfer Disabled'}
+                          </div>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                            {form.transferAllowed
+                              ? 'Customers may request to transfer this policy to another registered customer.'
+                              : 'Customers cannot initiate any transfer request for policies under this package.'}
+                          </div>
+                        </div>
+                      </label>
+                    </div>
+
+                    {/* Holding period before transfer allowed */}
+                    {form.transferAllowed && (
+                      <>
+                        <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+                          <i className="bi bi-calendar-check me-1" style={{ color: 'var(--primary)' }}></i>
+                          Minimum Holding Period Before Transfer
+                        </div>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
+                          The policy must be active for at least this long (from approval date) before a transfer request can be submitted.
+                          Leave both fields empty or 0 to allow transfer at any time after the first payment is verified.
+                        </p>
+                        <div className="row g-3">
+                          <div className="col-6">
+                            <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>
+                              Years
+                            </label>
+                            <input type="number" min="0" max="50" className="form-control-custom w-100"
+                              placeholder="e.g. 1"
+                              value={form.transferEligibleAfterYears}
+                              onChange={e => setForm(f => ({ ...f, transferEligibleAfterYears: e.target.value }))} />
+                          </div>
+                          <div className="col-6">
+                            <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>
+                              Additional Months
+                            </label>
+                            <input type="number" min="0" max="11" className="form-control-custom w-100"
+                              placeholder="e.g. 6"
+                              value={form.transferEligibleAfterMonths}
+                              onChange={e => setForm(f => ({ ...f, transferEligibleAfterMonths: e.target.value }))} />
+                          </div>
+                        </div>
+                        {(form.transferEligibleAfterYears || form.transferEligibleAfterMonths) && (
+                          <div style={{ marginTop: '0.75rem', padding: '0.5rem 0.75rem', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 8, fontSize: '0.8rem', color: '#1d4ed8' }}>
+                            <i className="bi bi-clock me-1"></i>
+                            Transfer eligibility: after{' '}
+                            {form.transferEligibleAfterYears > 0 ? `${form.transferEligibleAfterYears} year${form.transferEligibleAfterYears != 1 ? 's' : ''}` : ''}{' '}
+                            {form.transferEligibleAfterMonths > 0 ? `${form.transferEligibleAfterMonths} month${form.transferEligibleAfterMonths != 1 ? 's' : ''}` : ''}{' '}
+                            of active policy + at least 1 verified payment.
+                          </div>
+                        )}
+                        <div style={{ marginTop: '0.75rem', padding: '0.6rem 0.75rem', background: '#fefce8', border: '1px solid #fde68a', borderRadius: 8, fontSize: '0.78rem', color: '#92400e' }}>
+                          <i className="bi bi-exclamation-triangle me-1"></i>
+                          <strong>Note:</strong> Regardless of the holding period, at least one premium payment must be verified by admin before a transfer request can be initiated. After transfer is approved, the new owner can immediately submit claims using the previous owner's payment history.
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
               </div>

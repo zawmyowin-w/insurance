@@ -13,7 +13,11 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import com.insurance.portal.model.enums.PaymentStatus;
+import com.insurance.portal.repository.PaymentRepository;
+
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 /**
@@ -33,6 +37,7 @@ public class PolicyTransferController {
     private final UserRepository userRepo;
     private final PolicyApplicationRepository appRepo;
     private final PolicyTransferRepository transferRepo;
+    private final PaymentRepository paymentRepo;
     private final NotificationService notifService;
 
     private User getUser(UserDetails principal) {
@@ -67,6 +72,40 @@ public class PolicyTransferController {
             return ResponseEntity.status(403).body(Map.of("message", "This policy does not belong to you"));
         if (app.getStatus() != ApplicationStatus.APPROVED)
             return ResponseEntity.badRequest().body(Map.of("message", "Only approved policies can be transferred"));
+
+        // ── Package-level transfer eligibility checks ─────────────────
+        var pkg = app.getInsurancePackage();
+        if (pkg == null || !pkg.isTransferAllowed())
+            return ResponseEntity.badRequest().body(Map.of("message",
+                    "Ownership transfer is not permitted for this insurance package"));
+
+        // Must have at least one VERIFIED payment before transfer is allowed
+        List<com.insurance.portal.model.Payment> payments = paymentRepo.findAllByApplication_Id(appId);
+        boolean hasVerifiedPayment = payments.stream()
+                .anyMatch(p -> p.getStatus() == PaymentStatus.VERIFIED);
+        if (!hasVerifiedPayment)
+            return ResponseEntity.badRequest().body(Map.of("message",
+                    "Transfer is not allowed until the first premium payment has been verified by admin"));
+
+        // Must have been approved for the minimum holding period defined on the package
+        int requiredMonths = 0;
+        if (pkg.getTransferEligibleAfterYears() != null) requiredMonths += pkg.getTransferEligibleAfterYears() * 12;
+        if (pkg.getTransferEligibleAfterMonths() != null) requiredMonths += pkg.getTransferEligibleAfterMonths();
+
+        if (requiredMonths > 0) {
+            LocalDateTime approvedAt = app.getApprovedAt() != null ? app.getApprovedAt() : app.getCreatedAt();
+            if (approvedAt == null || ChronoUnit.MONTHS.between(approvedAt, LocalDateTime.now()) < requiredMonths) {
+                long monthsHeld = approvedAt != null ? ChronoUnit.MONTHS.between(approvedAt, LocalDateTime.now()) : 0;
+                int yearsReq = requiredMonths / 12;
+                int monthsReq = requiredMonths % 12;
+                String reqLabel = yearsReq > 0
+                        ? yearsReq + " year" + (yearsReq > 1 ? "s" : "") + (monthsReq > 0 ? " " + monthsReq + " month" + (monthsReq > 1 ? "s" : "") : "")
+                        : monthsReq + " month" + (monthsReq > 1 ? "s" : "");
+                return ResponseEntity.badRequest().body(Map.of("message",
+                        "Transfer is not allowed yet. This policy must be held for at least " + reqLabel +
+                        " before transfer. Currently held: " + monthsHeld + " month(s)"));
+            }
+        }
 
         // Check no pending transfer already exists for this policy
         List<TransferStatus> activeStatuses = List.of(
