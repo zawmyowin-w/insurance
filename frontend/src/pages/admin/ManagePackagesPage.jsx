@@ -35,6 +35,9 @@ const EMPTY = {
   transferAllowed: false,
   transferEligibleAfterYears: '',
   transferEligibleAfterMonths: '',
+  // Maturity / policy expiry payout
+  maturityBonusTiers: [{ year: '', bonusPercent: '' }],
+  maturityIncludesPremiums: false,
 }
 
 function fmt(n) {
@@ -125,6 +128,11 @@ export default function ManagePackagesPage() {
   const addAgeBand = () => setForm(f => ({ ...f, ageBands: [...f.ageBands, { minAge: '', maxAge: '', premiumRate: '' }] }))
   const removeAgeBand = i => setForm(f => ({ ...f, ageBands: f.ageBands.filter((_, idx) => idx !== i) }))
 
+  // Maturity Bonus Tiers
+  const handleMaturityTierChange = (i, field, v) => setForm(f => { const tiers = [...f.maturityBonusTiers]; tiers[i] = { ...tiers[i], [field]: v }; return { ...f, maturityBonusTiers: tiers } })
+  const addMaturityTier = () => setForm(f => ({ ...f, maturityBonusTiers: [...f.maturityBonusTiers, { year: '', bonusPercent: '' }] }))
+  const removeMaturityTier = i => setForm(f => ({ ...f, maturityBonusTiers: f.maturityBonusTiers.length > 1 ? f.maturityBonusTiers.filter((_, idx) => idx !== i) : f.maturityBonusTiers }))
+
   const handlePaymentFreq = e => {
     const freq = e.target.value
     const opt = PAYMENT_FREQ_OPTIONS.find(o => o.value === freq)
@@ -172,6 +180,11 @@ export default function ManagePackagesPage() {
         transferAllowed: form.transferAllowed,
         transferEligibleAfterYears: form.transferEligibleAfterYears !== '' ? Number(form.transferEligibleAfterYears) : null,
         transferEligibleAfterMonths: form.transferEligibleAfterMonths !== '' ? Number(form.transferEligibleAfterMonths) : null,
+        // Maturity / policy expiry payout
+        maturityBonusTiers: (form.maturityBonusTiers || [])
+          .filter(t => t.year !== '' && t.bonusPercent !== '')
+          .map(t => ({ year: Number(t.year), bonusPercent: Number(t.bonusPercent) })),
+        maturityIncludesPremiums: form.maturityIncludesPremiums,
       }
 
       if (editing) {
@@ -216,6 +229,11 @@ export default function ManagePackagesPage() {
       transferAllowed: pkg.transferAllowed === true,
       transferEligibleAfterYears: pkg.transferEligibleAfterYears != null ? String(pkg.transferEligibleAfterYears) : '',
       transferEligibleAfterMonths: pkg.transferEligibleAfterMonths != null ? String(pkg.transferEligibleAfterMonths) : '',
+      // Maturity / policy expiry payout
+      maturityBonusTiers: Array.isArray(pkg.maturityBonusTiers) && pkg.maturityBonusTiers.length > 0
+        ? pkg.maturityBonusTiers.map(t => ({ year: t.year, bonusPercent: t.bonusPercent }))
+        : [{ year: '', bonusPercent: '' }],
+      maturityIncludesPremiums: pkg.maturityIncludesPremiums === true,
     })
     setShowForm(true)
     setOpenSection('basic')
@@ -825,6 +843,124 @@ export default function ManagePackagesPage() {
                 )}
               </div>
 
+              {/* ⑫ Maturity / Policy Expiry Payout */}
+              <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+                <SectionHeader id="maturity" icon="bi-calendar2-check"
+                  label={t('admin.packages.secMaturityLabel')}
+                  badge={
+                    (form.maturityBonusTiers || []).filter(t => t.year !== '' && t.bonusPercent !== '').length > 0
+                      ? t('admin.packages.maturityBadgeOn')
+                      : t('admin.packages.maturityBadgeOff')
+                  } />
+                {openSection === 'maturity' && (
+                  <div style={{ padding: '1rem' }}>
+                    <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+                      <i className="bi bi-info-circle me-1"></i>
+                      {t('admin.packages.maturityHint')}
+                    </p>
+
+                    {/* Maturity Bonus Tiers */}
+                    <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+                      <i className="bi bi-gift me-1" style={{ color: '#d97706' }}></i>
+                      {t('admin.packages.maturityBonusTiersHeader')}
+                    </div>
+                    <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
+                      {t('admin.packages.maturityBonusHint')}
+                    </p>
+                    <div style={{ overflowX: 'auto', marginBottom: '0.75rem' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                        <thead>
+                          <tr style={{ background: 'var(--bg-secondary)' }}>
+                            <th style={thStyle}>{t('admin.packages.maturityYearHeader')}</th>
+                            <th style={thStyle}>{t('admin.packages.maturityBonusHeader')}</th>
+                            <th style={{ ...thStyle, width: 40 }}></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(form.maturityBonusTiers || []).map((tier, i) => (
+                            <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
+                              <td style={tdStyle}>
+                                <div className="d-flex align-items-center gap-2">
+                                  <input type="number" min="1" max="40" className="form-control-custom"
+                                    style={{ width: 80 }} placeholder="e.g. 3" value={tier.year}
+                                    onChange={e => handleMaturityTierChange(i, 'year', e.target.value)} />
+                                  <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>{t('admin.packages.yearsUnit')}</span>
+                                </div>
+                              </td>
+                              <td style={tdStyle}>
+                                <div className="d-flex align-items-center gap-2">
+                                  <input type="number" min="0" max="200" step="0.1" className="form-control-custom"
+                                    style={{ width: 100 }} placeholder="e.g. 10" value={tier.bonusPercent}
+                                    onChange={e => handleMaturityTierChange(i, 'bonusPercent', e.target.value)} />
+                                  <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>% of claim amount</span>
+                                </div>
+                              </td>
+                              <td style={tdStyle}>
+                                <button type="button" onClick={() => removeMaturityTier(i)}
+                                  disabled={(form.maturityBonusTiers || []).length <= 1}
+                                  style={{ background: 'none', border: 'none', color: '#dc2626', cursor: (form.maturityBonusTiers || []).length <= 1 ? 'not-allowed' : 'pointer', opacity: (form.maturityBonusTiers || []).length <= 1 ? 0.3 : 1 }}>
+                                  <i className="bi bi-trash"></i>
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <button type="button" onClick={addMaturityTier}
+                      style={{ fontSize: '0.82rem', color: '#d97706', background: 'none', border: '1.5px dashed #d97706', borderRadius: 8, padding: '0.35rem 0.9rem', cursor: 'pointer', fontWeight: 600, marginBottom: '1.25rem' }}>
+                      <i className="bi bi-plus me-1"></i>{t('admin.packages.addMaturityTierBtn')}
+                    </button>
+
+                    {/* Accumulated Premiums Toggle */}
+                    <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+                      <i className="bi bi-cash-coin me-1" style={{ color: '#16a34a' }}></i>
+                      {t('admin.packages.maturityIncludesPremiumsLabel')}
+                    </div>
+                    <div
+                      style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0.75rem 1rem', background: form.maturityIncludesPremiums ? '#f0fdf4' : 'var(--bg-secondary)', border: `1px solid ${form.maturityIncludesPremiums ? '#86efac' : 'var(--border)'}`, borderRadius: 10, marginBottom: '0.5rem', cursor: 'pointer' }}
+                      onClick={() => setForm(f => ({ ...f, maturityIncludesPremiums: !f.maturityIncludesPremiums }))}>
+                      <div style={{ width: 44, height: 24, borderRadius: 99, background: form.maturityIncludesPremiums ? 'var(--primary)' : '#cbd5e1', display: 'flex', alignItems: 'center', padding: '0 3px', flexShrink: 0, transition: 'background 0.2s' }}>
+                        <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'transform 0.2s', transform: form.maturityIncludesPremiums ? 'translateX(20px)' : 'translateX(0)' }}></div>
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: '0.88rem', color: form.maturityIncludesPremiums ? '#15803d' : 'var(--text-secondary)' }}>
+                          {form.maturityIncludesPremiums
+                            ? t('admin.packages.maturityIncludesPremiumsOn')
+                            : t('admin.packages.maturityIncludesPremiumsOff')}
+                        </div>
+                      </div>
+                    </div>
+                    <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', margin: 0 }}>
+                      <i className="bi bi-info-circle me-1"></i>
+                      {t('admin.packages.maturityIncludesPremiumsHint')}
+                    </p>
+
+                    {/* Preview summary */}
+                    {((form.maturityBonusTiers || []).some(t => t.year !== '' && t.bonusPercent !== '') || form.maturityIncludesPremiums) && (
+                      <div style={{ marginTop: '1rem', padding: '0.75rem 1rem', background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: 10, fontSize: '0.82rem', color: '#92400e' }}>
+                        <div style={{ fontWeight: 700, marginBottom: '0.4rem' }}>
+                          <i className="bi bi-eye me-1"></i>Maturity Payout Preview
+                        </div>
+                        {(form.maturityBonusTiers || []).filter(t => t.year !== '' && t.bonusPercent !== '').map((t, i) => (
+                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
+                            <i className="bi bi-check2-circle" style={{ color: '#d97706' }}></i>
+                            Year {t.year}: Claim Amount + <strong>{t.bonusPercent}% bonus</strong>
+                            {form.maturityIncludesPremiums && <span style={{ color: '#16a34a' }}> + All premiums paid</span>}
+                          </div>
+                        ))}
+                        {!(form.maturityBonusTiers || []).some(t => t.year !== '' && t.bonusPercent !== '') && form.maturityIncludesPremiums && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <i className="bi bi-check2-circle" style={{ color: '#16a34a' }}></i>
+                            At maturity: <strong style={{ color: '#16a34a' }}>All premiums paid will be returned</strong>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
             </div>{/* end sections */}
 
             <div className="d-flex gap-2 mt-4">
@@ -1100,6 +1236,54 @@ function PackageDetailModal({ pkg, onClose, onEdit }) {
               </div>
             </div>
           )}
+
+          {/* Maturity / Policy Expiry Payout */}
+          {(() => {
+            const maturityTiers = Array.isArray(pkg.maturityBonusTiers) && pkg.maturityBonusTiers.length > 0 ? pkg.maturityBonusTiers : []
+            if (maturityTiers.length === 0 && !pkg.maturityIncludesPremiums) return null
+            return (
+              <div style={{ background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: 12, padding: '1rem' }}>
+                <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#92400e', marginBottom: '0.75rem' }}>
+                  <i className="bi bi-calendar2-check me-1" style={{ color: '#d97706' }}></i>
+                  {t('admin.packages.maturityDetailHeader')}
+                </div>
+                {maturityTiers.length > 0 && (
+                  <div style={{ overflowX: 'auto', marginBottom: '0.75rem' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.83rem' }}>
+                      <thead>
+                        <tr style={{ background: 'rgba(217,119,6,0.1)' }}>
+                          <th style={{ ...thStyle, color: '#92400e' }}>{t('admin.packages.maturityYearHeader')}</th>
+                          <th style={{ ...thStyle, color: '#92400e' }}>{t('admin.packages.maturityBonusHeader')}</th>
+                          <th style={{ ...thStyle, color: '#92400e' }}>Payout at Maturity</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {maturityTiers.map((tier, i) => (
+                          <tr key={i} style={{ borderBottom: '1px solid #fde68a' }}>
+                            <td style={tdStyle}><strong style={{ color: '#92400e' }}>{tier.year} {t('admin.packages.yearsUnit')}</strong></td>
+                            <td style={tdStyle}><span style={{ color: '#d97706', fontWeight: 700 }}>{tier.bonusPercent}%</span></td>
+                            <td style={{ ...tdStyle, fontSize: '0.78rem', color: '#78350f' }}>
+                              Claim Amount + {tier.bonusPercent}% bonus
+                              {pkg.maturityIncludesPremiums && <span style={{ color: '#16a34a', fontWeight: 700 }}> + Total Premiums Paid</span>}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.82rem' }}>
+                  <i className={`bi ${pkg.maturityIncludesPremiums ? 'bi-check-circle-fill' : 'bi-x-circle'}`}
+                    style={{ color: pkg.maturityIncludesPremiums ? '#16a34a' : '#94a3b8' }}></i>
+                  <span style={{ color: pkg.maturityIncludesPremiums ? '#15803d' : 'var(--text-muted)' }}>
+                    {pkg.maturityIncludesPremiums
+                      ? t('admin.packages.maturityIncludesPremiumsOn')
+                      : t('admin.packages.maturityIncludesPremiumsOff')}
+                  </span>
+                </div>
+              </div>
+            )
+          })()}
 
           {/* Premium Calculator */}
           {tiers.length > 0 && (

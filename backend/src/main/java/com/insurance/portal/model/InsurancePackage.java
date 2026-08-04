@@ -115,6 +115,24 @@ public class InsurancePackage {
     @Column(name = "transfer_eligible_after_months")
     private Integer transferEligibleAfterMonths;
 
+    // ── Maturity / Policy Expiry Payout ──────────────────────────────────
+    /**
+     * Year-by-year bonus tiers at policy maturity.
+     * JSON array: [{year, bonusPercent}]
+     * e.g. [{year:1,bonusPercent:5.0},{year:3,bonusPercent:10.0}]
+     * At maturity the applicable tier's bonusPercent of the claim coverage amount is paid as a bonus.
+     */
+    @Column(name = "maturity_bonus_tiers", columnDefinition = "TEXT")
+    private String maturityBonusTiersJson;
+
+    /**
+     * If true, the total of all premiums paid (monthly/yearly) by the customer
+     * over the policy lifetime is added to the maturity payout alongside the bonus.
+     */
+    @Builder.Default
+    @Column(name = "maturity_includes_premiums", columnDefinition = "TINYINT(1) NOT NULL DEFAULT 0")
+    private boolean maturityIncludesPremiums = false;
+
     @Builder.Default
     private boolean active = true;
 

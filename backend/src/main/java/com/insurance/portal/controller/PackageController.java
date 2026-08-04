@@ -155,6 +155,14 @@ public class PackageController {
             else try { pkg.setTransferEligibleAfterMonths(((Number) v).intValue()); } catch (Exception ignored) {}
         }
 
+        // Maturity / policy expiry payout
+        if (req.containsKey("maturityBonusTiers")) {
+            Object mb = req.get("maturityBonusTiers");
+            try { pkg.setMaturityBonusTiersJson(MAPPER.writeValueAsString(mb)); } catch (Exception ignored) {}
+        }
+        if (req.containsKey("maturityIncludesPremiums"))
+            pkg.setMaturityIncludesPremiums(Boolean.TRUE.equals(req.get("maturityIncludesPremiums")));
+
         return pkg;
     }
 

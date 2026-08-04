@@ -43,6 +43,10 @@ public class PackageResponse {
     private Integer transferEligibleAfterYears;
     private Integer transferEligibleAfterMonths;
 
+    // Maturity / policy expiry payout
+    private List<Map<String, Object>> maturityBonusTiers;
+    private boolean maturityIncludesPremiums;
+
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     public static PackageResponse from(InsurancePackage pkg) {
@@ -68,6 +72,7 @@ public class PackageResponse {
         dto.setTransferAllowed(pkg.isTransferAllowed());
         dto.setTransferEligibleAfterYears(pkg.getTransferEligibleAfterYears());
         dto.setTransferEligibleAfterMonths(pkg.getTransferEligibleAfterMonths());
+        dto.setMaturityIncludesPremiums(pkg.isMaturityIncludesPremiums());
 
         // Parse benefits (newline-separated)
         try {
@@ -118,6 +123,18 @@ public class PackageResponse {
             }
         } catch (Exception e) {
             dto.setAgeBands(List.of());
+        }
+
+        // Parse maturity bonus tiers JSON
+        try {
+            if (pkg.getMaturityBonusTiersJson() != null && !pkg.getMaturityBonusTiersJson().isBlank()) {
+                dto.setMaturityBonusTiers(MAPPER.readValue(pkg.getMaturityBonusTiersJson(),
+                        new TypeReference<List<Map<String, Object>>>() {}));
+            } else {
+                dto.setMaturityBonusTiers(List.of());
+            }
+        } catch (Exception e) {
+            dto.setMaturityBonusTiers(List.of());
         }
 
         return dto;
