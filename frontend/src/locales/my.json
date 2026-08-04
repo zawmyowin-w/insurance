@@ -623,8 +623,12 @@
     "step4": "ရလဒ်ကို အကြောင်းကြားချက် ရရှိမည်",
     "step5": "အတည်ပြုပါက တောင်းဆိုငွေ ချက်ချင်းပေးသည်",
     "coverageExceeded": "Claim ငွေပမာဏ သည် ကာကွယ်မှုပမာဏ {{amount}} ကျပ် ထက် မကျော်လွန်ရ",
-    "waitingPeriodTitle": "Claim တောင်းဆိုခွင့် စောင့်ဆိုင်းကာလ ကျင်သုံးနေဆဲ",
-    "waitingPeriodEligibleFrom": "{{date}} မှ စတင် claim တောင်းနိုင်မည်",
+    "waitingPeriodTitle": "လျော်ကြေးတောင်းဆိုခွင့် စောင့်ဆိုင်းကာလ ကျင်သုံးနေဆဲ",
+    "waitingPeriodEligibleFrom": "{{date}} မှ စတင် လျော်ကြေးတောင်းနိုင်မည်",
+    "waitingPeriodDaysLeft": "ကျန်ရှိသောရက် — {{days}} ရက်",
+    "waitingPeriodMonthsDuration": "လွှဲပြောင်းရက်မှ {{months}} လ ကြာမှ တောင်းဆိုနိုင်မည်",
+    "transferredPolicyLabel": "လွှဲပြောင်းရရှိသော အာမခံစာချုပ်",
+    "claimEligibleFromLabel": "လျော်ကြေးတောင်းနိုင်မည့်ရက်",
     "maxLabel": "ကာကွယ်မှုပမာဏ {{amount}} ကျပ် ထက် မကျော်လွန်ရ"
   },
   "feedback": {

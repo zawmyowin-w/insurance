@@ -625,7 +625,11 @@
     "coverageExceeded": "Claim amount cannot exceed coverage of {{amount}} MMK",
     "maxLabel": "cannot exceed coverage amount {{amount}} MMK",
     "waitingPeriodTitle": "Claim Waiting Period Active",
-    "waitingPeriodEligibleFrom": "eligible from {{date}}"
+    "waitingPeriodEligibleFrom": "eligible from {{date}}",
+    "waitingPeriodDaysLeft": "{{days}} day(s) remaining",
+    "waitingPeriodMonthsDuration": "Waiting period: {{months}} month(s) from transfer date",
+    "transferredPolicyLabel": "Transferred Policy",
+    "claimEligibleFromLabel": "Claimable from:"
   },
   "feedback": {
     "title": "Send Feedback",

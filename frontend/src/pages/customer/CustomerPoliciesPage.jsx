@@ -219,16 +219,19 @@ export default function CustomerPoliciesPage() {
                 : <><i className="bi bi-download me-1"></i>PDF</>}
             </button>
             {!isUsed && (() => {
-              // Determine claim action:
-              // 1. claimEligibleFrom is set and in the past/today → can claim now
-              // 2. claimEligibleFrom is set and in the future → must wait (covers transferred
-              //    policies with a waiting period AND regular policies with waiting period)
-              // 3. claimEligibleFrom not set → fall back to verifiedPayments check
+              // Claim action logic:
+              // 1. claimEligibleFrom set and in the past/today → can claim now
+              // 2. claimEligibleFrom set and in the future → must wait (transferred policy
+              //    with waiting period, or regular policy with waiting period)
+              // 3. Transferred policy with no waiting period always has claimEligibleFrom = today (set by admin)
+              // 4. claimEligibleFrom not set → fall back to verifiedPayments check (payfirst)
               const eligibleFrom = policy.claimEligibleFrom ? new Date(policy.claimEligibleFrom) : null
               const today = new Date(); today.setHours(0, 0, 0, 0)
               const canClaimByDate = eligibleFrom !== null && eligibleFrom <= today
               const waitingByDate  = eligibleFrom !== null && eligibleFrom > today
               const hasVerified    = verifiedPaymentIds.has(policy.id)
+              // Transferred policies always show claim or wait — never pay-first
+              const isTransferred  = !!policy.isTransferred
 
               if (canClaimByDate || (!eligibleFrom && hasVerified)) {
                 return (
@@ -237,12 +240,39 @@ export default function CustomerPoliciesPage() {
                   </Link>
                 )
               } else if (waitingByDate) {
+                const msRemaining   = eligibleFrom.getTime() - today.getTime()
+                const daysRemaining = Math.ceil(msRemaining / (1000 * 60 * 60 * 24))
                 return (
-                  <span title={t('policies.waitingPeriodTitle')}
-                    style={{ padding: '0.4rem 0.85rem', borderRadius: 8, border: '1.5px solid #93c5fd', background: '#eff6ff', color: '#1d4ed8', fontSize: '0.82rem', fontWeight: 600, cursor: 'not-allowed', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                    <i className="bi bi-hourglass-split me-1"></i>
-                    {t('policies.waitingPeriodEligibleFrom', { date: eligibleFrom.toLocaleDateString() })}
-                  </span>
+                  <div style={{ width: '100%', padding: '0.55rem 0.75rem', borderRadius: 8, border: '1.5px solid #93c5fd', background: '#eff6ff' }}>
+                    {isTransferred && (
+                      <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#1d4ed8', marginBottom: '0.2rem', display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <i className="bi bi-arrow-left-right"></i>
+                        {t('policies.transferredPolicyLabel')}
+                      </div>
+                    )}
+                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#1e40af', display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <i className="bi bi-hourglass-split"></i>
+                      {t('policies.waitingPeriodTitle')}
+                    </div>
+                    <div style={{ fontSize: '0.78rem', color: '#1d4ed8', marginTop: '0.2rem' }}>
+                      {t('policies.claimEligibleFromLabel')} <strong>{eligibleFrom.toLocaleDateString()}</strong>
+                    </div>
+                    {policy.claimWaitingPeriodMonths > 0 && (
+                      <div style={{ fontSize: '0.73rem', color: '#475569', marginTop: '0.15rem' }}>
+                        {t('policies.waitingPeriodMonthsDuration', { months: policy.claimWaitingPeriodMonths })}
+                      </div>
+                    )}
+                    <div style={{ fontSize: '0.73rem', color: '#64748b', marginTop: '0.15rem' }}>
+                      {t('policies.waitingPeriodDaysLeft', { days: daysRemaining })}
+                    </div>
+                  </div>
+                )
+              } else if (isTransferred) {
+                // Safety net: transferred policy but claimEligibleFrom not set yet — allow claim
+                return (
+                  <Link to="/customer/submit-claim" className="btn-outline-custom" style={{ textDecoration: 'none', padding: '0.4rem 0.85rem', fontSize: '0.85rem' }}>
+                    <i className="bi bi-file-earmark-plus me-1"></i>{t('policies.claim')}
+                  </Link>
                 )
               } else {
                 return (

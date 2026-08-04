@@ -34,6 +34,7 @@ public class CustomerController {
     private final NotificationRepository notifRepo;
     private final PaymentMethodConfigRepository paymentMethodConfigRepo;
     private final PolicyService policyService;
+    private final PolicyTransferRepository transferRepo;
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -567,6 +568,21 @@ public class CustomerController {
                     m.put("status", app.getStatus().name());
                     m.put("createdAt", app.getCreatedAt());
                     m.put("agentName", app.getAgent() != null ? app.getAgent().getName() : null);
+                    // Claim eligibility — required for transferred policies and waiting-period policies
+                    m.put("claimEligibleFrom", app.getClaimEligibleFrom() != null ? app.getClaimEligibleFrom().toString() : null);
+                    if (app.getInsurancePackage() != null) {
+                        m.put("claimWaitingPeriodMonths", app.getInsurancePackage().getClaimWaitingPeriodMonths());
+                    }
+                    // Transfer metadata — lets the frontend show accurate status for the new owner
+                    boolean isTransferred = transferRepo.existsByApplication_IdAndToCustomer_IdAndStatus(
+                            app.getId(), user.getId(), TransferStatus.APPROVED);
+                    m.put("isTransferred", isTransferred);
+                    if (isTransferred) {
+                        transferRepo.findTopByApplication_IdAndToCustomer_IdAndStatus(
+                                app.getId(), user.getId(), TransferStatus.APPROVED)
+                                .ifPresent(t -> m.put("transferredAt",
+                                        t.getApprovedAt() != null ? t.getApprovedAt().toString() : null));
+                    }
                     return m;
                 }).toList();
     }

@@ -22,4 +22,11 @@ public interface PolicyTransferRepository extends JpaRepository<PolicyTransfer, 
     boolean existsByApplication_IdAndStatusIn(Long applicationId, List<TransferStatus> statuses);
 
     long countByStatus(TransferStatus status);
+
+    /** Check whether an approved transfer exists for this policy to this recipient. */
+    boolean existsByApplication_IdAndToCustomer_IdAndStatus(Long appId, Long toCustomerId, TransferStatus status);
+
+    /** Fetch the approved transfer record for this policy and recipient. */
+    java.util.Optional<PolicyTransfer> findTopByApplication_IdAndToCustomer_IdAndStatus(
+            Long appId, Long toCustomerId, TransferStatus status);
 }
