@@ -92,12 +92,17 @@ public class AdminPolicyTransferController {
         // ── Re-assign policy ownership ───────────────────────────────
         app.setCustomer(newOwner);
 
-        // ── Claim eligibility: new owner can claim immediately ────────
-        // The previous customer already paid, so the new owner inherits the paid
-        // installments and may claim without re-waiting. Set claimEligibleFrom to
-        // today (or keep it if already in the past so no regression).
+        // ── Claim eligibility after transfer ──────────────────────────────
+        // If the package has a claim waiting period the new owner must serve that
+        // period again from the transfer date (they didn't hold the policy before).
+        // If there is no waiting period they can claim immediately.
         LocalDate today = LocalDate.now();
-        if (app.getClaimEligibleFrom() == null || app.getClaimEligibleFrom().isAfter(today)) {
+        Integer waitMonths = (app.getInsurancePackage() != null)
+                ? app.getInsurancePackage().getClaimWaitingPeriodMonths() : null;
+        if (waitMonths != null && waitMonths > 0) {
+            app.setClaimEligibleFrom(today.plusMonths(waitMonths));
+        } else {
+            // No waiting period — new owner may claim straight away
             app.setClaimEligibleFrom(today);
         }
         appRepo.save(app);

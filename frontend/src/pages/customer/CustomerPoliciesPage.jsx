@@ -218,18 +218,41 @@ export default function CustomerPoliciesPage() {
                 ? <span className="spinner-border spinner-border-sm"></span>
                 : <><i className="bi bi-download me-1"></i>PDF</>}
             </button>
-            {!isUsed && (
-              verifiedPaymentIds.has(policy.id) ? (
-                <Link to="/customer/submit-claim" className="btn-outline-custom" style={{ textDecoration: 'none', padding: '0.4rem 0.85rem', fontSize: '0.85rem' }}>
-                  <i className="bi bi-file-earmark-plus me-1"></i>{t('policies.claim')}
-                </Link>
-              ) : (
-                <span title={t('policies.claimPaymentRequired')}
-                  style={{ padding: '0.4rem 0.85rem', borderRadius: 8, border: '1.5px solid #fcd34d', background: '#fef9c3', color: '#92400e', fontSize: '0.82rem', fontWeight: 600, cursor: 'not-allowed', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                  <i className="bi bi-credit-card me-1"></i>{t('policies.payFirst')}
-                </span>
-              )
-            )}
+            {!isUsed && (() => {
+              // Determine claim action:
+              // 1. claimEligibleFrom is set and in the past/today → can claim now
+              // 2. claimEligibleFrom is set and in the future → must wait (covers transferred
+              //    policies with a waiting period AND regular policies with waiting period)
+              // 3. claimEligibleFrom not set → fall back to verifiedPayments check
+              const eligibleFrom = policy.claimEligibleFrom ? new Date(policy.claimEligibleFrom) : null
+              const today = new Date(); today.setHours(0, 0, 0, 0)
+              const canClaimByDate = eligibleFrom !== null && eligibleFrom <= today
+              const waitingByDate  = eligibleFrom !== null && eligibleFrom > today
+              const hasVerified    = verifiedPaymentIds.has(policy.id)
+
+              if (canClaimByDate || (!eligibleFrom && hasVerified)) {
+                return (
+                  <Link to="/customer/submit-claim" className="btn-outline-custom" style={{ textDecoration: 'none', padding: '0.4rem 0.85rem', fontSize: '0.85rem' }}>
+                    <i className="bi bi-file-earmark-plus me-1"></i>{t('policies.claim')}
+                  </Link>
+                )
+              } else if (waitingByDate) {
+                return (
+                  <span title={t('policies.waitingPeriodTitle')}
+                    style={{ padding: '0.4rem 0.85rem', borderRadius: 8, border: '1.5px solid #93c5fd', background: '#eff6ff', color: '#1d4ed8', fontSize: '0.82rem', fontWeight: 600, cursor: 'not-allowed', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <i className="bi bi-hourglass-split me-1"></i>
+                    {t('policies.waitingPeriodEligibleFrom', { date: eligibleFrom.toLocaleDateString() })}
+                  </span>
+                )
+              } else {
+                return (
+                  <span title={t('policies.claimPaymentRequired')}
+                    style={{ padding: '0.4rem 0.85rem', borderRadius: 8, border: '1.5px solid #fcd34d', background: '#fef9c3', color: '#92400e', fontSize: '0.82rem', fontWeight: 600, cursor: 'not-allowed', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                    <i className="bi bi-credit-card me-1"></i>{t('policies.payFirst')}
+                  </span>
+                )
+              }
+            })()}
             {!isUsed && (
               <button onClick={() => handleRenew(policy.id)} disabled={renewing === policy.id}
                 style={{ padding: '0.4rem 0.85rem', borderRadius: 8, border: '1.5px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600 }}>
