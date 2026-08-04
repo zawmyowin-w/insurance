@@ -281,18 +281,23 @@ function AdvertiseSection({ showToast }) {
   const [sending,   setSending]   = useState(false)
   const [history,   setHistory]   = useState([])
   const [loadingItems, setLoadingItems] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
 
-  useEffect(() => {
-    Promise.all([
+  const loadItems = (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true)
+    else setLoadingItems(true)
+    return Promise.all([
       api.get('/admin/insurance-types').catch(() => ({ data: [] })),
       api.get('/admin/packages').catch(() => ({ data: [] })),
       api.get('/admin/advertise/history').catch(() => ({ data: [] })),
-    ]).then(([t, p, h]) => {
-      setTypes(Array.isArray(t.data) ? t.data : [])
+    ]).then(([ty, p, h]) => {
+      setTypes(Array.isArray(ty.data) ? ty.data : [])
       setPackages(Array.isArray(p.data) ? p.data : [])
       setHistory(Array.isArray(h.data) ? h.data : [])
-    }).finally(() => setLoadingItems(false))
-  }, [])
+    }).finally(() => { setLoadingItems(false); setRefreshing(false) })
+  }
+
+  useEffect(() => { loadItems() }, [])
 
   const toggleItem = (kind, item) => {
     setSelectedItems(prev => {
@@ -351,9 +356,23 @@ function AdvertiseSection({ showToast }) {
           <i className="bi bi-megaphone-fill me-2" style={{ color: '#16a34a' }}></i>
           {t('admin.autoCheck.advertiseTitle')}
         </h6>
-        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-          {t('admin.autoCheck.advertiseSubtitle')}
-        </span>
+        <div className="d-flex align-items-center gap-2">
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            {t('admin.autoCheck.advertiseSubtitle')}
+          </span>
+          <button type="button" onClick={() => loadItems(true)} disabled={refreshing}
+            title="Refresh package list"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              padding: '0.28rem 0.65rem', borderRadius: 7, border: '1.5px solid var(--border)',
+              background: 'var(--bg-primary)', color: 'var(--text-secondary)',
+              fontWeight: 600, fontSize: '0.75rem', cursor: 'pointer',
+            }}>
+            <i className={`bi bi-arrow-clockwise${refreshing ? ' spin-icon' : ''}`}
+              style={{ fontSize: '0.8rem', animation: refreshing ? 'spin 0.8s linear infinite' : 'none' }}></i>
+            {refreshing ? t('admin.common.loading', 'Loading…') : t('admin.autoCheck.refreshList', 'Refresh')}
+          </button>
+        </div>
       </div>
 
       <div className="row g-3">
@@ -680,11 +699,6 @@ export default function AdminAutoCheckPage() {
                    label: t('admin.autoCheck.cleanupCronLabel'),
                   value: status?.revisionCleanupCron ?? '—',
                   icon: 'bi-trash3', color: '#dc2626'
-                },
-                {
-                   label: t('admin.autoCheck.minPendingHours'),
-                   value: `${status?.minPendingHours ?? '—'} ${t('admin.autoCheck.hours')}`,
-                  icon: 'bi-hourglass', color: '#7c3aed'
                 },
                 {
                    label: t('admin.autoCheck.currentMyanmarTime'),
