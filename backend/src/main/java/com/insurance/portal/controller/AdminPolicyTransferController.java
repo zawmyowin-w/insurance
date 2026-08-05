@@ -91,6 +91,7 @@ public class AdminPolicyTransferController {
 
         // ── Re-assign policy ownership ───────────────────────────────
         app.setCustomer(newOwner);
+        app.setTransferredAt(LocalDateTime.now());
 
         // ── Claim eligibility after transfer ──────────────────────────────
         // If the package has a claim waiting period the new owner must serve that

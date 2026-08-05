@@ -45,6 +45,7 @@ public class ApplicationResponse {
     private LocalDateTime createdAt;
     private LocalDate claimEligibleFrom;
     private Integer claimWaitingPeriodMonths;
+    private boolean transferred;
 
     public static ApplicationResponse from(PolicyApplication app) {
         ApplicationResponse dto = new ApplicationResponse();
@@ -102,6 +103,7 @@ public class ApplicationResponse {
         if (app.getInsurancePackage() != null) {
             dto.setClaimWaitingPeriodMonths(app.getInsurancePackage().getClaimWaitingPeriodMonths());
         }
+        dto.setTransferred(app.getTransferredAt() != null);
         return dto;
     }
 }

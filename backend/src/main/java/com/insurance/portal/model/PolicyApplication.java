@@ -122,9 +122,17 @@ public class PolicyApplication {
      * Set automatically when the first payment is verified by admin,
      * calculated as: firstPaymentVerifiedDate + package.claimWaitingPeriodMonths.
      * Null means no waiting period was configured (claims allowed immediately after payment).
+     * Also reset when a policy transfer is approved (new owner serves the waiting period again).
      */
     @Column(name = "claim_eligible_from")
     private LocalDate claimEligibleFrom;
+
+    /**
+     * Set when an admin approves a policy transfer. Non-null means this policy
+     * was transferred at least once; the customer field reflects the current owner.
+     */
+    @Column(name = "transferred_at")
+    private LocalDateTime transferredAt;
 
     /** JSON array of server-stored paths for uploaded supporting documents */
     @Column(name = "documents_path", columnDefinition = "TEXT")

@@ -45,23 +45,33 @@ export default function SubmitClaimPage() {
   }, [])
 
   // Policies that already have a claim
-  // Helper: check if claim waiting period is active for a policy
   const today = new Date().toISOString().split('T')[0]
-  const isInWaitingPeriod = p => {
-    if (!p.claimEligibleFrom) return false
-    return p.claimEligibleFrom > today
+
+  // A policy is still inside its waiting period if claimEligibleFrom is set and in the future.
+  const isInWaitingPeriod = p => !!(p.claimEligibleFrom && p.claimEligibleFrom > today)
+
+  // A policy is claimable now if:
+  //   • claimEligibleFrom is set and is today or past  (covers transferred policies and
+  //     regular policies whose waiting period has already elapsed), OR
+  //   • claimEligibleFrom is NOT set and the customer has a verified payment
+  //     (regular policy with no waiting period configured).
+  const isEligibleToClaimNow = p => {
+    if (p.claimEligibleFrom) return p.claimEligibleFrom <= today
+    return verifiedPaymentIds.has(p.id)
   }
 
-  // Policies eligible to submit a claim: approved + verified payment + no existing claim + waiting period passed
+  // Policies eligible to submit a claim right now
   const availablePolicies = activePolicies.filter(
-    p => !claimedIds.has(p.id) && verifiedPaymentIds.has(p.id) && !isInWaitingPeriod(p)
+    p => !claimedIds.has(p.id) && isEligibleToClaimNow(p) && !isInWaitingPeriod(p)
   )
-  // Policies in waiting period (payment verified but waiting period not yet passed)
+  // Policies in waiting period (transferred with waiting period, or regular policy still waiting)
   const waitingPeriodPolicies = activePolicies.filter(
-    p => !claimedIds.has(p.id) && verifiedPaymentIds.has(p.id) && isInWaitingPeriod(p)
+    p => !claimedIds.has(p.id) && isInWaitingPeriod(p)
   )
-  // Policies approved but payment not yet verified
-  const pendingPaymentPolicies = activePolicies.filter(p => !claimedIds.has(p.id) && !verifiedPaymentIds.has(p.id))
+  // Policies approved but payment not yet verified (and no claimEligibleFrom set)
+  const pendingPaymentPolicies = activePolicies.filter(
+    p => !claimedIds.has(p.id) && !isEligibleToClaimNow(p) && !isInWaitingPeriod(p)
+  )
 
   const selectedPolicy = activePolicies.find(p => String(p.id) === String(form.applicationId))
   const maxClaimAmount = selectedPolicy?.coverageAmount ? Number(selectedPolicy.coverageAmount) : null
