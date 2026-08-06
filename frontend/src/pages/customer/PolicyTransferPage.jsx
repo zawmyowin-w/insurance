@@ -101,14 +101,19 @@ export default function PolicyTransferPage() {
     }
   }
 
-  const downloadPdf = (id) => {
-    api.get(`/customer/policy-transfers/${id}/pdf`, { responseType: 'blob' })
-      .then(res => {
-        const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
-        const a = document.createElement('a')
-        a.href = url; a.download = `transfer_contract_${id}.pdf`; a.click()
-        URL.revokeObjectURL(url)
-      }).catch(() => toast.error('Failed to download PDF'))
+  const downloadPdf = async (id) => {
+    try {
+      const res = await api.get(`/customer/policy-transfers/${id}/pdf`, { responseType: 'blob' })
+      const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `transfer_contract_${id}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      setTimeout(() => { URL.revokeObjectURL(url); document.body.removeChild(a) }, 200)
+    } catch {
+      toast.error('Failed to download PDF')
+    }
   }
 
   const { user } = useAuth()
