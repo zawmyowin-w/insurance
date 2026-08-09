@@ -10,7 +10,7 @@ import { apiError } from '../../utils/apiError'
 const FILTERS = ['ALL', 'PENDING', 'VERIFIED', 'REVISION_REQUESTED', 'REJECTED']
 
 export default function AgentClaimsPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const [claims, setClaims] = useState([])
   const [loading, setLoading] = useState(true)
@@ -25,6 +25,14 @@ export default function AgentClaimsPage() {
   const [signatureData, setSignatureData] = useState(null)
 
   const filter = (() => { const f = searchParams.get('filter'); return FILTERS.includes(f) ? f : 'ALL' })()
+
+  const locale = i18n.language
+  const CLAIM_STATUS_MAP = {
+    PENDING: t('agent.claims.statusPending'),
+    VERIFIED: t('agent.claims.statusVerified'),
+    REVISION_REQUESTED: t('agent.claims.statusRevision'),
+    REJECTED: t('agent.claims.statusRejected'),
+  }
 
   const FILTER_LABELS = {
     ALL:                t('agent.apps.filterAll'),
@@ -132,7 +140,7 @@ export default function AgentClaimsPage() {
                       </h6>
                       <small style={{ color: 'var(--text-muted)' }}>{claim.claimType}</small>
                     </div>
-                    <span className={`badge-status badge-${claim.status?.toLowerCase()}`}>{claim.status}</span>
+                     <span className={`badge-status badge-${claim.status?.toLowerCase()}`}>{CLAIM_STATUS_MAP[claim.status] || claim.status}</span>
                   </div>
 
                   {/* Admin revision note */}
@@ -164,9 +172,9 @@ export default function AgentClaimsPage() {
                   <div className="row g-2 mb-3">
                     {[
                       { label: t('agent.claims.policyLabel'),   value: claim.policyName || claim.policy?.packageName },
-                      { label: t('agent.claims.amountLabel'),   value: `${Number(claim.amount).toLocaleString()} MMK` },
-                      { label: t('agent.claims.incidentLabel'), value: claim.incidentDate ? new Date(claim.incidentDate).toLocaleDateString() : '—' },
-                      { label: t('agent.claims.submittedLabel'),value: claim.createdAt ? new Date(claim.createdAt).toLocaleDateString() : '—' },
+                      { label: t('agent.claims.amountLabel'),   value: `${Number(claim.amount).toLocaleString(locale)} MMK` },
+                       { label: t('agent.claims.incidentLabel'), value: claim.incidentDate ? new Date(claim.incidentDate).toLocaleDateString(locale) : t('formModal.na') },
+                       { label: t('agent.claims.submittedLabel'),value: claim.createdAt ? new Date(claim.createdAt).toLocaleDateString(locale) : t('formModal.na') },
                     ].map(item => (
                       <div key={item.label} className="col-6">
                         <div style={{ background: 'var(--bg-secondary)', borderRadius: 6, padding: '0.5rem 0.75rem' }}>

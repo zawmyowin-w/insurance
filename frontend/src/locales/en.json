@@ -1,5 +1,8 @@
 {
   "brand": "Digital Insurance Claim and Premiums",
+  "user": {
+    "role": "Role"
+  },
   "nav": {
     "plans": "Plans",
     "howItWorks": "How It Works",
@@ -9,7 +12,10 @@
     "applications": "Applications",
     "claims": "Claims",
     "notifications": "Notifications",
-    "logout": "Log out"
+    "logout": "Log out",
+    "profile": "My Profile",
+    "switchLanguage": "Switch Language",
+    "toggleTheme": "Toggle theme"
   },
   "hero": {
     "badge": "Trusted by over 1,000,000 policyholders nationwide",
@@ -541,7 +547,11 @@
     "customerPortal": "Customer Portal"
   },
   "notif": {
-    "customerSubtitle": "Stay updated on your applications and claims"
+    "customerSubtitle": "Stay updated on your applications and claims",
+    "title": "Notifications",
+    "markAllRead": "Mark all as read",
+    "empty": "No notifications yet",
+    "markedAllRead": "All notifications marked as read"
   },
   "policies": {
     "title": "My Policies",
@@ -597,6 +607,11 @@
     "subtitle": "View your account details and update what's yours to change",
     "editPhoto": "Click the camera icon to change your photo",
     "yourPhoto": "Your account photo",
+    "changePhotoTooltip": "Change photo",
+    "chooseImageFile": "Please choose an image file",
+    "imageMaxSize": "Image must be under 5MB",
+    "avatarUpdated": "Profile picture updated",
+    "avatarUploadFailed": "Failed to upload picture",
     "editTitle": "Edit Profile Information",
     "viewTitle": "Profile Information",
     "fullName": "Full Name",
@@ -899,7 +914,9 @@
       "backHome": "Back to home",
       "agentOnly": "This login is for agent accounts only.",
       "welcomeBack": "Welcome back!",
-      "invalidCredentials": "Invalid email or password."
+      "invalidCredentials": "Invalid email or password.",
+      "emailPlaceholder": "agent@example.com",
+      "passwordPlaceholder": "••••••••"
     },
     "dash": {
       "morningGreeting": "Good Morning",
@@ -930,7 +947,7 @@
       "filterVerified": "Verified",
       "filterRevision": "Revision",
       "filterRejected": "Rejected",
-      "empty": "No pending applications",
+      "empty": "There are currently no pending applications",
       "adminRevision": "Admin requested revision:",
       "yourNote": "Your note to customer:",
       "planLabel": "Plan",
@@ -954,7 +971,11 @@
       "signatureLabel": "Agent digital signature",
       "signatureRequired": "Please sign before verifying the application",
       "yearSuffix": "year",
-      "yearsSuffix": "years"
+      "yearsSuffix": "years",
+      "statusPending": "Pending",
+      "statusVerified": "Verified",
+      "statusRevision": "Revision",
+      "statusRejected": "Rejected"
     },
     "claims": {
       "title": "Check Claims",
@@ -981,7 +1002,11 @@
       "forwardSuccess": "Customer notified to update their claim",
       "reasonRequired": "Provide rejection reason",
       "signatureLabel": "Agent digital signature",
-      "signatureRequired": "Please sign before verifying the claim"
+      "signatureRequired": "Please sign before verifying the claim",
+      "statusPending": "Pending",
+      "statusVerified": "Verified",
+      "statusRevision": "Revision",
+      "statusRejected": "Rejected"
     },
     "messages": {
       "title": "Send Message",
@@ -1010,10 +1035,12 @@
       "subjectRequired": "Subject is required",
       "bodyRequired": "Message body is required",
       "sendSuccess": "Message sent successfully!",
-      "sendFailed": "Failed to send message"
+      "sendFailed": "Failed to send message",
+      "adminLabel": "Admin",
+      "customerLabel": "Customer"
     },
     "notif": {
-      "subtitle": "Notifications from the system and admin"
+      "subtitle": "Notifications from the Administrator"
     },
     "profile": {
       "title": "My Profile",
@@ -2081,12 +2108,18 @@
     "incidentDate": "Incident Date",
     "claimType": "Claim Type",
     "customer": "Customer",
+    "statusApproved": "Approved",
+    "statusRejected": "Rejected",
+    "statusPending": "Pending",
+    "statusVerified": "Verified",
+    "statusRevision": "Revision",
     "generating": "Generating...",
     "pdf": "PDF",
     "downloadFailed": "Failed to download PDF",
     "noTemplate": "No form template found for this plan.",
     "noFields": "No fields in this template.",
     "noneSelected": "None selected",
+    "na": "N/A",
     "yes": "Yes",
     "no": "No",
     "noImageUploaded": "No image uploaded",

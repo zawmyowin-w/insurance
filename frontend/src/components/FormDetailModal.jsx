@@ -15,7 +15,8 @@ import api from '../services/api'
  *   role        {string}   - 'admin' | 'agent' | 'customer'
  */
 export default function FormDetailModal({ show, onClose, type, item, role }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const locale = i18n.language
   const [template, setTemplate] = useState(null)
   const [loading, setLoading]   = useState(false)
   const [pdfLoading, setPdfLoading] = useState(false)
@@ -61,6 +62,15 @@ export default function FormDetailModal({ show, onClose, type, item, role }) {
   const typeLabel   = isApp ? t('formModal.applicationForm') : t('formModal.claimForm')
   const typeIcon    = isApp ? 'bi-file-earmark-text' : 'bi-shield-exclamation'
   const statusValue = item.status
+
+  const STATUS_MAP = {
+    APPROVED: t('formModal.statusApproved'),
+    REJECTED: t('formModal.statusRejected'),
+    PENDING: t('formModal.statusPending'),
+    VERIFIED: t('formModal.statusVerified'),
+    REVISION_REQUESTED: t('formModal.statusRevision'),
+  }
+  const statusText = STATUS_MAP[statusValue] || statusValue
 
   const statusBadgeStyle = {
     display: 'inline-block',
@@ -133,7 +143,7 @@ export default function FormDetailModal({ show, onClose, type, item, role }) {
                   {typeLabel}
                 </div>
                 <div style={{ color: '#fff', fontSize: '1.15rem', fontWeight: 800, lineHeight: 1.2 }}>
-                  {item.packageName || item.policyName || '—'}
+                  {item.packageName || item.policyName || t('formModal.na')}
                 </div>
               </div>
             </div>
@@ -165,12 +175,12 @@ export default function FormDetailModal({ show, onClose, type, item, role }) {
 
           {/* Status pill row */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: '1rem', position: 'relative', zIndex: 1 }}>
-            <span style={statusBadgeStyle}>{statusValue}</span>
-            <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.78rem' }}>
-              #{item.id}
-              {item.policyNumber ? ' · ' + item.policyNumber : ''}
-              {item.createdAt ? ' · ' + new Date(item.createdAt).toLocaleDateString() : ''}
-            </span>
+            <span style={statusBadgeStyle}>{statusText}</span>
+             <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.78rem' }}>
+               #{item.id}
+               {item.policyNumber ? ' · ' + item.policyNumber : ''}
+               {item.createdAt ? ' · ' + new Date(item.createdAt).toLocaleDateString(locale) : ''}
+             </span>
           </div>
 
           {/* Stats strip */}
@@ -179,12 +189,12 @@ export default function FormDetailModal({ show, onClose, type, item, role }) {
             position: 'relative', zIndex: 1, flexWrap: 'wrap',
           }}>
             {isApp ? <>
-              {item.coverageAmount && <StatPill icon="bi-shield-check" label={t('formModal.coverage')} value={Number(item.coverageAmount).toLocaleString() + ' MMK'} />}
-              {item.premiumAmount  && <StatPill icon="bi-cash-coin"    label={t('formModal.premium')}  value={Number(item.premiumAmount).toLocaleString() + ' MMK'} />}
+              {item.coverageAmount && <StatPill icon="bi-shield-check" label={t('formModal.coverage')} value={Number(item.coverageAmount).toLocaleString(locale) + ' MMK'} />}
+              {item.premiumAmount  && <StatPill icon="bi-cash-coin"    label={t('formModal.premium')}  value={Number(item.premiumAmount).toLocaleString(locale) + ' MMK'} />}
               {item.duration       && <StatPill icon="bi-calendar3"    label={t('formModal.duration')} value={item.duration + ' ' + t('formModal.year')} />}
               {item.riskLevel      && <StatPill icon="bi-activity"     label={t('formModal.risk')}     value={item.riskLevel} />}
             </> : <>
-              {item.amount       && <StatPill icon="bi-cash-coin"          label={t('formModal.claimAmount')}  value={Number(item.amount).toLocaleString() + ' MMK'} />}
+              {item.amount       && <StatPill icon="bi-cash-coin"          label={t('formModal.claimAmount')}  value={Number(item.amount).toLocaleString(locale) + ' MMK'} />}
               {item.incidentDate && <StatPill icon="bi-calendar-event"     label={t('formModal.incidentDate')} value={item.incidentDate} />}
               {item.claimType    && <StatPill icon="bi-tag"                label={t('formModal.claimType')}    value={item.claimType} />}
               {item.customerName && <StatPill icon="bi-person"             label={t('formModal.customer')}     value={item.customerName} />}
@@ -196,7 +206,7 @@ export default function FormDetailModal({ show, onClose, type, item, role }) {
         <div style={{ overflowY: 'auto', flex: 1, padding: '1.5rem' }}>
 
           {/* ── Personal Information section (always shown) ── */}
-          <PersonalInfoSection item={item} type={type} formData={formData} typeColor={typeColor} />
+          <PersonalInfoSection item={item} type={type} formData={formData} typeColor={typeColor} locale={locale} />
 
           {/* Dynamic form fields */}
           {loading ? (
@@ -238,7 +248,7 @@ export default function FormDetailModal({ show, onClose, type, item, role }) {
 }
 
 /* ── Personal Information Section ── */
-function PersonalInfoSection({ item, type, formData, typeColor }) {
+function PersonalInfoSection({ item, type, formData, typeColor, locale }) {
   const { t } = useTranslation()
   const isApp = type === 'application'
 
@@ -256,21 +266,21 @@ function PersonalInfoSection({ item, type, formData, typeColor }) {
     if (item.packageName)     rows.push({ icon: 'bi-box-seam',           label: t('formModal.pi.package'),        value: item.packageName })
     if (item.packageType)     rows.push({ icon: 'bi-tag',                label: t('formModal.pi.packageType'),    value: item.packageType })
     if (item.policyNumber)    rows.push({ icon: 'bi-hash',               label: t('formModal.pi.policyNumber'),   value: item.policyNumber })
-    if (item.coverageAmount)  rows.push({ icon: 'bi-shield-check',       label: t('formModal.pi.coverage'),       value: Number(item.coverageAmount).toLocaleString() + ' MMK' })
-    if (item.premiumAmount)   rows.push({ icon: 'bi-cash-coin',          label: t('formModal.pi.premium'),        value: Number(item.premiumAmount).toLocaleString() + ' MMK' })
+    if (item.coverageAmount)  rows.push({ icon: 'bi-shield-check',       label: t('formModal.pi.coverage'),       value: Number(item.coverageAmount).toLocaleString(locale) + ' MMK' })
+    if (item.premiumAmount)   rows.push({ icon: 'bi-cash-coin',          label: t('formModal.pi.premium'),        value: Number(item.premiumAmount).toLocaleString(locale) + ' MMK' })
     if (item.duration)        rows.push({ icon: 'bi-calendar3',          label: t('formModal.pi.duration'),       value: item.duration + ' ' + t('formModal.year') })
     if (item.paymentFrequency) rows.push({ icon: 'bi-arrow-repeat',     label: t('formModal.pi.paymentFreq'),    value: item.paymentFrequency })
-    if (item.installmentAmount) rows.push({ icon: 'bi-receipt',         label: t('formModal.pi.installment'),    value: Number(item.installmentAmount).toLocaleString() + ' MMK' })
+    if (item.installmentAmount) rows.push({ icon: 'bi-receipt',         label: t('formModal.pi.installment'),    value: Number(item.installmentAmount).toLocaleString(locale) + ' MMK' })
     if (item.totalInstallments) rows.push({ icon: 'bi-list-ol',         label: t('formModal.pi.totalInst'),      value: item.totalInstallments })
     if (item.riskLevel)       rows.push({ icon: 'bi-activity',           label: t('formModal.pi.riskLevel'),      value: item.riskLevel })
-    if (item.createdAt)       rows.push({ icon: 'bi-calendar-event',     label: t('formModal.pi.submittedAt'),    value: new Date(item.createdAt).toLocaleString() })
+    if (item.createdAt)       rows.push({ icon: 'bi-calendar-event',     label: t('formModal.pi.submittedAt'),    value: new Date(item.createdAt).toLocaleString(locale) })
   } else {
     if (item.policyName)      rows.push({ icon: 'bi-file-earmark-text',  label: t('formModal.pi.policy'),         value: item.policyName })
     if (item.claimType)       rows.push({ icon: 'bi-tag',                label: t('formModal.pi.claimType'),      value: item.claimType })
-    if (item.amount)          rows.push({ icon: 'bi-cash-coin',          label: t('formModal.pi.claimAmount'),    value: Number(item.amount).toLocaleString() + ' MMK' })
-    if (item.coverageAmount)  rows.push({ icon: 'bi-shield-check',       label: t('formModal.pi.coverage'),       value: Number(item.coverageAmount).toLocaleString() + ' MMK' })
+    if (item.amount)          rows.push({ icon: 'bi-cash-coin',          label: t('formModal.pi.claimAmount'),    value: Number(item.amount).toLocaleString(locale) + ' MMK' })
+    if (item.coverageAmount)  rows.push({ icon: 'bi-shield-check',       label: t('formModal.pi.coverage'),       value: Number(item.coverageAmount).toLocaleString(locale) + ' MMK' })
     if (item.incidentDate)    rows.push({ icon: 'bi-calendar-event',     label: t('formModal.pi.incidentDate'),   value: item.incidentDate })
-    if (item.createdAt)       rows.push({ icon: 'bi-clock-history',      label: t('formModal.pi.submittedAt'),    value: new Date(item.createdAt).toLocaleString() })
+    if (item.createdAt)       rows.push({ icon: 'bi-clock-history',      label: t('formModal.pi.submittedAt'),    value: new Date(item.createdAt).toLocaleString(locale) })
   }
 
   if (rows.length === 0) return null
@@ -419,7 +429,7 @@ function FieldRow({ field, value, role, type, itemId }) {
 
   if (field.fieldType === 'CHECKBOX') {
     if (value === undefined || value === null || value === '') {
-      displayValue = <span style={{ color: 'var(--text-muted)' }}>—</span>
+      displayValue = <span style={{ color: 'var(--text-muted)' }}>{t('formModal.na')}</span>
     } else if (Array.isArray(value)) {
       displayValue = value.length > 0
         ? <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
@@ -429,7 +439,7 @@ function FieldRow({ field, value, role, type, itemId }) {
               </span>
             ))}
           </div>
-        : <span style={{ color: 'var(--text-muted)' }}>None selected</span>
+         : <span style={{ color: 'var(--text-muted)' }}>{t('formModal.noneSelected')}</span>
     } else {
       try {
         const parsed = JSON.parse(value)
@@ -442,32 +452,32 @@ function FieldRow({ field, value, role, type, itemId }) {
                   </span>
                 ))}
               </div>
-            : <span style={{ color: 'var(--text-muted)' }}>None selected</span>
+            : <span style={{ color: 'var(--text-muted)' }}>{t('formModal.noneSelected')}</span>
         } else {
-          displayValue = value === 'true'
-            ? <span style={{ color: '#16a34a', fontWeight: 600 }}>✓ Yes</span>
-            : <span style={{ color: '#dc2626' }}>✗ No</span>
+           displayValue = value === 'true'
+             ? <span style={{ color: '#16a34a', fontWeight: 600 }}>✓ {t('formModal.yes')}</span>
+             : <span style={{ color: '#dc2626' }}>✗ {t('formModal.no')}</span>
         }
       } catch {
         displayValue = value === 'true'
-          ? <span style={{ color: '#16a34a', fontWeight: 600 }}>✓ Yes</span>
+          ? <span style={{ color: '#16a34a', fontWeight: 600 }}>✓ {t('formModal.yes')}</span>
           : value === 'false'
-            ? <span style={{ color: '#dc2626' }}>✗ No</span>
+            ? <span style={{ color: '#dc2626' }}>✗ {t('formModal.no')}</span>
             : <span>{value}</span>
       }
     }
   } else if (field.fieldType === 'IMAGE_UPLOAD') {
     displayValue = !value
-      ? <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>No image uploaded</span>
-      : <FileLink path={value} label="View Image" isImage={true} role={role} type={type} itemId={itemId} fieldId={field.id} />
+      ? <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{t('formModal.noImageUploaded')}</span>
+      :              <FileLink path={value} label={t('formModal.viewImage')} isImage={true} role={role} type={type} itemId={itemId} fieldId={field.id} />
   } else if (field.fieldType === 'PDF_UPLOAD') {
     displayValue = !value
-      ? <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>No file uploaded</span>
-      : <FileLink path={value} label="View File" isImage={false} role={role} type={type} itemId={itemId} fieldId={field.id} />
+      ? <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{t('formModal.noFileUploaded')}</span>
+      :              <FileLink path={value} label={t('formModal.viewFile')} isImage={false} role={role} type={type} itemId={itemId} fieldId={field.id} />
   } else {
     displayValue = value
       ? <span style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{value}</span>
-      : <span style={{ color: 'var(--text-muted)' }}>—</span>
+      : <span style={{ color: 'var(--text-muted)' }}>{t('formModal.na')}</span>
   }
 
   return (

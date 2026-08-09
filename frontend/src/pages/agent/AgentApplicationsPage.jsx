@@ -10,7 +10,7 @@ import { apiError } from '../../utils/apiError'
 const FILTERS = ['ALL', 'PENDING', 'VERIFIED', 'REVISION_REQUESTED', 'REJECTED']
 
 export default function AgentApplicationsPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const [apps, setApps] = useState([])
   const [loading, setLoading] = useState(true)
@@ -25,6 +25,14 @@ export default function AgentApplicationsPage() {
   const [signatureData, setSignatureData] = useState(null)
 
   const filter = (() => { const f = searchParams.get('filter'); return FILTERS.includes(f) ? f : 'ALL' })()
+
+  const locale = i18n.language
+  const APP_STATUS_MAP = {
+    PENDING: t('agent.apps.statusPending'),
+    VERIFIED: t('agent.apps.statusVerified'),
+    REVISION_REQUESTED: t('agent.apps.statusRevision'),
+    REJECTED: t('agent.apps.statusRejected'),
+  }
 
   const FILTER_LABELS = {
     ALL:                t('agent.apps.filterAll'),
@@ -132,7 +140,7 @@ export default function AgentApplicationsPage() {
                       </h6>
                       <small style={{ color: 'var(--text-muted)' }}>{app.customerEmail || app.customer?.email}</small>
                     </div>
-                    <span className={`badge-status badge-${app.status?.toLowerCase()}`}>{app.status}</span>
+                     <span className={`badge-status badge-${app.status?.toLowerCase()}`}>{APP_STATUS_MAP[app.status] || app.status}</span>
                   </div>
 
                   {/* Admin revision note */}
@@ -165,7 +173,7 @@ export default function AgentApplicationsPage() {
                     {[
                       { label: t('agent.apps.planLabel'),     value: app.packageName || app.package?.name },
                       { label: t('agent.apps.typeLabel'),     value: app.packageType || app.package?.type },
-                      { label: t('agent.apps.coverageLabel'), value: `${Number(app.coverageAmount).toLocaleString()} MMK` },
+                      { label: t('agent.apps.coverageLabel'), value: `${Number(app.coverageAmount).toLocaleString(locale)} MMK` },
                       { label: t('agent.apps.durationLabel'), value: `${app.duration} ${app.duration > 1 ? t('agent.apps.yearsSuffix') : t('agent.apps.yearSuffix')}` },
                     ].map(item => (
                       <div key={item.label} className="col-6">

@@ -2,16 +2,17 @@ import { useAuth } from '../../context/AuthContext'
 import { useTranslation } from 'react-i18next'
 import ProfileAvatar from '../../components/ProfileAvatar'
 
-const Field = ({ label, value }) => (
+const Field = ({ label, value, t }) => (
   <div className="col-12 col-md-6">
     <label className="form-label-custom">{label}</label>
-    <input disabled className="form-control-custom w-100" value={value || '—'} style={{ opacity: 0.7, cursor: 'not-allowed' }} />
+    <input disabled className="form-control-custom w-100" value={value || t('formModal.na')} style={{ opacity: 0.7, cursor: 'not-allowed' }} />
   </div>
 )
 
 export default function AgentProfilePage() {
   const { user } = useAuth()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const locale = i18n.language
 
   return (
     <div className="fade-in">
@@ -51,13 +52,13 @@ export default function AgentProfilePage() {
               </div>
             </div>
             <div className="row g-3">
-              <Field label={t('agent.profile.nameLabel')}          value={user?.name} />
-              <Field label={t('agent.profile.emailLabel')}         value={user?.email} />
-              <Field label={t('agent.profile.phoneLabel')}         value={user?.phone} />
-              <Field label={t('agent.profile.insuranceTypeLabel')} value={user?.insuranceType} />
-              <Field label={t('agent.profile.addressLabel')}       value={user?.address} />
-              <Field label={t('agent.profile.statusLabel')}        value={user?.active ? t('agent.profile.statusActive') : t('agent.profile.statusInactive')} />
-              <Field label={t('agent.profile.joinedLabel')}        value={user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : ''} />
+              <Field label={t('agent.profile.nameLabel')}          value={user?.name} t={t} />
+              <Field label={t('agent.profile.emailLabel')}         value={user?.email} t={t} />
+              <Field label={t('agent.profile.phoneLabel')}         value={user?.phone} t={t} />
+              <Field label={t('agent.profile.insuranceTypeLabel')} value={user?.insuranceType} t={t} />
+              <Field label={t('agent.profile.addressLabel')}       value={user?.address} t={t} />
+              <Field label={t('agent.profile.statusLabel')}        value={user?.active ? t('agent.profile.statusActive') : t('agent.profile.statusInactive')} t={t} />
+              <Field label={t('agent.profile.joinedLabel')}        value={user?.createdAt ? new Date(user.createdAt).toLocaleDateString(locale) : ''} t={t} />
             </div>
           </div>
         </div>

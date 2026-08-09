@@ -69,7 +69,7 @@ export default function AgentLoginPage() {
                 type="email" required
                 className="form-control-custom w-100"
                 style={{ paddingLeft: '2.25rem' }}
-                placeholder="agent@example.com"
+                 placeholder={t('agent.login.emailPlaceholder')}
                 value={form.email}
                 onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
               />
@@ -89,7 +89,7 @@ export default function AgentLoginPage() {
                 type={showPwd ? 'text' : 'password'} required
                 className="form-control-custom w-100"
                 style={{ paddingLeft: '2.25rem', paddingRight: '2.5rem' }}
-                placeholder="••••••••"
+                 placeholder={t('agent.login.passwordPlaceholder')}
                 value={form.password}
                 onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
               />

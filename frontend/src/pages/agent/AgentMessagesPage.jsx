@@ -97,10 +97,10 @@ export default function AgentMessagesPage() {
                     {t('agent.messages.sendTo')}
                   </label>
                   <div className="d-flex gap-2">
-                    {[
-                      { value: 'ADMIN',    label: 'Admin',    icon: 'bi-shield-lock', color: '#9333ea' },
-                      { value: 'CUSTOMER', label: 'Customer', icon: 'bi-person',      color: '#16a34a' },
-                    ].map(opt => (
+                     {[
+                       { value: 'ADMIN',    label: t('agent.messages.adminLabel'),    icon: 'bi-shield-lock', color: '#9333ea' },
+                       { value: 'CUSTOMER', label: t('agent.messages.customerLabel'), icon: 'bi-person',      color: '#16a34a' },
+                     ].map(opt => (
                       <button type="button" key={opt.value} onClick={() => handleTypeChange(opt.value)} style={{
                         flex: 1, padding: '0.6rem 1rem', borderRadius: 10, border: '1.5px solid',
                         borderColor: recipientType === opt.value ? opt.color : 'var(--border)',
@@ -119,7 +119,7 @@ export default function AgentMessagesPage() {
                 {/* Recipient select */}
                 <div className="mb-3">
                   <label className="form-label-custom">
-                    {recipientType === 'ADMIN' ? 'Admin' : 'Customer'}
+                     {recipientType === 'ADMIN' ? t('agent.messages.adminLabel') : t('agent.messages.customerLabel')}
                   </label>
                   {recipientList.length === 0 ? (
                     <div style={{
@@ -205,10 +205,10 @@ export default function AgentMessagesPage() {
               {t('agent.messages.availContacts')}
             </h6>
             <div className="d-flex gap-3">
-              {[
-                { label: 'Admin',    count: contacts.admins.length,    color: '#9333ea', bg: '#faf5ff' },
-                { label: 'Customer', count: contacts.customers.length, color: '#16a34a', bg: '#f0fdf4' },
-              ].map(c => (
+               {[
+                 { label: t('agent.messages.adminLabel'),    count: contacts.admins.length,    color: '#9333ea', bg: '#faf5ff' },
+                 { label: t('agent.messages.customerLabel'), count: contacts.customers.length, color: '#16a34a', bg: '#f0fdf4' },
+               ].map(c => (
                 <div key={c.label} style={{
                   flex: 1, textAlign: 'center', padding: '0.75rem',
                   borderRadius: 10, background: c.bg

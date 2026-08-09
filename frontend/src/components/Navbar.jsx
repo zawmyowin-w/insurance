@@ -68,14 +68,14 @@ export default function Navbar() {
           {/* Right controls */}
           <div className="d-flex align-items-center gap-2">
             {/* Language toggle */}
-            <button className="icon-btn" onClick={toggleLang} title="Switch Language">
+            <button className="icon-btn" onClick={toggleLang} title={t('nav.switchLanguage')}>
               <span style={{ fontSize: '0.78rem', fontWeight: 600, lineHeight: 1 }}>
                 {i18n.language === 'en' ? 'မြန်မာ' : 'EN'}
               </span>
             </button>
 
             {/* Theme toggle */}
-            <button className="icon-btn" onClick={toggleTheme} title="Toggle theme">
+            <button className="icon-btn" onClick={toggleTheme} title={t('nav.toggleTheme')}>
               <i className={`bi bi-${theme === 'light' ? 'sun' : 'moon-stars'}`}></i>
             </button>
 
@@ -84,7 +84,7 @@ export default function Navbar() {
               <Link
                 to="/customer/notifications"
                 className="icon-btn"
-                title="Notifications"
+                 title={t('nav.notifications')}
                 style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
                 <i className="bi bi-bell" style={{ fontSize: '1.05rem' }}></i>
@@ -129,10 +129,10 @@ export default function Navbar() {
                   borderRadius: '10px', minWidth: '180px', boxShadow: 'var(--shadow-lg)'
                 }}>
                   <li>
-                    <span className="dropdown-item-text" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', padding: '0.5rem 1rem' }}>
-                      {user.name}
-                      <div style={{ fontSize: '0.78rem', opacity: 0.7 }}>{user.role}</div>
-                    </span>
+                     <span className="dropdown-item-text" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', padding: '0.5rem 1rem' }}>
+                       {user.name}
+                       <div style={{ fontSize: '0.78rem', opacity: 0.7 }}>{t('user.role')}</div>
+                     </span>
                   </li>
                   <li><hr className="dropdown-divider" style={{ borderColor: 'var(--border)' }} /></li>
                   <li>
@@ -142,7 +142,7 @@ export default function Navbar() {
                   </li>
                   <li>
                     <Link className="dropdown-item" to={dashboardPath.replace('/dashboard', '/profile')} style={{ color: 'var(--text-primary)', fontSize: '0.88rem' }}>
-                      <i className="bi bi-person-circle me-2"></i>My Profile
+                       <i className="bi bi-person-circle me-2"></i>{t('nav.profile')}
                     </Link>
                   </li>
                   {user.role === 'CUSTOMER' && (

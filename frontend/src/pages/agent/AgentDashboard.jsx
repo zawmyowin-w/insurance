@@ -6,7 +6,7 @@ import api from '../../services/api'
 
 export default function AgentDashboard() {
   const { user } = useAuth()
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [stats, setStats] = useState({ pending: 0, verified: 0, pendingClaims: 0, verifiedClaims: 0, unreadNotifications: 0 })
   const [recentApps, setRecentApps] = useState([])
   const [loading, setLoading] = useState(true)
@@ -28,6 +28,14 @@ export default function AgentDashboard() {
     : hour < 17
     ? t('agent.dash.afternoonGreeting')
     : t('agent.dash.eveningGreeting')
+
+  const locale = i18n.language
+  const APP_STATUS_MAP = {
+    PENDING: t('agent.apps.statusPending'),
+    VERIFIED: t('agent.apps.statusVerified'),
+    REVISION_REQUESTED: t('agent.apps.statusRevision'),
+    REJECTED: t('agent.apps.statusRejected'),
+  }
 
   const statCards = [
     { label: t('agent.dash.pendingApps'),   value: stats.pending,             icon: 'bi-file-earmark-text-fill',    grad: 'linear-gradient(135deg,#f59e0b,#d97706)', link: '/agent/applications?filter=PENDING' },
@@ -130,11 +138,11 @@ export default function AgentDashboard() {
               <tbody>
                 {recentApps.map(a => (
                   <tr key={a.id}>
-                    <td style={{ fontWeight: 600 }}>{a.customerName || a.customer?.name}</td>
+                     <td style={{ fontWeight: 600 }}>{a.customerName || a.customer?.name}</td>
                     <td>{a.packageName || a.package?.name}</td>
-                    <td>{Number(a.coverageAmount).toLocaleString()} MMK</td>
-                    <td><span className={`badge-status badge-${a.status?.toLowerCase()}`}>{a.status}</span></td>
-                    <td>{a.createdAt ? new Date(a.createdAt).toLocaleDateString() : '—'}</td>
+                    <td>{Number(a.coverageAmount).toLocaleString(locale)} MMK</td>
+                     <td><span className={`badge-status badge-${a.status?.toLowerCase()}`}>{APP_STATUS_MAP[a.status] || a.status}</span></td>
+                     <td>{a.createdAt ? new Date(a.createdAt).toLocaleDateString(locale) : t('formModal.na')}</td>
                   </tr>
                 ))}
               </tbody>

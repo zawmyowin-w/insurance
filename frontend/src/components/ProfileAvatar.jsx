@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import api from '../services/api'
 import { toast } from 'react-toastify'
+import { useTranslation } from 'react-i18next'
 
 /**
  * Displays a user's profile picture (fetched via blob + object URL, since the
@@ -11,6 +12,7 @@ export default function ProfileAvatar({
   fetchUrl, uploadUrl, hasPicture, name, size = 96, editable = false, onUploaded,
   deferUpload = false, onFileSelected, previewOverrideUrl,
 }) {
+  const { t } = useTranslation()
   const [objectUrl, setObjectUrl] = useState(null)
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef(null)
@@ -33,8 +35,8 @@ export default function ProfileAvatar({
   const handleFileChange = async e => {
     const file = e.target.files?.[0]
     if (!file) return
-    if (!file.type.startsWith('image/')) { toast.error('Please choose an image file'); return }
-    if (file.size > 5 * 1024 * 1024) { toast.error('Image must be under 5MB'); return }
+    if (!file.type.startsWith('image/')) { toast.error(t('profile.chooseImageFile')); return }
+    if (file.size > 5 * 1024 * 1024) { toast.error(t('profile.imageMaxSize')); return }
 
     if (deferUpload) {
       // Just hand the file back to the parent — it decides when (e.g. on "Save Changes") to actually upload it.
@@ -48,10 +50,10 @@ export default function ProfileAvatar({
     setUploading(true)
     try {
       const { data } = await api.post(uploadUrl, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
-      toast.success('Profile picture updated')
+      toast.success(t('profile.avatarUpdated'))
       onUploaded?.(data)
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to upload picture')
+      toast.error(err.response?.data?.message || t('profile.avatarUploadFailed'))
     } finally {
       setUploading(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
@@ -76,7 +78,7 @@ export default function ProfileAvatar({
       {editable && (
         <>
           <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading}
-            title="Change photo"
+            title={t('profile.changePhotoTooltip')}
             style={{
               position: 'absolute', bottom: 0, right: 0, width: Math.max(size * 0.32, 22), height: Math.max(size * 0.32, 22),
               borderRadius: '50%', background: 'var(--primary)', color: '#fff', border: '2px solid var(--bg-card)',

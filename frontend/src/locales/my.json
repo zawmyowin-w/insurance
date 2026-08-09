@@ -1,5 +1,8 @@
 {
   "brand": "ဒစ်ဂျစ်တယ် အာမခံ တောင်းဆိုမှုနှင့် ပရီမီယံ",
+  "user": {
+    "role": "အခန်းကဏ္ဍ"
+  },
   "nav": {
     "plans": "အာမခံ Plan များ",
     "howItWorks": "လုပ်ထုံးလုပ်နည်း",
@@ -9,7 +12,10 @@
     "applications": "လျှောက်လွှာများ",
     "claims": "တောင်းဆိုမှုများ",
     "notifications": "အကြောင်းကြားချက်",
-    "logout": "ထွက်သွားရန်"
+    "logout": "ထွက်သွားရန်",
+    "profile": "ကိုယ်ရေး",
+    "switchLanguage": "ဘာသာစကား ပြောင်းရန်",
+    "toggleTheme": "အကြံပေးခြင်း ပြောင်းရန်"
   },
   "hero": {
     "badge": "နိုင်ငံတစ်ဝှမ်းရှိ အာမခံထားသူ တစ်သန်းကျော်က ယုံကြည်အပ်နှံထားသည်",
@@ -541,7 +547,11 @@
     "customerPortal": "ဖောက်သည် ပေါ်တယ်"
   },
   "notif": {
-    "customerSubtitle": "သင်၏ လျှောက်လွှာများနှင့် တောင်းဆိုမှုများ အပ်ဒိတ်ကို ရယူပါ"
+    "customerSubtitle": "သင်၏ လျှောက်လွှာများနှင့် တောင်းဆိုမှုများ အပ်ဒိတ်ကို ရယူပါ",
+    "title": "အကြောင်းကြားချက်",
+    "markAllRead": "အားလုံး ဖတ်ပြီးအလိုက် မှတ်ထားပါ",
+    "empty": "အကြောင်းကြားချက် မရှိသေးပါ",
+    "markedAllRead": "အကြောင်းကြားချက် အားလုံး ဖတ်ပြီးအလိုက် မှတ်ထားပြီး"
   },
   "policies": {
     "title": "ကျွန်ုပ်၏ Policy များ",
@@ -597,6 +607,11 @@
     "subtitle": "သင့်အကောင့်အချက်အလက်ကြည့်ပြီး ပြောင်းလဲနိုင်သည်များကို ပြောင်းလဲပါ",
     "editPhoto": "ဓာတ်ပုံပြောင်းရန် ကင်မရာ icon ကိုနှိပ်ပါ",
     "yourPhoto": "သင့်အကောင့် ဓာတ်ပုံ",
+    "changePhotoTooltip": "ဓာတ်ပုံ ပြောင်းရန်",
+    "chooseImageFile": "ပုံ ဖိုင်တစ်ခု ရွေးပါ",
+    "imageMaxSize": "ပုံသည် 5MB အထက် ဖြစ်ရပါမည်",
+    "avatarUpdated": "ဓာတ်ပုံ ပြောင်းပြီးပါပြီ",
+    "avatarUploadFailed": "ဓာတ်ပုံ တင်ရန် မအောင်မြင်ပါ",
     "editTitle": "ပရိုဖိုင်အချက်အလက် ပြင်ဆင်မည်",
     "viewTitle": "ပရိုဖိုင်အချက်အလက်",
     "fullName": "အမည်အပြည့်အစုံ",
@@ -886,7 +901,7 @@
       "claims": "Claim စစ်ဆေး",
       "messages": "စာများ",
       "notifications": "အကြောင်းကြားချက်",
-      "profile": "ကိုယ်ရေး"
+      "profile": "ကျွန်ုပ်၏ ပရိုဖိုင်"
     },
     "login": {
       "title": "ကိုယ်စားလှယ် ဌာန",
@@ -898,7 +913,9 @@
       "backHome": "မူလစာမျက်နှာ သို့ ပြန်ရန်",
       "agentOnly": "ဤ Login သည် Agent အကောင့်များအတွက်သာ ဖြစ်သည်",
       "welcomeBack": "ဝင်ရောက်မှု အောင်မြင်ပါသည်",
-      "invalidCredentials": "အီးမေးလ် သို့မဟုတ် စကားဝှက် မမှန်ကန်ပါ"
+      "invalidCredentials": "အီးမေးလ် သို့မဟုတ် စကားဝှက် မမှန်ကန်ပါ",
+      "emailPlaceholder": "agent@example.com",
+      "passwordPlaceholder": "••••••••"
     },
     "dash": {
       "morningGreeting": "မင်္ဂလာနံနက်ခင်းပါ",
@@ -925,11 +942,11 @@
       "title": "လျှောက်လွှာများ စစ်ဆေး",
       "subtitle": "Customer လျှောက်လွှာများကို Admin ထံ မတင်မီ စစ်ဆေး အတည်ပြုရန်",
       "filterAll": "အားလုံး",
-      "filterPending": "ဆဲဆေးဆဲ",
+      "filterPending": "စောင့်ဆိုင်းဆဲ",
       "filterVerified": "အတည်ပြုပြီး",
       "filterRevision": "ပြင်ဆင်ရန်",
       "filterRejected": "ပယ်ချပြီး",
-      "empty": "ဆဲဆေးဆဲ လျှောက်လွှာ မရှိပါ",
+      "empty": "လက်ရှိတွင် ဆောင်ရွက်ရန်ကျန်ရှိသော လျှောက်လွှာများ မရှိပါ",
       "adminRevision": "Admin မှ ပြင်ဆင်ရန် တောင်းဆိုသည်:",
       "yourNote": "Customer ထံ သင့်မှတ်ချက်:",
       "planLabel": "အာမခံ Plan",
@@ -953,7 +970,11 @@
       "signatureLabel": "Agent ဒစ်ဂျစ်တယ် လက်မှတ်",
       "signatureRequired": "လျှောက်လွှာ အတည်မပြုမီ လက်မှတ်ရေးထိုးပါ",
       "yearSuffix": "နှစ်",
-      "yearsSuffix": "နှစ်"
+      "yearsSuffix": "နှစ်",
+      "statusPending": "ဆဲဆေးဆဲ",
+      "statusVerified": "အတည်ပြုပြီး",
+      "statusRevision": "ပြင်ဆင်ရန်",
+      "statusRejected": "ပယ်ချပြီး"
     },
     "claims": {
       "title": "Claim များ စစ်ဆေး",
@@ -980,7 +1001,11 @@
       "forwardSuccess": "Customer ထံ Claim ပြင်ဆင်ရန် အကြောင်းကြားပြီးပါပြီ",
       "reasonRequired": "အကြောင်းပြချက် ဖြည့်ပါ",
       "signatureLabel": "Agent ဒစ်ဂျစ်တယ် လက်မှတ်",
-      "signatureRequired": "Claim အတည်မပြုမီ လက်မှတ်ရေးထိုးပါ"
+      "signatureRequired": "Claim အတည်မပြုမီ လက်မှတ်ရေးထိုးပါ",
+      "statusPending": "ဆဲဆေးဆဲ",
+      "statusVerified": "အတည်ပြုပြီး",
+      "statusRevision": "ပြင်ဆင်ရန်",
+      "statusRejected": "ပယ်ချပြီး"
     },
     "messages": {
       "title": "စာပေးပို့ရန်",
@@ -1009,10 +1034,12 @@
       "subjectRequired": "ခေါင်းစဥ် ဖြည့်ပါ",
       "bodyRequired": "စာသား ဖြည့်ပါ",
       "sendSuccess": "စာ ပေးပို့ပြီးပါပြီ",
-      "sendFailed": "စာ ပေးပို့မရပါ"
+      "sendFailed": "စာ ပေးပို့မရပါ",
+      "adminLabel": "Admin",
+      "customerLabel": "Customer"
     },
     "notif": {
-      "subtitle": "စနစ်နှင့် Admin မှ အကြောင်းကြားချက်များ"
+      "subtitle": "စီမံခန့်ခွဲသူထံမှ အသိပေးချက်များ"
     },
     "profile": {
       "title": "ကိုယ်ရေးအချက်အလက်",
@@ -2080,12 +2107,18 @@
     "incidentDate": "ဖြစ်ပွားသောရက်",
     "claimType": "တောင်းဆိုမှု အမျိုးအစား",
     "customer": "ဖောက်သည်",
+    "statusApproved": "အတည်ပြုပြီး",
+    "statusRejected": "ပယ်ချပြီး",
+    "statusPending": "ဆဲဆေးဆဲ",
+    "statusVerified": "အတည်ပြုပြီး",
+    "statusRevision": "ပြင်ဆင်ရန်",
     "generating": "ပြုလုပ်နေသည်...",
     "pdf": "PDF",
     "downloadFailed": "PDF ဒေါင်းလုဒ် မအောင်မြင်ပါ",
     "noTemplate": "ဤ Plan အတွက် Form Template မတွေ့ပါ။",
     "noFields": "Template တွင် Field မပါဝင်ပါ။",
     "noneSelected": "မရွေးချယ်ရသေးပါ",
+    "na": "မရှိ",
     "yes": "ဟုတ်သည်",
     "no": "မဟုတ်ပါ",
     "noImageUploaded": "ပုံ မတင်ရသေးပါ",

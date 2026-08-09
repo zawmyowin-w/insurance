@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import api from '../services/api'
 import { toast } from 'react-toastify'
 import { useNotifCount } from '../context/NotifCountContext'
+import { useTranslation } from 'react-i18next'
 
 const ICON_MAP  = { APPROVAL: 'bi-check-circle-fill', REJECTION: 'bi-x-circle-fill', PAYMENT: 'bi-credit-card-fill', CLAIM: 'bi-file-earmark-medical-fill', INFO: 'bi-info-circle-fill', REMINDER: 'bi-bell-fill' }
 const COLOR_MAP = { APPROVAL: '#16a34a', REJECTION: '#dc2626', PAYMENT: '#1d4ed8', CLAIM: '#f59e0b', INFO: '#6b7280', REMINDER: '#9333ea' }
@@ -13,7 +14,8 @@ const notifColor = type => COLOR_MAP[type] || '#6b7280'
  * Shared notification list used by customer and agent portals.
  * subtitle – optional description line under the heading.
  */
-export default function NotificationsPage({ subtitle = 'Stay updated on your applications and claims' }) {
+export default function NotificationsPage({ subtitle }) {
+  const { t } = useTranslation()
   const [notifications, setNotifications] = useState([])
   const [loading, setLoading] = useState(true)
   const { refreshUnread } = useNotifCount()
@@ -31,7 +33,7 @@ export default function NotificationsPage({ subtitle = 'Stay updated on your app
     try {
       await api.put(`/notifications/${id}/read`)
       setNotifications(ns => ns.map(n => n.id === id ? { ...n, read: true } : n))
-      refreshUnread()  // update navbar bell + sidebar badge immediately
+      refreshUnread()
     } catch {}
   }
 
@@ -39,8 +41,8 @@ export default function NotificationsPage({ subtitle = 'Stay updated on your app
     try {
       await api.put('/notifications/read-all')
       setNotifications(ns => ns.map(n => ({ ...n, read: true })))
-      refreshUnread()  // update navbar bell + sidebar badge immediately
-      toast.success('All notifications marked as read')
+      refreshUnread()
+      toast.success(t('notif.markedAllRead'))
     } catch {}
   }
 
@@ -51,7 +53,8 @@ export default function NotificationsPage({ subtitle = 'Stay updated on your app
       <div className="d-flex align-items-center justify-content-between mb-4">
         <div>
           <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-            Notifications{unreadCount > 0 && (
+            {t('notif.title')}
+            {unreadCount > 0 && (
               <span style={{ background: '#dc2626', color: '#fff', borderRadius: 20, fontSize: '0.72rem', padding: '0.15rem 0.5rem', marginLeft: 6 }}>
                 {unreadCount}
               </span>
@@ -59,9 +62,9 @@ export default function NotificationsPage({ subtitle = 'Stay updated on your app
           </h4>
           <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>{subtitle}</p>
         </div>
-        {unreadCount > 0 && (
-          <button className="btn-primary-sm" onClick={markAllRead}>Mark all as read</button>
-        )}
+         {unreadCount > 0 && (
+           <button className="btn-primary-sm" onClick={markAllRead}>{t('notif.markAllRead')}</button>
+         )}
       </div>
 
       {loading ? (
@@ -69,7 +72,7 @@ export default function NotificationsPage({ subtitle = 'Stay updated on your app
       ) : notifications.length === 0 ? (
         <div className="card-custom text-center py-5">
           <i className="bi bi-bell" style={{ fontSize: '3rem', color: 'var(--border)' }}></i>
-          <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>No notifications yet</h5>
+           <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>{t('notif.empty')}</h5>
         </div>
       ) : (
         <div className="card-custom p-0">
