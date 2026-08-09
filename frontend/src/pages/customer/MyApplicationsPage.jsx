@@ -86,12 +86,12 @@ export default function MyApplicationsPage() {
                     </div>
                     {app.adminNote && (
                       <div style={{ fontSize: '0.82rem', color: '#78350f', marginBottom: app.agentNote ? '0.2rem' : 0 }}>
-                        <span style={{ fontWeight: 700 }}>Admin: </span>{app.adminNote}
+                        <span style={{ fontWeight: 700 }}>{t('customer.adminLabel')}</span>{app.adminNote}
                       </div>
                     )}
                     {app.agentNote && (
                       <div style={{ fontSize: '0.82rem', color: '#78350f' }}>
-                        <span style={{ fontWeight: 700 }}>Agent: </span>{app.agentNote}
+                        <span style={{ fontWeight: 700 }}>{t('customer.agentLabel')}</span>{app.agentNote}
                       </div>
                     )}
                   </div>
@@ -105,7 +105,7 @@ export default function MyApplicationsPage() {
                           {app.packageName || app.package?.name}
                         </div>
                         <small style={{ color: 'var(--text-muted)' }}>
-                          #{app.id} · {app.packageType} · Applied {app.createdAt ? new Date(app.createdAt).toLocaleDateString() : '—'}
+                          #{app.id} · {app.packageType} · {t('customer.applied')} {app.createdAt ? new Date(app.createdAt).toLocaleDateString() : '—'}
                         </small>
                       </div>
                       <span className={`badge-status badge-${app.status?.toLowerCase()}`}>{app.status}</span>
@@ -118,7 +118,7 @@ export default function MyApplicationsPage() {
                       {app.agentName && <span style={{ color: 'var(--text-muted)' }}><i className="bi bi-person-badge me-1" style={{ color: '#1d4ed8' }}></i>{t('myApps.agentLabel')}: <strong style={{ color: '#1d4ed8' }}>{app.agentName}</strong></span>}
                     </div>
                     {!isRevision && app.adminNote && <p style={{ color: '#16a34a', fontSize: '0.82rem', margin: '0.4rem 0 0' }}><i className="bi bi-check-circle me-1"></i>{app.adminNote}</p>}
-                    {!isRevision && app.agentNote && <p style={{ color: '#1d4ed8', fontSize: '0.82rem', margin: '0.25rem 0 0' }}><i className="bi bi-person me-1"></i>Agent: {app.agentNote}</p>}
+                    {!isRevision && app.agentNote && <p style={{ color: '#1d4ed8', fontSize: '0.82rem', margin: '0.25rem 0 0' }}><i className="bi bi-person me-1"></i>{t('customer.agentLabel')} {app.agentNote}</p>}
                   </div>
                   <div className="col-12 col-md-5">
                     <div className="d-flex gap-2 justify-content-md-end flex-wrap">

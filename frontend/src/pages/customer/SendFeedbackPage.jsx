@@ -3,7 +3,15 @@ import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 
-const CATEGORIES = ['General', 'Claims', 'Payments', 'Policies', 'Applications', 'Support', 'Other']
+const CATEGORIES = [
+  { key: 'general', value: 'General' },
+  { key: 'claims', value: 'Claims' },
+  { key: 'payments', value: 'Payments' },
+  { key: 'policies', value: 'Policies' },
+  { key: 'applications', value: 'Applications' },
+  { key: 'support', value: 'Support' },
+  { key: 'other', value: 'Other' },
+]
 
 export default function SendFeedbackPage() {
   const { t } = useTranslation()
@@ -98,7 +106,7 @@ export default function SendFeedbackPage() {
               value={form.category}
               onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
             >
-              {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+              {CATEGORIES.map(c => <option key={c.key} value={c.value}>{t(`feedback.categories.${c.key}`)}</option>)}
             </select>
           </div>
 

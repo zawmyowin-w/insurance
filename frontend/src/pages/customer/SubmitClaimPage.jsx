@@ -9,7 +9,15 @@ import DigitalSignatureCanvas from '../../components/DigitalSignatureCanvas'
 import DynamicFormFields from '../../components/DynamicFormFields'
 import { getPhoneValidationError } from '../../utils/validation'
 
-const CLAIM_TYPES = ['Accident', 'Hospitalization', 'Death Benefit', 'Property Damage', 'Vehicle Damage', 'Critical Illness', 'Other']
+const CLAIM_TYPES = [
+  { key: 'accident', label: 'Accident' },
+  { key: 'hospitalization', label: 'Hospitalization' },
+  { key: 'deathBenefit', label: 'Death Benefit' },
+  { key: 'propertyDamage', label: 'Property Damage' },
+  { key: 'vehicleDamage', label: 'Vehicle Damage' },
+  { key: 'criticalIllness', label: 'Critical Illness' },
+  { key: 'other', label: 'Other' },
+]
 
 export default function SubmitClaimPage() {
   const { t } = useTranslation()
@@ -183,7 +191,7 @@ export default function SubmitClaimPage() {
       toast.success(t('submitClaim.submitSuccess'))
       navigate('/customer/claims')
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to submit claim')
+      toast.error(err.response?.data?.message || t('customer.claimSubmitFailed'))
     } finally {
       setLoading(false)
     }
@@ -334,7 +342,7 @@ export default function SubmitClaimPage() {
                       <label className="form-label-custom">{t('submitClaim.claimType')}</label>
                       <select name="claimType" required className="form-select-custom w-100" value={form.claimType} onChange={handleChange}>
                         <option value="">{t('submitClaim.selectType')}</option>
-                        {CLAIM_TYPES.map(ct => <option key={ct} value={ct}>{ct}</option>)}
+                        {CLAIM_TYPES.map(ct => <option key={ct.key} value={ct.label}>{t(`customer.claimTypes.${ct.key}`)}</option>)}
                       </select>
                     </div>
                     <div className="col-12">

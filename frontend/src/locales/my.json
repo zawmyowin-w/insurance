@@ -583,7 +583,14 @@
     "close": "ပိတ်မည်",
     "printDownload": "ပရင့်ထုတ် / ဒေါင်းလုဒ်",
     "year": "နှစ်",
-    "years": "နှစ်"
+    "years": "နှစ်",
+    "claimEligibleFromLabel": "တောင်းဆိုခွင့် ရက်စွဲ",
+    "transferredPolicyLabel": "လွှဲပြောင်းပြီး",
+    "waitingPeriodTitle": "စောင့်ဆိုင်းရမည့် ကာလ",
+    "waitingPeriodMonthsDuration": "စောင့်ဆိုင်းရမည့်ကာလ {{months}} လ",
+    "waitingPeriodDaysLeft": "အကြီးဆုံး {{days}} ရက်လျှောက်စွာ တောင်းဆိုခွင့်ရရှိမည်",
+    "claimEligibleFrom": "{{date}} မှ တောင်းဆိုခွင့်ရှိမည်",
+    "claim": "တောင်းဆိုမည်"
   },
   "profile": {
     "title": "ကျွန်ုပ်၏ ပရိုဖိုင်",
@@ -650,7 +657,8 @@
     "editBtn": "ပြင်မည်",
     "cancelBtn": "ပယ်ဖျက်မည်",
     "deleteBtn": "ဖျက်မည်",
-    "year": "နှစ်"
+    "year": "နှစ်",
+    "appliedLabel": "လျှောက်ထားသည်"
   },
   "myClaims": {
     "title": "ကျွန်ုပ်၏ တောင်းဆိုမှုများ",
@@ -663,7 +671,8 @@
     "incidentLabel": "ဖြစ်ရပ်ရက်",
     "agentLabel": "ကိုယ်စားလှယ်",
     "viewFormBtn": "ဖောင်ကြည့်မည်",
-    "editResubmitBtn": "ပြင်ဆင်ပြီး ပြန်တင်မည်"
+    "editResubmitBtn": "ပြင်ဆင်ပြီး ပြန်တင်မည်",
+    "downloadError": "ငွေထုတ်ပြေစာ PDF ဒေါင်းလုဒ် မအောင်မြင်ပါ"
   },
   "payments": {
     "title": "ပေးချေမှုများ",
@@ -706,6 +715,10 @@
     "sigMissing": "လက်မှတ်ရေးထိုးပါ — Digital Signature လိုအပ်သည်",
     "submitSuccess": "ငွေပေးချေမှု တင်ပြပြီးပါပြီ! Admin မှ စစ်ဆေးပေးမည်ဖြစ်သည်",
     "onceFreq": "တစ်ကြိမ်",
+    "freqMONTHLY": "လစဥ်",
+    "freqQUARTERLY": "သုံးလတစ်ကြိမ်",
+    "freqHALF_YEARLY": "ခြောက်လတစ်ကြိမ်",
+    "freqYEARLY": "နှစ်စဥ်",
     "statusPaid": "ပေးပြီး",
     "statusOverdue": "သတ်မှတ်ရက်ကျော်",
     "statusDue": "ဤလပေးရမည်",
@@ -783,7 +796,16 @@
     "rateFair": "ရပ်တည်နိုင်သည်",
     "rateGood": "ကောင်းသည်",
     "rateVeryGood": "အလွန်ကောင်းသည်",
-    "rateExcellent": "အကောင်းဆုံး"
+    "rateExcellent": "အကောင်းဆုံး",
+    "categories": {
+      "general": "အထွေထွေ",
+      "claims": "တောင်းဆိုမှု",
+      "payments": "ငွေပေးချေမှု",
+      "policies": "အာမခံစာချုပ်",
+      "applications": "လျှောက်လွှာ",
+      "support": "ပံ့ပိုးမှု",
+      "other": "အခြား"
+    }
   },
   "signature": {
     "placeholder": "ဤနေရာတွင် လက်မှတ်ရေးထိုးပါ",
@@ -1006,7 +1028,10 @@
       "joinedLabel": "ပါဝင်ဖွဲ့စည်းသည့်ရက်",
       "statusActive": "တက်ကြွဆဲ",
       "statusInactive": "တာဝန်မထမ်းဆောင်တော့"
-    }
+    },
+    "assignedAgentTitle": "သတ်မှတ်ထားသော ကိုယ်စားလှယ်",
+    "noAgentAssigned": "ဤ အမျိုးအစားအတွက် ကိုယ်စားလှယ် မသတ်မှတ်ရသေးပါ",
+    "loadingAgent": "ဆွဲယူနေသည်…"
   },
   "admin": {
     "common": {
@@ -2119,6 +2144,14 @@
     "applied": "လျှောက်ထားသည်",
     "admin": "စီမံခန့်ခွဲသူ",
     "agent": "ကိုယ်စားလှယ်",
+    "adminLabel": "စီမံခန့်ခွဲသူ:",
+    "agentLabel": "ကိုယ်စားလှယ်:",
+    "payoutVoucherDownloadFailed": "ငွေထုတ်ပြေစာ PDF ဒေါင်းလုဒ် မအောင်မြင်ပါ",
+    "policyUsed": "လျော်ကြေးပေးပြီး — အာမခံစာချုပ် အသုံးပြုပြီး",
+    "insurancePolicy": "အာမခံစာချုပ်",
+    "paymentSubmitFailed": "ငွေပေးချေမှု တင်သွင်းရန် မအောင်မြင်ပါ",
+    "relationshipLabel": "ဆက်သွယ်မှု:",
+    "reasonGivenLabel": "ပေးထားသော အကြောင်းပြချက်:",
     "cancelAppTitle": "လျှောက်လွှာကို ပယ်ဖျက်မည်လား?",
     "deleteAppTitle": "လျှောက်လွှာကို ဖျက်မည်လား?",
     "cancelAppMsg": "ဤလျှောက်လွှာကို ပယ်ဖျက်မည်။ ကိုယ်စားလှယ်မှ ဆောင်ရွက်မည့် လျှောက်လွှာ ရပ်တန့်သွားမည်။",

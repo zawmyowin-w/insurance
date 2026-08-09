@@ -12,11 +12,6 @@ const STATUS_BG     = { PAID: '#dcfce7', OVERDUE: '#fee2e2', DUE: '#fef3c7', PEN
 const PAY_STATUS_COLOR = s => ({ PENDING: '#d97706', VERIFIED: '#16a34a', REJECTED: '#dc2626' }[s] || '#64748b')
 const PAY_STATUS_BG    = s => ({ PENDING: '#fef3c7', VERIFIED: '#dcfce7', REJECTED: '#fee2e2' }[s] || '#f1f5f9')
 
-const FREQ_LABEL_KEYS = {
-  MONTHLY: 'လစဥ်', QUARTERLY: 'သုံးလတစ်ကြိမ်',
-  HALF_YEARLY: 'ခြောက်လတစ်ကြိမ်', YEARLY: 'နှစ်စဥ်',
-}
-
 export default function MyPaymentsPage() {
   const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState('schedule')
@@ -92,7 +87,7 @@ export default function MyPaymentsPage() {
       closeModal()
       fetchData()
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to submit payment')
+      toast.error(err.response?.data?.message || t('customer.paymentSubmitFailed'))
     } finally { setSubmitting(false) }
   }
 
@@ -289,7 +284,7 @@ function PolicyScheduleCard({ sched, onPay, statusLabel }) {
           </div>
           <div>
             <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.95rem' }}>
-              {sched.packageName || 'Insurance Policy'}
+              {sched.packageName || t('customer.insurancePolicy')}
               {sched.packageType && (
                 <span className="type-badge-pill" style={{ marginLeft: 8, padding: '0.1rem 0.4rem', borderRadius: 4, fontSize: '0.7rem' }}>
                   {sched.packageType}
@@ -297,7 +292,7 @@ function PolicyScheduleCard({ sched, onPay, statusLabel }) {
               )}
             </div>
             <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 2 }}>
-              {sched.policyNumber} · {FREQ_LABEL_KEYS[sched.paymentFrequency] || sched.paymentFrequency || t('payments.onceFreq')}
+              {sched.policyNumber} · {t(`payments.freq${sched.paymentFrequency}`) || sched.paymentFrequency || t('payments.onceFreq')}
             </div>
           </div>
         </div>
@@ -620,3 +615,5 @@ function PaymentModal({ payForm, setPayForm, payMethods, selectedMethod, paySign
     </div>
   )
 }
+
+

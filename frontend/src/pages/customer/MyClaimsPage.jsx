@@ -6,26 +6,27 @@ import { toast } from 'react-toastify'
 import FormDetailModal from '../../components/FormDetailModal'
 import RevisionFormModal from '../../components/RevisionFormModal'
 
-async function downloadPayoutVoucher(claimId, setDownloading) {
-  setDownloading(claimId)
-  try {
-    const res = await api.get(`/customer/claims/${claimId}/payout-voucher`, { responseType: 'blob' })
-    const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `payout_voucher_claim_${claimId}.pdf`
-    document.body.appendChild(a)
-    a.click()
-    setTimeout(() => { URL.revokeObjectURL(url); document.body.removeChild(a) }, 200)
-  } catch {
-    toast.error('Failed to download payout voucher')
-  } finally {
-    setDownloading(null)
-  }
-}
-
 export default function MyClaimsPage() {
   const { t } = useTranslation()
+
+  async function downloadPayoutVoucher(claimId, setDownloading) {
+    setDownloading(claimId)
+    try {
+      const res = await api.get(`/customer/claims/${claimId}/payout-voucher`, { responseType: 'blob' })
+      const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `payout_voucher_claim_${claimId}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      setTimeout(() => { URL.revokeObjectURL(url); document.body.removeChild(a) }, 200)
+    } catch {
+      toast.error(t('customer.payoutVoucherDownloadFailed'))
+    } finally {
+      setDownloading(null)
+    }
+  }
+
   const [claims, setClaims] = useState([])
   const [loading, setLoading] = useState(true)
   const [viewItem, setViewItem] = useState(null)
@@ -77,12 +78,12 @@ export default function MyClaimsPage() {
                     </div>
                     {claim.adminNote && (
                       <div style={{ fontSize: '0.82rem', color: '#78350f', marginBottom: claim.agentNote ? '0.2rem' : 0 }}>
-                        <span style={{ fontWeight: 700 }}>Admin: </span>{claim.adminNote}
+                        <span style={{ fontWeight: 700 }}>{t('customer.adminLabel')}</span>{claim.adminNote}
                       </div>
                     )}
                     {claim.agentNote && (
                       <div style={{ fontSize: '0.82rem', color: '#78350f' }}>
-                        <span style={{ fontWeight: 700 }}>Agent: </span>{claim.agentNote}
+                        <span style={{ fontWeight: 700 }}>{t('customer.agentLabel')}</span>{claim.agentNote}
                       </div>
                     )}
                   </div>
@@ -107,7 +108,7 @@ export default function MyClaimsPage() {
                       {claim.agentName && <span style={{ color: 'var(--text-muted)' }}><i className="bi bi-person-badge me-1" style={{ color: '#1d4ed8' }}></i>{t('myClaims.agentLabel')}: <strong style={{ color: '#1d4ed8' }}>{claim.agentName}</strong></span>}
                     </div>
                     {!isRevision && claim.adminNote && <p style={{ color: '#16a34a', fontSize: '0.82rem', margin: '0.4rem 0 0' }}><i className="bi bi-check-circle me-1"></i>{claim.adminNote}</p>}
-                    {!isRevision && claim.agentNote && <p style={{ color: '#1d4ed8', fontSize: '0.82rem', margin: '0.25rem 0 0' }}><i className="bi bi-person me-1"></i>Agent: {claim.agentNote}</p>}
+                    {!isRevision && claim.agentNote && <p style={{ color: '#1d4ed8', fontSize: '0.82rem', margin: '0.25rem 0 0' }}><i className="bi bi-person me-1"></i>{t('customer.agentLabel')} {claim.agentNote}</p>}
                   </div>
                   <div className="col-12 col-md-5">
                     <div className="d-flex gap-2 justify-content-md-end flex-wrap">

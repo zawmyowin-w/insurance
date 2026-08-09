@@ -42,7 +42,7 @@ function PolicyCertificate({ policy, onClose }) {
                   [t('policies.certRisk'), policy.riskLevel || '—'],
                   [t('policies.certPremium'), policy.premiumAmount ? `${Number(policy.premiumAmount).toLocaleString()} MMK` : '—'],
                   [t('policies.certIssue'), policy.createdAt ? new Date(policy.createdAt).toLocaleDateString() : '—'],
-                  [t('policies.certStatus'), policy.status === 'CLAIMED' ? 'Claim Paid — Policy Used' : t('policies.active')],
+                  [t('policies.certStatus'), policy.status === 'CLAIMED' ? t('customer.policyUsed') : t('policies.active')],
                 ].map(([label, value]) => (
                   <div key={label} className="col-6">
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{label}</div>

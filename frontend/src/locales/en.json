@@ -583,7 +583,14 @@
     "close": "Close",
     "printDownload": "Print / Download",
     "year": "Year",
-    "years": "Years"
+    "years": "Years",
+    "claimEligibleFromLabel": "Eligible to claim from",
+    "transferredPolicyLabel": "Transferred",
+    "waitingPeriodTitle": "Waiting Period",
+    "waitingPeriodMonthsDuration": "Waiting period: {{months}} months",
+    "waitingPeriodDaysLeft": "You can claim in {{days}} days at most",
+    "claimEligibleFrom": "You can claim from {{date}}",
+    "claim": "Claim"
   },
   "profile": {
     "title": "My Profile",
@@ -650,7 +657,8 @@
     "editBtn": "Edit",
     "cancelBtn": "Cancel",
     "deleteBtn": "Delete",
-    "year": "year"
+    "year": "year",
+    "appliedLabel": "Applied"
   },
   "myClaims": {
     "title": "My Claims",
@@ -663,7 +671,8 @@
     "incidentLabel": "Incident",
     "agentLabel": "Agent",
     "viewFormBtn": "View Form",
-    "editResubmitBtn": "Edit & Resubmit"
+    "editResubmitBtn": "Edit & Resubmit",
+    "downloadError": "Failed to download payout voucher PDF"
   },
   "payments": {
     "title": "Payments",
@@ -718,7 +727,12 @@
     "transactionDigitsMissing": "Please enter the last 6 digits of your transaction number",
     "transactionAmount": "Amount Transferred (MMK) *",
     "transactionAmountHint": "Enter the exact amount you transferred",
-    "transactionAmountMissing": "Please enter the transferred amount"
+    "transactionAmountMissing": "Please enter the transferred amount",
+    "freqMONTHLY": "Monthly",
+    "freqQUARTERLY": "Quarterly",
+    "freqHALF_YEARLY": "Half-Yearly",
+    "freqYEARLY": "Yearly",
+    "onceFreq": "One-time"
   },
   "submitClaim": {
     "title": "Submit a Claim",
@@ -783,7 +797,16 @@
     "rateFair": "Fair",
     "rateGood": "Good",
     "rateVeryGood": "Very Good",
-    "rateExcellent": "Excellent"
+    "rateExcellent": "Excellent",
+    "categories": {
+      "general": "General",
+      "claims": "Claims",
+      "payments": "Payments",
+      "policies": "Policies",
+      "applications": "Applications",
+      "support": "Support",
+      "other": "Other"
+    }
   },
   "signature": {
     "placeholder": "Sign here",
@@ -1006,7 +1029,10 @@
       "joinedLabel": "Joined",
       "statusActive": "Active",
       "statusInactive": "Inactive"
-    }
+    },
+    "assignedAgentTitle": "ASSIGNED AGENT",
+    "noAgentAssigned": "No agent assigned for this type yet",
+    "loadingAgent": "Loading…"
   },
   "admin": {
     "common": {
@@ -2119,6 +2145,14 @@
     "applied": "Applied",
     "admin": "Admin",
     "agent": "Agent",
+    "adminLabel": "Admin:",
+    "agentLabel": "Agent:",
+    "payoutVoucherDownloadFailed": "Failed to download payout voucher PDF",
+    "policyUsed": "Claim Paid — Policy Used",
+    "insurancePolicy": "Insurance Policy",
+    "paymentSubmitFailed": "Failed to submit payment",
+    "relationshipLabel": "Relationship:",
+    "reasonGivenLabel": "Reason given:",
     "cancelAppTitle": "Cancel this application?",
     "deleteAppTitle": "Delete this application?",
     "cancelAppMsg": "This application will be cancelled. The application being processed by the agent will be stopped.",

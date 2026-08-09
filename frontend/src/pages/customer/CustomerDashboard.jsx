@@ -6,6 +6,7 @@ import api from '../../services/api'
 
 /* ── 3-D floating protection scene (inline SVG) ─────────────────── */
 function ProtectionScene() {
+  const { t } = useTranslation()
   return (
     <svg viewBox="0 0 320 260" fill="none" xmlns="http://www.w3.org/2000/svg"
       style={{ width: '100%', maxWidth: 300, height: 'auto', filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.25))' }}>
@@ -46,9 +47,9 @@ function ProtectionScene() {
           fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.35)" strokeWidth="1" />
         {/* Pill badge */}
         <rect x="32" y="139" width="34" height="10" rx="5" fill="rgba(255,255,255,0.3)" />
-        <text x="49" y="147.5" textAnchor="middle" fontSize="6" fill="white" fontWeight="700" opacity="0.9">ACTIVE</text>
+        <text x="49" y="147.5" textAnchor="middle" fontSize="6" fill="white" fontWeight="700" opacity="0.9">{t('customer.active')}</text>
         <text x="64" y="165" textAnchor="middle" fontSize="16" fill="white" fontWeight="800" opacity="0.95">12</text>
-        <text x="64" y="175" textAnchor="middle" fontSize="6.5" fill="rgba(255,255,255,0.65)">Policies</text>
+        <text x="64" y="175" textAnchor="middle" fontSize="6.5" fill="rgba(255,255,255,0.65)">{t('customer.policies')}</text>
       </g>
 
       {/* ── Floating mini-badge – top left ── */}
@@ -83,7 +84,7 @@ function ProtectionScene() {
 }
 
 export default function CustomerDashboard() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const { user } = useAuth()
   const [stats, setStats] = useState({ applications: 0, activePolicies: 0, pendingClaims: 0, notifications: 0 })
   const [recentApps, setRecentApps] = useState([])
@@ -135,7 +136,7 @@ export default function CustomerDashboard() {
               {user?.name}
             </h4>
             <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.85rem', marginTop: '0.3rem', marginBottom: '1.1rem' }}>
-              {now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              {now.toLocaleDateString(i18n.language?.startsWith('my') ? 'my-MM' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </div>
             <div className="d-flex gap-2 flex-wrap">
               <Link to="/customer/apply" className="banner-action-btn">
