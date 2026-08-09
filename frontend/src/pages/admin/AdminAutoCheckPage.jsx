@@ -184,7 +184,7 @@ function SettingsModal({ status, onClose, onSaved }) {
 
           <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#d97706',
             textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.75rem' }}>
-            <i className="bi bi-clock me-1"></i>Myanmar Time Schedule
+            <i className="bi bi-clock me-1"></i>{t('admin.autoCheck.myanmarTimeSchedule')}
           </div>
 
           <div className="d-flex flex-column gap-3 mb-4">
@@ -361,7 +361,7 @@ function AdvertiseSection({ showToast }) {
             {t('admin.autoCheck.advertiseSubtitle')}
           </span>
           <button type="button" onClick={() => loadItems(true)} disabled={refreshing}
-            title="Refresh package list"
+             title={t('admin.autoCheck.refreshList')}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 5,
               padding: '0.28rem 0.65rem', borderRadius: 7, border: '1.5px solid var(--border)',

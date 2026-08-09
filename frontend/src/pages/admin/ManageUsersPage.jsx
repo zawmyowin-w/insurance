@@ -250,7 +250,7 @@ export default function ManageUsersPage() {
               </div>
               <div className={activeTab === 'AGENT' ? 'col-12 col-md-4' : 'col-12 col-md-6'}>
                 <label className="form-label-custom">{t('admin.users.phone')}</label>
-                <input className="form-control-custom w-100" placeholder="+959xxxxxxxx" value={createForm.phone}
+                <input className="form-control-custom w-100" placeholder={t('admin.users.phonePlaceholder')} value={createForm.phone}
                   onChange={e => handlePhoneChange(e.target.value, v => setCreateForm(f => ({ ...f, phone: v })))}
                   onFocus={() => { if (!createForm.phone) setCreateForm(f => ({ ...f, phone: '+959' })) }}
                   onBlur={() => { if (createForm.phone === '+959') setCreateForm(f => ({ ...f, phone: '' })) }}
@@ -430,7 +430,7 @@ export default function ManageUsersPage() {
             <div className="d-flex align-items-center justify-content-between mb-3">
               <h5 style={{ fontWeight: 700, margin: 0 }}>
                 <i className="bi bi-person-lines-fill me-2" style={{ color: '#1d4ed8' }}></i>
-                Review User Data Before Deleting
+                {t('admin.users.previewTitle')}
               </h5>
               <button onClick={() => setPreviewModal({ open: false, user: null, summary: null, loading: false })}
                 style={{ background: 'none', border: 'none', fontSize: '1.4rem', cursor: 'pointer', color: 'var(--text-secondary)' }}>×</button>
@@ -438,7 +438,7 @@ export default function ManageUsersPage() {
 
             <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: 8, padding: '0.75rem 1rem', marginBottom: '1.25rem', fontSize: '0.85rem', color: '#dc2626' }}>
               <i className="bi bi-exclamation-triangle-fill me-1"></i>
-              Deleting a <strong>customer</strong> permanently removes all their applications, claims, and payments. Deleting an <strong>agent</strong> removes them from all assigned cases. This action cannot be undone.
+              {t('admin.users.previewWarning')}
             </div>
 
             {previewModal.loading ? (
@@ -450,8 +450,8 @@ export default function ManageUsersPage() {
                   <div style={{ fontWeight: 700, fontSize: '1rem' }}>{previewModal.summary.name}</div>
                   <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{previewModal.summary.email}</div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 2 }}>
-                    Role: {previewModal.summary.role} | Joined: {previewModal.summary.joinedAt ? new Date(previewModal.summary.joinedAt).toLocaleDateString() : '—'} |
-                    Status: <span style={{ color: previewModal.summary.active ? '#15803d' : '#dc2626', fontWeight: 600 }}>{previewModal.summary.active ? 'Active' : 'Inactive'}</span>
+                    {t('admin.users.previewRole')}: {previewModal.summary.role} | {t('admin.users.previewJoined')}: {previewModal.summary.joinedAt ? new Date(previewModal.summary.joinedAt).toLocaleDateString() : '—'} |
+                    {t('admin.users.previewStatus')}: <span style={{ color: previewModal.summary.active ? '#15803d' : '#dc2626', fontWeight: 600 }}>{previewModal.summary.active ? t('admin.users.previewActive') : t('admin.users.previewInactive')}</span>
                   </div>
                 </div>
 
@@ -460,9 +460,9 @@ export default function ManageUsersPage() {
                   <>
                     <div className="row g-2 mb-3">
                       {[
-                        { label: 'Applications', value: previewModal.summary.applicationCount, icon: 'bi-file-earmark-text', color: '#1d4ed8' },
-                        { label: 'Claims', value: previewModal.summary.claimCount, icon: 'bi-file-earmark-medical', color: '#d97706' },
-                        { label: 'Payments', value: previewModal.summary.paymentCount, icon: 'bi-credit-card', color: '#15803d' },
+                        { label: t('admin.users.previewApplications'), value: previewModal.summary.applicationCount, icon: 'bi-file-earmark-text', color: '#1d4ed8' },
+                        { label: t('admin.users.previewClaims'), value: previewModal.summary.claimCount, icon: 'bi-file-earmark-medical', color: '#d97706' },
+                        { label: t('admin.users.previewPayments'), value: previewModal.summary.paymentCount, icon: 'bi-credit-card', color: '#15803d' },
                       ].map(stat => (
                         <div key={stat.label} className="col-4">
                           <div style={{ background: 'var(--bg-secondary)', borderRadius: 8, padding: '0.6rem', textAlign: 'center' }}>
@@ -476,7 +476,7 @@ export default function ManageUsersPage() {
 
                     {previewModal.summary.applications?.length > 0 && (
                       <div className="mb-3">
-                        <div style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: '0.4rem' }}>Applications (showing up to 5):</div>
+                        <div style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: '0.4rem' }}>{t('admin.users.previewAppsShowing', { count: 5 })}</div>
                         {previewModal.summary.applications.map(a => (
                           <div key={a.id} style={{ fontSize: '0.82rem', padding: '0.35rem 0.6rem', borderRadius: 6, background: 'var(--bg-secondary)', marginBottom: 3, display: 'flex', justifyContent: 'space-between' }}>
                             <span><span style={{ fontFamily: 'monospace', color: 'var(--primary)' }}>{a.policyNumber || `#${a.id}`}</span> — {a.packageName}</span>
@@ -484,14 +484,14 @@ export default function ManageUsersPage() {
                           </div>
                         ))}
                         {previewModal.summary.applicationCount > 5 && (
-                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 2 }}>…and {previewModal.summary.applicationCount - 5} more</div>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 2 }}>{t('admin.users.previewMore', { count: previewModal.summary.applicationCount - 5 })}</div>
                         )}
                       </div>
                     )}
 
                     {previewModal.summary.claims?.length > 0 && (
                       <div className="mb-3">
-                        <div style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: '0.4rem' }}>Claims (showing up to 5):</div>
+                        <div style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: '0.4rem' }}>{t('admin.users.previewClaimsShowing', { count: 5 })}</div>
                         {previewModal.summary.claims.map(c => (
                           <div key={c.id} style={{ fontSize: '0.82rem', padding: '0.35rem 0.6rem', borderRadius: 6, background: 'var(--bg-secondary)', marginBottom: 3, display: 'flex', justifyContent: 'space-between' }}>
                             <span>Claim #{c.id} — {Number(c.amount).toLocaleString()} MMK</span>
@@ -499,7 +499,7 @@ export default function ManageUsersPage() {
                           </div>
                         ))}
                         {previewModal.summary.claimCount > 5 && (
-                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 2 }}>…and {previewModal.summary.claimCount - 5} more</div>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 2 }}>{t('admin.users.previewMore', { count: previewModal.summary.claimCount - 5 })}</div>
                         )}
                       </div>
                     )}
@@ -511,7 +511,7 @@ export default function ManageUsersPage() {
                   <div className="mb-3">
                     <div style={{ background: 'var(--bg-secondary)', borderRadius: 8, padding: '0.6rem 0.75rem', marginBottom: '0.75rem' }}>
                       <span style={{ fontWeight: 700 }}>{previewModal.summary.assignedApplicationCount}</span>
-                      <span style={{ color: 'var(--text-secondary)', marginLeft: 4 }}>assigned application(s) — agent will be removed from these cases</span>
+                      <span style={{ color: 'var(--text-secondary)', marginLeft: 4 }}>{t('admin.users.previewAssignedApps')}</span>
                     </div>
                     {previewModal.summary.assignedApplications?.map(a => (
                       <div key={a.id} style={{ fontSize: '0.82rem', padding: '0.35rem 0.6rem', borderRadius: 6, background: 'var(--bg-secondary)', marginBottom: 3, display: 'flex', justifyContent: 'space-between' }}>
@@ -520,23 +520,23 @@ export default function ManageUsersPage() {
                       </div>
                     ))}
                     {previewModal.summary.assignedApplicationCount > 5 && (
-                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>…and {previewModal.summary.assignedApplicationCount - 5} more</div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{t('admin.users.previewMore', { count: previewModal.summary.assignedApplicationCount - 5 })}</div>
                     )}
                   </div>
                 )}
               </>
             ) : (
-              <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1rem' }}>Could not load user data.</div>
+              <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '1rem' }}>{t('admin.users.previewLoadFailed')}</div>
             )}
 
             <div className="d-flex gap-2 justify-content-end mt-3">
               <button onClick={() => setPreviewModal({ open: false, user: null, summary: null, loading: false })}
                 style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 8, padding: '0.5rem 1.2rem', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-                Cancel
+                {t('admin.common.cancel')}
               </button>
               <button onClick={proceedToDelete} disabled={previewModal.loading}
                 style={{ background: '#dc2626', color: 'white', border: 'none', borderRadius: 8, padding: '0.5rem 1.4rem', cursor: 'pointer', fontWeight: 600 }}>
-                <i className="bi bi-trash me-1"></i>Proceed to Delete
+                <i className="bi bi-trash me-1"></i>{t('admin.users.proceedToDelete')}
               </button>
             </div>
           </div>
@@ -598,7 +598,7 @@ export default function ManageUsersPage() {
                 </div>
                 <div className="col-12 col-md-6">
                   <label className="form-label-custom">{t('admin.users.phone')}</label>
-                  <input className="form-control-custom w-100" placeholder="+959xxxxxxxx" value={editForm.phone}
+                  <input className="form-control-custom w-100" placeholder={t('admin.users.phonePlaceholder')} value={editForm.phone}
                     onChange={e => handlePhoneChange(e.target.value, v => setEditForm(f => ({ ...f, phone: v })))}
                     onFocus={() => { if (!editForm.phone) setEditForm(f => ({ ...f, phone: '+959' })) }}
                     onBlur={() => { if (editForm.phone === '+959') setEditForm(f => ({ ...f, phone: '' })) }}

@@ -328,8 +328,8 @@ export default function AdminFormBuilderPage() {
                 <div className="row g-3 mb-3">
                   <div className="col-12">
                     <label className="form-label-custom">{t('admin.formBuilder.formNameLabel')}</label>
-                    <input required className="form-control-custom w-100"
-                      placeholder={`e.g. ${selectedPkg?.name} ${formTypeMeta[editFormType]?.label}`}
+                     <input required className="form-control-custom w-100"
+                      placeholder={t('admin.formBuilder.formNamePlaceholder', { pkg: selectedPkg?.name, type: formTypeMeta[editFormType]?.label })}
                       value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
                   </div>
                   <div className="col-12">
@@ -499,7 +499,7 @@ function FieldEditor({ field, index, onUpdate, onRemove, onMoveUp, onMoveDown, i
           )}
           <textarea rows={2} className="form-control-custom w-100"
             style={{ fontSize: '0.82rem', resize: 'vertical', padding: '0.35rem 0.5rem' }}
-            placeholder="Yes&#10;No"
+             placeholder={t('admin.formBuilder.optionsPlaceholder')}
             value={parsedOptions.join('\n')}
             onChange={e => {
               const opts = e.target.value.split('\n').filter(o => o.trim())

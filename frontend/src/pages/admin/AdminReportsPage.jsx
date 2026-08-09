@@ -406,11 +406,11 @@ export default function AdminReportsPage() {
               {/* Date range badge */}
               <div style={{ background: 'linear-gradient(135deg, #fffbeb, #fef3c7)', border: '1.5px solid #fcd34d', borderRadius: 12, padding: '0.75rem 1rem', marginBottom: '1.75rem', fontSize: '0.85rem', color: '#92400e', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                 <i className="bi bi-calendar2-range" style={{ fontSize: '1rem' }} />
-                <span>Report period:</span>
+                <span>{t('admin.reports.reportPeriodLabel')}</span>
                 <span style={{ fontWeight: 800, color: '#78350f' }}>
-                  {lastReset ? new Date(lastReset.resetAt).toLocaleDateString('en', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Inception'}
+                  {lastReset ? new Date(lastReset.resetAt).toLocaleDateString('en', { day: '2-digit', month: 'short', year: 'numeric' }) : t('admin.reports.inception')}
                 </span>
-                <span style={{ opacity: 0.6 }}>→</span>
+                <span style={{ opacity: 0.6 }}>{t('admin.reports.throughToday')}</span>
                 <span style={{ fontWeight: 800, color: '#78350f' }}>{currentMonthName} {currentYear}</span>
               </div>
 
@@ -451,8 +451,8 @@ export default function AdminReportsPage() {
           <div style={{ marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 6, background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 20, padding: '0.25rem 0.85rem', fontSize: '0.78rem', fontWeight: 600, color: '#1d4ed8' }}>
             <i className="bi bi-calendar2-range"></i>
             {lastReset
-              ? <>Current period: {new Date(lastReset.resetAt).toLocaleDateString('en', { day: '2-digit', month: 'short', year: 'numeric' })} → Today</>
-              : <>Current period: Inception → Today</>
+              ? <>{t('admin.reports.currentPeriodLabel')} {new Date(lastReset.resetAt).toLocaleDateString('en', { day: '2-digit', month: 'short', year: 'numeric' })} {t('admin.reports.throughToday')}</>
+              : <>{t('admin.reports.currentPeriodLabel')} {t('admin.reports.inception')} {t('admin.reports.throughToday')}</>
             }
           </div>
         )}
@@ -904,7 +904,7 @@ export default function AdminReportsPage() {
                 <div style={{ fontSize: '1.3rem', fontWeight: 900, color: '#fff', lineHeight: 1.25, marginBottom: 8 }}>
                   {lastReset
                     ? new Date(lastReset.resetAt).toLocaleDateString('en', { day: '2-digit', month: 'short', year: 'numeric' })
-                    : 'Inception'
+                    : t('admin.reports.inception')
                   }
                   <span style={{ color: 'rgba(255,255,255,0.5)', margin: '0 8px', fontWeight: 400 }}>→</span>
                   {currentMonthName} {currentYear}
@@ -951,13 +951,13 @@ export default function AdminReportsPage() {
               <i className="bi bi-info-circle-fill" style={{ color: '#d97706', fontSize: '1.2rem', flexShrink: 0, marginTop: 2 }}></i>
               <div>
                 <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4, fontSize: '0.9rem' }}>
-                  Monthly Reset — How it works
+                  {t('admin.reports.resetHowTitle')}
                 </div>
                 <ul style={{ margin: 0, padding: '0 0 0 1.1rem', color: 'var(--text-secondary)', fontSize: '0.83rem', lineHeight: 1.7 }}>
-                  <li>Exports <strong>all data from {lastReset ? new Date(lastReset.resetAt).toLocaleDateString('en', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Inception'} → today</strong> as a comprehensive PDF covering: Overview, By Type, Premium Wallet, Agents, Plan Popularity, Monthly Breakdown</li>
-                  <li><strong>Resets all analytics to zero</strong> — the dashboard will only count data created from this moment forward</li>
-                  <li>Saves the PDF to the archive below for re-download at any time</li>
-                  <li><strong>Does NOT delete</strong> any business data (payments, claims, applications remain intact)</li>
+                  <li>{t('admin.reports.resetHowExport', { start: lastReset ? new Date(lastReset.resetAt).toLocaleDateString('en', { day: '2-digit', month: 'short', year: 'numeric' }) : t('admin.reports.inception'), end: currentMonthName + ' ' + currentYear })}</li>
+                  <li>{t('admin.reports.resetHowZero')}</li>
+                  <li>{t('admin.reports.resetHowArchive')}</li>
+                  <li>{t('admin.reports.resetHowNoDelete')}</li>
                 </ul>
               </div>
             </div>

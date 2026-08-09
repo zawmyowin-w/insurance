@@ -241,11 +241,26 @@
     "s2Title": "2. Information We Collect",
     "s2Intro": "We collect the following types of information:",
     "s2Items": [
-      { "label": "Account information:", "text": "Full name, email address, phone number, and home address." },
-      { "label": "Identity documents:", "text": "National Registration Card (NRC) or other identity documents submitted for policy applications." },
-      { "label": "Financial information:", "text": "Payment screenshots and transaction references for premium payments." },
-      { "label": "Claims data:", "text": "Incident details, supporting documents, and photographs submitted with claims." },
-      { "label": "Usage data:", "text": "Log data, device information, and browsing activity within the Portal." }
+      {
+        "label": "Account information:",
+        "text": "Full name, email address, phone number, and home address."
+      },
+      {
+        "label": "Identity documents:",
+        "text": "National Registration Card (NRC) or other identity documents submitted for policy applications."
+      },
+      {
+        "label": "Financial information:",
+        "text": "Payment screenshots and transaction references for premium payments."
+      },
+      {
+        "label": "Claims data:",
+        "text": "Incident details, supporting documents, and photographs submitted with claims."
+      },
+      {
+        "label": "Usage data:",
+        "text": "Log data, device information, and browsing activity within the Portal."
+      }
     ],
     "s3Title": "3. How We Use Your Information",
     "s3Intro": "Your information is used to:",
@@ -260,10 +275,22 @@
     "s4Title": "4. Legal Basis for Processing",
     "s4Intro": "We process your personal data on the following legal bases:",
     "s4Items": [
-      { "label": "Contractual necessity:", "text": "To provide insurance services you have requested." },
-      { "label": "Legal obligation:", "text": "To comply with Myanmar insurance regulations and financial laws." },
-      { "label": "Legitimate interests:", "text": "To prevent fraud and maintain the security of our platform." },
-      { "label": "Consent:", "text": "Where you have explicitly agreed, such as for marketing communications." }
+      {
+        "label": "Contractual necessity:",
+        "text": "To provide insurance services you have requested."
+      },
+      {
+        "label": "Legal obligation:",
+        "text": "To comply with Myanmar insurance regulations and financial laws."
+      },
+      {
+        "label": "Legitimate interests:",
+        "text": "To prevent fraud and maintain the security of our platform."
+      },
+      {
+        "label": "Consent:",
+        "text": "Where you have explicitly agreed, such as for marketing communications."
+      }
     ],
     "s5Title": "5. Data Sharing",
     "s5Intro": "We do not sell your personal data. We may share your information with:",
@@ -599,8 +626,7 @@
     "waitingPeriodTitle": "Waiting Period",
     "waitingPeriodMonthsDuration": "Waiting period: {{months}} months",
     "waitingPeriodDaysLeft": "You can claim in {{days}} days at most",
-    "claimEligibleFrom": "You can claim from {{date}}",
-    "claim": "Claim"
+    "claimEligibleFrom": "You can claim from {{date}}"
   },
   "profile": {
     "title": "My Profile",
@@ -746,8 +772,7 @@
     "freqMONTHLY": "Monthly",
     "freqQUARTERLY": "Quarterly",
     "freqHALF_YEARLY": "Half-Yearly",
-    "freqYEARLY": "Yearly",
-    "onceFreq": "One-time"
+    "freqYEARLY": "Yearly"
   },
   "submitClaim": {
     "title": "Submit a Claim",
@@ -1114,12 +1139,13 @@
       "payments": "Payments",
       "premiumSchedule": "Premium Schedule",
       "paymentMethods": "Payment Methods",
-      "customerFeedback": "Customer Feedback",
+      "customerFeedback": "Customer Suggestions",
       "notifications": "Notifications",
       "autoCheck": "Auto-Check",
       "reports": "Reports",
       "myProfile": "My Profile",
-      "reminder": "Reminder"
+      "reminder": "Reminder",
+      "policyTransfers": "Policy Transfers"
     },
     "dashboard": {
       "totalCustomers": "Total Customers",
@@ -1197,7 +1223,8 @@
       "status_PENDING": "Pending",
       "status_VERIFIED": "Verified",
       "status_APPROVED": "Approved",
-      "status_REJECTED": "Rejected"
+      "status_REJECTED": "Rejected",
+      "downloadVoucher": "Download payout voucher PDF"
     },
     "payments": {
       "title": "Payments Management",
@@ -1306,7 +1333,9 @@
       "noMethodsHint": "Use the Add Method button to add KBZ Pay, Wave Pay, AYA Pay, etc.",
       "qrPresent": "✓ Has QR",
       "deleteModalTitle": "Delete Payment Method?",
-      "deleteModalMsg": "This payment method will be removed. This action cannot be undone."
+      "deleteModalMsg": "This payment method will be removed. This action cannot be undone.",
+      "namePlaceholder": "e.g. KBZ Pay",
+      "keyPlaceholder": "e.g. KBZ_PAY"
     },
     "users": {
       "title": "Manage Users",
@@ -1360,7 +1389,23 @@
       "noMatchSearch": "No {{label}} matching \"{{search}}\"",
       "noUsersYet": "No {{label}} yet",
       "agentConflictWarning": "{{name}} already has this type assigned. They will be deactivated if you save.",
-      "passwordStrengthError": "Password must be at least 8 characters with uppercase, lowercase, number and special character"
+      "passwordStrengthError": "Password must be at least 8 characters with uppercase, lowercase, number and special character",
+      "previewTitle": "Review User Data Before Deleting",
+      "previewWarning": "Deleting this user is permanent. Please proceed with caution.",
+      "previewRole": "Role",
+      "previewJoined": "Joined",
+      "previewStatus": "Status",
+      "previewActive": "Active",
+      "previewInactive": "Inactive",
+      "previewApplications": "Applications",
+      "previewClaims": "Claims",
+      "previewPayments": "Payments",
+      "previewAppsShowing": "applications showing (up to 5)",
+      "previewClaimsShowing": "claims showing (up to 5)",
+      "previewAssignedApps": "assigned application(s) — agent will be removed from these cases",
+      "previewLoadFailed": "Could not load user data.",
+      "proceedToDelete": "Proceed to Delete",
+      "phonePlaceholder": "+959xxxxxxxx"
     },
     "packages": {
       "title": "Insurance Packages",
@@ -1544,7 +1589,29 @@
       "maturityBadgeOff": "No Maturity Bonus",
       "maturityDetailHeader": "Maturity / Policy Expiry Payout",
       "maturityNoBonusTiers": "No maturity bonus tiers configured",
-      "maturityExamplePayout": "At year {year} maturity: Claim Amount + {bonusPercent}% bonus{premiums}"
+      "maturityExamplePayout": "At year {year} maturity: Claim Amount + {bonusPercent}% bonus{premiums}",
+      "coverageMinPlaceholder": "Min coverage",
+      "coverageMaxPlaceholder": "Max coverage",
+      "tierYearsPlaceholder": "e.g. 1",
+      "tierRatePlaceholder": "e.g. 2.5",
+      "ageMinPlaceholder": "Min age",
+      "ageMaxPlaceholder": "Max age",
+      "ageRatePlaceholder": "e.g. 3.0",
+      "docPlaceholder": "e.g. NRC Copy",
+      "transferYearsPlaceholder": "e.g. 1",
+      "transferMonthsPlaceholder": "e.g. 6",
+      "transferEligibilityNote": "Transfer eligible after: {{years}} years {{months}} months",
+      "maturityYearPlaceholder": "e.g. 5",
+      "maturityBonusPlaceholder": "e.g. 5.0",
+      "maturityBonusUnit": "%",
+      "transferEnabled": "Transfer enabled",
+      "transferDisabled": "Transfer disabled",
+      "transferEnabledDesc": "Policy transfer requests are allowed",
+      "transferDisabledDesc": "Policy transfer requests are not allowed",
+      "minHoldingPeriod": "Minimum holding period before transfer",
+      "holdingPeriodDesc": "Customers must hold the policy for this period before requesting a transfer.",
+      "yearsLabel": "Years",
+      "additionalMonths": "Additional months"
     },
     "insuranceTypes": {
       "title": "Insurance Types",
@@ -1684,7 +1751,8 @@
       "sysField_dob_label": "Date of Birth",
       "sysField_dob_note": "Customer fills — date picker",
       "sysField_nrc_label": "NRC No.",
-      "sysField_nrc_note": "Customer fills — Myanmar format"
+      "sysField_nrc_note": "Customer fills — Myanmar format",
+      "optionsPlaceholder": "One option per line (e.g. Yes/No)"
     },
     "feedback": {
       "title": "Customer Feedback",
@@ -1771,7 +1839,8 @@
       "phoneHint": "e.g. +959xxxxxxxxx",
       "cancelBtn": "Cancel",
       "emailError": "Email must be lowercase only, use letters/digits/dots only (no special chars), max 30 characters",
-      "phoneError": "Phone must start with +959 followed by 7–10 more digits (e.g. +9591234567)"
+      "phoneError": "Phone must start with +959 followed by 7–10 more digits (e.g. +9591234567)",
+      "phonePlaceholder": "+959xxxxxxxx"
     },
     "reports": {
       "title": "Reports & Analytics",
@@ -2025,7 +2094,8 @@
       "adDefaultMsgPkg": "We have a great new insurance package available: {{name}}! Check it out and see how it can protect what matters most to you.",
       "adNotifTitle": "New: {{name}}",
       "adNotifTitleMulti": "New Packages & Types ({{count}} selected)",
-      "adDefaultMsgMulti": "We are excited to share our latest insurance offerings: {{names}}. Explore the plans and find the right coverage for you today!"
+      "adDefaultMsgMulti": "We are excited to share our latest insurance offerings: {{names}}. Explore the plans and find the right coverage for you today!",
+      "refreshList": "Refresh package list"
     },
     "premiumSchedule": {
       "title": "Premium Payment Schedule",
@@ -2094,7 +2164,51 @@
       "warnBtnLabel": "Warn",
       "cancelBtnTitle": "Cancel Application",
       "cancelBtnLabel": "Cancel",
-      "scheduleFullTitle": "Full Payment Schedule"
+      "scheduleFullTitle": "Full Payment Schedule",
+      "cancelOverdueNote": "Premium payment overdue — policy cancelled due to non-payment",
+      "pdfBtn": "PDF"
+    },
+    "transfers": {
+      "title": "Policy Transfers",
+      "subtitle": "Manage policy ownership transfer requests",
+      "approvalPending": "pending approval",
+      "tabAll": "All",
+      "statusPENDING_TRANSFEREE_SIGNATURE": "Awaiting transferee signature",
+      "statusPENDING_ADMIN_APPROVAL": "Awaiting admin approval",
+      "statusAPPROVED": "Approved",
+      "statusREJECTED": "Rejected",
+      "noData": "No transfers found",
+      "transferId": "Transfer #{{id}}",
+      "pdfBtn": "Download PDF",
+      "approveBtn": "Approve",
+      "rejectBtn": "Reject",
+      "fromLabel": "From",
+      "toLabel": "To",
+      "signedOn": "Signed on {{date}}",
+      "relationship": "Relationship",
+      "submitted": "Submitted",
+      "decided": "Decided",
+      "byLabel": "by",
+      "reasonLabel": "Reason",
+      "adminNoteLabel": "Admin note",
+      "bothSignedWarning": "Both parties have signed. Awaiting admin approval.",
+      "confirmApprove": "Approve this transfer?",
+      "confirmReject": "Reject this transfer?",
+      "approveConfirmBody": "You are about to approve the ownership transfer of policy {{policy}} from {{from}} to {{to}}.",
+      "rejectConfirmBody": "You are about to reject the transfer request submitted by {{from}}.",
+      "adminNoteLabelModal": "Admin note",
+      "noteRequired": " (required)",
+      "noteOptional": " (optional)",
+      "noteApprovePlaceholder": "Approval note...",
+      "noteRejectPlaceholder": "Reason for rejection...",
+      "cancelBtn": "Cancel",
+      "confirmApprovalBtn": "Confirm Approval",
+      "confirmRejectionBtn": "Confirm Rejection",
+      "processing": "Processing...",
+      "approveSuccess": "Transfer approved",
+      "rejectSuccess": "Transfer rejected",
+      "actionFailed": "Action failed",
+      "pdfFailed": "Failed to download PDF"
     }
   },
   "formModal": {
@@ -2246,7 +2360,6 @@
     "reasonPlaceholder": "Please explain why you are transferring this policy...",
     "yourSignature": "Your Digital Signature",
     "signConfirm": "By signing, you confirm this transfer request and agree to relinquish ownership upon approval.",
-    "cancel": "Cancel",
     "submitting": "Submitting...",
     "submitTransfer": "Submit Transfer Request",
     "acceptTransferTitle": "Accept Policy Transfer",
@@ -2270,9 +2383,7 @@
     "statusAwaitingAdmin": "Awaiting Admin Approval",
     "statusApproved": "Approved",
     "statusRejected": "Rejected",
-    "insurancePolicy": "Insurance Policy",
     "period": "Period",
-    "paymentSubmitFailed": "Failed to submit payment",
     "digitalSignature": "Digital Signature",
     "claimSubmitFailed": "Failed to submit claim",
     "claimTypes": {

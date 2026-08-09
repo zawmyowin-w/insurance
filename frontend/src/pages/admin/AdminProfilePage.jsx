@@ -176,7 +176,7 @@ export default function AdminProfilePage() {
                     onChange={e => handlePhoneChange(e.target.value, v => setForm(f => ({ ...f, phone: v })))}
                     onFocus={() => { if (!form.phone) setForm(f => ({ ...f, phone: '+95' })) }}
                     onBlur={() => { if (form.phone === '+95') setForm(f => ({ ...f, phone: '' })) }}
-                    placeholder="+959xxxxxxxx"
+                     placeholder={t('admin.profile.phonePlaceholder')}
                     onKeyDown={e => { if (e.key === 'Enter') e.preventDefault() }}
                     style={{
                       ...(editMode && phoneInvalid ? { borderColor: '#ef4444' } : undefined),

@@ -7,26 +7,26 @@ import FormDetailModal from '../../components/FormDetailModal'
 import DigitalSignatureCanvas from '../../components/DigitalSignatureCanvas'
 import { apiError } from '../../utils/apiError'
 
-async function downloadPayoutVoucher(claimId, setDownloading) {
-  setDownloading(claimId)
-  try {
-    const res = await api.get(`/admin/claims/${claimId}/payout-voucher`, { responseType: 'blob' })
-    const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `payout_voucher_claim_${claimId}.pdf`
-    document.body.appendChild(a)
-    a.click()
-    setTimeout(() => { URL.revokeObjectURL(url); document.body.removeChild(a) }, 200)
-  } catch {
-    toast.error('Failed to download payout voucher')
-  } finally {
-    setDownloading(null)
-  }
-}
-
 export default function AdminClaimsPage() {
   const { t } = useTranslation()
+
+  async function downloadPayoutVoucher(claimId, setDownloading) {
+    setDownloading(claimId)
+    try {
+      const res = await api.get(`/admin/claims/${claimId}/payout-voucher`, { responseType: 'blob' })
+      const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `payout_voucher_claim_${claimId}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      setTimeout(() => { URL.revokeObjectURL(url); document.body.removeChild(a) }, 200)
+    } catch {
+      toast.error(t('admin.claims.downloadVoucherFailed'))
+    } finally {
+      setDownloading(null)
+    }
+  }
   const [searchParams] = useSearchParams()
   const [claims, setClaims] = useState([])
   const [loading, setLoading] = useState(true)
@@ -142,7 +142,7 @@ export default function AdminClaimsPage() {
                         >
                           {downloading === claim.id
                             ? <span className="spinner-border spinner-border-sm"></span>
-                            : <><i className="bi bi-file-earmark-arrow-down-fill"></i> ငွေထုတ်ပြေစာ PDF</>}
+                             : <><i className="bi bi-file-earmark-arrow-down-fill"></i> {t('admin.claims.downloadVoucher')}</>}
                         </button>
                       </div>
                     )}

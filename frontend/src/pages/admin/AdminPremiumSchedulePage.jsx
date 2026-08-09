@@ -93,7 +93,7 @@ export default function AdminPremiumSchedulePage() {
     setCancelConfirm(null)
     try {
       await api.post(`/admin/applications/${appId}/cancel-overdue`, {
-        note: 'Premium payment overdue — policy cancelled due to non-payment'
+        note: t('admin.premiumSchedule.cancelOverdueNote')
       })
       toast.success(t('admin.premiumSchedule.cancelSuccess'))
       fetchData()
@@ -366,7 +366,7 @@ export default function AdminPremiumSchedulePage() {
                       style={{ padding: '0.3rem 0.65rem', fontSize: '0.75rem' }}
                       title={t('admin.premiumSchedule.pdfBtnTitle')}
                       onClick={() => downloadPolicy(e.applicationId, e.policyNumber)}>
-                      <i className="bi bi-file-earmark-pdf me-1" style={{ color: '#dc2626' }}></i>PDF
+                       <i className="bi bi-file-earmark-pdf me-1" style={{ color: '#dc2626' }}></i>{t('admin.premiumSchedule.pdfBtn')}
                     </button>
                     {e.scheduleStatus === 'OVERDUE' && (
                       <>

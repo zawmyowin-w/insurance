@@ -124,7 +124,7 @@ export default function AdminPaymentMethodsPage() {
             <div className="row g-3">
               <div className="col-12 col-md-5">
                 <label className="form-label-custom">{t('admin.paymentMethods.nameLabel')}</label>
-                <input className="form-control-custom w-100" required placeholder="e.g. KBZ Pay"
+                <input className="form-control-custom w-100" required placeholder={t('admin.paymentMethods.namePlaceholder')}
                   value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
               </div>
               {!editing && (
@@ -132,7 +132,7 @@ export default function AdminPaymentMethodsPage() {
                   <label className="form-label-custom">
                     {t('admin.paymentMethods.methodKeyLabel')} <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>({t('admin.paymentMethods.methodKeyUniqueCode')})</span>
                   </label>
-                  <input className="form-control-custom w-100" required placeholder="e.g. KBZ_PAY"
+                  <input className="form-control-custom w-100" required placeholder={t('admin.paymentMethods.keyPlaceholder')}
                     value={form.methodKey}
                     onChange={e => setForm(f => ({ ...f, methodKey: e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '_') }))} />
                   <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)', margin: '0.25rem 0 0' }}>

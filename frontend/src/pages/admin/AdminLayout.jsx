@@ -12,7 +12,7 @@ export default function AdminLayout() {
     { to: '/admin/forms',            icon: 'bi-ui-checks',            label: t('admin.layout.formTemplates')     },
     { to: '/admin/applications',     icon: 'bi-file-earmark-text',    label: t('admin.layout.applications')      },
     { to: '/admin/claims',           icon: 'bi-file-earmark-medical', label: t('admin.layout.claims')            },
-    { to: '/admin/policy-transfers', icon: 'bi-arrow-left-right',     label: 'Policy Transfers'                  },
+    { to: '/admin/policy-transfers', icon: 'bi-arrow-left-right',     label: t('admin.layout.policyTransfers')                  },
     { to: '/admin/payments',         icon: 'bi-credit-card',          label: t('admin.layout.payments')          },
     { to: '/admin/premium-schedule', icon: 'bi-calendar2-check',      label: t('admin.layout.premiumSchedule')   },
     { to: '/admin/payment-methods',  icon: 'bi-qr-code',              label: t('admin.layout.paymentMethods')    },

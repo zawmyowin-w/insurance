@@ -383,13 +383,13 @@ export default function ManagePackagesPage() {
                   <div className="row g-3" style={{ padding: '1rem' }}>
                     <div className="col-12 col-md-4">
                       <label className="form-label-custom">{t('admin.packages.coverageMinLabel')}</label>
-                      <input name="coverageMin" type="number" required min="0" className="form-control-custom w-100"
-                        placeholder="e.g. 1000000" value={form.coverageMin} onChange={handleChange} />
+                       <input name="coverageMin" type="number" required min="0" className="form-control-custom w-100"
+                         placeholder={t('admin.packages.coverageMinPlaceholder')} value={form.coverageMin} onChange={handleChange} />
                     </div>
                     <div className="col-12 col-md-4">
                       <label className="form-label-custom">{t('admin.packages.coverageMaxLabel')}</label>
-                      <input name="coverageMax" type="number" required min="0" className="form-control-custom w-100"
-                        placeholder="e.g. 100000000" value={form.coverageMax} onChange={handleChange} />
+                       <input name="coverageMax" type="number" required min="0" className="form-control-custom w-100"
+                         placeholder={t('admin.packages.coverageMaxPlaceholder')} value={form.coverageMax} onChange={handleChange} />
                     </div>
                     <div className="col-12 col-md-4">
                       <label className="form-label-custom">{t('admin.packages.maxClaimLabel')}</label>
@@ -466,16 +466,16 @@ export default function ManagePackagesPage() {
                               <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
                                 <td style={tdStyle}>
                                   <div className="d-flex align-items-center gap-2">
-                                    <input type="number" min="1" max="40" className="form-control-custom"
-                                      style={{ width: 80 }} placeholder="e.g. 1" value={tier.years}
+                                     <input type="number" min="1" max="40" className="form-control-custom"
+                                       style={{ width: 80 }} placeholder={t('admin.packages.tierYearsPlaceholder')} value={tier.years}
                                       onChange={e => handleTierChange(i, 'years', e.target.value)} />
                                     <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>{t('admin.packages.yearsUnit')}</span>
                                   </div>
                                 </td>
                                 <td style={tdStyle}>
                                   <div className="d-flex align-items-center gap-2">
-                                    <input type="number" min="0" max="100" step="0.001" className="form-control-custom"
-                                      style={{ width: 100 }} placeholder="e.g. 2.5" value={tier.premiumRate}
+                                     <input type="number" min="0" max="100" step="0.001" className="form-control-custom"
+                                       style={{ width: 100 }} placeholder={t('admin.packages.tierRatePlaceholder')} value={tier.premiumRate}
                                       onChange={e => handleTierChange(i, 'premiumRate', e.target.value)} />
                                     <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>%</span>
                                   </div>
@@ -556,24 +556,24 @@ export default function ManagePackagesPage() {
                                 <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
                                   <td style={tdStyle}>
                                     <div className="d-flex align-items-center gap-2">
-                                      <input type="number" min="0" max="120" className="form-control-custom"
-                                        style={{ width: 80 }} placeholder="e.g. 18" value={band.minAge}
+                                       <input type="number" min="0" max="120" className="form-control-custom"
+                                         style={{ width: 80 }} placeholder={t('admin.packages.ageMinPlaceholder')} value={band.minAge}
                                         onChange={e => handleAgeBandChange(i, 'minAge', e.target.value)} />
                                       <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>{t('admin.packages.ageYearsUnit')}</span>
                                     </div>
                                   </td>
                                   <td style={tdStyle}>
                                     <div className="d-flex align-items-center gap-2">
-                                      <input type="number" min="0" max="120" className="form-control-custom"
-                                        style={{ width: 80 }} placeholder="e.g. 35" value={band.maxAge}
+                                       <input type="number" min="0" max="120" className="form-control-custom"
+                                         style={{ width: 80 }} placeholder={t('admin.packages.ageMaxPlaceholder')} value={band.maxAge}
                                         onChange={e => handleAgeBandChange(i, 'maxAge', e.target.value)} />
                                       <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>{t('admin.packages.ageYearsUnit')}</span>
                                     </div>
                                   </td>
                                   <td style={tdStyle}>
                                     <div className="d-flex align-items-center gap-2">
-                                      <input type="number" min="0" max="100" step="0.001" className="form-control-custom"
-                                        style={{ width: 100 }} placeholder="e.g. 1.5" value={band.premiumRate}
+                                       <input type="number" min="0" max="100" step="0.001" className="form-control-custom"
+                                         style={{ width: 100 }} placeholder={t('admin.packages.ageRatePlaceholder')} value={band.premiumRate}
                                         onChange={e => handleAgeBandChange(i, 'premiumRate', e.target.value)} />
                                       <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>%</span>
                                     </div>
@@ -691,9 +691,9 @@ export default function ManagePackagesPage() {
                     {form.requiredDocuments.map((d, i) => (
                       <div key={i} className="d-flex align-items-center gap-2 mb-2">
                         <i className="bi bi-file-text" style={{ color: 'var(--text-muted)', flexShrink: 0 }}></i>
-                        <input className="form-control-custom flex-grow-1"
-                          placeholder="e.g. National ID Card, Passport"
-                          value={d} onChange={e => handleDocChange(i, e.target.value)} />
+                         <input className="form-control-custom flex-grow-1"
+                           placeholder={t('admin.packages.docPlaceholder')}
+                           value={d} onChange={e => handleDocChange(i, e.target.value)} />
                         <button type="button" onClick={() => removeDoc(i)} style={{ background: 'none', border: 'none', color: '#dc2626', cursor: 'pointer', flexShrink: 0 }}><i className="bi bi-x-lg"></i></button>
                       </div>
                     ))}
@@ -760,13 +760,13 @@ export default function ManagePackagesPage() {
               {/* ⑪ Policy Ownership Transfer */}
               <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
                 <SectionHeader id="transfer" icon="bi-arrow-left-right"
-                  label="Policy Ownership Transfer"
-                  badge={form.transferAllowed ? 'Enabled' : 'Disabled'} />
+                  label={t('admin.packages.transferSectionLabel')}
+                  badge={form.transferAllowed ? t('admin.packages.transferEnabled') : t('admin.packages.transferDisabled')} />
                 {openSection === 'transfer' && (
                   <div style={{ padding: '1rem' }}>
                     <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
                       <i className="bi bi-info-circle me-1"></i>
-                      Configure whether customers holding policies under this package are allowed to transfer ownership to another registered customer.
+                      {t('admin.packages.transferDesc')}
                     </p>
 
                     {/* Enable / Disable toggle */}
@@ -782,12 +782,12 @@ export default function ManagePackagesPage() {
                         </div>
                         <div>
                           <div style={{ fontWeight: 700, fontSize: '0.9rem', color: form.transferAllowed ? '#15803d' : 'var(--text-secondary)' }}>
-                            {form.transferAllowed ? 'Ownership Transfer Enabled' : 'Ownership Transfer Disabled'}
+                            {form.transferAllowed ? t('admin.packages.transferEnabled') : t('admin.packages.transferDisabled')}
                           </div>
                           <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                             {form.transferAllowed
-                              ? 'Customers may request to transfer this policy to another registered customer.'
-                              : 'Customers cannot initiate any transfer request for policies under this package.'}
+                              ? t('admin.packages.transferEnabledDesc')
+                              : t('admin.packages.transferDisabledDesc')}
                           </div>
                         </div>
                       </label>
@@ -798,28 +798,27 @@ export default function ManagePackagesPage() {
                       <>
                         <div style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
                           <i className="bi bi-calendar-check me-1" style={{ color: 'var(--primary)' }}></i>
-                          Minimum Holding Period Before Transfer
+                          {t('admin.packages.minHoldingPeriod')}
                         </div>
                         <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
-                          The policy must be active for at least this long (from approval date) before a transfer request can be submitted.
-                          Leave both fields empty or 0 to allow transfer at any time after the first payment is verified.
+                          {t('admin.packages.holdingPeriodDesc')}
                         </p>
                         <div className="row g-3">
                           <div className="col-6">
                             <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>
-                              Years
+                              {t('admin.packages.yearsLabel')}
                             </label>
-                            <input type="number" min="0" max="50" className="form-control-custom w-100"
-                              placeholder="e.g. 1"
-                              value={form.transferEligibleAfterYears}
+                             <input type="number" min="0" max="50" className="form-control-custom w-100"
+                               placeholder={t('admin.packages.transferYearsPlaceholder')}
+                               value={form.transferEligibleAfterYears}
                               onChange={e => setForm(f => ({ ...f, transferEligibleAfterYears: e.target.value }))} />
                           </div>
                           <div className="col-6">
                             <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'block', marginBottom: 4 }}>
-                              Additional Months
+                              {t('admin.packages.additionalMonths')}
                             </label>
                             <input type="number" min="0" max="11" className="form-control-custom w-100"
-                              placeholder="e.g. 6"
+                              placeholder={t('admin.packages.transferMonthsPlaceholder')}
                               value={form.transferEligibleAfterMonths}
                               onChange={e => setForm(f => ({ ...f, transferEligibleAfterMonths: e.target.value }))} />
                           </div>
@@ -827,10 +826,7 @@ export default function ManagePackagesPage() {
                         {(form.transferEligibleAfterYears || form.transferEligibleAfterMonths) && (
                           <div style={{ marginTop: '0.75rem', padding: '0.5rem 0.75rem', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 8, fontSize: '0.8rem', color: '#1d4ed8' }}>
                             <i className="bi bi-clock me-1"></i>
-                            Transfer eligibility: after{' '}
-                            {form.transferEligibleAfterYears > 0 ? `${form.transferEligibleAfterYears} year${form.transferEligibleAfterYears != 1 ? 's' : ''}` : ''}{' '}
-                            {form.transferEligibleAfterMonths > 0 ? `${form.transferEligibleAfterMonths} month${form.transferEligibleAfterMonths != 1 ? 's' : ''}` : ''}{' '}
-                            of active policy + at least 1 verified payment.
+                            {t('admin.packages.transferEligibilityNote', { years: form.transferEligibleAfterYears, months: form.transferEligibleAfterMonths })}
                           </div>
                         )}
                         <div style={{ marginTop: '0.75rem', padding: '0.6rem 0.75rem', background: '#fefce8', border: '1px solid #fde68a', borderRadius: 8, fontSize: '0.78rem', color: '#92400e' }}>
@@ -881,18 +877,18 @@ export default function ManagePackagesPage() {
                             <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
                               <td style={tdStyle}>
                                 <div className="d-flex align-items-center gap-2">
-                                  <input type="number" min="1" max="40" className="form-control-custom"
-                                    style={{ width: 80 }} placeholder="e.g. 3" value={tier.year}
+                                   <input type="number" min="1" max="40" className="form-control-custom"
+                                     style={{ width: 80 }} placeholder={t('admin.packages.maturityYearPlaceholder')} value={tier.year}
                                     onChange={e => handleMaturityTierChange(i, 'year', e.target.value)} />
                                   <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>{t('admin.packages.yearsUnit')}</span>
                                 </div>
                               </td>
                               <td style={tdStyle}>
                                 <div className="d-flex align-items-center gap-2">
-                                  <input type="number" min="0" max="200" step="0.1" className="form-control-custom"
-                                    style={{ width: 100 }} placeholder="e.g. 10" value={tier.bonusPercent}
+                                   <input type="number" min="0" max="200" step="0.1" className="form-control-custom"
+                                     style={{ width: 100 }} placeholder={t('admin.packages.maturityBonusPlaceholder')} value={tier.bonusPercent}
                                     onChange={e => handleMaturityTierChange(i, 'bonusPercent', e.target.value)} />
-                                  <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>% of claim amount</span>
+                                   <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>{t('admin.packages.maturityBonusUnit')}</span>
                                 </div>
                               </td>
                               <td style={tdStyle}>
@@ -940,7 +936,7 @@ export default function ManagePackagesPage() {
                     {((form.maturityBonusTiers || []).some(t => t.year !== '' && t.bonusPercent !== '') || form.maturityIncludesPremiums) && (
                       <div style={{ marginTop: '1rem', padding: '0.75rem 1rem', background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: 10, fontSize: '0.82rem', color: '#92400e' }}>
                         <div style={{ fontWeight: 700, marginBottom: '0.4rem' }}>
-                          <i className="bi bi-eye me-1"></i>Maturity Payout Preview
+                           <i className="bi bi-eye me-1"></i>{t('admin.packages.maturityPayoutPreview')}
                         </div>
                         {(form.maturityBonusTiers || []).filter(t => t.year !== '' && t.bonusPercent !== '').map((t, i) => (
                           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
@@ -1254,7 +1250,7 @@ function PackageDetailModal({ pkg, onClose, onEdit }) {
                         <tr style={{ background: 'rgba(217,119,6,0.1)' }}>
                           <th style={{ ...thStyle, color: '#92400e' }}>{t('admin.packages.maturityYearHeader')}</th>
                           <th style={{ ...thStyle, color: '#92400e' }}>{t('admin.packages.maturityBonusHeader')}</th>
-                          <th style={{ ...thStyle, color: '#92400e' }}>Payout at Maturity</th>
+                           <th style={{ ...thStyle, color: '#92400e' }}>{t('admin.packages.payoutAtMaturity')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1264,7 +1260,7 @@ function PackageDetailModal({ pkg, onClose, onEdit }) {
                             <td style={tdStyle}><span style={{ color: '#d97706', fontWeight: 700 }}>{tier.bonusPercent}%</span></td>
                             <td style={{ ...tdStyle, fontSize: '0.78rem', color: '#78350f' }}>
                               Claim Amount + {tier.bonusPercent}% bonus
-                              {pkg.maturityIncludesPremiums && <span style={{ color: '#16a34a', fontWeight: 700 }}> + Total Premiums Paid</span>}
+                              {pkg.maturityIncludesPremiums && <span style={{ color: '#16a34a', fontWeight: 700 }}> {t('admin.packages.maturityTotalPremiumsPaid')}</span>}
                             </td>
                           </tr>
                         ))}
