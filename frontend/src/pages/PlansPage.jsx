@@ -6,7 +6,7 @@ import Navbar from '../components/Navbar'
 import api from '../services/api'
 import { getTypeMeta } from '../utils/typeMeta'
 
-const OCCUPATIONS = ['Employee', 'Business Owner', 'Driver', 'Student', 'Teacher', 'Engineer', 'Doctor', 'Freelancer', 'Other']
+const OCCUPATION_KEYS = ['employee', 'businessOwner', 'driver', 'student', 'teacher', 'engineer', 'doctor', 'freelancer', 'other']
 
 function fmt(n) {
   const num = parseFloat(n)
@@ -75,6 +75,8 @@ export default function PlansPage() {
   }
 
   const freqLabel = freq => t(`plans.freq${freq}`, freq || '—')
+  const typeLabel = type => t(`plans.typeLabels.${type}`, { defaultValue: getTypeMeta(type).label })
+  const occLabel = key => t(`plans.occupations.${key}`, { defaultValue: key })
 
   return (
     <div>
@@ -89,6 +91,7 @@ export default function PlansPage() {
           user={user}
           t={t}
           freqLabel={freqLabel}
+          typeLabel={typeLabel}
         />
       )}
 
@@ -135,7 +138,7 @@ export default function PlansPage() {
                     style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.3)', color: '#fff' }}
                     value={recOcc} onChange={e => setRecOcc(e.target.value)}>
                     <option value="">{t('plans.occupationPlaceholder')}</option>
-                    {OCCUPATIONS.map(o => <option key={o} value={o.toLowerCase()}>{o}</option>)}
+                    {OCCUPATION_KEYS.map(k => <option key={k} value={k}>{occLabel(k)}</option>)}
                   </select>
                 </div>
                 <div className="col-4">
@@ -170,7 +173,7 @@ export default function PlansPage() {
                     cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem',
                   }}>
                     <i className={`bi ${getTypeMeta(rec.type).icon} me-1`}></i>
-                    {getTypeMeta(rec.type).label}
+                    {typeLabel(rec.type)}
                     <span style={{ opacity: 0.7, fontSize: '0.72rem', marginLeft: 4 }}>
                       — {t(`plans.${rec.reasonKey}`)}
                     </span>
@@ -202,7 +205,7 @@ export default function PlansPage() {
                 color: typeFilter === type ? (meta?.color || 'var(--primary)') : 'var(--text-secondary)',
               }}>
                 {meta && <i className={`bi ${meta.icon} me-1`}></i>}
-                {type === 'ALL' ? t('plans.allPlansBtn') : meta?.label || type}
+                {type === 'ALL' ? t('plans.allPlansBtn') : typeLabel(type)}
               </button>
             )
           })}
@@ -237,7 +240,7 @@ export default function PlansPage() {
                         <i className={`bi ${meta.icon}`} style={{ color: meta.color, fontSize: '1.4rem' }}></i>
                       </div>
                       <div className="flex-grow-1">
-                        <div style={{ fontSize: '0.72rem', fontWeight: 700, color: meta.color, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{meta.label}</div>
+                        <div style={{ fontSize: '0.72rem', fontWeight: 700, color: meta.color, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{typeLabel(plan.type)}</div>
                         <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '1rem', lineHeight: 1.3 }}>{plan.name}</div>
                       </div>
                     </div>
@@ -252,7 +255,7 @@ export default function PlansPage() {
                             {t('plans.premiumRate')}
                           </div>
                           <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.92rem' }}>
-                            {minRate ? `${(minRate * 100).toFixed(1)}%` : '—'}/year{tiers.length > 1 ? '+' : ''}
+                            {minRate ? `${(minRate * 100).toFixed(1)}%` : '—'}{t('plans.perYear')}{tiers.length > 1 ? '+' : ''}
                           </div>
                         </div>
                       </div>
@@ -357,7 +360,7 @@ export default function PlansPage() {
 }
 
 // ── Plan Detail Modal ──────────────────────────────────────────────────────────
-function PlanDetailModal({ plan, onClose, onApply, user, t, freqLabel }) {
+function PlanDetailModal({ plan, onClose, onApply, user, t, freqLabel, typeLabel }) {
   const meta = getTypeMeta(plan.type)
   const tiers = Array.isArray(plan.durationTiers) && plan.durationTiers.length > 0 ? plan.durationTiers : []
   const [calcCoverage, setCalcCoverage] = useState('')
@@ -405,7 +408,7 @@ function PlanDetailModal({ plan, onClose, onApply, user, t, freqLabel }) {
               <i className={`bi ${meta.icon}`} style={{ color: '#fff', fontSize: '1.55rem' }}></i>
             </div>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 2 }}>{meta.label}</div>
+              <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 2 }}>{typeLabel(plan.type)}</div>
               <div style={{ fontWeight: 800, color: '#fff', fontSize: '1.2rem', lineHeight: 1.2 }}>{plan.name}</div>
               {plan.description && (
                 <p style={{ color: 'rgba(255,255,255,0.82)', fontSize: '0.84rem', marginTop: 5, marginBottom: 0, lineHeight: 1.5 }}>{plan.description}</p>
@@ -525,7 +528,7 @@ function PlanDetailModal({ plan, onClose, onApply, user, t, freqLabel }) {
                                 </td>
                                 <td style={tdS}>
                                   <span style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '1.05rem' }}>{(tier.premiumRate * 100).toFixed(2)}%</span>
-                                  <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem', marginLeft: 2 }}>/year</span>
+                                  <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem', marginLeft: 2 }}>{t('plans.perYear')}</span>
                                 </td>
                                 <td style={{ ...tdS, color: 'var(--text-secondary)' }}>{sample ? `MMK ${fmt(sample.annual)}` : '—'}</td>
                                 <td style={tdS}>
@@ -568,7 +571,7 @@ function PlanDetailModal({ plan, onClose, onApply, user, t, freqLabel }) {
                           <select className="form-select-custom w-100" value={calcDuration} onChange={e => setCalcDuration(e.target.value)}>
                             {tiers.map(tier => (
                               <option key={tier.years} value={tier.years}>
-                                {tier.years} {t('plans.yearsUnit')} — {(tier.premiumRate * 100).toFixed(2)}%/year
+                                {tier.years} {t('plans.yearsUnit')} — {(tier.premiumRate * 100).toFixed(2)}%{t('plans.perYear')}
                               </option>
                             ))}
                           </select>
@@ -599,7 +602,7 @@ function PlanDetailModal({ plan, onClose, onApply, user, t, freqLabel }) {
                           {[
                             { l: t('plans.calcCoverageRow'), v: `MMK ${fmt(calcCoverage)}`, c: '#1d4ed8' },
                             { l: t('plans.calcDurationRow'), v: `${calcDuration} ${t('plans.yearsUnit')}`, c: meta.color },
-                            { l: t('plans.calcRateRow'),     v: `${((selectedTier?.premiumRate || 0) * 100).toFixed(2)}%/year`, c: '#d97706' },
+                            { l: t('plans.calcRateRow'),     v: `${((selectedTier?.premiumRate || 0) * 100).toFixed(2)}%${t('plans.perYear')}`, c: '#d97706' },
                             { l: t('plans.calcTotalRow'),    v: `MMK ${fmt(calcResult.annual * calcDuration)}`, c: '#16a34a' },
                           ].map((s, i) => (
                             <div key={i} className="col-6 col-md-3">

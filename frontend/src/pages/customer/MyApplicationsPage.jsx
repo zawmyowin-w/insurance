@@ -176,14 +176,14 @@ export default function MyApplicationsPage() {
 
       <DeleteConfirmModal
         open={deleteModal.open}
-        title={deleteModal.action === 'cancel' ? 'Application ကို ပယ်ဖျက်မည်လား?' : 'Application ကို ဖျက်မည်လား?'}
+        title={deleteModal.action === 'cancel' ? t('customer.cancelAppTitle') : t('customer.deleteAppTitle')}
         message={deleteModal.action === 'cancel'
-          ? 'ဤ Application ကို ပယ်ဖျက်မည်။ Agent မှ ဆောင်ရွက်မည့် Application ရပ်တန့်သွားမည်။'
-          : 'ဤ Application ကို အပြီးအပိုင် ဖျက်မည်။ ဤလုပ်ဆောင်ချက်ကို ပြန်မလုပ်နိုင်ပါ။'}
+          ? t('customer.cancelAppMsg')
+          : t('customer.deleteAppMsg')}
         onConfirm={confirmDeleteAction}
         onCancel={() => setDeleteModal({ open: false, id: null, action: null, loading: false })}
         loading={deleteModal.loading}
-        confirmLabel={deleteModal.action === 'cancel' ? 'ပယ်ဖျက်မည်' : 'Delete'}
+        confirmLabel={deleteModal.action === 'cancel' ? t('customer.cancel') : t('customer.delete')}
       />
     </div>
   )

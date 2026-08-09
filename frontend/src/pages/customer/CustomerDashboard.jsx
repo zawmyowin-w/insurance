@@ -101,7 +101,7 @@ export default function CustomerDashboard() {
 
   const now = new Date()
   const hour = now.getHours()
-  const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening'
+  const greeting = hour < 12 ? t('customer.morningGreeting') : hour < 17 ? t('customer.afternoonGreeting') : t('customer.eveningGreeting')
 
   const statCards = [
     { label: t('dash.totalApplications'), value: stats.applications,  icon: 'bi-file-earmark-text-fill',  grad: 'linear-gradient(135deg,#3b82f6,#1d4ed8)', link: '/customer/applications' },
@@ -145,7 +145,7 @@ export default function CustomerDashboard() {
                 <i className="bi bi-file-earmark-medical me-1"></i>{t('dash.submitClaim')}
               </Link>
               <div className="dashboard-banner-badge ms-1">
-                <i className="bi bi-person-fill me-1"></i> Customer
+                <i className="bi bi-person-fill me-1"></i> {t('customer.customerBadge')}
               </div>
             </div>
           </div>

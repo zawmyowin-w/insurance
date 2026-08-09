@@ -135,7 +135,7 @@ export default function MyClaimsPage() {
                         >
                           {downloading === claim.id
                             ? <span className="spinner-border spinner-border-sm"></span>
-                            : <><i className="bi bi-file-earmark-arrow-down-fill"></i> ငွေထုတ်ပြေစာ PDF</>}
+                            : <><i className="bi bi-file-earmark-arrow-down-fill"></i> {t('customer.payoutVoucher')}</>}
                         </button>
                       )}
                     </div>

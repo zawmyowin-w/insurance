@@ -12,6 +12,13 @@ const STATUS_LABEL = {
   REJECTED: { label: 'Rejected', color: '#dc2626', bg: '#fef2f2' },
 }
 
+const STATUS_KEY = {
+  PENDING_TRANSFEREE_SIGNATURE: 'customer.statusAwaitingTransferee',
+  PENDING_ADMIN_APPROVAL: 'customer.statusAwaitingAdmin',
+  APPROVED: 'customer.statusApproved',
+  REJECTED: 'customer.statusRejected',
+}
+
 export default function PolicyTransferPage() {
   const { t } = useTranslation()
   const [transfers, setTransfers] = useState([])
@@ -59,12 +66,12 @@ export default function PolicyTransferPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!fromSig) { toast.error('Please draw your digital signature'); return }
-    if (!emailValid) { toast.error('Transferee email is not a valid customer account'); return }
+    if (!fromSig) { toast.error(t('customer.drawSignature')); return }
+    if (!emailValid) { toast.error(t('customer.invalidTransfereeEmail')); return }
     setSubmitting(true)
     try {
       await api.post('/customer/policy-transfers', { ...form, fromSignature: fromSig })
-      toast.success('Transfer request submitted successfully')
+      toast.success(t('customer.transferSubmitted'))
       setShowForm(false)
       setForm({ applicationId: '', toEmail: '', relationship: '', reason: '' })
       setFromSig(null)
@@ -72,32 +79,32 @@ export default function PolicyTransferPage() {
       setEmailName('')
       fetchData()
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to submit transfer request')
+      toast.error(err.response?.data?.message || t('customer.transferFailed'))
     } finally { setSubmitting(false) }
   }
 
   const handleAccept = async () => {
-    if (!toSig) { toast.error('Please draw your digital signature to accept'); return }
+    if (!toSig) { toast.error(t('customer.drawSignature')); return }
     setSubmitting(true)
     try {
       await api.put(`/customer/policy-transfers/${showAcceptModal.id}/accept`, { toSignature: toSig })
-      toast.success('Transfer accepted and sent to admin for approval')
+      toast.success(t('customer.transferAccepted'))
       setShowAcceptModal(null)
       setToSig(null)
       fetchData()
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to accept transfer')
+      toast.error(err.response?.data?.message || t('customer.acceptFailed'))
     } finally { setSubmitting(false) }
   }
 
   const handleRejectTransferee = async (id) => {
-    if (!window.confirm('Are you sure you want to decline this transfer request?')) return
+    if (!window.confirm(t('customer.declineConfirm'))) return
     try {
       await api.put(`/customer/policy-transfers/${id}/reject`)
-      toast.success('Transfer declined')
+      toast.success(t('customer.transferDeclined'))
       fetchData()
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to decline')
+      toast.error(err.response?.data?.message || t('customer.declineFailed'))
     }
   }
 
@@ -112,7 +119,7 @@ export default function PolicyTransferPage() {
       a.click()
       setTimeout(() => { URL.revokeObjectURL(url); document.body.removeChild(a) }, 200)
     } catch {
-      toast.error('Failed to download PDF')
+      toast.error(t('customer.pdfDownloadFailed'))
     }
   }
 
@@ -127,15 +134,15 @@ export default function PolicyTransferPage() {
       <div className="d-flex align-items-center justify-content-between mb-4">
         <div>
           <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-            <i className="bi bi-arrow-left-right me-2"></i>Policy Ownership Transfer
+            <i className="bi bi-arrow-left-right me-2"></i>{t('customer.transferTitle')}
           </h4>
           <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>
-            Transfer your policy ownership to another registered customer
+            {t('customer.transferSubtitle')}
           </p>
         </div>
         <button className="btn-primary-custom" onClick={() => setShowForm(true)}
           style={{ fontSize: '0.88rem', padding: '0.45rem 1rem' }}>
-          <i className="bi bi-plus-circle me-1"></i>New Transfer Request
+          <i className="bi bi-plus-circle me-1"></i>{t('customer.newTransfer')}
         </button>
       </div>
 
@@ -143,27 +150,27 @@ export default function PolicyTransferPage() {
       {pendingForMe.length > 0 && (
         <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 10, padding: '1rem', marginBottom: '1.5rem' }}>
           <div style={{ fontWeight: 700, color: '#1e40af', marginBottom: '0.5rem' }}>
-            <i className="bi bi-bell-fill me-2"></i>You have {pendingForMe.length} pending transfer request(s)
+            <i className="bi bi-bell-fill me-2"></i>{t('customer.pendingTransfers', { count: pendingForMe.length })}
           </div>
           {pendingForMe.map(t => (
             <div key={t.id} style={{ background: 'white', borderRadius: 8, padding: '0.75rem 1rem', marginBottom: '0.5rem', border: '1px solid #e0e7ff' }}>
               <div style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
-                {t.fromCustomerName} wants to transfer policy <strong>{t.policyNumber || `#${t.applicationId}`}</strong> to you
+                {t('customer.wantsToTransfer', { name: t.fromCustomerName, policy: t.policyNumber || `#${t.applicationId}` })}
               </div>
               <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                Package: {t.packageName} | Relationship: {t.relationship}
+                {t('customer.package')}: {t.packageName} | {t('customer.relationship')}: {t.relationship}
               </div>
               <div style={{ fontSize: '0.85rem', marginBottom: '0.75rem' }}>
-                <span style={{ fontWeight: 600 }}>Reason: </span>{t.reason}
+                <span style={{ fontWeight: 600 }}>{t('customer.reason')}: </span>{t.reason}
               </div>
               <div className="d-flex gap-2">
                 <button className="btn-primary-custom" style={{ fontSize: '0.82rem', padding: '0.35rem 0.9rem' }}
                   onClick={() => setShowAcceptModal(t)}>
-                  <i className="bi bi-pen me-1"></i>Accept & Sign
+                  <i className="bi bi-pen me-1"></i>{t('customer.acceptSign')}
                 </button>
                 <button onClick={() => handleRejectTransferee(t.id)}
                   style={{ background: 'none', border: '1px solid #dc2626', color: '#dc2626', borderRadius: 6, padding: '0.35rem 0.9rem', fontSize: '0.82rem', cursor: 'pointer' }}>
-                  Decline
+                  {t('customer.decline')}
                 </button>
               </div>
             </div>
@@ -177,7 +184,7 @@ export default function PolicyTransferPage() {
       ) : transfers.length === 0 ? (
         <div className="card-custom text-center py-5">
           <i className="bi bi-arrow-left-right" style={{ fontSize: '3rem', color: 'var(--border)' }}></i>
-          <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>No transfer requests yet</h5>
+          <h5 style={{ color: 'var(--text-secondary)', marginTop: '1rem' }}>{t('customer.noTransfers')}</h5>
         </div>
       ) : (
         <div className="d-flex flex-column gap-3">
@@ -202,37 +209,37 @@ export default function PolicyTransferPage() {
                   {(t.status === 'APPROVED' || t.status === 'PENDING_ADMIN_APPROVAL') && (
                     <button onClick={() => downloadPdf(t.id)}
                       style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 6, padding: '0.3rem 0.8rem', fontSize: '0.82rem', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-                      <i className="bi bi-file-earmark-pdf me-1"></i>Download Contract
+                      <i className="bi bi-file-earmark-pdf me-1"></i>{t('customer.downloadContract')}
                     </button>
                   )}
                 </div>
                 <div className="row g-2 mt-1" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                   <div className="col-sm-6">
-                    <span style={{ fontWeight: 600 }}>From: </span>{t.fromCustomerName} ({t.fromCustomerEmail})
+                    <span style={{ fontWeight: 600 }}>{t('customer.from')}: </span>{t.fromCustomerName} ({t.fromCustomerEmail})
                   </div>
                   <div className="col-sm-6">
-                    <span style={{ fontWeight: 600 }}>To: </span>{t.toCustomerName} ({t.toCustomerEmail})
+                    <span style={{ fontWeight: 600 }}>{t('customer.to')}: </span>{t.toCustomerName} ({t.toCustomerEmail})
                   </div>
                   <div className="col-sm-6">
-                    <span style={{ fontWeight: 600 }}>Relationship: </span>{t.relationship}
+                    <span style={{ fontWeight: 600 }}>{t('customer.relationship')}: </span>{t.relationship}
                   </div>
                   <div className="col-sm-6">
-                    <span style={{ fontWeight: 600 }}>Submitted: </span>
+                    <span style={{ fontWeight: 600 }}>{t('customer.submitted')}: </span>
                     {t.createdAt ? new Date(t.createdAt).toLocaleDateString() : '—'}
                   </div>
                   <div className="col-12">
-                    <span style={{ fontWeight: 600 }}>Reason: </span>{t.reason}
+                    <span style={{ fontWeight: 600 }}>{t('customer.reason')}: </span>{t.reason}
                   </div>
                   {t.adminNote && (
                     <div className="col-12" style={{ color: t.status === 'REJECTED' ? '#dc2626' : '#1d4ed8' }}>
-                      <span style={{ fontWeight: 600 }}>Admin note: </span>{t.adminNote}
+                      <span style={{ fontWeight: 600 }}>{t('customer.adminNote')}: </span>{t.adminNote}
                     </div>
                   )}
                 </div>
                 <div className="d-flex gap-3 mt-2" style={{ fontSize: '0.78rem', color: '#64748b' }}>
-                  {t.fromSignedAt && <span><i className="bi bi-pen-fill me-1" style={{ color: '#15803d' }}></i>Original owner signed {new Date(t.fromSignedAt).toLocaleDateString()}</span>}
-                  {t.toSignedAt && <span><i className="bi bi-pen-fill me-1" style={{ color: '#15803d' }}></i>Transferee signed {new Date(t.toSignedAt).toLocaleDateString()}</span>}
-                  {t.approvedAt && <span><i className="bi bi-check-circle-fill me-1" style={{ color: '#15803d' }}></i>Approved {new Date(t.approvedAt).toLocaleDateString()}</span>}
+                  {t.fromSignedAt && <span><i className="bi bi-pen-fill me-1" style={{ color: '#15803d' }}></i>{t('customer.originalOwnerSigned')} {new Date(t.fromSignedAt).toLocaleDateString()}</span>}
+                  {t.toSignedAt && <span><i className="bi bi-pen-fill me-1" style={{ color: '#15803d' }}></i>{t('customer.transfereeSigned')} {new Date(t.toSignedAt).toLocaleDateString()}</span>}
+                  {t.approvedAt && <span><i className="bi bi-check-circle-fill me-1" style={{ color: '#15803d' }}></i>{t('customer.approved')} {new Date(t.approvedAt).toLocaleDateString()}</span>}
                 </div>
               </div>
             )

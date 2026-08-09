@@ -15,7 +15,7 @@ export default function CustomerLayout() {
     { to: '/customer/submit-claim',  icon: 'bi-plus-circle-dotted',   label: t('sidebar.submitClaim')  },
     { to: '/customer/payments',      icon: 'bi-credit-card',           label: t('sidebar.payments')     },
     { to: '/customer/notifications', icon: 'bi-bell',                  label: t('sidebar.notifications'), badge: true },
-    { to: '/customer/policy-transfers', icon: 'bi-arrow-left-right',    label: 'Policy Transfer'         },
+    { to: '/customer/policy-transfers', icon: 'bi-arrow-left-right',    label: t('customer.policyTransfer') },
     { to: '/customer/feedback',      icon: 'bi-chat-heart',            label: t('sidebar.feedback')     },
     { to: '/customer/profile',       icon: 'bi-person-circle',         label: t('sidebar.profile')      },
   ]

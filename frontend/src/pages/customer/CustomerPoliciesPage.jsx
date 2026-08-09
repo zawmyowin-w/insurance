@@ -117,7 +117,7 @@ export default function CustomerPoliciesPage() {
       a.click()
       URL.revokeObjectURL(url)
     } catch {
-      toast.error('Failed to download certificate PDF')
+      toast.error(t('customer.certDownloadFailed'))
     } finally { setDownloading(null) }
   }
 
@@ -146,7 +146,7 @@ export default function CustomerPoliciesPage() {
             </div>
             {isUsed ? (
               <span style={{ padding: '0.25rem 0.65rem', borderRadius: 99, background: '#f1f5f9', color: '#64748b', fontSize: '0.75rem', fontWeight: 700, flexShrink: 0 }}>
-                <i className="bi bi-check-circle-fill me-1" style={{ color: '#15803d' }}></i>Claim Paid
+                <i className="bi bi-check-circle-fill me-1" style={{ color: '#15803d' }}></i>{t('customer.claimPaid')}
               </span>
             ) : (
               <span style={{ padding: '0.25rem 0.65rem', borderRadius: 99, background: '#dcfce7', color: '#16a34a', fontSize: '0.75rem', fontWeight: 700, flexShrink: 0 }}>{t('policies.active')}</span>
@@ -199,8 +199,7 @@ export default function CustomerPoliciesPage() {
           {isUsed && (
             <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '0.6rem 0.75rem', marginBottom: '0.75rem', fontSize: '0.82rem', color: '#15803d' }}>
               <i className="bi bi-check-circle-fill me-1"></i>
-              Claim has been approved and paid out. This policy is now closed and cannot be used for further claims.
-              <br />ဤပါလစီ၏ လျော်ကြေးကို ပေးချေပြီးဖြစ်သောကြောင့် နောက်ထပ်တောင်းဆိုခွင့်မရှိတော့ပါ။
+              {t('customer.claimPaidDesc')}
             </div>
           )}
 
@@ -323,7 +322,7 @@ export default function CustomerPoliciesPage() {
             <>
               {usedPolicies.length > 0 && (
                 <h6 style={{ fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-                  <i className="bi bi-shield-check me-2" style={{ color: '#16a34a' }}></i>Active Policies ({activePolicies.length})
+                  <i className="bi bi-shield-check me-2" style={{ color: '#16a34a' }}></i>{t('customer.activePolicies')} ({activePolicies.length})
                 </h6>
               )}
               <div className="row g-4 mb-4">
@@ -337,9 +336,9 @@ export default function CustomerPoliciesPage() {
             <>
               <div style={{ borderTop: '1px solid var(--border)', marginBottom: '1.5rem', paddingTop: '1.5rem' }}>
                 <h6 style={{ fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '1rem' }}>
-                  <i className="bi bi-clock-history me-2"></i>Policy History — Claim Paid ({usedPolicies.length})
+                  <i className="bi bi-clock-history me-2"></i>{t('customer.policyHistory')} ({usedPolicies.length})
                   <span style={{ fontSize: '0.8rem', fontWeight: 400, color: 'var(--text-muted)', marginLeft: 8 }}>
-                    These policies have had claims approved and are now closed.
+                    {t('customer.policyHistoryDesc')}
                   </span>
                 </h6>
               </div>
@@ -352,7 +351,7 @@ export default function CustomerPoliciesPage() {
           {activePolicies.length === 0 && usedPolicies.length > 0 && (
             <div className="card-custom text-center py-4 mb-4" style={{ background: '#f8fafc' }}>
               <i className="bi bi-shield-plus" style={{ fontSize: '2rem', color: 'var(--border)' }}></i>
-              <div style={{ color: 'var(--text-secondary)', marginTop: '0.5rem', fontSize: '0.9rem' }}>No active policies. Apply for a new policy to get started.</div>
+              <div style={{ color: 'var(--text-secondary)', marginTop: '0.5rem', fontSize: '0.9rem' }}>{t('customer.noActivePolicies')}</div>
               <Link to="/customer/apply" className="btn-primary-custom mt-3" style={{ display: 'inline-flex' }}>{t('policies.applyNow')}</Link>
             </div>
           )}
@@ -367,7 +366,7 @@ export default function CustomerPoliciesPage() {
         message=""
         icon="bi-arrow-repeat"
         confirmLabel={t('policies.renew')}
-        cancelLabel="Cancel"
+        cancelLabel={t('customer.cancelLabel')}
         variant="primary"
         loading={renewing !== null}
         onConfirm={doRenew}
