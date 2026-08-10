@@ -1608,10 +1608,13 @@
       "transferDisabled": "Transfer disabled",
       "transferEnabledDesc": "Policy transfer requests are allowed",
       "transferDisabledDesc": "Policy transfer requests are not allowed",
+      "transferSectionLabel": "⑪ Policy Ownership Transfer",
+      "transferDesc": "Allow policy holders to transfer ownership to another person after the minimum holding period.",
       "minHoldingPeriod": "Minimum holding period before transfer",
       "holdingPeriodDesc": "Customers must hold the policy for this period before requesting a transfer.",
       "yearsLabel": "Years",
-      "additionalMonths": "Additional months"
+      "additionalMonths": "Additional months",
+      "holdingPeriodNote": "Note: Regardless of the holding period, at least one premium payment must be verified by admin before a transfer request can be initiated. After transfer is approved, the new owner can immediately submit claims using the previous owner's payment history."
     },
     "insuranceTypes": {
       "title": "Insurance Types",

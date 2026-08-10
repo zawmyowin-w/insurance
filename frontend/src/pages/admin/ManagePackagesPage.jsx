@@ -831,7 +831,7 @@ export default function ManagePackagesPage() {
                         )}
                         <div style={{ marginTop: '0.75rem', padding: '0.6rem 0.75rem', background: '#fefce8', border: '1px solid #fde68a', borderRadius: 8, fontSize: '0.78rem', color: '#92400e' }}>
                           <i className="bi bi-exclamation-triangle me-1"></i>
-                          <strong>Note:</strong> Regardless of the holding period, at least one premium payment must be verified by admin before a transfer request can be initiated. After transfer is approved, the new owner can immediately submit claims using the previous owner's payment history.
+                          {t('admin.packages.holdingPeriodNote')}
                         </div>
                       </>
                     )}
