@@ -1230,7 +1230,7 @@
       "title": "Payments Management",
       "subtitle": "Review mobile payment proofs and verify premium payments",
       "noFound": "No payments found for",
-      "verify": "Verify",
+      "verify": "Approve",
       "reject": "Reject",
       "rejectionReason": "Provide a reason for rejection",
       "viewScreenshot": "View Screenshot",
