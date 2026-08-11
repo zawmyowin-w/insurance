@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
+import { downloadBlob } from '../../utils/download'
 
 const STATUS_LABEL = {
   PENDING_TRANSFEREE_SIGNATURE: { labelKey: 'statusPENDING_TRANSFEREE_SIGNATURE', color: '#d97706', bg: '#fef3c7' },
@@ -47,13 +48,7 @@ export default function AdminPolicyTransfersPage() {
   const downloadPdf = async (id) => {
     try {
       const res = await api.get(`/admin/policy-transfers/${id}/pdf`, { responseType: 'blob' })
-      const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `transfer_contract_${id}.pdf`
-      document.body.appendChild(a)
-      a.click()
-      setTimeout(() => { URL.revokeObjectURL(url); document.body.removeChild(a) }, 200)
+      await downloadBlob(res.data, `transfer_contract_${id}.pdf`, 'application/pdf')
     } catch {
       toast.error(t('admin.transfers.pdfFailed'))
     }

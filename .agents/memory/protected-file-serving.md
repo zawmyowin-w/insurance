@@ -13,6 +13,7 @@ All uploaded files (documents, payment screenshots) are served through role-scop
 - Frontend: `const res = await api.get(url, { responseType: 'blob' }); const objUrl = URL.createObjectURL(res.data);` — then assign to `<img src>` or open in new tab.
 - Always revoke object URLs on component unmount: `URL.revokeObjectURL(objUrl)` in a `useEffect` cleanup.
 - PDFs: detect `res.data.type === 'application/pdf'` and offer an "open in new tab" link instead of embedding inline.
+- For downloads, keep the object URL alive briefly after triggering the anchor click; synchronous revocation can truncate the browser's asynchronous blob read.
 
 ## Codebase pattern
 - `DocumentViewerModal.jsx` (reusable) — accepts `urls[]` (relative API paths), fetches all, renders images inline or PDF links.

@@ -5,6 +5,7 @@ import api from '../../services/api'
 import { toast } from 'react-toastify'
 import FormDetailModal from '../../components/FormDetailModal'
 import RevisionFormModal from '../../components/RevisionFormModal'
+import { downloadBlob } from '../../utils/download'
 
 export default function MyClaimsPage() {
   const { t } = useTranslation()
@@ -13,13 +14,7 @@ export default function MyClaimsPage() {
     setDownloading(claimId)
     try {
       const res = await api.get(`/customer/claims/${claimId}/payout-voucher`, { responseType: 'blob' })
-      const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `payout_voucher_claim_${claimId}.pdf`
-      document.body.appendChild(a)
-      a.click()
-      setTimeout(() => { URL.revokeObjectURL(url); document.body.removeChild(a) }, 200)
+      await downloadBlob(res.data, `payout_voucher_claim_${claimId}.pdf`, 'application/pdf')
     } catch {
       toast.error(t('customer.payoutVoucherDownloadFailed'))
     } finally {

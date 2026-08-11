@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import api from '../services/api'
+import { downloadBlob } from '../utils/download'
 
 /**
  * Reusable modal for viewing submitted application or claim form data.
@@ -46,12 +47,7 @@ export default function FormDetailModal({ show, onClose, type, item, role }) {
     setPdfLoading(true)
     try {
       const res = await api.get(path, { responseType: 'blob' })
-      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `${type}_${item.id}.pdf`
-      a.click()
-      window.URL.revokeObjectURL(url)
+      await downloadBlob(res.data, `${type}_${item.id}.pdf`, 'application/pdf')
     } catch { alert(t('formModal.downloadFailed')) }
     finally { setPdfLoading(false) }
   }

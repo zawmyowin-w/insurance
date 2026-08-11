@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
+import { downloadBlob } from '../../utils/download'
 import { getTypeMeta } from '../../utils/typeMeta'
 import ConfirmModal from '../../components/ConfirmModal'
 
@@ -110,12 +111,7 @@ export default function CustomerPoliciesPage() {
     setDownloading(policy.id)
     try {
       const res = await api.get(`/customer/applications/${policy.id}/policy-contract`, { responseType: 'blob' })
-      const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `policy_certificate_${policy.policyNumber || policy.id}.pdf`
-      a.click()
-      URL.revokeObjectURL(url)
+      await downloadBlob(res.data, `policy_certificate_${policy.policyNumber || policy.id}.pdf`, 'application/pdf')
     } catch {
       toast.error(t('customer.certDownloadFailed'))
     } finally { setDownloading(null) }

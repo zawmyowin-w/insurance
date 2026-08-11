@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
+import { downloadBlob } from '../../utils/download'
 
 const STATUS_COLORS = {
   OVERDUE:              { color: '#dc2626', bg: '#fee2e2', icon: 'bi-exclamation-triangle-fill' },
@@ -123,12 +124,7 @@ export default function AdminPremiumSchedulePage() {
   const downloadPolicy = async (appId, policyNumber) => {
     try {
       const res = await api.get(`/admin/applications/${appId}/policy-contract`, { responseType: 'blob' })
-      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `policy_contract_${policyNumber || appId}.pdf`
-      a.click()
-      window.URL.revokeObjectURL(url)
+      await downloadBlob(res.data, `policy_contract_${policyNumber || appId}.pdf`, 'application/pdf')
     } catch {
       toast.error(t('admin.premiumSchedule.pdfFailed'))
     }

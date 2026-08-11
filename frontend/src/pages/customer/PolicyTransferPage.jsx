@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
+import { downloadBlob } from '../../utils/download'
 import { useAuth } from '../../context/AuthContext'
 import DigitalSignatureCanvas from '../../components/DigitalSignatureCanvas'
 
@@ -111,13 +112,7 @@ export default function PolicyTransferPage() {
   const downloadPdf = async (id) => {
     try {
       const res = await api.get(`/customer/policy-transfers/${id}/pdf`, { responseType: 'blob' })
-      const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `transfer_contract_${id}.pdf`
-      document.body.appendChild(a)
-      a.click()
-      setTimeout(() => { URL.revokeObjectURL(url); document.body.removeChild(a) }, 200)
+      await downloadBlob(res.data, `transfer_contract_${id}.pdf`, 'application/pdf')
     } catch {
       toast.error(t('customer.pdfDownloadFailed'))
     }

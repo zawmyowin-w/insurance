@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
+import { downloadBlob } from '../../utils/download'
 
 // ── Colour palette by insurance type ────────────────────────────────────────
 const TYPE_COLORS = {
@@ -183,13 +184,7 @@ function StatCard({ label, value, icon, color, bg, sub }) {
 
 // ── Blob-download helper ──────────────────────────────────────────────────────
 function triggerBlobDownload(data, filename, mime = 'application/pdf') {
-  const url = URL.createObjectURL(new Blob([data], { type: mime }))
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  document.body.appendChild(a)
-  a.click()
-  setTimeout(() => { URL.revokeObjectURL(url); a.remove() }, 200)
+  return downloadBlob(data, filename, mime)
 }
 
 // ── Main Component ────────────────────────────────────────────────────────────
@@ -266,7 +261,7 @@ export default function AdminReportsPage() {
         responseType: 'blob',
       })
       const filename = `monthly-report-${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}.pdf`
-      triggerBlobDownload(res.data, filename)
+      await triggerBlobDownload(res.data, filename)
     } catch {
       showToast(t('admin.reports.downloadError'), false)
     } finally {
@@ -282,7 +277,7 @@ export default function AdminReportsPage() {
       const now = new Date()
       const res = await api.post('/admin/reports/monthly-reset', null, { responseType: 'blob' })
       const filename = `period-report-${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}.pdf`
-      triggerBlobDownload(res.data, filename)
+      await triggerBlobDownload(res.data, filename)
       showToast(t('admin.reports.monthlyResetSuccess'))
       // Reload everything — analytics now shows zero, snapshots table updated
       const [snaps, newReports, newReset] = await Promise.all([
@@ -305,7 +300,7 @@ export default function AdminReportsPage() {
     try {
       const res = await api.get(`/admin/reports/monthly-snapshots/${id}/pdf`, { responseType: 'blob' })
       const filename = `monthly-report-${year}-${String(month).padStart(2,'0')}.pdf`
-      triggerBlobDownload(res.data, filename)
+      await triggerBlobDownload(res.data, filename)
     } catch {
       showToast(t('admin.reports.downloadError'), false)
     }

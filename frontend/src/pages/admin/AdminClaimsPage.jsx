@@ -6,6 +6,7 @@ import { toast } from 'react-toastify'
 import FormDetailModal from '../../components/FormDetailModal'
 import DigitalSignatureCanvas from '../../components/DigitalSignatureCanvas'
 import { apiError } from '../../utils/apiError'
+import { downloadBlob } from '../../utils/download'
 
 export default function AdminClaimsPage() {
   const { t } = useTranslation()
@@ -14,13 +15,7 @@ export default function AdminClaimsPage() {
     setDownloading(claimId)
     try {
       const res = await api.get(`/admin/claims/${claimId}/payout-voucher`, { responseType: 'blob' })
-      const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `payout_voucher_claim_${claimId}.pdf`
-      document.body.appendChild(a)
-      a.click()
-      setTimeout(() => { URL.revokeObjectURL(url); document.body.removeChild(a) }, 200)
+      await downloadBlob(res.data, `payout_voucher_claim_${claimId}.pdf`, 'application/pdf')
     } catch {
       toast.error(t('admin.claims.downloadVoucherFailed'))
     } finally {
