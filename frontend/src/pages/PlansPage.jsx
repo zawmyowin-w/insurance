@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import Navbar from '../components/Navbar'
@@ -40,6 +40,7 @@ export default function PlansPage() {
   const { t } = useTranslation()
   const { user } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [plans, setPlans] = useState([])
   const [loading, setLoading] = useState(true)
   const [typeFilter, setTypeFilter] = useState('ALL')
@@ -49,6 +50,13 @@ export default function PlansPage() {
   const [recIncome, setRecIncome] = useState('')
   const [recommendations, setRecommendations] = useState([])
   const [showRec, setShowRec] = useState(false)
+
+  useEffect(() => {
+    const typeParam = searchParams.get('type')
+    if (typeParam) {
+      setTypeFilter(typeParam.toUpperCase())
+    }
+  }, [searchParams])
 
   useEffect(() => {
     api.get('/packages/public')

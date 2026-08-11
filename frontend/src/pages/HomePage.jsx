@@ -170,7 +170,7 @@ export default function HomePage() {
                         )}
 
                         <div className="d-flex align-items-center gap-2">
-                          <Link to="/plans" className="insurance-card-3d-link" style={{ color: meta.color }}>
+                          <Link to={`/plans?type=${type.name}`} className="insurance-card-3d-link" style={{ color: meta.color }}>
                             {t('home.learnMore')} <i className="bi bi-arrow-right ms-1"></i>
                           </Link>
                           {hasDetails && (
