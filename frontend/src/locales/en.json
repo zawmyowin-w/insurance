@@ -1700,6 +1700,7 @@
       "editBtnLabel": "Edit",
       "noFormCreated": "No form created yet",
       "formNameLabel": "Form Name *",
+      "formNamePlaceholder": "Name",
       "activeLabel": "Active",
       "formCreated": "Form saved successfully",
       "formUpdated": "Form updated successfully",

@@ -1700,6 +1700,7 @@
       "editBtnLabel": "ပြင်ဆင်ရန်",
       "noFormCreated": "Form မရှိသေးပါ",
       "formNameLabel": "Form အမည် *",
+      "formNamePlaceholder": "အမည်",
       "activeLabel": "တက်ကြွဆဲ",
       "formCreated": "Form သိမ်းပြီး",
       "formUpdated": "Form ပြင်ဆင်ပြီး",
