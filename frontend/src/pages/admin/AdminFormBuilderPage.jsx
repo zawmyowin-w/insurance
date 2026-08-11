@@ -7,12 +7,11 @@ import { getTypeMeta } from '../../utils/typeMeta'
 import DeleteConfirmModal from '../../components/DeleteConfirmModal'
 
 const FIELD_TYPE_VALUES = [
-  'LABEL', 'NAME', 'EMAIL', 'PHONE', 'TEXT',
-  'TEXTAREA', 'DATE', 'NRC', 'CHECKBOX', 'RADIO', 'IMAGE_UPLOAD', 'PDF_UPLOAD',
+  'NAME', 'EMAIL', 'PHONE', 'TEXT',
+  'TEXTAREA', 'DATE', 'NRC', 'CHECKBOX', 'IMAGE_UPLOAD', 'PDF_UPLOAD',
 ]
 
 const FIELD_ICONS = {
-  LABEL:        'bi-type-h2',
   NAME:         'bi-person-fill',
   EMAIL:        'bi-envelope-fill',
   PHONE:        'bi-telephone-fill',
@@ -21,7 +20,6 @@ const FIELD_ICONS = {
   DATE:         'bi-calendar-date',
   NRC:          'bi-person-vcard',
   CHECKBOX:     'bi-check2-square',
-  RADIO:        'bi-ui-radios',
   IMAGE_UPLOAD: 'bi-image',
   PDF_UPLOAD:   'bi-file-earmark-pdf',
 }
