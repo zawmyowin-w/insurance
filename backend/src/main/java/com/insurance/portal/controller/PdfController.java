@@ -50,6 +50,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.util.*;
 import java.util.Base64;
 
@@ -263,14 +264,7 @@ public class PdfController {
             // HEADER
             // ─────────────────────────────────────────────────────────────
             Table headerTable = new Table(UnitValue.createPercentArray(new float[]{70, 30})).useAllAvailableWidth();
-            headerTable.addCell(new Cell()
-                    .add(new Paragraph("DIGITAL INSURANCE CLAIMS AND PREMIUMS")
-                            .setFont(bold).setFontSize(13).setFontColor(blue).setMarginBottom(2))
-                    .add(new Paragraph("PORTAL — MYANMAR")
-                            .setFont(bold).setFontSize(10).setFontColor(navy).setMarginBottom(4))
-                    .add(new Paragraph("ဒစ်ဂျစ်တယ် အာမခံ တောင်းဆိုမှုနှင့် ကြေးငွေ ပေါ်တယ် — မြန်မာ")
-                            .setFont(oblique).setFontSize(8).setFontColor(gray))
-                    .setBorder(Border.NO_BORDER).setPadding(4));
+             headerTable.addCell(brandHeaderCell(bold, oblique, blue, 13, 8));
             headerTable.addCell(new Cell()
                     .add(new Paragraph("OFFICIAL POLICY CERTIFICATE")
                             .setFont(bold).setFontSize(10).setFontColor(blue)
@@ -632,11 +626,7 @@ public class PdfController {
 
             // ── HEADER ──────────────────────────────────────────────────
             Table headerTable = new Table(UnitValue.createPercentArray(new float[]{70, 30})).useAllAvailableWidth();
-            headerTable.addCell(new Cell()
-                    .add(new Paragraph("DIGITAL INSURANCE CLAIMS AND PREMIUMS").setFont(bold).setFontSize(12).setFontColor(blue).setMarginBottom(2))
-                    .add(new Paragraph("PORTAL — MYANMAR").setFont(bold).setFontSize(9).setFontColor(navy).setMarginBottom(3))
-                    .add(new Paragraph("ဒစ်ဂျစ်တယ် အာမခံ တောင်းဆိုမှုနှင့် ကြေးငွေ ပေါ်တယ် — မြန်မာ").setFont(oblique).setFontSize(8).setFontColor(gray))
-                    .setBorder(Border.NO_BORDER).setPadding(4));
+             headerTable.addCell(brandHeaderCell(bold, oblique, blue, 12, 8));
             headerTable.addCell(new Cell()
                     .add(new Paragraph("INSURANCE APPLICATION FORM").setFont(bold).setFontSize(10).setFontColor(blue).setTextAlignment(TextAlignment.RIGHT).setMarginBottom(3))
                     .add(new Paragraph("အာမခံ လျှောက်လွှာ ပုံစံ").setFont(oblique).setFontSize(8).setFontColor(gray).setTextAlignment(TextAlignment.RIGHT).setMarginBottom(6))
@@ -753,11 +743,7 @@ public class PdfController {
 
             // ── HEADER ──────────────────────────────────────────────────
             Table headerTable = new Table(UnitValue.createPercentArray(new float[]{70, 30})).useAllAvailableWidth();
-            headerTable.addCell(new Cell()
-                    .add(new Paragraph("DIGITAL INSURANCE CLAIMS AND PREMIUMS").setFont(bold).setFontSize(12).setFontColor(amber).setMarginBottom(2))
-                    .add(new Paragraph("PORTAL — MYANMAR").setFont(bold).setFontSize(9).setFontColor(navy).setMarginBottom(3))
-                    .add(new Paragraph("ဒစ်ဂျစ်တယ် အာမခံ တောင်းဆိုမှုနှင့် ကြေးငွေ ပေါ်တယ် — မြန်မာ").setFont(oblique).setFontSize(8).setFontColor(gray))
-                    .setBorder(Border.NO_BORDER).setPadding(4));
+             headerTable.addCell(brandHeaderCell(bold, oblique, amber, 12, 8));
             headerTable.addCell(new Cell()
                     .add(new Paragraph("INSURANCE CLAIM FORM").setFont(bold).setFontSize(10).setFontColor(amber).setTextAlignment(TextAlignment.RIGHT).setMarginBottom(3))
                     .add(new Paragraph("အာမခံ တောင်းဆိုမှု ပုံစံ").setFont(oblique).setFontSize(8).setFontColor(gray).setTextAlignment(TextAlignment.RIGHT).setMarginBottom(6))
@@ -863,6 +849,46 @@ public class PdfController {
                     .setPadding(5));
         }
         doc.add(table);
+    }
+
+    /**
+     * Shared PDF brand block. The logo is bundled with the backend so every
+     * generated/downloaded PDF carries the same branding as the web portal.
+     */
+    private Cell brandHeaderCell(PdfFont boldFont, PdfFont obliqueFont, DeviceRgb accent,
+                                 float titleSize, float myanmarSize) {
+        Table brand = new Table(UnitValue.createPercentArray(new float[]{16, 84}))
+                .useAllAvailableWidth();
+
+        Cell logoCell = new Cell().setBorder(Border.NO_BORDER).setPadding(0);
+        Image logo = pdfLogo();
+        if (logo != null) {
+            logo.scaleToFit(32, 32);
+            logoCell.add(logo);
+        }
+        brand.addCell(logoCell);
+
+        Cell textCell = new Cell().setBorder(Border.NO_BORDER).setPadding(0).setPaddingLeft(4);
+        textCell.add(new Paragraph("DIGITAL INSURANCE CLAIMS AND PREMIUMS")
+                .setFont(boldFont).setFontSize(titleSize).setFontColor(accent).setMarginBottom(2));
+        textCell.add(new Paragraph("PORTAL — MYANMAR")
+                .setFont(boldFont).setFontSize(9)
+                .setFontColor(new DeviceRgb(15, 23, 42)).setMarginBottom(3));
+        textCell.add(new Paragraph("ဒစ်ဂျစ်တယ် အာမခံ တောင်းဆိုမှုနှင့် ကြေးငွေ ပေါ်တယ် — မြန်မာ")
+                .setFont(obliqueFont).setFontSize(myanmarSize)
+                .setFontColor(new DeviceRgb(71, 85, 105)));
+        brand.addCell(textCell);
+
+        return new Cell().add(brand).setBorder(Border.NO_BORDER).setPadding(4);
+    }
+
+    private Image pdfLogo() {
+        try (InputStream input = PdfController.class.getResourceAsStream("/logo-transparent.png")) {
+            if (input == null) return null;
+            return new Image(ImageDataFactory.create(input.readAllBytes()));
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 
     /**
@@ -1057,14 +1083,7 @@ public class PdfController {
 
             // ── HEADER ─────────────────────────────────────────────────────
             Table headerTable = new Table(UnitValue.createPercentArray(new float[]{65, 35})).useAllAvailableWidth();
-            headerTable.addCell(new Cell()
-                    .add(new Paragraph("DIGITAL INSURANCE CLAIMS AND PREMIUMS")
-                            .setFont(bold).setFontSize(11).setFontColor(blue).setMarginBottom(2))
-                    .add(new Paragraph("PORTAL — MYANMAR")
-                            .setFont(bold).setFontSize(9).setFontColor(navy).setMarginBottom(3))
-                    .add(new Paragraph("ဒစ်ဂျစ်တယ် အာမခံ တောင်းဆိုမှုနှင့် ကြေးငွေ ပေါ်တယ် — မြန်မာ")
-                            .setFont(oblique).setFontSize(8).setFontColor(gray))
-                    .setBorder(Border.NO_BORDER).setPadding(4));
+             headerTable.addCell(brandHeaderCell(bold, oblique, blue, 11, 8));
             headerTable.addCell(new Cell()
                     .add(new Paragraph("POLICY OWNERSHIP TRANSFER CONTRACT")
                             .setFont(bold).setFontSize(10).setFontColor(blue)
@@ -1315,11 +1334,7 @@ public class PdfController {
 
             // ── HEADER ───────────────────────────────────────────────────
             Table headerTable = new Table(UnitValue.createPercentArray(new float[]{65, 35})).useAllAvailableWidth();
-            headerTable.addCell(new Cell()
-                    .add(new Paragraph("DIGITAL INSURANCE CLAIMS AND PREMIUMS").setFont(bold).setFontSize(11).setFontColor(green).setMarginBottom(2))
-                    .add(new Paragraph("PORTAL — MYANMAR").setFont(bold).setFontSize(9).setFontColor(navy).setMarginBottom(3))
-                    .add(new Paragraph("ဒစ်ဂျစ်တယ် အာမခံ တောင်းဆိုမှုနှင့် ကြေးငွေ ပေါ်တယ် — မြန်မာ").setFont(oblique).setFontSize(8).setFontColor(gray))
-                    .setBorder(Border.NO_BORDER).setPadding(4));
+             headerTable.addCell(brandHeaderCell(bold, oblique, green, 11, 8));
             headerTable.addCell(new Cell()
                     .add(new Paragraph("CLAIM PAYOUT VOUCHER").setFont(bold).setFontSize(11).setFontColor(green).setTextAlignment(TextAlignment.RIGHT).setMarginBottom(2))
                     .add(new Paragraph("လျော်ကြေး ငွေထုတ်ရန် ပြေစာ").setFont(oblique).setFontSize(8.5f).setFontColor(gray).setTextAlignment(TextAlignment.RIGHT).setMarginBottom(4))

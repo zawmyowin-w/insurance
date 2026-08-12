@@ -15,6 +15,7 @@ import com.itextpdf.layout.Document;
 import com.itextpdf.layout.borders.Border;
 import com.itextpdf.layout.borders.SolidBorder;
 import com.itextpdf.layout.element.Cell;
+import com.itextpdf.layout.element.Image;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
 import com.itextpdf.layout.properties.TextAlignment;
@@ -29,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.file.Files;
@@ -359,11 +361,7 @@ public class MonthlyReportController {
 
         // ── HEADER ────────────────────────────────────────────────────────
         Table header = new Table(UnitValue.createPercentArray(new float[]{65, 35})).useAllAvailableWidth();
-        header.addCell(new Cell()
-                .add(new Paragraph("DIGITAL INSURANCE CLAIMS AND PREMIUMS").setFont(bold).setFontSize(12).setFontColor(BLUE).setMarginBottom(2))
-                .add(new Paragraph("PORTAL — MYANMAR").setFont(bold).setFontSize(9).setFontColor(NAVY).setMarginBottom(3))
-                .add(new Paragraph("ဒစ်ဂျစ်တယ် အာမခံ တောင်းဆိုမှုနှင့် ကြေးငွေ ပေါ်တယ် — မြန်မာ").setFont(oblique).setFontSize(7.5f).setFontColor(GRAY))
-                .setBorder(Border.NO_BORDER).setPadding(4));
+        header.addCell(brandHeaderCell(bold, oblique, BLUE, 12, 7.5f));
         header.addCell(new Cell()
                 .add(new Paragraph("MONTHLY ANALYTICS REPORT").setFont(bold).setFontSize(10).setFontColor(BLUE).setTextAlignment(TextAlignment.RIGHT).setMarginBottom(3))
                 .add(new Paragraph("လစဉ် ခွဲခြမ်းစိတ်ဖြာမှု အစီရင်ခံစာ").setFont(oblique).setFontSize(7.5f).setFontColor(GRAY).setTextAlignment(TextAlignment.RIGHT).setMarginBottom(5))
@@ -636,11 +634,7 @@ public class MonthlyReportController {
 
         // Header
         Table header = new Table(UnitValue.createPercentArray(new float[]{58, 42})).useAllAvailableWidth();
-        header.addCell(new Cell()
-                .add(new Paragraph("DIGITAL INSURANCE CLAIMS AND PREMIUMS").setFont(bold).setFontSize(12).setFontColor(BLUE).setMarginBottom(2))
-                .add(new Paragraph("PORTAL — MYANMAR").setFont(bold).setFontSize(9).setFontColor(NAVY).setMarginBottom(3))
-                .add(new Paragraph("\u1012\u1005\u103a\u1002\u1000\u103a\u1010\u101a\u103a \u1021\u102c\u1019\u1001\u1036 \u1010\u1031\u102c\u1004\u103a\u1038\u1006\u102d\u102f\u1019\u103a\u1014\u103e\u1004\u1037\u103a \u1000\u103c\u1031\u102c\u1004\u103a\u1038\u1004\u103d\u1031 \u1015\u1031\u102c\u103a\u1010\u101a\u103a \u2014 \u1019\u103c\u1014\u103a\u1019\u102c").setFont(oblique).setFontSize(7.5f).setFontColor(GRAY))
-                .setBorder(Border.NO_BORDER).setPadding(4));
+        header.addCell(brandHeaderCell(bold, oblique, BLUE, 12, 7.5f));
         header.addCell(new Cell()
                 .add(new Paragraph("PERIOD ANALYTICS REPORT").setFont(bold).setFontSize(10).setFontColor(BLUE).setTextAlignment(TextAlignment.RIGHT).setMarginBottom(2))
                 .add(new Paragraph("(Monthly Reset Export)").setFont(oblique).setFontSize(8f).setFontColor(GRAY).setTextAlignment(TextAlignment.RIGHT).setMarginBottom(5))
@@ -864,6 +858,40 @@ public class MonthlyReportController {
     private static String fmt(BigDecimal v) {
         if (v == null) return "0";
         return String.format("%,.0f", v.doubleValue());
+    }
+
+    private static Cell brandHeaderCell(PdfFont boldFont, PdfFont obliqueFont, DeviceRgb accent,
+                                        float titleSize, float myanmarSize) {
+        Table brand = new Table(UnitValue.createPercentArray(new float[]{16, 84}))
+                .useAllAvailableWidth();
+
+        Cell logoCell = new Cell().setBorder(Border.NO_BORDER).setPadding(0);
+        Image logo = pdfLogo();
+        if (logo != null) {
+            logo.scaleToFit(32, 32);
+            logoCell.add(logo);
+        }
+        brand.addCell(logoCell);
+
+        Cell textCell = new Cell().setBorder(Border.NO_BORDER).setPadding(0).setPaddingLeft(4);
+        textCell.add(new Paragraph("DIGITAL INSURANCE CLAIMS AND PREMIUMS")
+                .setFont(boldFont).setFontSize(titleSize).setFontColor(accent).setMarginBottom(2));
+        textCell.add(new Paragraph("PORTAL — MYANMAR")
+                .setFont(boldFont).setFontSize(9).setFontColor(NAVY).setMarginBottom(3));
+        textCell.add(new Paragraph("ဒစ်ဂျစ်တယ် အာမခံ တောင်းဆိုမှုနှင့် ကြေးငွေ ပေါ်တယ် — မြန်မာ")
+                .setFont(obliqueFont).setFontSize(myanmarSize).setFontColor(GRAY));
+        brand.addCell(textCell);
+
+        return new Cell().add(brand).setBorder(Border.NO_BORDER).setPadding(4);
+    }
+
+    private static Image pdfLogo() {
+        try (InputStream input = MonthlyReportController.class.getResourceAsStream("/logo-transparent.png")) {
+            if (input == null) return null;
+            return new Image(com.itextpdf.io.image.ImageDataFactory.create(input.readAllBytes()));
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 
     private static void sectionHeader(Document doc, PdfFont bold, String title) {
