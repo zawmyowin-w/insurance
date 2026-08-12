@@ -6,7 +6,7 @@
  *   - Lowercase (a-z) only — uppercase not accepted
  *   - No spaces anywhere (leading, trailing, or internal)
  *   - Exactly one @ symbol; must not start or end with @
- *   - Username (before @): 6–30 chars, a-z / 0-9 / . / _ / - only
+ *   - Username (before @): a-z / 0-9 / . / _ / - only; no arbitrary length limit
  *       • Must start and end with a letter or number
  *       • No consecutive .. __ --
  *       • No mixed consecutive patterns: ._ _. .- -.
@@ -14,27 +14,16 @@
  *       • Reserved usernames blocked (admin, root, system, test …)
  *   - Domain (after @): letter or number start, no underscore,
  *       no leading/trailing hyphen per label, at least one dot
- *   - TLD (last domain segment): 2–6 letters only
+ *   - TLD (last domain segment): at least 2 letters
  *   - Disposable/temp-mail domains blocked
  *   - SQL injection / XSS inputs blocked by strict character whitelist
  */
-
-// ── Email constants ───────────────────────────────────────────────────────
-
-export const EMAIL_USERNAME_MIN = 6
-export const EMAIL_USERNAME_MAX = 30
-/** Total max: username(30) + @(1) + domain(~60) */
-export const EMAIL_MAX_LENGTH = 100
-
-/** Kept for backward-compatible callers */
-export const GMAIL_USERNAME_MIN = EMAIL_USERNAME_MIN
-export const GMAIL_USERNAME_MAX = EMAIL_USERNAME_MAX
 
 /**
  * Loose pattern for quick sanity-check fallbacks.
  * Full validation is done by getEmailValidationError().
  */
-export const EMAIL_PATTERN = /^[a-z0-9][a-z0-9._-]{4,28}[a-z0-9]@[a-z0-9][a-z0-9.-]{0,61}[a-z0-9]\.[a-z]{2,6}$|^[a-z0-9]{6,30}@[a-z0-9][a-z0-9.-]+\.[a-z]{2,6}$/
+export const EMAIL_PATTERN = /^[a-z0-9](?:[a-z0-9._-]*[a-z0-9])?@[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?\.[a-z]{2,}$/
 
 /** Normalize: trim + lowercase (use before persisting, not as a validation bypass) */
 export function normalizeEmail(raw) {
@@ -143,21 +132,7 @@ export function getEmailValidationError(rawEmail) {
 
   // ══ Username rules ═══════════════════════════════════════════════════════
 
-  // ⑦ Username length 6–30
-  if (username.length < EMAIL_USERNAME_MIN) {
-    return {
-      en: `Username (before @) must be at least ${EMAIL_USERNAME_MIN} characters (yours: ${username.length}).`,
-      my: `Username (@ ရှေ့) အနည်းဆုံး ${EMAIL_USERNAME_MIN} လုံး ဖြစ်ရမည်။ (${username.length} လုံးသာ ရှိသည်)`,
-    }
-  }
-  if (username.length > EMAIL_USERNAME_MAX) {
-    return {
-      en: `Username (before @) must not exceed ${EMAIL_USERNAME_MAX} characters (yours: ${username.length}).`,
-      my: `Username (@ ရှေ့) အများဆုံး ${EMAIL_USERNAME_MAX} လုံးသာ ဖြစ်ရမည်။`,
-    }
-  }
-
-  // ⑧ Username must start with a letter or number
+  // ⑦ Username must start with a letter or number
   if (!/^[a-z0-9]/.test(username)) {
     return {
       en: 'Username must start with a letter (a–z) or number (0–9).',
@@ -165,7 +140,7 @@ export function getEmailValidationError(rawEmail) {
     }
   }
 
-  // ⑨ Username must not end with . _ -
+  // ⑧ Username must not end with . _ -
   if (/[._-]$/.test(username)) {
     const last = username[username.length - 1]
     const [en_char, my_char] =
@@ -178,7 +153,7 @@ export function getEmailValidationError(rawEmail) {
     }
   }
 
-  // ⑩ Username allowed characters: a-z, 0-9, . _ -  (blocks +#$%&!?*() etc.)
+  // ⑨ Username allowed characters: a-z, 0-9, . _ -  (blocks +#$%&!?*() etc.)
   if (!/^[a-z0-9._-]+$/.test(username)) {
     return {
       en: 'Username may only contain letters (a–z), numbers (0–9), dots (.), underscores (_), or hyphens (-). Special characters like +, #, $, %, &, !, ?, *, (, ) are not allowed.',
@@ -186,7 +161,7 @@ export function getEmailValidationError(rawEmail) {
     }
   }
 
-  // ⑪ No consecutive dots (..)
+  // ⑩ No consecutive dots (..)
   if (username.includes('..')) {
     return {
       en: 'Username must not contain consecutive dots (..).',
@@ -194,7 +169,7 @@ export function getEmailValidationError(rawEmail) {
     }
   }
 
-  // ⑫ No consecutive underscores (__)
+  // ⑪ No consecutive underscores (__)
   if (username.includes('__')) {
     return {
       en: 'Username must not contain consecutive underscores (__).',
@@ -202,7 +177,7 @@ export function getEmailValidationError(rawEmail) {
     }
   }
 
-  // ⑬ No consecutive hyphens (--)
+  // ⑫ No consecutive hyphens (--)
   if (username.includes('--')) {
     return {
       en: 'Username must not contain consecutive hyphens (--).',
@@ -210,7 +185,7 @@ export function getEmailValidationError(rawEmail) {
     }
   }
 
-  // ⑭ No mixed consecutive special characters: ._ _. .- -.
+  // ⑬ No mixed consecutive special characters: ._ _. .- -.
   if (username.includes('._') || username.includes('_.') ||
       username.includes('.-') || username.includes('-.')) {
     return {
@@ -219,7 +194,7 @@ export function getEmailValidationError(rawEmail) {
     }
   }
 
-  // ⑮ Numeric-only username blocked (e.g. 123456@...)
+  // ⑭ Numeric-only username blocked (e.g. 123456@...)
   if (/^[0-9]+$/.test(username)) {
     return {
       en: 'Username must not be numbers only. Include at least one letter (a–z).',
@@ -227,7 +202,7 @@ export function getEmailValidationError(rawEmail) {
     }
   }
 
-  // ⑯ Reserved / blacklisted usernames (admin@, root@, system@, test@ …)
+  // ⑮ Reserved / blacklisted usernames (admin@, root@, system@, test@ …)
   if (RESERVED_USERNAMES.has(username)) {
     return {
       en: 'This email address is not allowed. Please use a different email.',
@@ -237,7 +212,7 @@ export function getEmailValidationError(rawEmail) {
 
   // ══ Domain rules ══════════════════════════════════════════════════════════
 
-  // ⑰ Domain must start with a letter or number
+  // ⑯ Domain must start with a letter or number
   if (!/^[a-z0-9]/.test(domain)) {
     return {
       en: 'Email domain must start with a letter or number.',
@@ -245,7 +220,7 @@ export function getEmailValidationError(rawEmail) {
     }
   }
 
-  // ⑱ Domain must not contain underscore
+  // ⑰ Domain must not contain underscore
   if (domain.includes('_')) {
     return {
       en: 'Email domain must not contain underscores (_).',
@@ -253,7 +228,7 @@ export function getEmailValidationError(rawEmail) {
     }
   }
 
-  // ⑲ Domain must have at least one dot
+  // ⑱ Domain must have at least one dot
   if (!domain.includes('.')) {
     return {
       en: 'Email domain must contain at least one dot (e.g. example.com).',
@@ -263,7 +238,7 @@ export function getEmailValidationError(rawEmail) {
 
   const domainLabels = domain.split('.')
 
-  // ⑳ Each domain label must not be empty and must not start/end with hyphen
+  // ⑲ Each domain label must not be empty and must not start/end with hyphen
   for (const label of domainLabels) {
     if (label.length === 0) {
       return {
@@ -279,16 +254,16 @@ export function getEmailValidationError(rawEmail) {
     }
   }
 
-  // ㉑ TLD (last segment): 2–6 letters only
+  // ⑳ TLD (last segment): at least 2 letters; no arbitrary maximum
   const tld = domainLabels[domainLabels.length - 1]
-  if (!/^[a-z]+$/.test(tld) || tld.length < 2 || tld.length > 6) {
+  if (!/^[a-z]+$/.test(tld) || tld.length < 2) {
     return {
-      en: 'Email domain ending (TLD) must be 2–6 letters only (e.g. com, net, org, mm, edu).',
-      my: 'TLD (Domain နောက်ဆုံး) သည် 2 မှ 6 လုံး အတွင်း အက္ခရာများသာ ဖြစ်ရမည်။ (com, net, org, mm, edu)',
+      en: 'Email domain ending (TLD) must contain at least 2 letters (e.g. com, net, org, mm, edu).',
+      my: 'TLD (Domain နောက်ဆုံး) သည် အနည်းဆုံး အက္ခရာ ၂ လုံး ပါရမည်။ (com, net, org, mm, edu)',
     }
   }
 
-  // ㉒ Disposable / temp-mail domains blocked
+  // ㉑ Disposable / temp-mail domains blocked
   if (DISPOSABLE_DOMAINS.has(domain)) {
     return {
       en: 'Temporary or disposable email addresses are not allowed. Please use a real email.',

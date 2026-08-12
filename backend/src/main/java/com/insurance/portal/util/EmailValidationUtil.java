@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
  *   3.  Lowercase only — uppercase letters (A-Z) not accepted.
  *   4.  Must not start or end with '@'.
  *   5.  Exactly one '@' symbol.
- *   6.  Username (before @): 6–30 characters.
+ *   6.  Username (before @): valid email characters, with no arbitrary length limit.
  *   7.  Username must start with a letter (a-z) or number (0-9).
  *   8.  Username must not end with . _ -
  *   9.  Username: only a-z, 0-9, ., _, - allowed; blocks +#$%&!?*() etc.
@@ -26,16 +26,13 @@ import java.util.regex.Pattern;
  *  17.  Domain must not contain underscore (_).
  *  18.  Domain must contain at least one dot.
  *  19.  Each domain label must not start or end with hyphen (-).
- *  20.  TLD (last domain segment): 2–6 letters only.
+ *  20.  TLD (last domain segment): at least 2 letters.
  *  21.  Disposable/temp-mail domains blocked.
  *
  * Applied on registration, agent/admin creation, and profile e-mail updates.
  * Not applied on login so existing accounts are never locked out.
  */
 public final class EmailValidationUtil {
-
-    private static final int USERNAME_MIN = 6;
-    private static final int USERNAME_MAX = 30;
 
     /** Allowed characters in the username part */
     private static final Pattern USERNAME_CHARS = Pattern.compile("^[a-z0-9._-]+$");
@@ -71,9 +68,9 @@ public final class EmailValidationUtil {
     /** Generic error for callers that only need one message */
     public static final String ERROR_MESSAGE =
         "Please enter a valid email address. " +
-        "Username (before @) must be 6–30 characters using a-z, 0-9, dots, underscores, or hyphens " +
+        "Username (before @) must use valid email characters (a-z, 0-9, dots, underscores, or hyphens) " +
         "(must start and end with a letter or number; no consecutive or mixed special characters). " +
-        "Domain must have a valid TLD (2–6 letters). Disposable and reserved addresses are not accepted.";
+        "Domain must have a valid TLD (at least 2 letters). Disposable and reserved addresses are not accepted.";
 
     private EmailValidationUtil() {}
 
@@ -135,17 +132,7 @@ public final class EmailValidationUtil {
 
         // ══ Username rules ════════════════════════════════════════════════════
 
-        // ⑥ Username length 6–30
-        if (username.length() < USERNAME_MIN) {
-            return "Username (before @) must be at least " + USERNAME_MIN +
-                   " characters (yours: " + username.length() + ").";
-        }
-        if (username.length() > USERNAME_MAX) {
-            return "Username (before @) must not exceed " + USERNAME_MAX +
-                   " characters (yours: " + username.length() + ").";
-        }
-
-        // ⑦ Must start with letter or number
+        // ⑥ Must start with letter or number
         char first = username.charAt(0);
         if (!Character.isLetterOrDigit(first)) {
             return "Username must start with a letter (a–z) or number (0–9).";
@@ -226,10 +213,10 @@ public final class EmailValidationUtil {
             }
         }
 
-        // ⑳ TLD: 2–6 letters only
+        // ⑳ TLD: at least 2 letters; no arbitrary maximum
         String tld = labels[labels.length - 1];
-        if (!tld.matches("[a-z]+") || tld.length() < 2 || tld.length() > 6) {
-            return "Email domain ending (TLD) must be 2–6 letters only " +
+        if (!tld.matches("[a-z]+") || tld.length() < 2) {
+            return "Email domain ending (TLD) must contain at least 2 letters " +
                    "(e.g. com, net, org, mm, edu).";
         }
 

@@ -5,7 +5,7 @@ import { toast } from 'react-toastify'
 import { useAuth } from '../../context/AuthContext'
 import ProfileAvatar from '../../components/ProfileAvatar'
 import {
-  EMAIL_MAX_LENGTH, isEmailValid,
+  isEmailValid,
   PHONE_PATTERN,
 } from '../../utils/validation'
 
@@ -150,7 +150,6 @@ export default function AdminProfilePage() {
                     disabled={!editMode}
                     className="form-control-custom w-100"
                     value={form.email}
-                    maxLength={EMAIL_MAX_LENGTH}
                     onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                     onBlur={() => setEmailTouched(true)}
                     onKeyDown={e => { if (e.key === 'Enter') e.preventDefault() }}

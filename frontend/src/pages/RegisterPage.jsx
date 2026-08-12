@@ -5,7 +5,7 @@ import { toast } from 'react-toastify'
 import { issueOtp, storePendingRegistration } from '../services/otpService'
 import api from '../services/api'
 import {
-  EMAIL_MAX_LENGTH, EMAIL_ERROR,
+  EMAIL_ERROR,
   getEmailValidationError, normalizeEmail,
   getPhoneValidationError, isPhoneValid,
   passwordStrengthLevel, isStrongPassword,
@@ -159,7 +159,6 @@ export default function RegisterPage() {
                   className="form-control-custom w-100"
                   placeholder="yourname@example.com"
                   value={form.email} onChange={handleChange}
-                  maxLength={EMAIL_MAX_LENGTH}
                   onBlur={handleEmailBlur}
                   style={emailError ? { borderColor: '#ef4444' } : undefined}
                 />
@@ -180,7 +179,7 @@ export default function RegisterPage() {
               )}
               {!emailError && !emailTouched && (
                 <p style={{ fontSize: '0.73rem', color: 'var(--text-muted)', margin: '0.2rem 0 0' }}>
-                  {lang === 'my' ? 'စာလုံးအသေး (a-z) သာ • Username 6–30 လုံး • Domain မှန်ကန်ရမည်' : 'Lowercase only • Username 6–30 chars • Valid domain required'}
+                  {lang === 'my' ? 'စာလုံးအသေး (a-z) သာ • Email ပုံစံမှန်ကန်ရမည်' : 'Lowercase only • Valid email format required'}
                 </p>
               )}
             </div>

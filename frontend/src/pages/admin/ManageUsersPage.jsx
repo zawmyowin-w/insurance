@@ -7,7 +7,7 @@ import DeleteConfirmModal from '../../components/DeleteConfirmModal'
 import ProfileAvatar from '../../components/ProfileAvatar'
 import PasswordStrengthWidget from '../../components/PasswordStrengthWidget'
 import {
-  EMAIL_MAX_LENGTH, EMAIL_ERROR, isEmailValid,
+  EMAIL_ERROR, isEmailValid,
   getPhoneValidationError, isPhoneValid, isStrongPassword,
 } from '../../utils/validation'
 
@@ -241,7 +241,6 @@ export default function ManageUsersPage() {
               <div className="col-12 col-md-6">
                 <label className="form-label-custom">{t('admin.users.email')} *</label>
                 <input type="email" required className="form-control-custom w-100" value={createForm.email}
-                  maxLength={EMAIL_MAX_LENGTH}
                   onChange={e => setCreateForm(f => ({ ...f, email: e.target.value }))}
                   style={createForm.email && !isEmailValid(createForm.email) ? { borderColor: '#ef4444' } : undefined} />
                 {createForm.email && !isEmailValid(createForm.email) && (
@@ -589,7 +588,6 @@ export default function ManageUsersPage() {
                 <div className="col-12 col-md-6">
                   <label className="form-label-custom">{t('admin.users.email')} *</label>
                   <input type="email" required className="form-control-custom w-100" value={editForm.email}
-                    maxLength={EMAIL_MAX_LENGTH}
                     onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))}
                     style={editForm.email && !isEmailValid(editForm.email) ? { borderColor: '#ef4444' } : undefined} />
                   {editForm.email && !isEmailValid(editForm.email) && (
