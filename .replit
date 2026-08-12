@@ -1,4 +1,4 @@
-modules = ["nodejs-20", "java-graalvm22.3", "web", "bash"]
+modules = ["nodejs-20", "java-graalvm22.3", "web", "bash", "python-base-3.13"]
 [agent]
 expertMode = true
 
@@ -30,7 +30,7 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd frontend && npm install && npm run dev"
+args = "cd frontend && npm install && node node_modules/vite/bin/vite.js --port 5000 --host"
 waitForPort = 5000
 
 [[workflows.workflow]]

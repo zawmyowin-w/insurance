@@ -10,3 +10,4 @@
 - [Insurance type details + AI chat architecture](insurance-type-details-and-chat.md) — InsuranceType has description/benefits/rules; AI chat at /ai/chat needs XAI_API_KEY; payment needs last-6-digits + amount
 - [MySQL and file storage](mysql-and-file-storage.md) — Keep business records in MySQL and uploaded binaries in persistent protected storage with MySQL references
 - [Digital signature workflow](digital-signature-workflow.md) — Customer, agent, and admin signatures are separate, validated, reset on revision, and rendered in PDFs
+- [Imported frontend workflow permissions](imported-frontend-workflow.md) — Invoke Vite through Node when imported npm shims lack executable permissions

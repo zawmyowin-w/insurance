@@ -23,7 +23,7 @@ Two workflows run in parallel (both start automatically):
   - Seeds default insurance types, packages, agents, and customers on first run
   - API available at `http://localhost:8080/api`
 
-- **Start application** — `cd frontend && npm install && npm run dev`
+- **Start application** — `cd frontend && npm install && node node_modules/vite/bin/vite.js --port 5000 --host`
   - Vite dev server on port 5000
   - Proxies `/api` calls to the backend automatically
 
