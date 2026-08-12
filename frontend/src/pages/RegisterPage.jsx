@@ -146,13 +146,13 @@ export default function RegisterPage() {
           </div>
 
           <div className="row g-3">
-            <div className="col-12 col-sm-6">
-              <label className="form-label-custom">{t('auth.fullName')} *</label>
+            <div className="col-12">
+              <label className="form-label-custom">{t('auth.fullName')} <span style={{color: 'red'}}>*</span></label>
               <input name="name" required className="form-control-custom w-100" placeholder="John Doe"
                 value={form.name} onChange={handleChange} />
             </div>
-            <div className="col-12 col-sm-6">
-              <label className="form-label-custom">{t('auth.email')} *</label>
+            <div className="col-12">
+              <label className="form-label-custom">{t('auth.email')} <span style={{color: 'red'}}>*</span></label>
               <div style={{ position: 'relative' }}>
                 <input
                   name="email" type="email" required
@@ -179,12 +179,12 @@ export default function RegisterPage() {
               )}
               {!emailError && !emailTouched && (
                 <p style={{ fontSize: '0.73rem', color: 'var(--text-muted)', margin: '0.2rem 0 0' }}>
-                  {lang === 'my' ? 'စာလုံးအသေး (a-z) သာ • Email ပုံစံမှန်ကန်ရမည်' : 'Lowercase only • Valid email format required'}
+                  {lang === 'my' ? 'Email ပုံစံမှန်ကန်ရမည်' : 'Valid email format required'}
                 </p>
               )}
             </div>
-            <div className="col-12 col-sm-6">
-              <label className="form-label-custom">{t('auth.phone')} *</label>
+            <div className="col-12">
+              <label className="form-label-custom">{t('auth.phone')} <span style={{color: 'red'}}>*</span></label>
               <div style={{ position: 'relative' }}>
                 <input
                   name="phone" type="tel" required
@@ -215,7 +215,7 @@ export default function RegisterPage() {
 
             {/* Password with live requirements */}
             <div className="col-12">
-              <label className="form-label-custom">{t('auth.password')} *</label>
+              <label className="form-label-custom">{t('auth.password')} <span style={{color: 'red'}}>*</span></label>
               <div style={{ position: 'relative' }}>
                 <input
                   name="password" type={showPwd ? 'text' : 'password'} required
@@ -259,7 +259,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="col-12">
-              <label className="form-label-custom">{t('auth.confirmPassword')} *</label>
+              <label className="form-label-custom">{t('auth.confirmPassword')} <span style={{color: 'red'}}>*</span></label>
               <div style={{ position: 'relative' }}>
                 <input name="confirmPassword" type={showPwd ? 'text' : 'password'} required
                   className="form-control-custom w-100" style={{ paddingRight: '2.5rem' }}
