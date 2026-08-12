@@ -932,27 +932,7 @@ export default function ManagePackagesPage() {
                       {t('admin.packages.maturityIncludesPremiumsHint')}
                     </p>
 
-                    {/* Preview summary */}
-                    {((form.maturityBonusTiers || []).some(t => t.year !== '' && t.bonusPercent !== '') || form.maturityIncludesPremiums) && (
-                      <div style={{ marginTop: '1rem', padding: '0.75rem 1rem', background: '#fffbeb', border: '1px solid #fcd34d', borderRadius: 10, fontSize: '0.82rem', color: '#92400e' }}>
-                        <div style={{ fontWeight: 700, marginBottom: '0.4rem' }}>
-                           <i className="bi bi-eye me-1"></i>{t('admin.packages.maturityPayoutPreview')}
-                        </div>
-                        {(form.maturityBonusTiers || []).filter(t => t.year !== '' && t.bonusPercent !== '').map((t, i) => (
-                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-                            <i className="bi bi-check2-circle" style={{ color: '#d97706' }}></i>
-                            Year {t.year}: Claim Amount + <strong>{t.bonusPercent}% bonus</strong>
-                            {form.maturityIncludesPremiums && <span style={{ color: '#16a34a' }}> + All premiums paid</span>}
-                          </div>
-                        ))}
-                        {!(form.maturityBonusTiers || []).some(t => t.year !== '' && t.bonusPercent !== '') && form.maturityIncludesPremiums && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                            <i className="bi bi-check2-circle" style={{ color: '#16a34a' }}></i>
-                            At maturity: <strong style={{ color: '#16a34a' }}>All premiums paid will be returned</strong>
-                          </div>
-                        )}
-                      </div>
-                    )}
+
                   </div>
                 )}
               </div>

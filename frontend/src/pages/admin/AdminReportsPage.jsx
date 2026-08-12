@@ -1448,20 +1448,6 @@ function WalletTab({ wallet, walletLoaded }) {
             <div style={{ fontSize: '2rem', fontWeight: 900, color: '#fff', lineHeight: 1 }}>{inflow.toLocaleString()}</div>
             <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.8rem', marginTop: 4 }}>MMK</div>
           </div>
-          <div className="col-12 col-md-7">
-            <div className="row g-2">
-              {[
-                { l: t('admin.reports.totalCustomers'), v: customers.length, icon: 'bi-people', c: '#93c5fd', isCount: true },
-              ].map(x => (
-                <div key={x.l} className="col-6">
-                  <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 10, padding: '0.65rem 0.75rem' }}>
-                    <div style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.45)', marginBottom: 2 }}>{x.l}</div>
-                    <div style={{ fontWeight: 800, color: x.c, fontSize: '0.95rem' }}>{x.isCount ? x.v : `${x.v.toLocaleString()} MMK`}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
 
