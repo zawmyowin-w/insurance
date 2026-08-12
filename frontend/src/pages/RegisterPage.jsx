@@ -16,7 +16,7 @@ export default function RegisterPage() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const [form, setForm] = useState({
-    name: '', email: '', address: '', password: '', confirmPassword: '',
+    name: '', email: '', password: '', confirmPassword: '',
     _website: '', // honeypot — should always stay empty; bots fill this in
   })
   const [loading, setLoading] = useState(false)
@@ -84,7 +84,7 @@ export default function RegisterPage() {
     if (!agree) { toast.error(t('auth.mustAgree')); return }
 
     setLoading(true)
-    const payload = { name: form.name, email: normalizedEmail, phone: form.phone, address: form.address, password: form.password }
+    const payload = { name: form.name, email: normalizedEmail, phone: form.phone, password: form.password }
 
     // Step 1: Server-side Gmail format + blacklist + MX record validation
     try {
@@ -208,14 +208,9 @@ export default function RegisterPage() {
                 </p>
               ) : (
                 <p style={{ fontSize: '0.73rem', color: 'var(--text-muted)', margin: '0.2rem 0 0' }}>
-                  {lang === 'my' ? '+959 ဖြင့်စပြီး ဂဏန်း 7–10 လုံး ဖြည့်ပါ' : 'Start with +959 then 7–10 digits'}
+                  {lang === 'my' ? '+959 ဖြင့်စပြီး ဂဏန်း 7 လုံး သို့မဟုတ် 9 လုံး ဖြည့်ပါ' : 'Start with +959 then exactly 7 or 9 digits'}
                 </p>
               )}
-            </div>
-            <div className="col-12 col-sm-6">
-              <label className="form-label-custom">{t('auth.address')}</label>
-              <input name="address" className="form-control-custom w-100"
-                placeholder="Yangon, Myanmar" value={form.address} onChange={handleChange} />
             </div>
 
             {/* Password with live requirements */}
