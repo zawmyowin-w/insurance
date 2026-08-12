@@ -127,7 +127,7 @@ export default function ManageInsuranceTypesPage() {
 
       <div className="row g-4">
         {/* ── Left: Create Form ── */}
-        <div className="col-12 col-xl-5">
+        <div className="col-12">{/*col-xl-5*/}
           <div className="card-custom h-100">
             <h6 style={{ fontWeight: 700, marginBottom: '1.25rem', color: 'var(--text-primary)' }}>
               <i className="bi bi-plus-circle me-2" style={{ color: 'var(--primary)' }}></i>
@@ -155,7 +155,7 @@ export default function ManageInsuranceTypesPage() {
               </div>
 
               {/* Description */}
-              <div>
+              {/* <div>
                 <label style={{ fontWeight: 600, fontSize: '0.83rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.35rem' }}>
                   {t('admin.insuranceTypes.descriptionLabel')}
                 </label>
@@ -167,10 +167,10 @@ export default function ManageInsuranceTypesPage() {
                   rows={3}
                   style={{ resize: 'vertical' }}
                 />
-              </div>
+              </div> */}
 
               {/* Benefits */}
-              <div>
+              {/* <div>
                 <label style={{ fontWeight: 600, fontSize: '0.83rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.35rem' }}>
                   <i className="bi bi-check2-circle me-1" style={{ color: '#16a34a' }}></i>
                   {t('admin.insuranceTypes.benefitsLabel')}
@@ -183,10 +183,10 @@ export default function ManageInsuranceTypesPage() {
                   rows={3}
                   style={{ resize: 'vertical' }}
                 />
-              </div>
+              </div> */}
 
               {/* Rules */}
-              <div>
+              {/* <div>
                 <label style={{ fontWeight: 600, fontSize: '0.83rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.35rem' }}>
                   <i className="bi bi-file-text me-1" style={{ color: '#f59e0b' }}></i>
                   {t('admin.insuranceTypes.rulesLabel')}
@@ -199,7 +199,7 @@ export default function ManageInsuranceTypesPage() {
                   rows={3}
                   style={{ resize: 'vertical' }}
                 />
-              </div>
+              </div> */}
 
               <button
                 type="submit"
@@ -217,7 +217,7 @@ export default function ManageInsuranceTypesPage() {
         </div>
 
         {/* ── Right: List ── */}
-        <div className="col-12 col-xl-7">
+        <div className="col-12">{/* col-xl-7*/}
           <div className="card-custom">
             <h6 style={{ fontWeight: 700, marginBottom: '1rem', color: 'var(--text-primary)' }}>
               <i className="bi bi-list-ul me-2" style={{ color: 'var(--primary)' }}></i>

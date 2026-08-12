@@ -8,7 +8,7 @@ import DeleteConfirmModal from '../../components/DeleteConfirmModal'
 
 const FIELD_TYPE_VALUES = [
   'NAME', 'EMAIL', 'PHONE', 'TEXT',
-  'TEXTAREA', 'DATE', 'NRC', 'CHECKBOX', 'IMAGE_UPLOAD', 'PDF_UPLOAD',
+  'TEXTAREA', 'DATE', 'NRC', 'CHECKBOX', 'LABEL', 'IMAGE_UPLOAD', 'PDF_UPLOAD',
 ]
 
 const FIELD_ICONS = {
@@ -20,6 +20,7 @@ const FIELD_ICONS = {
   DATE:         'bi-calendar-date',
   NRC:          'bi-person-vcard',
   CHECKBOX:     'bi-check2-square',
+  LABEL:        'bi-type',
   IMAGE_UPLOAD: 'bi-image',
   PDF_UPLOAD:   'bi-file-earmark-pdf',
 }
