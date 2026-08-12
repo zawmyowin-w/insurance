@@ -11,7 +11,7 @@ package com.insurance.portal.util;
  *  5.  No special characters (-, _, ., /, \, (, ), ,, #, *, @, !, $, etc.)
  *  6.  Only digits and a single leading '+' are allowed — no letters,
  *      Myanmar script, emoji, or other Unicode symbols
- *  7.  Digits after +959: exactly 7–10 digits
+ *  7.  Digits after +959: exactly 7 or 9 digits (8 digits are rejected)
  *  8.  No duplicated country code (+95959…, +959095…)
  *  9.  Fake numbers blocked: all-same digit (000000000, 111111111…)
  * 10.  Sequential digits blocked: 123456789, 987654321…
@@ -40,9 +40,11 @@ public final class PhoneValidationUtil {
         "Phone number contains a duplicated country code (+95959...). " +
         "Enter only the subscriber digits after +959.";
     public static final String TOO_SHORT_ERROR =
-        "Phone number is too short. +959 must be followed by 7–10 digits.";
+        "Phone number is too short. +959 must be followed by exactly 7 or 9 digits.";
+    public static final String INVALID_LENGTH_ERROR =
+        "Phone number must contain exactly 7 or 9 digits after +959. 8 digits are not accepted.";
     public static final String TOO_LONG_ERROR =
-        "Phone number is too long. +959 must be followed by 7–10 digits.";
+        "Phone number is too long. +959 must be followed by exactly 7 or 9 digits.";
     public static final String FAKE_ERROR =
         "Phone number appears to be fake (all same digits). Please enter a real phone number.";
     public static final String SEQUENTIAL_ERROR =
@@ -91,9 +93,10 @@ public final class PhoneValidationUtil {
         // Guard: digits must be all digits
         if (!digits.matches("\\d*")) return INVALID_CHARS_ERROR;
 
-        // ⑨ Length
+        // ⑨ Length: exactly 7 or 9 digits after +959 (8 is intentionally invalid)
         if (digits.length() < 7) return TOO_SHORT_ERROR;
-        if (digits.length() > 10) return TOO_LONG_ERROR;
+        if (digits.length() == 8) return INVALID_LENGTH_ERROR;
+        if (digits.length() > 9) return TOO_LONG_ERROR;
 
         // ⑩ Fake: all same digit
         if (digits.chars().distinct().count() == 1) return FAKE_ERROR;

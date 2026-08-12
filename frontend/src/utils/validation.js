@@ -300,7 +300,7 @@ export const EMAIL_ERROR = {
  *  4. No spaces anywhere (leading, trailing, internal)
  *  5. Only '+' at the very start (once); no other special characters
  *  6. No letters (English/Myanmar), emoji, or Unicode symbols
- *  7. After +959: digits 0–9 only, length 7–10
+ *  7. After +959: digits 0–9 only, length exactly 7 or 9
  *  8. No double country code (+95959…)
  *  9. Fake numbers blocked: all-same digit (111111111, 000000000…)
  * 10. Sequential numbers blocked: 123456789, 987654321…
@@ -406,17 +406,23 @@ export function getPhoneValidationError(rawPhone) {
     }
   }
 
-  // ⑩ Length: 7–10 digits after +959
+  // ⑩ Length: exactly 7 or 9 digits after +959 (8 is intentionally invalid)
   if (digits.length < 7) {
     return {
-      en: `Phone number is too short. +959 must be followed by 7–10 digits (you entered ${digits.length}).`,
-      my: `ဖုန်းနံပါတ် တိုနေသည်။ +959 နောက် ဂဏန်း 7 မှ 10 လုံးအထိ ဖြည့်ရမည်။ (${digits.length} လုံးသာ ဖြည့်ထားသည်)`,
+      en: `Phone number is too short. +959 must be followed by exactly 7 or 9 digits (you entered ${digits.length}).`,
+      my: `ဖုန်းနံပါတ် တိုနေသည်။ +959 နောက် ဂဏန်း 7 လုံး သို့မဟုတ် 9 လုံး အတိအကျ ဖြည့်ရမည်။ (${digits.length} လုံးသာ ဖြည့်ထားသည်)`,
     }
   }
-  if (digits.length > 10) {
+  if (digits.length === 8) {
     return {
-      en: `Phone number is too long. +959 must be followed by 7–10 digits (you entered ${digits.length}).`,
-      my: `ဖုန်းနံပါတ် ရှည်နေသည်။ +959 နောက် ဂဏန်း 7 မှ 10 လုံးအထိသာ ဖြည့်ရမည်။ (${digits.length} လုံး ဖြည့်ထားသည်)`,
+      en: 'Phone number must contain exactly 7 or 9 digits after +959. 8 digits are not accepted.',
+      my: 'ဖုန်းနံပါတ်တွင် +959 နောက် ဂဏန်း 7 လုံး သို့မဟုတ် 9 လုံး အတိအကျ ပါရမည်။ 8 လုံးကို လက်မခံပါ။',
+    }
+  }
+  if (digits.length > 9) {
+    return {
+      en: `Phone number is too long. +959 must be followed by exactly 7 or 9 digits (you entered ${digits.length}).`,
+      my: `ဖုန်းနံပါတ် ရှည်နေသည်။ +959 နောက် ဂဏန်း 7 လုံး သို့မဟုတ် 9 လုံးသာ အတိအကျ ဖြည့်ရမည်။ (${digits.length} လုံး ဖြည့်ထားသည်)`,
     }
   }
 
@@ -451,9 +457,9 @@ export function isPhoneValid(rawPhone) {
 }
 
 /** Legacy pattern kept for any callers not yet migrated. */
-export const PHONE_PATTERN = /^\+959\d{7,10}$/
+export const PHONE_PATTERN = /^\+959(?:\d{7}|\d{9})$/
 /** Legacy error string. */
-export const PHONE_ERROR = 'Phone must start with +959 followed by 7–10 digits (e.g. +9591234567)'
+export const PHONE_ERROR = 'Phone must start with +959 followed by exactly 7 or 9 digits (e.g. +9591234567)'
 
 // ── Password ──────────────────────────────────────────────────────────────
 export const PWD_RULES = [
