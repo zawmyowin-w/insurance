@@ -1869,6 +1869,7 @@
       "profit_negative": "Loss",
       "loadFailed": "Failed to load reports",
       "currentPeriodLabel": "Current period",
+      "reportPeriodLabel": "Report period:",
       "throughToday": "Today",
       "resetHowTitle": "Monthly Reset - How it works",
       "resetHowExport": "Exports all data from - today as a comprehensive PDF covering: Overview, By Type, Premium Wallet, Agents, Plan Popularity, Monthly Breakdown",

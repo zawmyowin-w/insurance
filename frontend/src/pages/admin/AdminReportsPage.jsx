@@ -405,8 +405,8 @@ export default function AdminReportsPage() {
                 <span style={{ fontWeight: 800, color: '#78350f' }}>
                   {lastReset ? new Date(lastReset.resetAt).toLocaleDateString('en', { day: '2-digit', month: 'short', year: 'numeric' }) : t('admin.reports.inception')}
                 </span>
-                <span style={{ opacity: 0.6 }}>{t('admin.reports.throughToday')}</span>
-                <span style={{ fontWeight: 800, color: '#78350f' }}>{currentMonthName} {currentYear}</span>
+                {/* <span style={{ opacity: 0.6 }}>{t('admin.reports.throughToday')}</span>
+                <span style={{ fontWeight: 800, color: '#78350f' }}>{currentMonthName} {currentYear}</span> */}
               </div>
 
               {/* Divider */}
