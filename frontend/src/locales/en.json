@@ -158,6 +158,8 @@
     "calcDurationRow": "Duration",
     "calcRateRow": "Rate",
     "calcTotalRow": "Total Premium",
+    "ttPre": "Total Premium",
+    "anntt": "Year Payment Per Period",
     "benefitsEmpty": "No benefits configured yet",
     "documentLabel": "Document",
     "yearsUnit": "years",

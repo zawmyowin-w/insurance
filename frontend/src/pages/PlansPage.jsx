@@ -584,18 +584,16 @@ function PlanDetailModal({ plan, onClose, onApply, user, t, freqLabel, typeLabel
                             ))}
                           </select>
                         </div>
-                        <div className="col-12 col-md-3">
+                        <div className="col-6 col-md-3">
                           {calcResult ? (
                             <div style={{ background: '#f0fdf4', borderRadius: 10, padding: '0.75rem 1rem', border: '1.5px solid #bbf7d0' }}>
                               <div style={{ fontSize: '0.65rem', color: '#16a34a', textTransform: 'uppercase', fontWeight: 700, marginBottom: 2 }}>
-                                {freq || t('plans.payment')} {t('plans.payPer')}
+                                { t('plans.ttPre')}
                               </div>
                               <div style={{ fontWeight: 800, color: '#15803d', fontSize: '1.15rem', lineHeight: 1.2 }}>
-                                MMK {fmt(calcResult.perPayment)}
+                                MMK {fmt(calcResult.perPayment * calcDuration)}
                               </div>
-                              <div style={{ fontSize: '0.72rem', color: '#16a34a', marginTop: 4 }}>
-                                {t('plans.annualTotal')}: MMK {fmt(calcResult.annual)}
-                              </div>
+                              
                             </div>
                           ) : (
                             <div style={{ background: 'var(--bg-secondary)', borderRadius: 10, padding: '0.75rem 1rem', border: '1.5px dashed var(--border)', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 4, minHeight: 72 }}>
@@ -611,7 +609,7 @@ function PlanDetailModal({ plan, onClose, onApply, user, t, freqLabel, typeLabel
                             { l: t('plans.calcCoverageRow'), v: `MMK ${fmt(calcCoverage)}`, c: '#1d4ed8' },
                             { l: t('plans.calcDurationRow'), v: `${calcDuration} ${t('plans.yearsUnit')}`, c: meta.color },
                             { l: t('plans.calcRateRow'),     v: `${((selectedTier?.premiumRate || 0) * 100).toFixed(2)}%${t('plans.perYear')}`, c: '#d97706' },
-                            { l: t('plans.calcTotalRow'),    v: `MMK ${fmt(calcResult.annual * calcDuration)}`, c: '#16a34a' },
+                            { l: t('plans.anntt'),    v: `MMK ${fmt(calcResult.annual)}`, c: '#16a34a' },
                           ].map((s, i) => (
                             <div key={i} className="col-6 col-md-3">
                               <div style={{ background: 'var(--bg-secondary)', borderRadius: 8, padding: '0.5rem 0.75rem', border: '1px solid var(--border)', textAlign: 'center' }}>
