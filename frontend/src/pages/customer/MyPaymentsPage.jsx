@@ -95,7 +95,7 @@ export default function MyPaymentsPage() {
       }
       await api.post('/customer/payments', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
       const cnt = payForm.selectedPeriods?.length > 1 ? payForm.selectedPeriods.length : 1
-      toast.success(cnt > 1 ? `${cnt} periods submitted for verification` : t('payments.submitSuccess'))
+      toast.success(cnt > 1 ? t('payments.multiPeriodSubmitSuccess', { count: cnt }) : t('payments.submitSuccess'))
       closeModal()
       fetchData()
     } catch (err) {
@@ -367,7 +367,7 @@ function PolicyScheduleCard({ sched, onPay, statusLabel }) {
                 fontSize: '0.72rem', fontWeight: 700, whiteSpace: 'nowrap',
               }}>
               <i className="bi bi-ui-checks me-1"></i>
-              {multiSelectMode ? 'Cancel' : 'Pay Multiple'}
+              {multiSelectMode ? t('payments.cancelMultiSelect') : t('payments.payMultiple')}
             </button>
           )}
           {!isOneTime && (
@@ -447,7 +447,7 @@ function PolicyScheduleCard({ sched, onPay, statusLabel }) {
           <div>
             <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#1d4ed8' }}>
               <i className="bi bi-collection me-1"></i>
-              {totalSelected} period{totalSelected > 1 ? 's' : ''} selected
+              {t('payments.periodsSelected', { count: totalSelected })}
             </div>
             <div style={{ fontSize: '0.78rem', color: '#3b82f6', marginTop: 2 }}>
               {selectedEntries.map(e => e.periodLabel || `Period ${e.periodNumber}`).join(' · ')}
@@ -462,7 +462,7 @@ function PolicyScheduleCard({ sched, onPay, statusLabel }) {
                 background: 'var(--primary)', color: '#fff', fontWeight: 700, fontSize: '0.82rem',
                 display: 'flex', alignItems: 'center', gap: 5 }}>
               <i className="bi bi-credit-card"></i>
-              Pay {totalSelected} Period{totalSelected > 1 ? 's' : ''}
+              {t('payments.payPeriods', { count: totalSelected })}
             </button>
           </div>
         </div>
@@ -505,7 +505,7 @@ function InstallmentRow({ entry, onPay, highlight, statusLabel, multiSelectMode,
         </span>
         {isUpcoming && !multiSelectMode && (
           <span style={{ fontSize: '0.65rem', color: '#0891b2', fontWeight: 600, background: '#e0f2fe', padding: '0.1rem 0.4rem', borderRadius: 4 }}>
-            Advance Pay
+            {t('payments.advancePayBadge')}
           </span>
         )}
       </div>
@@ -527,7 +527,7 @@ function InstallmentRow({ entry, onPay, highlight, statusLabel, multiSelectMode,
               color: '#fff', fontSize: '0.75rem', fontWeight: 700,
             }}>
             <i className="bi bi-credit-card me-1"></i>
-            {isUpcoming ? 'Pay Advance' : t('payments.payBtn')}
+            {isUpcoming ? t('payments.payAdvanceBtn') : t('payments.payBtn')}
           </button>
         )}
       </div>
@@ -566,7 +566,7 @@ function PaymentModal({ payForm, setPayForm, payMethods, selectedMethod, paySign
                       <div>
                         <div style={{ fontSize: '0.8rem', color: '#1e40af', fontWeight: 700 }}>
                           <i className="bi bi-collection me-1"></i>
-                          {payForm.selectedPeriods.length} periods — Advance / Batch Payment
+                          {t('payments.batchPaymentLabel', { count: payForm.selectedPeriods.length })}
                         </div>
                         <div style={{ fontSize: '0.74rem', color: '#3b82f6', marginTop: 3, lineHeight: 1.5 }}>
                           {payForm.selectedPeriods.map(p => p.periodLabel || `Period ${p.periodNumber}`).join(' · ')}

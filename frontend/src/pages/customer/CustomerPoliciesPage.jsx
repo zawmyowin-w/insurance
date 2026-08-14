@@ -10,6 +10,7 @@ import DigitalSignatureCanvas from '../../components/DigitalSignatureCanvas'
 
 /* ─── Policy Countdown Timer ────────────────────────────────────────────────── */
 function PolicyCountdown({ approvedAt, durationYears, maturityDate: maturityStr }) {
+  const { t } = useTranslation()
   const [now, setNow] = useState(() => new Date())
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 1000)
@@ -33,7 +34,7 @@ function PolicyCountdown({ approvedAt, durationYears, maturityDate: maturityStr 
   if (ms <= 0) {
     return (
       <span style={{ color: '#dc2626', fontWeight: 700, fontSize: '0.82rem' }}>
-        <i className="bi bi-clock-history me-1"></i>Expired
+        <i className="bi bi-clock-history me-1"></i>{t('policies.expired')}
       </span>
     )
   }
@@ -57,7 +58,7 @@ function PolicyCountdown({ approvedAt, durationYears, maturityDate: maturityStr 
         <span>{days}d </span>
         <span style={{ color: '#475569' }}>{pad(hours)}:{pad(mins)}:{pad(secs)}</span>
       </span>
-      <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>remaining</span>
+      <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>{t('policies.countdownRemaining')}</span>
     </div>
   )
 }
@@ -305,7 +306,7 @@ export default function CustomerPoliciesPage() {
               </div>
             </div>
             <span style={{ padding: '0.25rem 0.65rem', borderRadius: 99, background: '#fee2e2', color: '#dc2626', fontSize: '0.75rem', fontWeight: 700, flexShrink: 0 }}>
-              <i className="bi bi-clock-history me-1"></i>Expired
+              <i className="bi bi-clock-history me-1"></i>{t('policies.expired')}
             </span>
           </div>
           <div className="mb-3 p-2" style={{ background: 'var(--bg-secondary)', borderRadius: 8 }}>
@@ -328,7 +329,7 @@ export default function CustomerPoliciesPage() {
             {policy.maturityDate && (
               <div className="col-12">
                 <div style={{ background: '#fff1f2', borderRadius: 8, padding: '0.45rem 0.65rem', border: '1px solid #fecdd3' }}>
-                  <div style={{ fontSize: '0.67rem', color: '#dc2626' }}>Expired on</div>
+                  <div style={{ fontSize: '0.67rem', color: '#dc2626' }}>{t('policies.expiredOn')}</div>
                   <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#dc2626' }}>{policy.maturityDate}</div>
                 </div>
               </div>
@@ -336,7 +337,7 @@ export default function CustomerPoliciesPage() {
           </div>
           <div style={{ background: '#fff1f2', border: '1px solid #fecdd3', borderRadius: 8, padding: '0.6rem 0.75rem', fontSize: '0.82rem', color: '#dc2626' }}>
             <i className="bi bi-exclamation-triangle-fill me-1"></i>
-            This policy has reached its maturity date and is no longer active.
+            {t('policies.expiredDesc')}
           </div>
           <div className="d-flex flex-wrap gap-2 mt-3">
             <div style={{ flex: '1 1 auto' }}>
@@ -420,7 +421,7 @@ export default function CustomerPoliciesPage() {
             {!isUsed && policy.maturityDate && (
               <div className="col-12">
                 <div style={{ background: 'var(--bg-secondary)', borderRadius: 8, padding: '0.45rem 0.65rem', border: '1px solid var(--border)' }}>
-                  <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)' }}>Time Remaining / သက်တမ်းကျန်</div>
+                  <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)' }}>{t('policies.timeRemaining')}</div>
                   <PolicyCountdown approvedAt={policy.approvedAt} durationYears={policy.duration} maturityDate={policy.maturityDate} />
                 </div>
               </div>
@@ -437,15 +438,15 @@ export default function CustomerPoliciesPage() {
           {policy.premiumWaiverBenefit && policy.emergencyStatus === 'APPROVED' && (
             <div style={{ background: '#e0f2fe', border: '1px solid #7dd3fc', borderRadius: 8, padding: '0.6rem 0.75rem', marginBottom: '0.75rem', fontSize: '0.82rem', color: '#0369a1' }}>
               <i className="bi bi-shield-heart-fill me-1"></i>
-              <strong>Premium Waiver Active</strong> — All remaining premiums are waived.
-              {policy.waiverGrantedAt && <span style={{ marginLeft: 6, color: '#0891b2' }}>Granted: {new Date(policy.waiverGrantedAt).toLocaleDateString()}</span>}
+              {t('policies.premiumWaiverActive')}
+              {policy.waiverGrantedAt && <span style={{ marginLeft: 6, color: '#0891b2' }}>{t('policies.waiverGranted', { date: new Date(policy.waiverGrantedAt).toLocaleDateString() })}</span>}
             </div>
           )}
           {/* Premium Waiver Benefit — emergency pending banner */}
           {policy.premiumWaiverBenefit && policy.emergencyStatus === 'PENDING' && (
             <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 8, padding: '0.6rem 0.75rem', marginBottom: '0.75rem', fontSize: '0.82rem', color: '#c2410c' }}>
               <i className="bi bi-hourglass-split me-1"></i>
-              Emergency declaration submitted — awaiting admin review.
+              {t('policies.emergencyPending')}
             </div>
           )}
 
@@ -618,9 +619,9 @@ export default function CustomerPoliciesPage() {
             <>
               <div style={{ borderTop: '1px solid var(--border)', marginBottom: '1.5rem', paddingTop: '1.5rem' }}>
                 <h6 style={{ fontWeight: 700, color: '#dc2626', marginBottom: '1rem' }}>
-                  <i className="bi bi-clock-history me-2"></i>Expired Policies ({expiredPolicies.length})
+                  <i className="bi bi-clock-history me-2"></i>{t('policies.expiredPoliciesSection', { count: expiredPolicies.length })}
                   <span style={{ fontSize: '0.8rem', fontWeight: 400, color: 'var(--text-muted)', marginLeft: 8 }}>
-                    — သက်တမ်းကုန်ဆုံးသွားသောပါလစီများ
+                    — {t('policies.expiredPoliciesSubtitle')}
                   </span>
                 </h6>
               </div>

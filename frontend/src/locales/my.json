@@ -628,7 +628,17 @@
     "waitingPeriodTitle": "စောင့်ဆိုင်းရမည့် ကာလ",
     "waitingPeriodMonthsDuration": "စောင့်ဆိုင်းရမည့်ကာလ {{months}} လ",
     "waitingPeriodDaysLeft": "အကြီးဆုံး {{days}} ရက်လျှောက်စွာ တောင်းဆိုခွင့်ရရှိမည်",
-    "claimEligibleFrom": "{{date}} မှ တောင်းဆိုခွင့်ရှိမည်"
+    "claimEligibleFrom": "{{date}} မှ တောင်းဆိုခွင့်ရှိမည်",
+    "expired": "သက်တမ်းကုန်ဆုံးပြီ",
+    "countdownRemaining": "ကျန်ရှိသည်",
+    "expiredOn": "သက်တမ်းကုန်ဆုံးရက်",
+    "expiredDesc": "ဤအာမခံပေါ်လစီသည် သတ်မှတ်သက်တမ်း ကုန်ဆုံးပြီဖြစ်ပြီး တက်ကြွမနေတော့ပါ",
+    "timeRemaining": "သက်တမ်းကျန်",
+    "premiumWaiverActive": "ပရီမီယံ ကင်းလွတ်ခွင့် တက်ကြွနေသည် — ကျန်ရှိသော ပရီမီယံများ ကင်းလွတ်ပြီ",
+    "waiverGranted": "ခွင့်ပြုရက်: {{date}}",
+    "emergencyPending": "အရေးပေါ် ကြေညာချက် တင်ပြပြီး — စီမံခန့်ခွဲသူ စစ်ဆေးရန် စောင့်ဆိုင်းဆဲ",
+    "expiredPoliciesSection": "သက်တမ်းကုန်ဆုံးသော ပေါ်လစီများ ({{count}})",
+    "expiredPoliciesSubtitle": "သက်တမ်းကုန်ဆုံးသွားသောပါလစီများ"
   },
   "profile": {
     "title": "ကျွန်ုပ်၏ ပရိုဖိုင်",
@@ -762,6 +772,15 @@
     "freqQUARTERLY": "သုံးလတစ်ကြိမ်",
     "freqHALF_YEARLY": "ခြောက်လတစ်ကြိမ်",
     "freqYEARLY": "နှစ်စဥ်",
+    "payMultiple": "ကြိမ်များပေးချေ",
+    "cancelMultiSelect": "မလုပ်တော့ပါ",
+    "multiSelectTitle": "တစ်ကြိမ်တည်း ပေးချေရန် ကာလများ ရွေးပါ",
+    "advancePayBadge": "ကြိုတင်ပေးချေ",
+    "payAdvanceBtn": "ကြိုတင်ပေးချေ",
+    "periodsSelected": "{{count}} ကာလ ရွေးချယ်ပြီး",
+    "payPeriods": "{{count}} ကာလ ပေးချေမည်",
+    "batchPaymentLabel": "{{count}} ကာလ — ကြိုတင် / စုပေးချေ",
+    "multiPeriodSubmitSuccess": "{{count}} ကာလ စစ်ဆေးမှုအတွက် တင်ပြပြီးပါပြီ",
     "statusPaid": "ပေးပြီး",
     "statusOverdue": "သတ်မှတ်ရက်ကျော်",
     "statusDue": "ဤလပေးရမည်",
@@ -2293,7 +2312,9 @@
     "statePlaceholder": "နံပါတ်",
     "townshipPlaceholder": "မြို့နယ်",
     "typePlaceholder": "အမျိုးအစား",
-    "digitsPlaceholder": "၁၂၃၄၅၆"
+    "digitsPlaceholder": "၁၂၃၄၅၆",
+    "digitsMoreNeeded": "{{count}} လုံး ထပ်ထည့်ရန် လိုသည် (ဂဏန်း ၆ လုံး တိတိ ဖြစ်ရမည်)",
+    "digitsExactly6": "ဂဏန်း ၆ လုံး တိတိ ဖြစ်ရမည်"
   },
   "customer": {
     "policyTransfer": "အာမခံစာချုပ် လွှဲပြောင်းခြင်း",

@@ -163,8 +163,8 @@ export default function NrcInput({ value, onChange, required, readOnly }) {
         <div style={{ fontSize: '0.74rem', color: '#dc2626', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
           <i className="bi bi-exclamation-circle-fill"></i>
           {toAR(parsed.digits).length < 6
-            ? `${6 - toAR(parsed.digits).length} digit${6 - toAR(parsed.digits).length > 1 ? 's' : ''} more needed (must be exactly 6)`
-            : 'Must be exactly 6 digits'}
+            ? t('nrc.digitsMoreNeeded', { count: 6 - toAR(parsed.digits).length })
+            : t('nrc.digitsExactly6')}
         </div>
       )}
 
