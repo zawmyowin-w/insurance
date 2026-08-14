@@ -7,6 +7,7 @@ import com.insurance.portal.model.enums.*;
 import com.insurance.portal.repository.*;
 import com.insurance.portal.service.PolicyService;
 import com.insurance.portal.util.FileStorageUtil;
+import com.insurance.portal.util.PremiumScheduleUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -464,6 +465,7 @@ public class CustomerController {
                                            @RequestParam(required = false) String signature,
                                            @RequestParam(required = false) Integer periodNumber,
                                            @RequestParam(required = false) String periodLabel,
+                                           @RequestParam(required = false) String periodsJson,
                                            @RequestParam(required = false) String transactionLastSixDigits,
                                            @RequestParam(required = false) java.math.BigDecimal transactionAmount) {
         User user = getUser(principal);
@@ -474,12 +476,25 @@ public class CustomerController {
         if (app.getStatus() != ApplicationStatus.APPROVED)
             return ResponseEntity.badRequest().body(Map.of("message", "Payment can only be submitted for APPROVED applications"));
 
-        // For period-based payments: block duplicate submission for same period
-        if (periodNumber != null) {
-            if (paymentRepo.existsByApplication_IdAndPeriodNumberAndStatusNot(
-                    app.getId(), periodNumber, PaymentStatus.REJECTED)) {
-                return ResponseEntity.badRequest().body(Map.of("message",
-                        "A payment for period " + periodNumber + " already exists"));
+        // Parse multi-period list (periodsJson = "[1,2,3]") or fall back to single periodNumber
+        List<Integer> periods = new java.util.ArrayList<>();
+        if (periodsJson != null && !periodsJson.isBlank()) {
+            try {
+                periods = MAPPER.readValue(periodsJson, new com.fasterxml.jackson.core.type.TypeReference<List<Integer>>(){});
+            } catch (Exception e) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Invalid periodsJson format"));
+            }
+        } else if (periodNumber != null) {
+            periods = List.of(periodNumber);
+        }
+
+        // Check for duplicate period payments
+        if (!periods.isEmpty()) {
+            for (Integer pn : periods) {
+                if (paymentRepo.existsByApplication_IdAndPeriodNumberAndStatusNot(app.getId(), pn, PaymentStatus.REJECTED)) {
+                    return ResponseEntity.badRequest().body(Map.of("message",
+                            "Period " + pn + " already has a pending or verified payment"));
+                }
             }
         } else {
             // Legacy / one-time: block if any pending payment exists
@@ -513,10 +528,20 @@ public class CustomerController {
         if (transactionAmount == null || transactionAmount.compareTo(java.math.BigDecimal.ZERO) <= 0)
             return ResponseEntity.badRequest().body(Map.of("message", "Transfer amount is required and must be greater than 0"));
 
-        // Duplicate transaction check — same last-6 digits already used in any non-rejected payment
-        if (paymentRepo.existsByTransactionLastSixDigitsAndStatusNot(last6, PaymentStatus.REJECTED))
-            return ResponseEntity.status(409).body(Map.of("message",
-                "ဤ Transaction (" + last6 + ") သည် တင်ပြပြီးသားဖြစ်သည်။ Duplicate ဖြစ်နေသောကြောင့် ထပ်မံတင်ပြ၍မရပါ"));
+        // Duplicate transaction check
+        // Multi-period batch: same transaction can cover multiple periods of THE SAME application;
+        // block only if it appears on a DIFFERENT application.
+        boolean isMultiPeriod = periods.size() > 1;
+        if (isMultiPeriod) {
+            if (paymentRepo.existsByTransactionLastSixDigitsAndStatusNotAndApplication_IdNot(
+                    last6, PaymentStatus.REJECTED, app.getId()))
+                return ResponseEntity.status(409).body(Map.of("message",
+                    "ဤ Transaction (" + last6 + ") သည် တင်ပြပြီးသားဖြစ်သည်။ Duplicate ဖြစ်နေသောကြောင့် ထပ်မံတင်ပြ၍မရပါ"));
+        } else {
+            if (paymentRepo.existsByTransactionLastSixDigitsAndStatusNot(last6, PaymentStatus.REJECTED))
+                return ResponseEntity.status(409).body(Map.of("message",
+                    "ဤ Transaction (" + last6 + ") သည် တင်ပြပြီးသားဖြစ်သည်။ Duplicate ဖြစ်နေသောကြောင့် ထပ်မံတင်ပြ၍မရပါ"));
+        }
 
         String screenshotPath;
         try {
@@ -527,10 +552,14 @@ public class CustomerController {
             return ResponseEntity.badRequest().body(Map.of("message", "Failed to save screenshot"));
         }
 
-        // Determine installment amount for this period
+        // Determine installment amount per period
         BigDecimal payAmount = app.getPremiumAmount();
-        if (periodNumber != null && app.getInsurancePackage() != null) {
-            Integer intervalMonths = app.getInsurancePackage().getPaymentIntervalMonths();
+        String frequency      = null;
+        Integer intervalMonths = null;
+        java.time.LocalDate startDate = app.getCreatedAt() != null ? app.getCreatedAt().toLocalDate() : java.time.LocalDate.now();
+        if (app.getInsurancePackage() != null) {
+            frequency      = app.getInsurancePackage().getPaymentFrequency();
+            intervalMonths = app.getInsurancePackage().getPaymentIntervalMonths();
             if (intervalMonths != null && intervalMonths > 0 && app.getDuration() != null) {
                 int totalInstallments = (app.getDuration() * 12) / intervalMonths;
                 if (totalInstallments > 1) {
@@ -540,16 +569,57 @@ public class CustomerController {
             }
         }
 
-        Payment payment = Payment.builder()
-                .application(app).customer(user)
-                .amount(payAmount)
-                .paymentType("PREMIUM").paymentMethod(paymentMethod)
-                .screenshotPath(screenshotPath).notes(notes)
-                .periodNumber(periodNumber).periodLabel(periodLabel)
-                .transactionLastSixDigits(last6)
-                .transactionAmount(transactionAmount)
-                .status(PaymentStatus.PENDING).build();
-        return ResponseEntity.ok(PaymentResponse.from(paymentRepo.save(payment)));
+        if (periods.isEmpty()) {
+            // Legacy one-time payment (no period number)
+            Payment payment = Payment.builder()
+                    .application(app).customer(user)
+                    .amount(payAmount)
+                    .paymentType("PREMIUM").paymentMethod(paymentMethod)
+                    .screenshotPath(screenshotPath).notes(notes)
+                    .periodNumber(null).periodLabel(null)
+                    .transactionLastSixDigits(last6)
+                    .transactionAmount(transactionAmount)
+                    .status(PaymentStatus.PENDING).build();
+            return ResponseEntity.ok(PaymentResponse.from(paymentRepo.save(payment)));
+        }
+
+        if (periods.size() == 1) {
+            // Single period payment
+            Integer pn = periods.get(0);
+            java.time.LocalDate dueDate = (intervalMonths != null && intervalMonths > 0)
+                ? startDate.plusMonths((long)(pn - 1) * intervalMonths) : startDate;
+            String lbl = (periodLabel != null && !periodLabel.isBlank()) ? periodLabel
+                : PremiumScheduleUtil.buildPeriodLabel(frequency, pn, dueDate);
+            Payment payment = Payment.builder()
+                    .application(app).customer(user)
+                    .amount(payAmount)
+                    .paymentType("PREMIUM").paymentMethod(paymentMethod)
+                    .screenshotPath(screenshotPath).notes(notes)
+                    .periodNumber(pn).periodLabel(lbl)
+                    .transactionLastSixDigits(last6)
+                    .transactionAmount(transactionAmount)
+                    .status(PaymentStatus.PENDING).build();
+            return ResponseEntity.ok(PaymentResponse.from(paymentRepo.save(payment)));
+        }
+
+        // Multi-period batch — one Payment record per period, same screenshot/transaction
+        List<PaymentResponse> responses = new java.util.ArrayList<>();
+        for (Integer pn : periods) {
+            java.time.LocalDate dueDate = (intervalMonths != null && intervalMonths > 0)
+                ? startDate.plusMonths((long)(pn - 1) * intervalMonths) : startDate;
+            String lbl = PremiumScheduleUtil.buildPeriodLabel(frequency, pn, dueDate);
+            Payment p = Payment.builder()
+                    .application(app).customer(user)
+                    .amount(payAmount)
+                    .paymentType("PREMIUM").paymentMethod(paymentMethod)
+                    .screenshotPath(screenshotPath).notes(notes)
+                    .periodNumber(pn).periodLabel(lbl)
+                    .transactionLastSixDigits(last6)
+                    .transactionAmount(transactionAmount)
+                    .status(PaymentStatus.PENDING).build();
+            responses.add(PaymentResponse.from(paymentRepo.save(p)));
+        }
+        return ResponseEntity.ok(responses);
     }
 
     // ── Active Policies ─────────────────────────────────────────────
@@ -560,6 +630,7 @@ public class CustomerController {
         List<PolicyApplication> apps = new java.util.ArrayList<>();
         apps.addAll(appRepo.findAllByCustomerAndStatus(user, ApplicationStatus.APPROVED));
         apps.addAll(appRepo.findAllByCustomerAndStatus(user, ApplicationStatus.CLAIMED));
+        apps.addAll(appRepo.findAllByCustomerAndStatus(user, ApplicationStatus.EXPIRED));
         return apps.stream()
                 .sorted(Comparator.comparing(PolicyApplication::getCreatedAt).reversed())
                 .map(app -> {
@@ -596,6 +667,13 @@ public class CustomerController {
                     m.put("premiumWaiverBenefit", pwbPkg != null && pwbPkg.isPremiumWaiverBenefit());
                     m.put("emergencyStatus", app.getEmergencyStatus() != null ? app.getEmergencyStatus().name() : "NONE");
                     m.put("waiverGrantedAt", app.getWaiverGrantedAt() != null ? app.getWaiverGrantedAt().toString() : null);
+                    // Policy maturity / expiry
+                    m.put("approvedAt", app.getApprovedAt() != null ? app.getApprovedAt().toString() : null);
+                    if (app.getApprovedAt() != null && app.getDuration() != null) {
+                        m.put("maturityDate", app.getApprovedAt().toLocalDate().plusYears(app.getDuration()).toString());
+                    } else {
+                        m.put("maturityDate", null);
+                    }
                     return m;
                 }).toList();
     }

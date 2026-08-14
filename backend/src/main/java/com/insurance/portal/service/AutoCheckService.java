@@ -663,6 +663,36 @@ public class AutoCheckService {
         };
     }
 
+    // ──────────────────────────────────────────────────────────────────────────
+    // 4. POLICY EXPIRY CHECK  —  scheduled via DynamicSchedulerService (midnight daily)
+    // ──────────────────────────────────────────────────────────────────────────
+    @Transactional
+    public void runDailyPolicyExpiry() {
+        log.info("[AutoCheck] ▶ Daily policy expiry check started");
+        LocalDate today = LocalDate.now();
+        List<PolicyApplication> apps = appRepo.findAllByStatus(ApplicationStatus.APPROVED);
+        int expiredCount = 0;
+        for (PolicyApplication app : apps) {
+            if (app.getApprovedAt() == null || app.getDuration() == null) continue;
+            LocalDate maturityDate = app.getApprovedAt().toLocalDate().plusYears(app.getDuration());
+            if (!maturityDate.isAfter(today)) {
+                app.setStatus(ApplicationStatus.EXPIRED);
+                appRepo.save(app);
+                String policyNum  = app.getPolicyNumber() != null ? app.getPolicyNumber() : "#" + app.getId();
+                String policyName = app.getInsurancePackage() != null ? app.getInsurancePackage().getName() : "Policy";
+                sendNotification(app.getCustomer(),
+                        "📋 ပါလစီသက်တမ်းကုန်ဆုံးပြီ",
+                        String.format("%s (%s) ၏ သက်တမ်းကာလ %s ရက်နေ့တွင် ပြည့်ဆုံးကာ ကုန်ဆုံးသွားပါပြီ။ " +
+                                "ပါလစီကို ဆက်လက်အသုံးပြု၍မရတော့ပါ။",
+                                policyName, policyNum, maturityDate),
+                        NotificationType.INFO);
+                expiredCount++;
+                log.info("[AutoCheck] Expired policy {} (id={})", policyNum, app.getId());
+            }
+        }
+        log.info("[AutoCheck] ▶ Daily policy expiry check complete. {} policies expired.", expiredCount);
+    }
+
     private void sendNotification(User recipient, String title, String message, NotificationType type) {
         if (recipient == null) return;
         notifRepo.save(Notification.builder()

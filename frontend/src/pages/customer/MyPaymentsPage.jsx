@@ -24,6 +24,7 @@ export default function MyPaymentsPage() {
     applicationId: '', paymentMethod: '', screenshot: null,
     notes: '', periodNumber: null, periodLabel: '', installmentAmount: null,
     transactionLastSixDigits: '', transactionAmount: '',
+    selectedPeriods: [],   // [{periodNumber, periodLabel}] for multi-period payment
   })
   const [paySignature, setPaySignature] = useState(null)
   const paySignatureRef = useRef()
@@ -47,8 +48,13 @@ export default function MyPaymentsPage() {
 
   useEffect(() => { fetchData() }, [])
 
-  const openModal = ({ appId = '', periodNumber = null, periodLabel = '', installmentAmount = null } = {}) => {
-    setPayForm({ applicationId: String(appId), paymentMethod: '', screenshot: null, notes: '', periodNumber, periodLabel, installmentAmount, transactionLastSixDigits: '', transactionAmount: '' })
+  const openModal = ({ appId = '', periodNumber = null, periodLabel = '', installmentAmount = null, selectedPeriods = [] } = {}) => {
+    setPayForm({
+      applicationId: String(appId), paymentMethod: '', screenshot: null, notes: '',
+      periodNumber, periodLabel, installmentAmount,
+      transactionLastSixDigits: '', transactionAmount: '',
+      selectedPeriods,
+    })
     setPaySignature(null)
     setShowModal(true)
   }
@@ -80,10 +86,16 @@ export default function MyPaymentsPage() {
       fd.append('signature',     paySignature)
       fd.append('transactionLastSixDigits', last6)
       fd.append('transactionAmount', payForm.transactionAmount)
-      if (payForm.periodNumber != null) fd.append('periodNumber', payForm.periodNumber)
-      if (payForm.periodLabel)          fd.append('periodLabel',  payForm.periodLabel)
+      if (payForm.selectedPeriods && payForm.selectedPeriods.length > 1) {
+        // Multi-period batch
+        fd.append('periodsJson', JSON.stringify(payForm.selectedPeriods.map(p => p.periodNumber)))
+      } else {
+        if (payForm.periodNumber != null) fd.append('periodNumber', payForm.periodNumber)
+        if (payForm.periodLabel)          fd.append('periodLabel',  payForm.periodLabel)
+      }
       await api.post('/customer/payments', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
-      toast.success(t('payments.submitSuccess'))
+      const cnt = payForm.selectedPeriods?.length > 1 ? payForm.selectedPeriods.length : 1
+      toast.success(cnt > 1 ? `${cnt} periods submitted for verification` : t('payments.submitSuccess'))
       closeModal()
       fetchData()
     } catch (err) {
@@ -268,13 +280,44 @@ export default function MyPaymentsPage() {
 
 // ── Policy Schedule Card ────────────────────────────────────────────────────
 
+const canPayEntry = e => e.status === 'DUE' || e.status === 'OVERDUE' || e.status === 'UPCOMING'
+
 function PolicyScheduleCard({ sched, onPay, statusLabel }) {
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
+  const [multiSelectMode, setMultiSelectMode] = useState(false)
+  const [selectedPeriodNums, setSelectedPeriodNums] = useState(new Set())
 
   const urgentEntries = sched.schedule.filter(e => e.status === 'OVERDUE' || e.status === 'DUE')
   const isOneTime = sched.totalInstallments === 1
   const paidAll = sched.paidCount === sched.totalInstallments
+
+  const toggleSelect = num => setSelectedPeriodNums(prev => {
+    const next = new Set(prev)
+    next.has(num) ? next.delete(num) : next.add(num)
+    return next
+  })
+
+  const toggleMultiSelect = () => {
+    setMultiSelectMode(m => !m)
+    setSelectedPeriodNums(new Set())
+  }
+
+  const selectedEntries = sched.schedule.filter(e => selectedPeriodNums.has(e.periodNumber))
+  const totalSelected   = selectedEntries.length
+  const totalAmount     = totalSelected * Number(sched.installmentAmount)
+
+  const paySelected = () => {
+    if (!totalSelected) return
+    onPay({
+      selectedPeriods: selectedEntries.map(e => ({ periodNumber: e.periodNumber, periodLabel: e.periodLabel })),
+      installmentAmount: sched.installmentAmount,
+      periodNumber: null,
+      periodLabel: null,
+    })
+    setMultiSelectMode(false)
+    setSelectedPeriodNums(new Set())
+  }
 
   return (
     <div className="card-custom">
@@ -298,7 +341,7 @@ function PolicyScheduleCard({ sched, onPay, statusLabel }) {
           </div>
         </div>
 
-        <div className="d-flex align-items-center gap-3">
+        <div className="d-flex align-items-center gap-2">
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t('payments.installmentLabel')}</div>
             <div style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--primary)' }}>
@@ -313,6 +356,20 @@ function PolicyScheduleCard({ sched, onPay, statusLabel }) {
               </div>
             </div>
           )}
+          {!isOneTime && !paidAll && (
+            <button type="button" onClick={toggleMultiSelect}
+              title="Select multiple periods to pay at once"
+              style={{
+                background: multiSelectMode ? '#eff6ff' : 'none',
+                border: multiSelectMode ? '1.5px solid var(--primary)' : '1.5px solid var(--border)',
+                borderRadius: 8, cursor: 'pointer', padding: '0.3rem 0.6rem',
+                color: multiSelectMode ? 'var(--primary)' : 'var(--text-muted)',
+                fontSize: '0.72rem', fontWeight: 700, whiteSpace: 'nowrap',
+              }}>
+              <i className="bi bi-ui-checks me-1"></i>
+              {multiSelectMode ? 'Cancel' : 'Pay Multiple'}
+            </button>
+          )}
           {!isOneTime && (
             <button type="button" onClick={() => setExpanded(v => !v)}
               style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.4rem', color: 'var(--text-muted)', fontSize: '1rem' }}>
@@ -325,11 +382,16 @@ function PolicyScheduleCard({ sched, onPay, statusLabel }) {
       {urgentEntries.length > 0 && (
         <div className="d-flex flex-column gap-2 mb-2">
           {urgentEntries.map(entry => (
-            <InstallmentRow key={entry.periodNumber} entry={entry} statusLabel={statusLabel} onPay={() => onPay({
-              periodNumber: entry.periodNumber,
-              periodLabel: entry.periodLabel,
-              installmentAmount: sched.installmentAmount,
-            })} highlight />
+            <InstallmentRow key={entry.periodNumber} entry={entry} statusLabel={statusLabel}
+              multiSelectMode={multiSelectMode}
+              isSelected={selectedPeriodNums.has(entry.periodNumber)}
+              onToggleSelect={() => toggleSelect(entry.periodNumber)}
+              onPay={() => onPay({
+                periodNumber: entry.periodNumber,
+                periodLabel: entry.periodLabel,
+                installmentAmount: sched.installmentAmount,
+                selectedPeriods: [],
+              })} highlight />
           ))}
         </div>
       )}
@@ -338,19 +400,29 @@ function PolicyScheduleCard({ sched, onPay, statusLabel }) {
         <div className="fade-in">
           {isOneTime ? (
             sched.schedule.map(entry => (
-              <InstallmentRow key={entry.periodNumber} entry={entry} statusLabel={statusLabel} onPay={() => onPay({
+              <InstallmentRow key={entry.periodNumber} entry={entry} statusLabel={statusLabel}
+                multiSelectMode={multiSelectMode}
+                isSelected={selectedPeriodNums.has(entry.periodNumber)}
+                onToggleSelect={() => toggleSelect(entry.periodNumber)}
+                onPay={() => onPay({
                 periodNumber: entry.periodNumber,
                 periodLabel: entry.periodLabel,
                 installmentAmount: sched.installmentAmount,
+                selectedPeriods: [],
               })} />
             ))
           ) : (
             <div style={{ maxHeight: 320, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 4 }}>
               {sched.schedule.filter(e => e.status !== 'OVERDUE' && e.status !== 'DUE').map(entry => (
-                <InstallmentRow key={entry.periodNumber} entry={entry} statusLabel={statusLabel} onPay={() => onPay({
+                <InstallmentRow key={entry.periodNumber} entry={entry} statusLabel={statusLabel}
+                  multiSelectMode={multiSelectMode}
+                  isSelected={selectedPeriodNums.has(entry.periodNumber)}
+                  onToggleSelect={() => toggleSelect(entry.periodNumber)}
+                  onPay={() => onPay({
                   periodNumber: entry.periodNumber,
                   periodLabel: entry.periodLabel,
                   installmentAmount: sched.installmentAmount,
+                  selectedPeriods: [],
                 })} />
               ))}
             </div>
@@ -363,26 +435,79 @@ function PolicyScheduleCard({ sched, onPay, statusLabel }) {
           <i className="bi bi-check-circle-fill me-1"></i>{t('payments.allPaid')}
         </div>
       )}
+
+      {/* ── Multi-select pay bar ── */}
+      {multiSelectMode && totalSelected > 0 && (
+        <div className="fade-in" style={{
+          marginTop: '0.75rem', padding: '0.75rem 1rem', borderRadius: 10,
+          background: 'linear-gradient(135deg, #eff6ff, #dbeafe)',
+          border: '1.5px solid #93c5fd',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap',
+        }}>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#1d4ed8' }}>
+              <i className="bi bi-collection me-1"></i>
+              {totalSelected} period{totalSelected > 1 ? 's' : ''} selected
+            </div>
+            <div style={{ fontSize: '0.78rem', color: '#3b82f6', marginTop: 2 }}>
+              {selectedEntries.map(e => e.periodLabel || `Period ${e.periodNumber}`).join(' · ')}
+            </div>
+          </div>
+          <div className="d-flex align-items-center gap-2">
+            <div style={{ fontWeight: 900, fontSize: '1.15rem', color: '#1d4ed8', textAlign: 'right' }}>
+              {totalAmount.toLocaleString()} <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>MMK</span>
+            </div>
+            <button type="button" onClick={paySelected}
+              style={{ padding: '0.45rem 1rem', borderRadius: 8, border: 'none', cursor: 'pointer',
+                background: 'var(--primary)', color: '#fff', fontWeight: 700, fontSize: '0.82rem',
+                display: 'flex', alignItems: 'center', gap: 5 }}>
+              <i className="bi bi-credit-card"></i>
+              Pay {totalSelected} Period{totalSelected > 1 ? 's' : ''}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-function InstallmentRow({ entry, onPay, highlight, statusLabel }) {
+function InstallmentRow({ entry, onPay, highlight, statusLabel, multiSelectMode, isSelected, onToggleSelect }) {
   const { t } = useTranslation()
-  const canPay = entry.status === 'DUE' || entry.status === 'OVERDUE'
+  const canPay = canPayEntry(entry)
+  const isUpcoming = entry.status === 'UPCOMING'
+  const bgColor = isSelected ? '#eff6ff'
+    : highlight && (entry.status === 'OVERDUE' || entry.status === 'DUE')
+      ? (entry.status === 'OVERDUE' ? '#fff1f2' : '#fffbeb')
+      : 'var(--bg-secondary)'
+  const borderColor = isSelected ? 'var(--primary)'
+    : highlight && (entry.status === 'OVERDUE' || entry.status === 'DUE')
+      ? (entry.status === 'OVERDUE' ? '#fecdd3' : '#fde68a')
+      : 'var(--border)'
+
   return (
     <div style={{
       display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8,
       padding: '0.55rem 0.75rem', borderRadius: 8,
-      background: highlight && canPay ? (entry.status === 'OVERDUE' ? '#fff1f2' : '#fffbeb') : 'var(--bg-secondary)',
-      border: `1px solid ${highlight && canPay ? (entry.status === 'OVERDUE' ? '#fecdd3' : '#fde68a') : 'var(--border)'}`,
-    }}>
+      background: bgColor, border: `1px solid ${borderColor}`,
+      cursor: multiSelectMode && canPay ? 'pointer' : 'default',
+      transition: 'background 0.1s',
+    }} onClick={multiSelectMode && canPay ? onToggleSelect : undefined}>
       <div className="d-flex align-items-center gap-2">
+        {multiSelectMode && canPay && (
+          <input type="checkbox" checked={isSelected} onChange={onToggleSelect}
+            onClick={e => e.stopPropagation()}
+            style={{ width: 16, height: 16, cursor: 'pointer', accentColor: 'var(--primary)', flexShrink: 0 }} />
+        )}
         <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', minWidth: 22 }}>#{entry.periodNumber}</span>
         <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-primary)' }}>{entry.periodLabel}</span>
         <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
           {entry.dueDate ? new Date(entry.dueDate + 'T00:00:00').toLocaleDateString('my-MM') : ''}
         </span>
+        {isUpcoming && !multiSelectMode && (
+          <span style={{ fontSize: '0.65rem', color: '#0891b2', fontWeight: 600, background: '#e0f2fe', padding: '0.1rem 0.4rem', borderRadius: 4 }}>
+            Advance Pay
+          </span>
+        )}
       </div>
       <div className="d-flex align-items-center gap-2">
         <span style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)' }}>
@@ -393,14 +518,16 @@ function InstallmentRow({ entry, onPay, highlight, statusLabel }) {
           background: STATUS_BG[entry.status] || '#f1f5f9',
           color: STATUS_COLOR[entry.status] || '#64748b',
         }}>{statusLabel[entry.status] || entry.status}</span>
-        {canPay && (
-          <button type="button" onClick={onPay}
+        {canPay && !multiSelectMode && (
+          <button type="button" onClick={e => { e.stopPropagation(); onPay() }}
             style={{
               padding: '0.25rem 0.65rem', borderRadius: 8, border: 'none', cursor: 'pointer',
-              background: entry.status === 'OVERDUE' ? '#dc2626' : 'var(--primary)',
+              background: entry.status === 'OVERDUE' ? '#dc2626'
+                : isUpcoming ? '#0891b2' : 'var(--primary)',
               color: '#fff', fontSize: '0.75rem', fontWeight: 700,
             }}>
-            <i className="bi bi-credit-card me-1"></i>{t('payments.payBtn')}
+            <i className="bi bi-credit-card me-1"></i>
+            {isUpcoming ? 'Pay Advance' : t('payments.payBtn')}
           </button>
         )}
       </div>
@@ -434,18 +561,40 @@ function PaymentModal({ payForm, setPayForm, payMethods, selectedMethod, paySign
                   padding: '0.85rem 1.1rem', marginBottom: '1.25rem',
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8,
                 }}>
-                  <div>
-                    <div style={{ fontSize: '0.8rem', color: '#1e40af', fontWeight: 600 }}>
-                      <i className="bi bi-info-circle me-1"></i>
-                      {payForm.periodLabel ? `${t('payments.periodPrefix')}${payForm.periodLabel}` : t('payments.amountDueLabel')}
-                    </div>
-                    <div style={{ fontSize: '0.78rem', color: '#3b82f6', marginTop: 2 }}>
-                      {t('payments.amountDueLabel')}
-                    </div>
-                  </div>
-                  <div style={{ fontWeight: 900, fontSize: '1.5rem', color: '#1d4ed8' }}>
-                    {Number(payForm.installmentAmount).toLocaleString()} <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>MMK</span>
-                  </div>
+                  {payForm.selectedPeriods && payForm.selectedPeriods.length > 1 ? (
+                    <>
+                      <div>
+                        <div style={{ fontSize: '0.8rem', color: '#1e40af', fontWeight: 700 }}>
+                          <i className="bi bi-collection me-1"></i>
+                          {payForm.selectedPeriods.length} periods — Advance / Batch Payment
+                        </div>
+                        <div style={{ fontSize: '0.74rem', color: '#3b82f6', marginTop: 3, lineHeight: 1.5 }}>
+                          {payForm.selectedPeriods.map(p => p.periodLabel || `Period ${p.periodNumber}`).join(' · ')}
+                        </div>
+                        <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: 2 }}>
+                          {payForm.selectedPeriods.length} × {Number(payForm.installmentAmount).toLocaleString()} MMK
+                        </div>
+                      </div>
+                      <div style={{ fontWeight: 900, fontSize: '1.5rem', color: '#1d4ed8' }}>
+                        {(payForm.selectedPeriods.length * Number(payForm.installmentAmount)).toLocaleString()} <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>MMK</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div>
+                        <div style={{ fontSize: '0.8rem', color: '#1e40af', fontWeight: 600 }}>
+                          <i className="bi bi-info-circle me-1"></i>
+                          {payForm.periodLabel ? `${t('payments.periodPrefix')}${payForm.periodLabel}` : t('payments.amountDueLabel')}
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: '#3b82f6', marginTop: 2 }}>
+                          {t('payments.amountDueLabel')}
+                        </div>
+                      </div>
+                      <div style={{ fontWeight: 900, fontSize: '1.5rem', color: '#1d4ed8' }}>
+                        {Number(payForm.installmentAmount).toLocaleString()} <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>MMK</span>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 

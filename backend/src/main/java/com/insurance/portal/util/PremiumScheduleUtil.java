@@ -177,7 +177,7 @@ public class PremiumScheduleUtil {
         return entry;
     }
 
-    private static String buildPeriodLabel(String frequency, int n, LocalDate dueDate) {
+    public static String buildPeriodLabel(String frequency, int n, LocalDate dueDate) {
         if (frequency == null) return "Period " + n;
         return switch (frequency.toUpperCase()) {
             case "MONTHLY" -> dueDate.format(DateTimeFormatter.ofPattern("yyyy-MM"));

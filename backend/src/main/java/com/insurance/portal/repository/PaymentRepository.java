@@ -21,4 +21,7 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     /** Duplicate-transaction check: same last-6 digits already submitted and not rejected */
     boolean existsByTransactionLastSixDigitsAndStatusNot(String transactionLastSixDigits, PaymentStatus status);
+
+    /** Same transaction allowed within the same application (multi-period batch); block only if used in a DIFFERENT application. */
+    boolean existsByTransactionLastSixDigitsAndStatusNotAndApplication_IdNot(String transactionLastSixDigits, PaymentStatus status, Long applicationId);
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
@@ -7,6 +7,60 @@ import { getTypeMeta } from '../../utils/typeMeta'
 import ConfirmModal from '../../components/ConfirmModal'
 import PdfDropdownButton from '../../components/PdfDropdownButton'
 import DigitalSignatureCanvas from '../../components/DigitalSignatureCanvas'
+
+/* ─── Policy Countdown Timer ────────────────────────────────────────────────── */
+function PolicyCountdown({ approvedAt, durationYears, maturityDate: maturityStr }) {
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000)
+    return () => clearInterval(id)
+  }, [])
+
+  // Compute maturity date from approvedAt + durationYears, or fall back to maturityStr
+  const maturity = useMemo(() => {
+    if (approvedAt && durationYears) {
+      const d = new Date(approvedAt)
+      d.setFullYear(d.getFullYear() + durationYears)
+      return d
+    }
+    if (maturityStr) return new Date(maturityStr + 'T00:00:00')
+    return null
+  }, [approvedAt, durationYears, maturityStr])
+
+  if (!maturity) return null
+
+  const ms = maturity.getTime() - now.getTime()
+  if (ms <= 0) {
+    return (
+      <span style={{ color: '#dc2626', fontWeight: 700, fontSize: '0.82rem' }}>
+        <i className="bi bi-clock-history me-1"></i>Expired
+      </span>
+    )
+  }
+  const totalSec  = Math.floor(ms / 1000)
+  const totalDays = Math.floor(totalSec / 86400)
+  const years     = Math.floor(totalDays / 365)
+  const months    = Math.floor((totalDays % 365) / 30)
+  const days      = totalDays % 30
+  const hours     = Math.floor((totalSec % 86400) / 3600)
+  const mins      = Math.floor((totalSec % 3600) / 60)
+  const secs      = totalSec % 60
+
+  const color = years > 0 ? '#1d4ed8' : months > 0 ? '#d97706' : '#dc2626'
+  const pad   = n => String(n).padStart(2, '0')
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+      <span style={{ fontWeight: 700, fontSize: '0.82rem', color, fontFamily: 'monospace' }}>
+        {years > 0 && <span>{years}y </span>}
+        {(years > 0 || months > 0) && <span>{months}mo </span>}
+        <span>{days}d </span>
+        <span style={{ color: '#475569' }}>{pad(hours)}:{pad(mins)}:{pad(secs)}</span>
+      </span>
+      <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>remaining</span>
+    </div>
+  )
+}
 
 /* ─── Emergency Declaration Modal ──────────────────────────────────────────── */
 function EmergencyFormModal({ policy, onClose, onSubmitted }) {
@@ -231,8 +285,74 @@ export default function CustomerPoliciesPage() {
     }
   }
 
-  const activePolicies = policies.filter(p => p.status === 'APPROVED')
-  const usedPolicies   = policies.filter(p => p.status === 'CLAIMED')
+  const activePolicies  = policies.filter(p => p.status === 'APPROVED')
+  const usedPolicies    = policies.filter(p => p.status === 'CLAIMED')
+  const expiredPolicies = policies.filter(p => p.status === 'EXPIRED')
+
+  const renderExpiredCard = (policy) => {
+    const typeMeta = getTypeMeta(policy.packageType)
+    return (
+      <div key={policy.id} className="col-12 col-md-6">
+        <div className="card-custom h-100" style={{ border: '2px solid #fca5a533', opacity: 0.82 }}>
+          <div className="d-flex align-items-start justify-content-between mb-3">
+            <div className="d-flex align-items-center gap-3">
+              <div style={{ width: 48, height: 48, borderRadius: 12, background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <i className="bi bi-shield-x" style={{ color: '#94a3b8', fontSize: '1.4rem' }}></i>
+              </div>
+              <div>
+                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase' }}>{policy.packageType}</div>
+                <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{policy.packageName}</div>
+              </div>
+            </div>
+            <span style={{ padding: '0.25rem 0.65rem', borderRadius: 99, background: '#fee2e2', color: '#dc2626', fontSize: '0.75rem', fontWeight: 700, flexShrink: 0 }}>
+              <i className="bi bi-clock-history me-1"></i>Expired
+            </span>
+          </div>
+          <div className="mb-3 p-2" style={{ background: 'var(--bg-secondary)', borderRadius: 8 }}>
+            <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t('policies.policyNumber')}</div>
+            <div style={{ fontWeight: 700, fontFamily: 'monospace', color: '#94a3b8', fontSize: '0.95rem' }}>{policy.policyNumber || t('policies.pendingAssignment')}</div>
+          </div>
+          <div className="row g-2 mb-3">
+            <div className="col-6">
+              <div style={{ background: 'var(--bg-secondary)', borderRadius: 8, padding: '0.45rem 0.65rem' }}>
+                <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)' }}>{t('policies.coverage')}</div>
+                <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)' }}>{Number(policy.coverageAmount).toLocaleString()} MMK</div>
+              </div>
+            </div>
+            <div className="col-6">
+              <div style={{ background: 'var(--bg-secondary)', borderRadius: 8, padding: '0.45rem 0.65rem' }}>
+                <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)' }}>{t('policies.duration')}</div>
+                <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)' }}>{policy.duration} {policy.duration > 1 ? t('policies.years') : t('policies.year')}</div>
+              </div>
+            </div>
+            {policy.maturityDate && (
+              <div className="col-12">
+                <div style={{ background: '#fff1f2', borderRadius: 8, padding: '0.45rem 0.65rem', border: '1px solid #fecdd3' }}>
+                  <div style={{ fontSize: '0.67rem', color: '#dc2626' }}>Expired on</div>
+                  <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#dc2626' }}>{policy.maturityDate}</div>
+                </div>
+              </div>
+            )}
+          </div>
+          <div style={{ background: '#fff1f2', border: '1px solid #fecdd3', borderRadius: 8, padding: '0.6rem 0.75rem', fontSize: '0.82rem', color: '#dc2626' }}>
+            <i className="bi bi-exclamation-triangle-fill me-1"></i>
+            This policy has reached its maturity date and is no longer active.
+          </div>
+          <div className="d-flex flex-wrap gap-2 mt-3">
+            <div style={{ flex: '1 1 auto' }}>
+              <PdfDropdownButton
+                fetchPdf={() => api.get(`/customer/applications/${policy.id}/policy-contract`, { responseType: 'blob' }).then(r => r.data)}
+                filename={`policy_certificate_${policy.policyNumber || policy.id}.pdf`}
+                label="PDF"
+                size="sm"
+                variant="secondary"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   const renderPolicyCard = (policy, isUsed = false) => {
     const typeMeta = getTypeMeta(policy.packageType)
@@ -297,6 +417,14 @@ export default function CustomerPoliciesPage() {
                 </div>
               </div>
             </div>
+            {!isUsed && policy.maturityDate && (
+              <div className="col-12">
+                <div style={{ background: 'var(--bg-secondary)', borderRadius: 8, padding: '0.45rem 0.65rem', border: '1px solid var(--border)' }}>
+                  <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)' }}>Time Remaining / သက်တမ်းကျန်</div>
+                  <PolicyCountdown approvedAt={policy.approvedAt} durationYears={policy.duration} maturityDate={policy.maturityDate} />
+                </div>
+              </div>
+            )}
           </div>
 
           {policy.agentName && (
@@ -449,7 +577,7 @@ export default function CustomerPoliciesPage() {
           {/* Active policies */}
           {activePolicies.length > 0 && (
             <>
-              {usedPolicies.length > 0 && (
+              {(usedPolicies.length > 0 || expiredPolicies.length > 0) && (
                 <h6 style={{ fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '1rem' }}>
                   <i className="bi bi-shield-check me-2" style={{ color: '#16a34a' }}></i>{t('customer.activePolicies')} ({activePolicies.length})
                 </h6>
@@ -477,12 +605,29 @@ export default function CustomerPoliciesPage() {
             </>
           )}
 
-          {activePolicies.length === 0 && usedPolicies.length > 0 && (
+          {activePolicies.length === 0 && (usedPolicies.length > 0 || expiredPolicies.length > 0) && (
             <div className="card-custom text-center py-4 mb-4" style={{ background: '#f8fafc' }}>
               <i className="bi bi-shield-plus" style={{ fontSize: '2rem', color: 'var(--border)' }}></i>
               <div style={{ color: 'var(--text-secondary)', marginTop: '0.5rem', fontSize: '0.9rem' }}>{t('customer.noActivePolicies')}</div>
               <Link to="/customer/apply" className="btn-primary-custom mt-3" style={{ display: 'inline-flex' }}>{t('policies.applyNow')}</Link>
             </div>
+          )}
+
+          {/* Expired policies */}
+          {expiredPolicies.length > 0 && (
+            <>
+              <div style={{ borderTop: '1px solid var(--border)', marginBottom: '1.5rem', paddingTop: '1.5rem' }}>
+                <h6 style={{ fontWeight: 700, color: '#dc2626', marginBottom: '1rem' }}>
+                  <i className="bi bi-clock-history me-2"></i>Expired Policies ({expiredPolicies.length})
+                  <span style={{ fontSize: '0.8rem', fontWeight: 400, color: 'var(--text-muted)', marginLeft: 8 }}>
+                    — သက်တမ်းကုန်ဆုံးသွားသောပါလစီများ
+                  </span>
+                </h6>
+              </div>
+              <div className="row g-4">
+                {expiredPolicies.map(p => renderExpiredCard(p))}
+              </div>
+            </>
           )}
         </>
       )}

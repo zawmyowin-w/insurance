@@ -102,6 +102,8 @@ public class DynamicSchedulerService {
         schedule("AUTO_VERIFY",       s.getVerifyCron(),        autoCheckService::runDailyPaymentVerification);
         schedule("REMINDER",          s.getReminderCron(),       autoCheckService::runDailyPremiumReminders);
         schedule("REVISION_CLEANUP",  s.getRevisionCleanupCron(), autoCheckService::runRevisionCleanup);
+        // Policy expiry check: every day at midnight (not configurable — always active when auto-check is on)
+        schedule("POLICY_EXPIRY",     "0 0 0 * * *",             autoCheckService::runDailyPolicyExpiry);
     }
 
     private void schedule(String name, String cron, Runnable task) {
