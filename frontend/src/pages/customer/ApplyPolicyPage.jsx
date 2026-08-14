@@ -202,7 +202,7 @@ export default function ApplyPolicyPage() {
   const effectiveRate = matchedBand?.premiumRate ?? selectedTier?.premiumRate ?? null
 
   const premium = effectiveRate != null && coverage
-    ? Math.round(Number(coverage) * effectiveRate * duration)
+    ? Math.round(Number(coverage) * (effectiveRate / 100) * duration)
     : null
   const meta2 = selectedPlan ? getTypeMeta(selectedPlan.type) : {}
 
@@ -281,7 +281,7 @@ export default function ApplyPolicyPage() {
                       <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 0.75rem' }}>{plan.description}</p>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
                         <span style={{ color: 'var(--text-muted)' }}>{Number(plan.coverageMin).toLocaleString()} – {Number(plan.coverageMax).toLocaleString()} MMK</span>
-                        <span style={{ fontWeight: 700, color: meta.color }}>{plan.durationTiers?.length > 0 ? `${(Math.min(...plan.durationTiers.map(t => t.premiumRate)) * 100).toFixed(1)}%` : '—'}/{t('applyPolicy.year')}</span>
+                        <span style={{ fontWeight: 700, color: meta.color }}>{plan.durationTiers?.length > 0 ? `${parseFloat(Math.min(...plan.durationTiers.map(t => t.premiumRate))).toFixed(1)}%` : '—'}/{t('applyPolicy.year')}</span>
                       </div>
                       {(plan.minPolicyTerm || plan.policyTerm) && (
                         <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.35rem' }}>
@@ -337,7 +337,7 @@ export default function ApplyPolicyPage() {
                   <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{selectedPlan.type}</div>
                   <div style={{ color: '#fff', fontWeight: 800, fontSize: '1.15rem', lineHeight: 1.2 }}>{selectedPlan.name}</div>
                   <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.8rem', marginTop: 3 }}>
-                    {(selectedPlan.premiumRate * 100).toFixed(1)}% {t('applyPolicy.premiumRate')} &nbsp;·&nbsp; {Number(selectedPlan.coverageMin).toLocaleString()} – {Number(selectedPlan.coverageMax).toLocaleString()} MMK
+                    {parseFloat(selectedPlan.premiumRate).toFixed(1)}% {t('applyPolicy.premiumRate')} &nbsp;·&nbsp; {Number(selectedPlan.coverageMin).toLocaleString()} – {Number(selectedPlan.coverageMax).toLocaleString()} MMK
                   </div>
                 </div>
                 <button onClick={() => { setStep(1); setSelectedPlan(null) }} style={{
@@ -403,7 +403,7 @@ export default function ApplyPolicyPage() {
                         <small style={{ color: '#16a34a', fontSize: '0.75rem' }}>
                           <i className="bi bi-check-circle me-1"></i>
                           {t('applyPolicy.ageGroup')}: {matchedBand.minAge}–{matchedBand.maxAge} {t('applyPolicy.yrs')} &nbsp;·&nbsp;
-                          {t('applyPolicy.ageBandRate')}: {(matchedBand.premiumRate * 100).toFixed(2)}%/{t('applyPolicy.year')}
+                          {t('applyPolicy.ageBandRate')}: {parseFloat(matchedBand.premiumRate).toFixed(2)}%/{t('applyPolicy.year')}
                         </small>
                       )}
                     </div>
@@ -512,9 +512,9 @@ export default function ApplyPolicyPage() {
                   ...(hasAgeBands
                     ? [[t('applyPolicy.dateOfBirth'), dob || '—'],
                        matchedBand
-                         ? [t('applyPolicy.ageBandRate'), `${(matchedBand.premiumRate * 100).toFixed(2)}% (${matchedBand.minAge}–${matchedBand.maxAge} ${t('applyPolicy.yrs')})`]
+                         ? [t('applyPolicy.ageBandRate'), `${parseFloat(matchedBand.premiumRate).toFixed(2)}% (${matchedBand.minAge}–${matchedBand.maxAge} ${t('applyPolicy.yrs')})`]
                          : [t('applyPolicy.rate'), dob ? `— (${t('applyPolicy.noAgeBandMatch')})` : '—']]
-                    : [[t('applyPolicy.rate'), `${((effectiveRate ?? selectedPlan.premiumRate) * 100).toFixed(1)}%/${t('applyPolicy.year')}`]]
+                    : [[t('applyPolicy.rate'), `${parseFloat(effectiveRate ?? selectedPlan.premiumRate).toFixed(1)}%/${t('applyPolicy.year')}`]]
                   ),
                   ...(selectedPlan.minPolicyTerm || selectedPlan.policyTerm ? [[t('applyPolicy.policyTerm'), selectedPlan.minPolicyTerm && selectedPlan.policyTerm ? `${selectedPlan.minPolicyTerm} – ${selectedPlan.policyTerm} ${t('applyPolicy.yrs')}` : selectedPlan.policyTerm ? `${t('applyPolicy.upTo')} ${selectedPlan.policyTerm} ${t('applyPolicy.yrs')}` : `${t('applyPolicy.from')} ${selectedPlan.minPolicyTerm} ${t('applyPolicy.yrs')}`]] : []),
                 ].map(([l, v]) => (
@@ -560,7 +560,7 @@ export default function ApplyPolicyPage() {
               {hasAgeBands && matchedBand && (
                 <ReviewRow
                   label={t('applyPolicy.ageBandRate')}
-                  value={`${(matchedBand.premiumRate * 100).toFixed(2)}% (${t('applyPolicy.ageGroup')}: ${matchedBand.minAge}–${matchedBand.maxAge} ${t('applyPolicy.yrs')})`}
+                  value={`${parseFloat(matchedBand.premiumRate).toFixed(2)}% (${t('applyPolicy.ageGroup')}: ${matchedBand.minAge}–${matchedBand.maxAge} ${t('applyPolicy.yrs')})`}
                 />
               )}
               <ReviewRow label={t('applyPolicy.estPremium')} value={premium ? Number(premium).toLocaleString() + ' MMK' : '—'} />
