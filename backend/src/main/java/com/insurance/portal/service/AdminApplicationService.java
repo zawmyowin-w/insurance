@@ -74,6 +74,7 @@ public class AdminApplicationService {
         app.setAdminSignature(null);
         app.setAdminSignedAt(null);
         app.setRevisionDeadline(LocalDateTime.now().plusDays(7));
+        app.setCustomerEditedSinceRevision(false);
         appRepo.save(app);
         notifService.send(app.getCustomer(),
                 "Revision Required for Your Application",

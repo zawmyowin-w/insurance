@@ -20,6 +20,8 @@ export default function AgentClaimsPage() {
   const [rejectNote, setRejectNote] = useState('')
   const [forwardId, setForwardId] = useState(null)
   const [forwardNote, setForwardNote] = useState('')
+  const [reviseId, setReviseId] = useState(null)
+  const [reviseNote, setReviseNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [viewItem, setViewItem] = useState(null)
   const [signatureData, setSignatureData] = useState(null)
@@ -57,6 +59,17 @@ export default function AgentClaimsPage() {
     setSignatureData(null)
     setRejectId(null); setRejectNote('')
     setForwardId(null); setForwardNote('')
+    setReviseId(null); setReviseNote('')
+  }
+
+  const handleRevise = async (id) => {
+    if (!reviseNote.trim()) { toast.error(t('agent.claims.reasonRequired')); return }
+    setSubmitting(true)
+    try {
+      await api.put(`/agent/claims/${id}/request-revision`, { note: reviseNote })
+      toast.success('Claim sent back to customer for revision.')
+      clearActions(); fetchClaims()
+    } catch (err) { apiError(err) } finally { setSubmitting(false) }
   }
 
   const handleVerify = async (id) => {
@@ -128,6 +141,7 @@ export default function AgentClaimsPage() {
             const activeAction = selected === claim.id ? 'verify'
               : rejectId === claim.id ? 'reject'
               : forwardId === claim.id ? 'forward'
+              : reviseId === claim.id ? 'revise'
               : null
 
             return (
@@ -197,67 +211,58 @@ export default function AgentClaimsPage() {
 
                   {(isPending || isRevision) && (
                     <>
-                      {activeAction === 'verify' && (
+                      {isPending && activeAction === 'verify' && (
                         <div>
-                          <DigitalSignatureCanvas
-                            label={t('agent.claims.signatureLabel')}
-                            required
-                            onChange={setSignatureData}
-                            height={120}
-                          />
+                          <DigitalSignatureCanvas label={t('agent.claims.signatureLabel')} required onChange={setSignatureData} height={120} />
                           <textarea rows={2} className="form-control-custom w-100 mb-2" style={{ resize: 'vertical' }}
-                            placeholder={t('agent.claims.verifyPlaceholder')}
-                            value={note} onChange={e => setNote(e.target.value)} />
+                            placeholder={t('agent.claims.verifyPlaceholder')} value={note} onChange={e => setNote(e.target.value)} />
                           <div className="d-flex gap-2">
                             <button className="btn-success-sm flex-grow-1" onClick={() => handleVerify(claim.id)} disabled={submitting}>
-                              {submitting
-                                ? <span className="spinner-border spinner-border-sm"></span>
-                                : t('agent.claims.markVerified')}
+                              {submitting ? <span className="spinner-border spinner-border-sm"></span> : t('agent.claims.markVerified')}
                             </button>
-                            <button className="btn-outline-custom" style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem' }} onClick={clearActions}>
-                              {t('agent.claims.cancel')}
-                            </button>
+                            <button className="btn-outline-custom" style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem' }} onClick={clearActions}>{t('agent.claims.cancel')}</button>
                           </div>
                         </div>
                       )}
-                      {activeAction === 'reject' && (
+                      {isPending && activeAction === 'reject' && (
                         <div>
                           <textarea rows={2} className="form-control-custom w-100 mb-2" style={{ resize: 'vertical' }}
-                            placeholder={t('agent.claims.rejectPlaceholder')}
-                            value={rejectNote} onChange={e => setRejectNote(e.target.value)} />
+                            placeholder={t('agent.claims.rejectPlaceholder')} value={rejectNote} onChange={e => setRejectNote(e.target.value)} />
                           <div className="d-flex gap-2">
-                            <button className="btn-danger-sm flex-grow-1" onClick={() => handleReject(claim.id)} disabled={submitting}>
-                              {t('agent.claims.reject')}
-                            </button>
-                            <button className="btn-outline-custom" style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem' }} onClick={clearActions}>
-                              {t('agent.claims.cancel')}
-                            </button>
+                            <button className="btn-danger-sm flex-grow-1" onClick={() => handleReject(claim.id)} disabled={submitting}>{t('agent.claims.reject')}</button>
+                            <button className="btn-outline-custom" style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem' }} onClick={clearActions}>{t('agent.claims.cancel')}</button>
                           </div>
                         </div>
                       )}
-                      {activeAction === 'forward' && (
+                      {isPending && activeAction === 'revise' && (
                         <div>
                           <textarea rows={2} className="form-control-custom w-100 mb-2" style={{ resize: 'vertical' }}
-                            placeholder={t('agent.claims.forwardPlaceholder')}
-                            value={forwardNote} onChange={e => setForwardNote(e.target.value)} />
+                            placeholder="Describe what the customer needs to correct…" value={reviseNote} onChange={e => setReviseNote(e.target.value)} />
                           <div className="d-flex gap-2">
-                            <button style={{
-                              flex: 1, padding: '0.45rem 0.75rem', borderRadius: 8, border: 'none',
-                              background: '#d97706', color: '#fff', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer'
-                            }} onClick={() => handleForward(claim.id)} disabled={submitting}>
-                              {submitting
-                                ? <span className="spinner-border spinner-border-sm"></span>
-                                : <><i className="bi bi-send me-1"></i>{t('agent.claims.notifyCustomer')}</>}
+                            <button style={{ flex: 1, padding: '0.45rem 0.75rem', borderRadius: 8, border: 'none', background: '#7c3aed', color: '#fff', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}
+                              onClick={() => handleRevise(claim.id)} disabled={submitting}>
+                              {submitting ? <span className="spinner-border spinner-border-sm"></span> : <><i className="bi bi-pencil-square me-1"></i>Send for Revision</>}
                             </button>
-                            <button className="btn-outline-custom" style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem' }} onClick={clearActions}>
-                              {t('agent.claims.cancel')}
+                            <button className="btn-outline-custom" style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem' }} onClick={clearActions}>{t('agent.claims.cancel')}</button>
+                          </div>
+                        </div>
+                      )}
+                      {isRevision && activeAction === 'forward' && (
+                        <div>
+                          <textarea rows={2} className="form-control-custom w-100 mb-2" style={{ resize: 'vertical' }}
+                            placeholder={t('agent.claims.forwardPlaceholder')} value={forwardNote} onChange={e => setForwardNote(e.target.value)} />
+                          <div className="d-flex gap-2">
+                            <button style={{ flex: 1, padding: '0.45rem 0.75rem', borderRadius: 8, border: 'none', background: '#d97706', color: '#fff', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}
+                              onClick={() => handleForward(claim.id)} disabled={submitting}>
+                              {submitting ? <span className="spinner-border spinner-border-sm"></span> : <><i className="bi bi-send me-1"></i>{t('agent.claims.notifyCustomer')}</>}
                             </button>
+                            <button className="btn-outline-custom" style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem' }} onClick={clearActions}>{t('agent.claims.cancel')}</button>
                           </div>
                         </div>
                       )}
                       {activeAction === null && (
                         <div className="d-flex flex-column gap-2">
-                          {isRevision && (
+                          {isRevision ? (
                             <button onClick={() => setForwardId(claim.id)} style={{
                               width: '100%', padding: '0.5rem', borderRadius: 8, border: 'none',
                               background: '#d97706', color: '#fff', fontWeight: 700, fontSize: '0.85rem',
@@ -265,23 +270,33 @@ export default function AgentClaimsPage() {
                             }}>
                               <i className="bi bi-send"></i>{t('agent.claims.forwardToCustomer')}
                             </button>
+                          ) : (
+                            <>
+                              <div className="d-flex gap-2">
+                                <button onClick={() => { setSelected(claim.id); setSignatureData(null) }} style={{
+                                  flex: 1, padding: '0.5rem', borderRadius: 8, border: 'none',
+                                  background: '#16a34a', color: '#fff', fontWeight: 700, fontSize: '0.85rem',
+                                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
+                                }}>
+                                  <i className="bi bi-check-circle"></i>{t('agent.claims.verify')}
+                                </button>
+                                <button onClick={() => setRejectId(claim.id)} style={{
+                                  flex: 1, padding: '0.5rem', borderRadius: 8, border: 'none',
+                                  background: '#dc2626', color: '#fff', fontWeight: 700, fontSize: '0.85rem',
+                                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
+                                }}>
+                                  <i className="bi bi-x-circle"></i>{t('agent.claims.reject')}
+                                </button>
+                              </div>
+                              <button onClick={() => setReviseId(claim.id)} style={{
+                                width: '100%', padding: '0.45rem', borderRadius: 8, border: '1.5px solid #7c3aed',
+                                background: '#f5f3ff', color: '#7c3aed', fontWeight: 700, fontSize: '0.85rem',
+                                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
+                              }}>
+                                <i className="bi bi-pencil-square"></i>Revise (Send to Customer)
+                              </button>
+                            </>
                           )}
-                          <div className="d-flex gap-2">
-                            <button onClick={() => { setSelected(claim.id); setSignatureData(null) }} style={{
-                              flex: 1, padding: '0.5rem', borderRadius: 8, border: 'none',
-                              background: '#16a34a', color: '#fff', fontWeight: 700, fontSize: '0.85rem',
-                              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
-                            }}>
-                              <i className="bi bi-check-circle"></i>{t('agent.claims.verify')}
-                            </button>
-                            <button onClick={() => setRejectId(claim.id)} style={{
-                              flex: 1, padding: '0.5rem', borderRadius: 8, border: 'none',
-                              background: '#dc2626', color: '#fff', fontWeight: 700, fontSize: '0.85rem',
-                              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
-                            }}>
-                              <i className="bi bi-x-circle"></i>{t('agent.claims.reject')}
-                            </button>
-                          </div>
                         </div>
                       )}
                     </>

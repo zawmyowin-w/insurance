@@ -14,7 +14,7 @@ export function NotifCountProvider({ children }) {
   const [unreadCount, setUnreadCount] = useState(0)
 
   const refreshUnread = useCallback(() => {
-    if (!user || user.role !== 'CUSTOMER') { setUnreadCount(0); return }
+    if (!user) { setUnreadCount(0); return }
     api.get('/notifications/unread-count')
       .then(res => setUnreadCount(res.data?.count ?? 0))
       .catch(() => {})
@@ -22,7 +22,7 @@ export function NotifCountProvider({ children }) {
 
   useEffect(() => {
     refreshUnread()
-    if (!user || user.role !== 'CUSTOMER') return
+    if (!user) return
     const id = setInterval(refreshUnread, 30000)
     return () => clearInterval(id)
   }, [refreshUnread])

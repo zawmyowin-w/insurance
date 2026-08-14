@@ -83,13 +83,15 @@ fi
 echo "[start-backend] Ensuring database '${DB_NAME}' exists..."
 mysql "${mysql_args[@]}" -e "CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
-# ── Idempotent ENUM migrations (Hibernate ddl-auto=update cannot alter ENUM columns) ──────────
-mysql "${mysql_args[@]}" "${DB_NAME}" 2>/dev/null <<'ENDSQL'
--- Premium Waiver Benefit: extend form_type ENUM to include EMERGENCY
-ALTER TABLE form_templates MODIFY COLUMN form_type ENUM('APPLICATION','CLAIM','EMERGENCY') NOT NULL;
--- Premium Waiver Benefit: extend payments.status to include WAIVED
-ALTER TABLE payments MODIFY COLUMN status ENUM('PENDING','VERIFIED','REJECTED','WAIVED') NULL;
-ENDSQL
+# ── Idempotent schema migrations (Hibernate ddl-auto=update cannot alter ENUM columns) ──────────
+# Run each statement separately, ignoring errors (column/type may already be correct).
+set +e
+mysql "${mysql_args[@]}" "${DB_NAME}" -e "ALTER TABLE form_templates MODIFY COLUMN form_type ENUM('APPLICATION','CLAIM','EMERGENCY') NOT NULL;" 2>/dev/null
+mysql "${mysql_args[@]}" "${DB_NAME}" -e "ALTER TABLE payments MODIFY COLUMN status ENUM('PENDING','VERIFIED','REJECTED','WAIVED') NULL;" 2>/dev/null
+# Add customer_edited_since_revision if missing (safe on re-runs: column already exists → error silently ignored)
+mysql "${mysql_args[@]}" "${DB_NAME}" -e "ALTER TABLE policy_applications ADD COLUMN customer_edited_since_revision TINYINT(1) NOT NULL DEFAULT 0;" 2>/dev/null
+mysql "${mysql_args[@]}" "${DB_NAME}" -e "ALTER TABLE claims ADD COLUMN customer_edited_since_revision TINYINT(1) NOT NULL DEFAULT 0;" 2>/dev/null
+set -e
 
 # Schema and seed data are managed by Hibernate (ddl-auto=update) and DataInitializer on startup.
 

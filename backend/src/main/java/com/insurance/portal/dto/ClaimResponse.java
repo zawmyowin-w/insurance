@@ -32,6 +32,7 @@ public class ClaimResponse {
     private String formData;
     private int documentCount;
     private LocalDateTime createdAt;
+    private boolean customerEditedSinceRevision;
 
     public static ClaimResponse from(Claim claim) {
         ClaimResponse dto = new ClaimResponse();
@@ -65,6 +66,7 @@ public class ClaimResponse {
         dto.setFormData(claim.getFormData());
         dto.setDocumentCount(FileStorageUtil.fromJsonArray(claim.getDocumentsPath()).size());
         dto.setCreatedAt(claim.getCreatedAt());
+        dto.setCustomerEditedSinceRevision(claim.isCustomerEditedSinceRevision());
         return dto;
     }
 }

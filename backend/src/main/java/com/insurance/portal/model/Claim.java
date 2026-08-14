@@ -90,6 +90,11 @@ public class Claim {
     @Column(name = "revision_deadline")
     private LocalDateTime revisionDeadline;
 
+    /** Prevents customer from editing more than once per revision cycle. Reset when admin/agent creates a new revision. */
+    @Builder.Default
+    @Column(name = "customer_edited_since_revision")
+    private boolean customerEditedSinceRevision = false;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

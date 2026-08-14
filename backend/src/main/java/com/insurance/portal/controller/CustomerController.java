@@ -192,6 +192,9 @@ public class CustomerController {
                 && app.getStatus() != ApplicationStatus.PENDING
                 && app.getStatus() != ApplicationStatus.REJECTED)
             return ResponseEntity.badRequest().body(Map.of("message", "Only PENDING, REVISION_REQUESTED, or REJECTED applications can be edited"));
+        // One-edit-per-revision-cycle guard: customer may not re-edit until admin/agent sends a new revision
+        if (app.getStatus() == ApplicationStatus.REVISION_REQUESTED && app.isCustomerEditedSinceRevision())
+            return ResponseEntity.badRequest().body(Map.of("message", "You have already submitted a revision for this cycle. Please wait for admin/agent review."));
 
         InsurancePackage pkg = app.getInsurancePackage();
         BigDecimal effectiveCoverage = app.getCoverageAmount();
@@ -263,6 +266,7 @@ public class CustomerController {
         app.setAdminSignedAt(null);
         app.setApprovedBy(null);
         app.setApprovedAt(null);
+        app.setCustomerEditedSinceRevision(true);
         return ResponseEntity.ok(ApplicationResponse.from(appRepo.save(app)));
     }
 
@@ -301,6 +305,8 @@ public class CustomerController {
             return ResponseEntity.status(403).body(Map.of("message", "Forbidden"));
         if (claim.getStatus() != ClaimStatus.REVISION_REQUESTED)
             return ResponseEntity.badRequest().body(Map.of("message", "Only REVISION_REQUESTED claims can be revised"));
+        if (claim.isCustomerEditedSinceRevision())
+            return ResponseEntity.badRequest().body(Map.of("message", "You have already submitted a revision for this cycle. Please wait for admin/agent review."));
 
         if (formData != null) {
             try {
@@ -327,6 +333,7 @@ public class CustomerController {
         claim.setAgentSignedAt(null);
         claim.setAdminSignature(null);
         claim.setAdminSignedAt(null);
+        claim.setCustomerEditedSinceRevision(true);
         return ResponseEntity.ok(ClaimResponse.from(claimRepo.save(claim)));
     }
 

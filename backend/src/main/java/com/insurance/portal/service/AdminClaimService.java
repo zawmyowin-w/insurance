@@ -89,6 +89,7 @@ public class AdminClaimService {
         claim.setAdminSignature(null);
         claim.setAdminSignedAt(null);
         claim.setRevisionDeadline(LocalDateTime.now().plusDays(7));
+        claim.setCustomerEditedSinceRevision(false);
         claimRepo.save(claim);
         notifService.send(claim.getCustomer(),
                 "Claim Revision Required",

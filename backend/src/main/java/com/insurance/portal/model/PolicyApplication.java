@@ -168,6 +168,15 @@ public class PolicyApplication {
     @Column(name = "waiver_granted_at")
     private LocalDateTime waiverGrantedAt;
 
+    /**
+     * Set to true when the customer submits a revision for the current revision cycle.
+     * Reset to false whenever admin or agent creates a new revision request.
+     * Prevents customers from editing more than once per revision cycle.
+     */
+    @Builder.Default
+    @Column(name = "customer_edited_since_revision")
+    private boolean customerEditedSinceRevision = false;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

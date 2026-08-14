@@ -129,13 +129,23 @@ export default function MyClaimsPage() {
                       )}
 
                       {isRevision && (
-                        <button onClick={() => setReviseItem(claim)} style={{
-                          padding: '0.4rem 0.9rem', borderRadius: 8, border: 'none',
-                          background: '#d97706', color: '#fff', cursor: 'pointer',
-                          fontWeight: 600, fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: 4
-                        }}>
-                          <i className="bi bi-pencil-square"></i> {t('myClaims.editResubmitBtn')}
-                        </button>
+                        claim.customerEditedSinceRevision ? (
+                          <span style={{
+                            padding: '0.4rem 0.9rem', borderRadius: 8, border: '1.5px solid #d1d5db',
+                            background: '#f9fafb', color: '#9ca3af', fontSize: '0.82rem', fontWeight: 600,
+                            display: 'inline-flex', alignItems: 'center', gap: 4
+                          }}>
+                            <i className="bi bi-hourglass-split"></i> Submitted — awaiting review
+                          </span>
+                        ) : (
+                          <button onClick={() => setReviseItem(claim)} style={{
+                            padding: '0.4rem 0.9rem', borderRadius: 8, border: 'none',
+                            background: '#d97706', color: '#fff', cursor: 'pointer',
+                            fontWeight: 600, fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: 4
+                          }}>
+                            <i className="bi bi-pencil-square"></i> {t('myClaims.editResubmitBtn')}
+                          </button>
+                        )
                       )}
 
                       {/* Payout voucher — PDF dropdown (Save as PDF + Print) */}

@@ -47,6 +47,8 @@ public class ApplicationResponse {
     private Integer claimWaitingPeriodMonths;
     private boolean transferred;
 
+    private boolean customerEditedSinceRevision;
+
     // Premium Waiver Benefit
     private boolean premiumWaiverBenefit;
     private String emergencyStatus;
@@ -114,6 +116,7 @@ public class ApplicationResponse {
             dto.setClaimWaitingPeriodMonths(app.getInsurancePackage().getClaimWaitingPeriodMonths());
         }
         dto.setTransferred(app.getTransferredAt() != null);
+        dto.setCustomerEditedSinceRevision(app.isCustomerEditedSinceRevision());
         // Premium Waiver Benefit
         if (app.getInsurancePackage() != null) {
             dto.setPremiumWaiverBenefit(app.getInsurancePackage().isPremiumWaiverBenefit());

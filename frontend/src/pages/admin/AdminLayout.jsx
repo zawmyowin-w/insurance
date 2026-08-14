@@ -1,8 +1,10 @@
 import { useTranslation } from 'react-i18next'
 import DashboardLayout from '../../components/DashboardLayout'
+import { useNotifCount } from '../../context/NotifCountContext'
 
 export default function AdminLayout() {
   const { t } = useTranslation()
+  const { unreadCount } = useNotifCount()
 
   const links = [
     { to: '/admin/dashboard',        icon: 'bi-speedometer2',         label: t('admin.layout.dashboard')         },
@@ -12,12 +14,12 @@ export default function AdminLayout() {
     { to: '/admin/forms',            icon: 'bi-ui-checks',            label: t('admin.layout.formTemplates')     },
     { to: '/admin/applications',     icon: 'bi-file-earmark-text',    label: t('admin.layout.applications')      },
     { to: '/admin/claims',           icon: 'bi-file-earmark-medical', label: t('admin.layout.claims')            },
-    { to: '/admin/policy-transfers', icon: 'bi-arrow-left-right',     label: t('admin.layout.policyTransfers')                  },
+    { to: '/admin/policy-transfers', icon: 'bi-arrow-left-right',     label: t('admin.layout.policyTransfers')   },
     { to: '/admin/payments',         icon: 'bi-credit-card',          label: t('admin.layout.payments')          },
     { to: '/admin/premium-schedule', icon: 'bi-calendar2-check',      label: t('admin.layout.premiumSchedule')   },
     { to: '/admin/payment-methods',  icon: 'bi-qr-code',              label: t('admin.layout.paymentMethods')    },
     { to: '/admin/feedback',         icon: 'bi-chat-heart',           label: t('admin.layout.customerFeedback'), badge: true },
-    { to: '/admin/notifications',    icon: 'bi-bell',                 label: t('admin.layout.notifications')     },
+    { to: '/admin/notifications',    icon: 'bi-bell',                 label: t('admin.layout.notifications'),    notif: true },
     { to: '/admin/autocheck',        icon: 'bi-bell-fill',            label: t('admin.layout.reminder')          },
     { to: '/admin/reports',          icon: 'bi-bar-chart-line',       label: t('admin.layout.reports')           },
     { to: '/admin/profile',          icon: 'bi-person-circle',        label: t('admin.layout.myProfile')         },
@@ -28,6 +30,7 @@ export default function AdminLayout() {
       title={t('admin.layout.adminPanel')}
       links={links}
       badgeApi={{ url: '/admin/feedback/unread-count' }}
+      notifBadge={unreadCount}
     />
   )
 }

@@ -12,3 +12,5 @@
 - [Digital signature workflow](digital-signature-workflow.md) — Customer, agent, and admin signatures are separate, validated, reset on revision, and rendered in PDFs
 - [Imported frontend workflow permissions](imported-frontend-workflow.md) — Invoke Vite through Node when imported npm shims lack executable permissions
 - [Premium Waiver Benefit architecture](pwb-implementation.md) — Full enum/model/controller/frontend flow; EmergencyStatus on PolicyApplication, WAIVED PaymentStatus, AdminWaiverController endpoints
+- [Bash set -e with mysql migrations](bash-set-e-mysql.md) — start-backend.sh uses set -e; any mysql command exit ≠ 0 kills the script; use set +e / set -e around migration blocks
+- [Agent revise + one-edit cycle](agent-revise-cycle.md) — customerEditedSinceRevision boolean on PolicyApplication+Claim; reset by admin/agent revise, set true by customer on submission; DTOs expose the flag

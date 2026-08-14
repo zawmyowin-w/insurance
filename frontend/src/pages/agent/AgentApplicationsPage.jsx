@@ -21,6 +21,8 @@ export default function AgentApplicationsPage() {
   const [rejectNote, setRejectNote] = useState('')
   const [forwardId, setForwardId] = useState(null)
   const [forwardNote, setForwardNote] = useState('')
+  const [reviseId, setReviseId] = useState(null)
+  const [reviseNote, setReviseNote] = useState('')
   const [viewItem, setViewItem] = useState(null)
   const [signatureData, setSignatureData] = useState(null)
 
@@ -57,6 +59,17 @@ export default function AgentApplicationsPage() {
     setSignatureData(null)
     setRejectId(null); setRejectNote('')
     setForwardId(null); setForwardNote('')
+    setReviseId(null); setReviseNote('')
+  }
+
+  const handleRevise = async (id) => {
+    if (!reviseNote.trim()) { toast.error(t('agent.apps.reasonRequired')); return }
+    setSubmitting(true)
+    try {
+      await api.put(`/agent/applications/${id}/request-revision`, { note: reviseNote })
+      toast.success('Application sent back to customer for revision.')
+      clearActions(); fetchApps()
+    } catch (err) { apiError(err) } finally { setSubmitting(false) }
   }
 
   const handleVerify = async (id) => {
@@ -128,6 +141,7 @@ export default function AgentApplicationsPage() {
             const activeAction = selected === app.id ? 'verify'
               : rejectId === app.id ? 'reject'
               : forwardId === app.id ? 'forward'
+              : reviseId === app.id ? 'revise'
               : null
 
             return (
@@ -198,69 +212,70 @@ export default function AgentApplicationsPage() {
                   {/* Actions for PENDING and REVISION_REQUESTED */}
                   {(isPending || isRevision) && (
                     <>
-                      {activeAction === 'verify' && (
+                      {/* Verify form — PENDING only */}
+                      {isPending && activeAction === 'verify' && (
                         <div>
-                          <DigitalSignatureCanvas
-                            label={t('agent.apps.signatureLabel')}
-                            required
-                            onChange={setSignatureData}
-                            height={120}
-                          />
+                          <DigitalSignatureCanvas label={t('agent.apps.signatureLabel')} required onChange={setSignatureData} height={120} />
                           <textarea rows={2} className="form-control-custom w-100 mb-2" style={{ resize: 'vertical' }}
-                            placeholder={t('agent.apps.verifyPlaceholder')}
-                            value={note} onChange={e => setNote(e.target.value)} />
+                            placeholder={t('agent.apps.verifyPlaceholder')} value={note} onChange={e => setNote(e.target.value)} />
                           <div className="d-flex gap-2">
                             <button className="btn-success-sm flex-grow-1" onClick={() => handleVerify(app.id)} disabled={submitting}>
-                              {submitting
-                                ? <span className="spinner-border spinner-border-sm"></span>
+                              {submitting ? <span className="spinner-border spinner-border-sm"></span>
                                 : <><i className="bi bi-check-lg me-1"></i>{t('agent.apps.markVerified')}</>}
                             </button>
-                            <button className="btn-outline-custom" style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem' }} onClick={clearActions}>
-                              {t('agent.apps.cancel')}
-                            </button>
+                            <button className="btn-outline-custom" style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem' }} onClick={clearActions}>{t('agent.apps.cancel')}</button>
                           </div>
                         </div>
                       )}
-                      {activeAction === 'reject' && (
+                      {/* Reject form — PENDING only */}
+                      {isPending && activeAction === 'reject' && (
                         <div>
                           <textarea rows={2} className="form-control-custom w-100 mb-2" style={{ resize: 'vertical' }}
-                            placeholder={t('agent.apps.rejectPlaceholder')}
-                            value={rejectNote} onChange={e => setRejectNote(e.target.value)} />
+                            placeholder={t('agent.apps.rejectPlaceholder')} value={rejectNote} onChange={e => setRejectNote(e.target.value)} />
                           <div className="d-flex gap-2">
                             <button className="btn-danger-sm flex-grow-1" onClick={() => handleReject(app.id)} disabled={submitting}>
-                              {submitting
-                                ? <span className="spinner-border spinner-border-sm"></span>
+                              {submitting ? <span className="spinner-border spinner-border-sm"></span>
                                 : <><i className="bi bi-x-lg me-1"></i>{t('agent.apps.reject')}</>}
                             </button>
-                            <button className="btn-outline-custom" style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem' }} onClick={clearActions}>
-                              {t('agent.apps.cancel')}
-                            </button>
+                            <button className="btn-outline-custom" style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem' }} onClick={clearActions}>{t('agent.apps.cancel')}</button>
                           </div>
                         </div>
                       )}
-                      {activeAction === 'forward' && (
+                      {/* Agent-initiated revise form — PENDING only */}
+                      {isPending && activeAction === 'revise' && (
                         <div>
                           <textarea rows={2} className="form-control-custom w-100 mb-2" style={{ resize: 'vertical' }}
-                            placeholder={t('agent.apps.forwardPlaceholder')}
-                            value={forwardNote} onChange={e => setForwardNote(e.target.value)} />
+                            placeholder="Describe what the customer needs to correct…" value={reviseNote} onChange={e => setReviseNote(e.target.value)} />
                           <div className="d-flex gap-2">
-                            <button style={{
-                              flex: 1, padding: '0.45rem 0.75rem', borderRadius: 8, border: 'none',
-                              background: '#d97706', color: '#fff', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer'
-                            }} onClick={() => handleForward(app.id)} disabled={submitting}>
-                              {submitting
-                                ? <span className="spinner-border spinner-border-sm"></span>
-                                : <><i className="bi bi-send me-1"></i>{t('agent.apps.notifyCustomer')}</>}
+                            <button style={{ flex: 1, padding: '0.45rem 0.75rem', borderRadius: 8, border: 'none', background: '#7c3aed', color: '#fff', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}
+                              onClick={() => handleRevise(app.id)} disabled={submitting}>
+                              {submitting ? <span className="spinner-border spinner-border-sm"></span>
+                                : <><i className="bi bi-pencil-square me-1"></i>Send for Revision</>}
                             </button>
-                            <button className="btn-outline-custom" style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem' }} onClick={clearActions}>
-                              {t('agent.apps.cancel')}
-                            </button>
+                            <button className="btn-outline-custom" style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem' }} onClick={clearActions}>{t('agent.apps.cancel')}</button>
                           </div>
                         </div>
                       )}
+                      {/* Forward form — REVISION_REQUESTED (from admin) */}
+                      {isRevision && activeAction === 'forward' && (
+                        <div>
+                          <textarea rows={2} className="form-control-custom w-100 mb-2" style={{ resize: 'vertical' }}
+                            placeholder={t('agent.apps.forwardPlaceholder')} value={forwardNote} onChange={e => setForwardNote(e.target.value)} />
+                          <div className="d-flex gap-2">
+                            <button style={{ flex: 1, padding: '0.45rem 0.75rem', borderRadius: 8, border: 'none', background: '#d97706', color: '#fff', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}
+                              onClick={() => handleForward(app.id)} disabled={submitting}>
+                              {submitting ? <span className="spinner-border spinner-border-sm"></span>
+                                : <><i className="bi bi-send me-1"></i>{t('agent.apps.notifyCustomer')}</>}
+                            </button>
+                            <button className="btn-outline-custom" style={{ padding: '0.4rem 0.9rem', fontSize: '0.85rem' }} onClick={clearActions}>{t('agent.apps.cancel')}</button>
+                          </div>
+                        </div>
+                      )}
+                      {/* Default button row */}
                       {activeAction === null && (
                         <div className="d-flex flex-column gap-2">
-                          {isRevision && (
+                          {isRevision ? (
+                            /* REVISION_REQUESTED: admin sent it — agent only forwards to customer */
                             <button onClick={() => setForwardId(app.id)} style={{
                               width: '100%', padding: '0.5rem', borderRadius: 8, border: 'none',
                               background: '#d97706', color: '#fff', fontWeight: 700, fontSize: '0.85rem',
@@ -268,23 +283,34 @@ export default function AgentApplicationsPage() {
                             }}>
                               <i className="bi bi-send"></i>{t('agent.apps.forwardToCustomer')}
                             </button>
+                          ) : (
+                            /* PENDING: Verify + Reject + Revise */
+                            <>
+                              <div className="d-flex gap-2">
+                                <button onClick={() => { setSelected(app.id); setSignatureData(null) }} style={{
+                                  flex: 1, padding: '0.5rem', borderRadius: 8, border: 'none',
+                                  background: '#16a34a', color: '#fff', fontWeight: 700, fontSize: '0.85rem',
+                                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
+                                }}>
+                                  <i className="bi bi-check-circle"></i>{t('agent.apps.verify')}
+                                </button>
+                                <button onClick={() => setRejectId(app.id)} style={{
+                                  flex: 1, padding: '0.5rem', borderRadius: 8, border: 'none',
+                                  background: '#dc2626', color: '#fff', fontWeight: 700, fontSize: '0.85rem',
+                                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
+                                }}>
+                                  <i className="bi bi-x-circle"></i>{t('agent.apps.reject')}
+                                </button>
+                              </div>
+                              <button onClick={() => setReviseId(app.id)} style={{
+                                width: '100%', padding: '0.45rem', borderRadius: 8, border: '1.5px solid #7c3aed',
+                                background: '#f5f3ff', color: '#7c3aed', fontWeight: 700, fontSize: '0.85rem',
+                                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
+                              }}>
+                                <i className="bi bi-pencil-square"></i>Revise (Send to Customer)
+                              </button>
+                            </>
                           )}
-                          <div className="d-flex gap-2">
-                            <button onClick={() => { setSelected(app.id); setSignatureData(null) }} style={{
-                              flex: 1, padding: '0.5rem', borderRadius: 8, border: 'none',
-                              background: '#16a34a', color: '#fff', fontWeight: 700, fontSize: '0.85rem',
-                              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
-                            }}>
-                              <i className="bi bi-check-circle"></i>{t('agent.apps.verify')}
-                            </button>
-                            <button onClick={() => setRejectId(app.id)} style={{
-                              flex: 1, padding: '0.5rem', borderRadius: 8, border: 'none',
-                              background: '#dc2626', color: '#fff', fontWeight: 700, fontSize: '0.85rem',
-                              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6
-                            }}>
-                              <i className="bi bi-x-circle"></i>{t('agent.apps.reject')}
-                            </button>
-                          </div>
                         </div>
                       )}
                     </>

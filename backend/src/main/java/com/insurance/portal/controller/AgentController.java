@@ -180,10 +180,16 @@ public class AgentController {
                 .orElseThrow(() -> new RuntimeException("Application not found"));
         if (app.getAgent() == null || !app.getAgent().getId().equals(agent.getId()))
             return ResponseEntity.status(403).body(Map.of("message", "You are not assigned to this application"));
-        if (app.getStatus() != ApplicationStatus.REVISION_REQUESTED)
-            return ResponseEntity.badRequest().body(Map.of("message", "Application is not in revision state"));
+        if (app.getStatus() != ApplicationStatus.REVISION_REQUESTED && app.getStatus() != ApplicationStatus.PENDING)
+            return ResponseEntity.badRequest().body(Map.of("message", "Application cannot be sent for revision at this stage"));
+        // Agent-initiated revision from PENDING: transition to REVISION_REQUESTED
+        if (app.getStatus() == ApplicationStatus.PENDING) {
+            app.setStatus(ApplicationStatus.REVISION_REQUESTED);
+            app.setAdminNote(null); // clear any stale admin note — this revision is agent-initiated
+        }
         String note = req.get("note");
         app.setAgentNote(note);
+        app.setCustomerEditedSinceRevision(false);
         appRepo.save(app);
         notifService.send(app.getCustomer(),
                 "Action Required: Update Your Application",
@@ -204,10 +210,16 @@ public class AgentController {
                 .orElseThrow(() -> new RuntimeException("Claim not found"));
         if (claim.getAgent() == null || !claim.getAgent().getId().equals(agent.getId()))
             return ResponseEntity.status(403).body(Map.of("message", "You are not assigned to this claim"));
-        if (claim.getStatus() != ClaimStatus.REVISION_REQUESTED)
-            return ResponseEntity.badRequest().body(Map.of("message", "Claim is not in revision state"));
+        if (claim.getStatus() != ClaimStatus.REVISION_REQUESTED && claim.getStatus() != ClaimStatus.PENDING)
+            return ResponseEntity.badRequest().body(Map.of("message", "Claim cannot be sent for revision at this stage"));
+        // Agent-initiated revision from PENDING: transition to REVISION_REQUESTED
+        if (claim.getStatus() == ClaimStatus.PENDING) {
+            claim.setStatus(ClaimStatus.REVISION_REQUESTED);
+            claim.setAdminNote(null);
+        }
         String note = req.get("note");
         claim.setAgentNote(note);
+        claim.setCustomerEditedSinceRevision(false);
         claimRepo.save(claim);
         notifService.send(claim.getCustomer(),
                 "Action Required: Update Your Claim",

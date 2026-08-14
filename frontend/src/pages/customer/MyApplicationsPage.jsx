@@ -146,13 +146,23 @@ export default function MyApplicationsPage() {
                       )}
 
                       {(app.status === 'PENDING' || app.status === 'REVISION_REQUESTED' || app.status === 'REJECTED') && (
-                        <button onClick={() => setReviseItem(app)} style={{
-                          padding: '0.4rem 0.9rem', borderRadius: 8, border: '1.5px solid #d97706',
-                          background: 'transparent', color: '#d97706', cursor: 'pointer',
-                          fontWeight: 600, fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: 4
-                        }}>
-                          <i className="bi bi-pencil"></i> {t('myApps.editBtn')}
-                        </button>
+                        app.status === 'REVISION_REQUESTED' && app.customerEditedSinceRevision ? (
+                          <span style={{
+                            padding: '0.4rem 0.9rem', borderRadius: 8, border: '1.5px solid #d1d5db',
+                            background: '#f9fafb', color: '#9ca3af', fontSize: '0.82rem', fontWeight: 600,
+                            display: 'inline-flex', alignItems: 'center', gap: 4
+                          }}>
+                            <i className="bi bi-hourglass-split"></i> Submitted — awaiting review
+                          </span>
+                        ) : (
+                          <button onClick={() => setReviseItem(app)} style={{
+                            padding: '0.4rem 0.9rem', borderRadius: 8, border: '1.5px solid #d97706',
+                            background: 'transparent', color: '#d97706', cursor: 'pointer',
+                            fontWeight: 600, fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: 4
+                          }}>
+                            <i className="bi bi-pencil"></i> {t('myApps.editBtn')}
+                          </button>
+                        )
                       )}
                       {app.status === 'PENDING' && (
                         <button onClick={() => handleCancel(app.id)} style={{

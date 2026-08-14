@@ -12,7 +12,7 @@ import api from '../services/api'
  *   badgeApi      — optional { url } — polls for unread count; renders badge on link with badge:true
  *   externalBadge — when provided (number), skips internal polling (used by CustomerLayout)
  */
-export default function DashboardLayout({ title, links, badgeApi, externalBadge }) {
+export default function DashboardLayout({ title, links, badgeApi, externalBadge, notifBadge = 0 }) {
   const [badge, setBadge] = useState(0)
   const [drawerOpen, setDrawerOpen] = useState(false)
 
@@ -50,6 +50,17 @@ export default function DashboardLayout({ title, links, badgeApi, externalBadge 
     </span>
   )
 
+  const notifChip = notifBadge > 0 ? (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+      background: '#dc2626', color: '#fff', borderRadius: '999px',
+      fontSize: '0.68rem', fontWeight: 700, minWidth: 18, height: 18,
+      padding: '0 5px', lineHeight: 1,
+    }}>
+      {notifBadge > 99 ? '99+' : notifBadge}
+    </span>
+  ) : null
+
   // Single shared link list — used in both desktop sidebar and mobile drawer
   const SidebarLinks = ({ onNavigate }) => (
     <>
@@ -63,6 +74,7 @@ export default function DashboardLayout({ title, links, badgeApi, externalBadge 
           <i className={`bi ${link.icon}`}></i>
           <span style={{ flex: 1 }}>{link.label}</span>
           {link.badge && badge > 0 && badgeChip}
+          {link.notif && notifChip}
         </NavLink>
       ))}
     </>

@@ -1224,18 +1224,58 @@ function AgentPerformanceTab({ agents }) {
         ))}
       </div>
 
-      {/* Bar chart of applications per agent */}
+      {/* Approval Rate Gauges */}
       {agents.length > 0 && (
         <div className="card-custom">
           <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
-            <i className="bi bi-bar-chart me-2" style={{ color: 'var(--primary)' }}></i>
-            {t('admin.reports.applicationsPerAgent')}
+            <i className="bi bi-speedometer2 me-2" style={{ color: '#7c3aed' }}></i>
+            Approval Rate by Agent
           </h6>
-          <BarChart
-            data={Object.fromEntries(agents.map(a => [a.agentName?.split(' ')[0] || 'Agent', a.applicationsHandled || 0]))}
-            color="#1d4ed8"
-            height={180}
-          />
+          <div className="d-flex flex-wrap gap-4 justify-content-center pb-2">
+            {agents.slice(0, 8).map((a, i) => {
+              const rate = a.approvalRate || 0
+              const rateColor = rate >= 70 ? '#16a34a' : rate >= 40 ? '#d97706' : '#dc2626'
+              return (
+                <div key={a.agentId} className="text-center">
+                  <DonutGauge value={rate} max={100} color={rateColor} size={110} label={a.agentName?.split(' ')[0] || 'Agent'} />
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 4 }}>{a.applicationsHandled || 0} handled</div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Bar chart: approved vs total per agent */}
+      {agents.length > 0 && (
+        <div className="row g-4">
+          <div className="col-12 col-lg-6">
+            <div className="card-custom h-100">
+              <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
+                <i className="bi bi-bar-chart me-2" style={{ color: 'var(--primary)' }}></i>
+                {t('admin.reports.applicationsPerAgent')}
+              </h6>
+              <BarChart
+                data={Object.fromEntries(agents.map(a => [a.agentName?.split(' ')[0] || 'Agent', a.applicationsHandled || 0]))}
+                color="#1d4ed8"
+                height={180}
+              />
+            </div>
+          </div>
+          <div className="col-12 col-lg-6">
+            <div className="card-custom h-100">
+              <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
+                <i className="bi bi-check2-circle me-2" style={{ color: '#16a34a' }}></i>
+                Approved vs Not Approved
+              </h6>
+              <GroupedBarChart
+                data1={Object.fromEntries(agents.map(a => [a.agentName?.split(' ')[0] || 'Agent', a.applicationsApproved || 0]))}
+                data2={Object.fromEntries(agents.map(a => [a.agentName?.split(' ')[0] || 'Agent', Math.max((a.applicationsHandled || 0) - (a.applicationsApproved || 0), 0)]))}
+                label1="Approved" label2="Not Approved"
+                height={190}
+              />
+            </div>
+          </div>
         </div>
       )}
 
@@ -1329,17 +1369,71 @@ function PackagePopularityTab({ packages }) {
         ))}
       </div>
 
-      {/* Popularity bar chart */}
+      {/* Charts row: popularity bar + revenue pie */}
+      {packages.length > 0 && (
+        <div className="row g-4">
+          <div className="col-12 col-lg-7">
+            <div className="card-custom h-100">
+              <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
+                <i className="bi bi-bar-chart me-2" style={{ color: 'var(--primary)' }}></i>
+                {t('admin.reports.applicationsPerPlan')}
+              </h6>
+              <BarChart
+                data={Object.fromEntries(packages.slice(0, 12).map(p => [p.packageName?.substring(0, 10) || 'Plan', p.applicationCount || 0]))}
+                color={packages.slice(0, 12).map(p => typeColor(p.packageType))}
+                height={180}
+              />
+            </div>
+          </div>
+          <div className="col-12 col-lg-5">
+            <div className="card-custom h-100">
+              <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
+                <i className="bi bi-pie-chart me-2" style={{ color: '#d97706' }}></i>
+                Revenue Share by Insurance Type
+              </h6>
+              {(() => {
+                const revByPkgType = {}
+                packages.forEach(p => {
+                  if (!revByPkgType[p.packageType]) revByPkgType[p.packageType] = 0
+                  revByPkgType[p.packageType] += Number(p.revenue || 0)
+                })
+                const total = Object.values(revByPkgType).reduce((s, v) => s + v, 0)
+                return (
+                  <div className="d-flex align-items-center justify-content-center gap-4 flex-wrap">
+                    <PieChart data={revByPkgType} colors={TYPE_COLORS} size={160} />
+                    <div className="d-flex flex-column gap-2">
+                      {Object.entries(revByPkgType).sort((a, b) => b[1] - a[1]).map(([type, rev]) => (
+                        <div key={type} className="d-flex align-items-center gap-2">
+                          <div style={{ width: 10, height: 10, borderRadius: 2, background: typeColor(type), flexShrink: 0 }}></div>
+                          <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-primary)' }}>{type}</span>
+                          <span style={{ fontSize: '0.72rem', color: typeColor(type), fontWeight: 700 }}>
+                            {total > 0 ? (rev / total * 100).toFixed(1) : 0}%
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Revenue per package bar */}
       {packages.length > 0 && (
         <div className="card-custom">
           <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
-            <i className="bi bi-bar-chart me-2" style={{ color: 'var(--primary)' }}></i>
-            {t('admin.reports.applicationsPerPlan')}
+            <i className="bi bi-cash-stack me-2" style={{ color: '#d97706' }}></i>
+            Revenue per Package (Top 12)
           </h6>
           <BarChart
-            data={Object.fromEntries(packages.slice(0, 15).map(p => [p.packageName?.substring(0, 10) || 'Plan', p.applicationCount || 0]))}
-            color={packages.map(p => typeColor(p.packageType))}
-            height={180}
+            data={Object.fromEntries(
+              [...packages].sort((a, b) => Number(b.revenue || 0) - Number(a.revenue || 0))
+                .slice(0, 12).map(p => [p.packageName?.substring(0, 12) || 'Plan', Number(p.revenue || 0)])
+            )}
+            color={[...packages].sort((a, b) => Number(b.revenue || 0) - Number(a.revenue || 0)).slice(0, 12).map(p => typeColor(p.packageType))}
+            height={190}
           />
         </div>
       )}
