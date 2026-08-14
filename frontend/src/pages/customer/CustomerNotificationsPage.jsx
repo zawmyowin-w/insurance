@@ -3,5 +3,5 @@ import NotificationsPage from '../../components/NotificationsPage'
 
 export default function CustomerNotificationsPage() {
   const { t } = useTranslation()
-  return <NotificationsPage subtitle={t('notif.customerSubtitle')} />
+  return <NotificationsPage subtitle={t('notif.customerSubtitle')} role="customer" />
 }

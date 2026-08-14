@@ -71,6 +71,11 @@ public class AdminAdvertiseController {
             return ResponseEntity.badRequest().body(Map.of("message", "Title and message are required"));
         }
 
+        // Optional: packageId for deep-link popup on customer side
+        Long packageId = null;
+        Object pkgIdRaw = req.get("packageId");
+        if (pkgIdRaw instanceof Number) packageId = ((Number) pkgIdRaw).longValue();
+
         List<User> customers = userRepo.findAllByRole(Role.CUSTOMER).stream()
                 .filter(User::isActive)
                 .toList();
@@ -79,12 +84,25 @@ public class AdminAdvertiseController {
             return ResponseEntity.ok(Map.of("sent", 0, "message", "No active customers found"));
         }
 
-        notifService.sendToAll(customers, title, message, NotificationType.ADVERTISE, "CUSTOMER");
+        final Long finalPackageId = packageId;
+        List<com.insurance.portal.model.Notification> notifications = customers.stream()
+                .map(customer -> com.insurance.portal.model.Notification.builder()
+                        .recipient(customer)
+                        .title(title)
+                        .message(message)
+                        .type(NotificationType.ADVERTISE)
+                        .targetRole("CUSTOMER")
+                        .referenceId(finalPackageId)
+                        .referenceType(finalPackageId != null ? "PACKAGE" : null)
+                        .build())
+                .collect(Collectors.toList());
+        notifRepo.saveAll(notifications);
 
         return ResponseEntity.ok(Map.of(
-                "sent",    customers.size(),
-                "title",   title,
-                "message", message
+                "sent",      customers.size(),
+                "title",     title,
+                "message",   message,
+                "packageId", packageId != null ? packageId : ""
         ));
     }
 }

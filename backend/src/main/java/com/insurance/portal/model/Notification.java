@@ -42,6 +42,14 @@ public class Notification {
     @Column(name = "target_role")
     private String targetRole;
 
+    /** Optional: ID of a related entity (e.g. packageId for ADVERTISE notifications). */
+    @Column(name = "reference_id")
+    private Long referenceId;
+
+    /** Optional: type label of the referenced entity, e.g. "PACKAGE". */
+    @Column(name = "reference_type", length = 50)
+    private String referenceType;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

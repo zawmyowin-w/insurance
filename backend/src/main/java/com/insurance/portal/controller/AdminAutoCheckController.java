@@ -177,6 +177,17 @@ public class AdminAutoCheckController {
         }
     }
 
+    @PostMapping("/run/cleanup")
+    @Transactional
+    public ResponseEntity<?> triggerCleanup() {
+        try {
+            Map<String, Object> result = autoCheckService.triggerRevisionCleanup();
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of("message", e.getMessage()));
+        }
+    }
+
     private boolean isAiEnabled() {
         boolean hasOpenAi = openAiKey != null && !openAiKey.isBlank() && !openAiKey.startsWith("sk-placeholder");
         boolean hasXai    = xaiKey    != null && !xaiKey.isBlank();

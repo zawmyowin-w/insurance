@@ -10,32 +10,7 @@ const STATUS_STYLE = {
 }
 const TYPE_META = {
   REMINDER:         { icon: 'bi-bell-fill',    color: '#d97706', labelKey: 'typeReminder' },
-  REVISION_CLEANUP: { icon: 'bi-trash3-fill', color: '#dc2626', labelKey: 'typeCleanup' },
-}
-
-// Myanmar timezone offset = UTC+6:30
-function myanmarTimeToCron(hhmm) {
-  const [h, m] = hhmm.split(':').map(Number)
-  let totalMin = h * 60 + m - (6 * 60 + 30)
-  if (totalMin < 0) totalMin += 24 * 60
-  const utcH = Math.floor(totalMin / 60) % 24
-  const utcM = totalMin % 60
-  return `0 ${utcM} ${utcH} * * *`
-}
-
-function cronToMyanmarTime(cron) {
-  try {
-    const parts = cron.trim().split(/\s+/)
-    if (parts.length < 3) return null
-    const utcH = parseInt(parts[2], 10)
-    const utcM = parseInt(parts[1], 10)
-    if (isNaN(utcH) || isNaN(utcM)) return null
-    let totalMin = utcH * 60 + utcM + 6 * 60 + 30
-    if (totalMin >= 24 * 60) totalMin -= 24 * 60
-    const mmH = String(Math.floor(totalMin / 60)).padStart(2, '0')
-    const mmM = String(totalMin % 60).padStart(2, '0')
-    return `${mmH}:${mmM}`
-  } catch { return null }
+  REVISION_CLEANUP: { icon: 'bi-trash3-fill',  color: '#dc2626', labelKey: 'typeCleanup'  },
 }
 
 function Badge({ status, t }) {
@@ -66,232 +41,24 @@ function StatCard({ icon, label, value, color, bg, sub }) {
   )
 }
 
-// ─── Settings Edit Modal ───────────────────────────────────────────────────
-function SettingsModal({ status, onClose, onSaved }) {
-  const { t } = useTranslation()
-  const [form, setForm] = useState({
-    enabled:             status?.enabled ?? true,
-    reminderCron:        status?.reminderCron        ?? '0 30 1 * * *',
-    revisionCleanupCron: status?.revisionCleanupCron ?? '0 0 3 * * *',
-  })
-  const [reminderTime, setReminderTime] = useState(cronToMyanmarTime(form.reminderCron) ?? '08:00')
-  const [cleanupTime,  setCleanupTime]  = useState(cronToMyanmarTime(form.revisionCleanupCron) ?? '09:30')
-  const [advanced,     setAdvanced]     = useState(false)
-  const [saving,       setSaving]       = useState(false)
-  const [err,          setErr]          = useState(null)
-
-  const handleTimeChange = (field, cronField, time) => {
-    if (field === 'reminder') setReminderTime(time)
-    if (field === 'cleanup')  setCleanupTime(time)
-    setForm(f => ({ ...f, [cronField]: myanmarTimeToCron(time) }))
-  }
-
-  const save = async () => {
-    setSaving(true); setErr(null)
-    try {
-      await api.put('/admin/autocheck/settings', form)
-      onSaved()
-    } catch (e) {
-      setErr(e?.response?.data?.message || t('admin.autoCheck.settingsSaveFailed'))
-    } finally { setSaving(false) }
-  }
-
-  const inputStyle = {
-    width: '100%', padding: '0.5rem 0.75rem', borderRadius: 8,
-    border: '1.5px solid var(--border)', background: 'var(--bg-primary)',
-    color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none',
-  }
-  const labelStyle = { fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: 4, display: 'block' }
-
-  return (
-    <div style={{
-      position: 'fixed', inset: 0,
-      background: 'rgba(15, 23, 42, 0.65)',
-      backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      zIndex: 9000, padding: '1rem',
-    }} onClick={e => e.target === e.currentTarget && onClose()}>
-      <div style={{
-        background: '#ffffff', borderRadius: 20, width: '100%', maxWidth: 560,
-        boxShadow: '0 25px 80px rgba(0,0,0,.35)', maxHeight: '90vh', overflowY: 'auto', border: 'none',
-      }}>
-        <div style={{
-          background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 60%, #fbbf24 100%)',
-          borderRadius: '20px 20px 0 0', padding: '1.5rem 1.75rem',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          position: 'relative', overflow: 'hidden',
-        }}>
-          <div style={{ position: 'absolute', width: 140, height: 140, borderRadius: '50%',
-            background: 'rgba(255,255,255,0.07)', top: -40, right: 60, pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', width: 80, height: 80, borderRadius: '50%',
-            background: 'rgba(255,255,255,0.07)', bottom: -30, right: 20, pointerEvents: 'none' }} />
-          <div style={{ position: 'relative' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10,
-                background: 'rgba(255,255,255,0.2)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <i className="bi bi-gear-fill" style={{ color: '#fff', fontSize: '1rem' }}></i>
-              </div>
-              <div style={{ fontWeight: 800, fontSize: '1.05rem', color: '#fff' }}>
-                {t('admin.autoCheck.settingsTitle')}
-              </div>
-            </div>
-            <div style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.8)', marginLeft: 46 }}>
-              {t('admin.autoCheck.settingsTimezoneDesc')}
-            </div>
-          </div>
-          <button type="button" onClick={onClose} style={{
-            background: 'rgba(255,255,255,0.15)', border: 'none', cursor: 'pointer',
-            color: '#fff', fontSize: '1rem', lineHeight: 1,
-            width: 32, height: 32, borderRadius: 8,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            position: 'relative', flexShrink: 0,
-          }}>
-            <i className="bi bi-x-lg"></i>
-          </button>
-        </div>
-
-        <div style={{ padding: '1.5rem 1.75rem', background: '#ffffff' }}>
-          {/* Enable toggle */}
-          <div className="d-flex align-items-center justify-content-between mb-4"
-            style={{ background: '#f8fafc', border: '1.5px solid #e2e8f0', borderRadius: 12, padding: '0.9rem 1.1rem' }}>
-            <div>
-              <div style={{ fontWeight: 700, fontSize: '0.88rem', color: '#1e293b' }}>
-                {t('admin.autoCheck.title')}
-              </div>
-              <div style={{ fontSize: '0.75rem', color: form.enabled ? '#16a34a' : '#dc2626', marginTop: 2, fontWeight: 600 }}>
-                <i className={`bi bi-${form.enabled ? 'check-circle-fill' : 'x-circle-fill'} me-1`}></i>
-                {form.enabled ? t('admin.autoCheck.enabled') : t('admin.autoCheck.disabled')}
-              </div>
-            </div>
-            <label style={{ position: 'relative', width: 50, height: 28, cursor: 'pointer', flexShrink: 0 }}>
-              <input type="checkbox" checked={form.enabled}
-                onChange={e => setForm(f => ({ ...f, enabled: e.target.checked }))}
-                style={{ opacity: 0, width: 0, height: 0, position: 'absolute' }} />
-              <span style={{
-                position: 'absolute', inset: 0, borderRadius: 14, transition: '.25s',
-                background: form.enabled ? '#d97706' : '#cbd5e1',
-                boxShadow: form.enabled ? '0 0 0 3px rgba(217,119,6,0.2)' : 'none',
-              }}>
-                <span style={{
-                  position: 'absolute', width: 22, height: 22, borderRadius: '50%',
-                  background: '#fff', top: 3, transition: '.25s',
-                  left: form.enabled ? 25 : 3, boxShadow: '0 2px 6px rgba(0,0,0,.25)',
-                }}></span>
-              </span>
-            </label>
-          </div>
-
-          <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#d97706',
-            textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '0.75rem' }}>
-            <i className="bi bi-clock me-1"></i>{t('admin.autoCheck.myanmarTimeSchedule')}
-          </div>
-
-          <div className="d-flex flex-column gap-3 mb-4">
-            {[
-               { field: 'reminder', cronField: 'reminderCron',        label: t('admin.autoCheck.reminderTimeLabel'), icon: 'bi-bell-fill', color: '#d97706', bg: '#fffbeb', val: reminderTime },
-               { field: 'cleanup',  cronField: 'revisionCleanupCron', label: t('admin.autoCheck.cleanupTimeLabel'), icon: 'bi-trash3', color: '#dc2626', bg: '#fef2f2', val: cleanupTime },
-            ].map(row => (
-              <div key={row.field} style={{ background: '#f8fafc', borderRadius: 12, padding: '0.85rem 1rem', border: '1px solid #e2e8f0' }}>
-                <label style={{ ...labelStyle, color: '#374151', marginBottom: 8 }}>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                    width: 22, height: 22, borderRadius: 6, background: row.bg, marginRight: 6 }}>
-                    <i className={`bi ${row.icon}`} style={{ color: row.color, fontSize: '0.72rem' }}></i>
-                  </span>
-                  {row.label}
-                </label>
-                <div className="d-flex align-items-center gap-2">
-                  <input type="time" value={row.val}
-                    onChange={e => handleTimeChange(row.field, row.cronField, e.target.value)}
-                    style={{ ...inputStyle, flex: 1, background: '#fff', border: '1.5px solid #d1d5db' }} />
-                  <span style={{ fontSize: '0.68rem', color: '#94a3b8', whiteSpace: 'nowrap', minWidth: 110 }}>
-                     {t('admin.autoCheck.cronLabel')}: <code style={{ fontSize: '0.68rem', color: '#d97706' }}>{form[row.cronField]}</code>
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Advanced cron */}
-          <button type="button" onClick={() => setAdvanced(v => !v)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer',
-              color: '#d97706', fontSize: '0.75rem', padding: 0, marginBottom: 8, fontWeight: 600 }}>
-            <i className={`bi bi-chevron-${advanced ? 'up' : 'down'} me-1`}></i>
-             {t('admin.autoCheck.advancedCron')}
-          </button>
-          {advanced && (
-            <div className="d-flex flex-column gap-2 mb-3" style={{ background: '#f8fafc', borderRadius: 12, padding: '1rem', border: '1px solid #e2e8f0' }}>
-              {[
-                 { label: t('admin.autoCheck.reminderCronLabel'), key: 'reminderCron' },
-                 { label: t('admin.autoCheck.cleanupCronLabel'), key: 'revisionCleanupCron' },
-              ].map(row => (
-                <div key={row.key}>
-                  <label style={{ ...labelStyle, color: '#374151' }}>{row.label}</label>
-                  <input value={form[row.key]}
-                    onChange={e => setForm(f => ({ ...f, [row.key]: e.target.value }))}
-                    placeholder="0 30 1 * * *"
-                    style={{ ...inputStyle, background: '#fff', border: '1.5px solid #d1d5db' }} />
-                </div>
-              ))}
-              <div style={{ fontSize: '0.72rem', color: '#64748b', background: '#fff',
-                borderRadius: 8, padding: '0.5rem 0.75rem', border: '1px solid #e2e8f0' }}>
-                 {t('admin.autoCheck.cronFormat')}: <code style={{ color: '#d97706' }}>seconds minutes hours day month weekday</code><br />
-                 {t('admin.autoCheck.timezoneFormat')}
-              </div>
-            </div>
-          )}
-
-          {err && (
-            <div style={{ background: '#fef2f2', color: '#dc2626', borderRadius: 10, padding: '0.7rem 1rem',
-              fontSize: '0.8rem', marginBottom: 12, border: '1px solid #fecaca' }}>
-              <i className="bi bi-exclamation-triangle-fill me-2"></i>{err}
-            </div>
-          )}
-
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', paddingTop: '0.5rem', borderTop: '1px solid #f1f5f9', marginTop: 4 }}>
-            <button type="button" onClick={onClose}
-              style={{ padding: '0.55rem 1.4rem', borderRadius: 10, border: '1.5px solid #e2e8f0',
-                background: '#fff', color: '#64748b', fontWeight: 600, fontSize: '0.85rem', cursor: 'pointer' }}>
-              {t('admin.common.cancel')}
-            </button>
-            <button type="button" onClick={save} disabled={saving}
-              style={{ padding: '0.55rem 1.5rem', borderRadius: 10, border: 'none', cursor: 'pointer',
-                background: saving ? '#e2e8f0' : 'linear-gradient(135deg, #d97706, #f59e0b)',
-                color: saving ? '#64748b' : '#fff', fontWeight: 700, fontSize: '0.85rem',
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-                boxShadow: saving ? 'none' : '0 4px 12px rgba(217,119,6,0.35)' }}>
-              {saving
-                ? <><span className="spinner-border spinner-border-sm"></span> {t('admin.common.saving')}</>
-                : <><i className="bi bi-floppy-fill"></i> {t('admin.autoCheck.saveSettings')}</>}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ─── Advertise Section ──────────────────────────────────────────────────────
+// ─── Advertise Section (packages only) ──────────────────────────────────────
 function AdvertiseSection({ showToast }) {
   const { t } = useTranslation()
-  const [types,     setTypes]     = useState([])
-  const [packages,  setPackages]  = useState([])
-  const [selectedItems, setSelectedItems] = useState([])  // [{ kind: 'type'|'package', item }]
-  const [customMsg, setCustomMsg] = useState('')
-  const [sending,   setSending]   = useState(false)
-  const [history,   setHistory]   = useState([])
-  const [loadingItems, setLoadingItems] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
+  const [packages,      setPackages]      = useState([])
+  const [selectedPkg,   setSelectedPkg]   = useState(null)
+  const [customMsg,     setCustomMsg]     = useState('')
+  const [sending,       setSending]       = useState(false)
+  const [history,       setHistory]       = useState([])
+  const [loadingItems,  setLoadingItems]  = useState(true)
+  const [refreshing,    setRefreshing]    = useState(false)
 
   const loadItems = (isRefresh = false) => {
     if (isRefresh) setRefreshing(true)
     else setLoadingItems(true)
     return Promise.all([
-      api.get('/admin/insurance-types').catch(() => ({ data: [] })),
       api.get('/admin/packages').catch(() => ({ data: [] })),
       api.get('/admin/advertise/history').catch(() => ({ data: [] })),
-    ]).then(([ty, p, h]) => {
-      setTypes(Array.isArray(ty.data) ? ty.data : [])
+    ]).then(([p, h]) => {
       setPackages(Array.isArray(p.data) ? p.data : [])
       setHistory(Array.isArray(h.data) ? h.data : [])
     }).finally(() => { setLoadingItems(false); setRefreshing(false) })
@@ -299,54 +66,29 @@ function AdvertiseSection({ showToast }) {
 
   useEffect(() => { loadItems() }, [])
 
-  const toggleItem = (kind, item) => {
-    setSelectedItems(prev => {
-      const exists = prev.some(s => s.kind === kind && s.item.id === item.id)
-      return exists
-        ? prev.filter(s => !(s.kind === kind && s.item.id === item.id))
-        : [...prev, { kind, item }]
-    })
-  }
-
   const handleBroadcast = async () => {
-    if (selectedItems.length === 0) { showToast('❌ ' + t('admin.autoCheck.adSelectRequired'), false); return }
+    if (!selectedPkg) { showToast('❌ Please select a package to advertise.', false); return }
     setSending(true)
     try {
-      const labels = selectedItems.map(s => s.kind === 'type' ? s.item.name : s.item.packageName)
-      const isSingle = selectedItems.length === 1
-      const title = isSingle
-        ? t('admin.autoCheck.adNotifTitle',      { name: labels[0] })
-        : t('admin.autoCheck.adNotifTitleMulti', { count: selectedItems.length })
-      const defaultMsg = isSingle
-        ? (selectedItems[0].kind === 'type'
-            ? t('admin.autoCheck.adDefaultMsgType',  { name: labels[0] })
-            : t('admin.autoCheck.adDefaultMsgPkg',   { name: labels[0] }))
-        : t('admin.autoCheck.adDefaultMsgMulti', { names: labels.join(', ') })
-      const message = customMsg.trim() || defaultMsg
+      const pkgName = selectedPkg.packageName || selectedPkg.name
+      const title   = `🎉 New Insurance Package: ${pkgName}`
+      const message = customMsg.trim() || `Discover our "${pkgName}" insurance package — great coverage options are available for you! Tap to learn more.`
 
       await api.post('/admin/advertise/broadcast', {
         title,
         message,
-        itemKind: isSingle ? selectedItems[0].kind : 'multiple',
-        itemId:   isSingle ? selectedItems[0].item.id : null,
-        itemName: labels.join(', '),
+        packageId: selectedPkg.id,
       })
 
-      showToast('✅ ' + t('admin.autoCheck.adBroadcastSent'))
-      setSelectedItems([]); setCustomMsg('')
+      showToast('✅ Advertisement sent to all customers!')
+      setSelectedPkg(null); setCustomMsg('')
 
-      // refresh history
       const h = await api.get('/admin/advertise/history').catch(() => ({ data: [] }))
       setHistory(Array.isArray(h.data) ? h.data : [])
     } catch (e) {
       showToast('❌ ' + (e?.response?.data?.message || t('admin.autoCheck.errorOccurred')), false)
     } finally { setSending(false) }
   }
-
-  const allItems = [
-    ...types.map(i => ({ kind: 'type', item: i, label: i.name, icon: 'bi-tags', color: '#7c3aed', bg: '#f5f3ff' })),
-    ...packages.map(i => ({ kind: 'package', item: i, label: i.packageName, icon: 'bi-box-seam', color: '#0891b2', bg: '#ecfeff' })),
-  ]
 
   return (
     <div className="card-custom mb-4">
@@ -361,7 +103,6 @@ function AdvertiseSection({ showToast }) {
             {t('admin.autoCheck.advertiseSubtitle')}
           </span>
           <button type="button" onClick={() => loadItems(true)} disabled={refreshing}
-             title={t('admin.autoCheck.refreshList')}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 5,
               padding: '0.28rem 0.65rem', borderRadius: 7, border: '1.5px solid var(--border)',
@@ -376,43 +117,44 @@ function AdvertiseSection({ showToast }) {
       </div>
 
       <div className="row g-3">
-        {/* Left: item picker */}
+        {/* Left: package picker */}
         <div className="col-12 col-lg-5">
           <div style={{ fontSize: '0.73rem', fontWeight: 700, color: 'var(--text-secondary)',
             textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
-            {t('admin.autoCheck.adPickItem')}
+            Select Insurance Package
           </div>
           {loadingItems ? (
             <div className="text-center py-3"><span className="spinner-border spinner-border-sm" style={{ color: 'var(--primary)' }}></span></div>
-          ) : allItems.length === 0 ? (
-            <div style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{t('admin.autoCheck.adNoItems')}</div>
+          ) : packages.length === 0 ? (
+            <div style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>No packages found. Create a package first.</div>
           ) : (
-            <div style={{ maxHeight: 220, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {allItems.map(({ kind, item, label, icon, color, bg }) => {
-                const isSelected = selectedItems.some(s => s.kind === kind && s.item.id === item.id)
+            <div style={{ maxHeight: 260, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {packages.map(pkg => {
+                const isSelected = selectedPkg?.id === pkg.id
+                const pkgName = pkg.packageName || pkg.name
                 return (
-                  <button key={`${kind}-${item.id}`} type="button"
-                    onClick={() => toggleItem(kind, item)}
+                  <button key={pkg.id} type="button"
+                    onClick={() => setSelectedPkg(isSelected ? null : pkg)}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 10,
-                      padding: '0.5rem 0.75rem', borderRadius: 9,
-                      border: `1.5px solid ${isSelected ? color : 'var(--border)'}`,
-                      background: isSelected ? bg : 'var(--bg-primary)',
+                      padding: '0.6rem 0.85rem', borderRadius: 10,
+                      border: `1.5px solid ${isSelected ? '#0891b2' : 'var(--border)'}`,
+                      background: isSelected ? '#e0f2fe' : 'var(--bg-primary)',
                       cursor: 'pointer', textAlign: 'left', transition: 'all .15s',
                     }}>
-                    <span style={{ width: 28, height: 28, borderRadius: 7, background: bg,
+                    <div style={{ width: 34, height: 34, borderRadius: 8, background: isSelected ? '#bae6fd' : 'var(--bg-secondary)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <i className={`bi ${icon}`} style={{ color, fontSize: '0.8rem' }}></i>
-                    </span>
+                      <i className="bi bi-box-seam" style={{ color: isSelected ? '#0891b2' : 'var(--text-muted)', fontSize: '0.85rem' }}></i>
+                    </div>
                     <div style={{ flex: 1, overflow: 'hidden' }}>
-                      <div style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text-primary)',
-                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</div>
-                      <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-                        {kind === 'type' ? t('admin.autoCheck.adKindType') : t('admin.autoCheck.adKindPackage')}
+                      <div style={{ fontWeight: 700, fontSize: '0.85rem', color: isSelected ? '#0c4a6e' : 'var(--text-primary)',
+                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{pkgName}</div>
+                      <div style={{ fontSize: '0.7rem', color: isSelected ? '#0369a1' : 'var(--text-muted)' }}>
+                        {pkg.type || pkg.packageType || 'Insurance Package'}
                       </div>
                     </div>
                     <i className={`bi ${isSelected ? 'bi-check-circle-fill' : 'bi-circle'}`}
-                      style={{ color: isSelected ? color : 'var(--border)', fontSize: '0.9rem', flexShrink: 0 }}></i>
+                      style={{ color: isSelected ? '#0891b2' : 'var(--border)', fontSize: '1rem', flexShrink: 0 }}></i>
                   </button>
                 )
               })}
@@ -426,41 +168,26 @@ function AdvertiseSection({ showToast }) {
             textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
             {t('admin.autoCheck.adComposeMsg')}
           </div>
-          {selectedItems.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
-              {selectedItems.map(s => {
-                const label = s.kind === 'type' ? s.item.name : s.item.packageName
-                const color = s.kind === 'type' ? '#7c3aed' : '#0891b2'
-                const icon  = s.kind === 'type' ? 'bi-tags' : 'bi-box-seam'
-                return (
-                  <div key={`${s.kind}-${s.item.id}`} style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 5,
-                    background: 'var(--bg-secondary)', borderRadius: 20,
-                    padding: '0.22rem 0.55rem 0.22rem 0.4rem',
-                    border: `1.5px solid ${color}40`, fontSize: '0.78rem',
-                  }}>
-                    <i className={`bi ${icon}`} style={{ color, fontSize: '0.7rem' }}></i>
-                    <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{label}</span>
-                    <button type="button"
-                      onClick={() => setSelectedItems(prev => prev.filter(x => !(x.kind === s.kind && x.item.id === s.item.id)))}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer',
-                        color: '#94a3b8', padding: '0 1px', lineHeight: 1, fontSize: '0.75rem' }}>
-                      <i className="bi bi-x"></i>
-                    </button>
-                  </div>
-                )
-              })}
+
+          {/* Selected package chip */}
+          {selectedPkg && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6,
+              background: '#e0f2fe', borderRadius: 20, padding: '0.25rem 0.65rem 0.25rem 0.45rem',
+              border: '1.5px solid #7dd3fc', fontSize: '0.8rem', marginBottom: 8 }}>
+              <i className="bi bi-box-seam" style={{ color: '#0891b2', fontSize: '0.75rem' }}></i>
+              <span style={{ color: '#0c4a6e', fontWeight: 700 }}>{selectedPkg.packageName || selectedPkg.name}</span>
+              <button type="button" onClick={() => setSelectedPkg(null)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#64748b', padding: '0 1px', lineHeight: 1 }}>
+                <i className="bi bi-x"></i>
+              </button>
             </div>
           )}
+
           <textarea
             rows={4}
-            placeholder={selectedItems.length > 0
-              ? (selectedItems.length === 1
-                  ? (selectedItems[0].kind === 'type'
-                      ? t('admin.autoCheck.adDefaultMsgType', { name: selectedItems[0].item.name })
-                      : t('admin.autoCheck.adDefaultMsgPkg',  { name: selectedItems[0].item.packageName }))
-                  : t('admin.autoCheck.adDefaultMsgMulti', { names: selectedItems.map(s => s.kind === 'type' ? s.item.name : s.item.packageName).join(', ') }))
-              : t('admin.autoCheck.adMsgPlaceholder')}
+            placeholder={selectedPkg
+              ? `Discover our "${selectedPkg.packageName || selectedPkg.name}" insurance package — great coverage options are available for you!`
+              : 'Select a package above, then write a custom message (or leave blank for default)'}
             value={customMsg}
             onChange={e => setCustomMsg(e.target.value)}
             style={{
@@ -470,21 +197,22 @@ function AdvertiseSection({ showToast }) {
               outline: 'none', marginBottom: 10,
             }}
           />
-          <button type="button" onClick={handleBroadcast} disabled={sending || selectedItems.length === 0}
+          <button type="button" onClick={handleBroadcast} disabled={sending || !selectedPkg}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
               padding: '0.55rem 1.4rem', borderRadius: 10, border: 'none', cursor: 'pointer',
-              background: (!selectedItems.length || sending) ? '#e2e8f0' : 'linear-gradient(135deg, #16a34a, #15803d)',
-              color: (!selectedItems.length || sending) ? '#94a3b8' : '#fff',
+              background: (!selectedPkg || sending) ? '#e2e8f0' : 'linear-gradient(135deg, #16a34a, #15803d)',
+              color: (!selectedPkg || sending) ? '#94a3b8' : '#fff',
               fontWeight: 700, fontSize: '0.85rem',
-              boxShadow: (!selectedItems.length || sending) ? 'none' : '0 4px 12px rgba(22,163,74,0.35)',
+              boxShadow: (!selectedPkg || sending) ? 'none' : '0 4px 12px rgba(22,163,74,0.35)',
             }}>
             {sending
               ? <><span className="spinner-border spinner-border-sm"></span> {t('admin.autoCheck.sendingLabel')}</>
               : <><i className="bi bi-megaphone"></i> {t('admin.autoCheck.adBroadcastBtn')}</>}
           </button>
           <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 6 }}>
-            <i className="bi bi-info-circle me-1"></i>{t('admin.autoCheck.adBroadcastNote')}
+            <i className="bi bi-info-circle me-1"></i>
+            Customers will see a popup with package details and an "Apply Now" button.
           </div>
         </div>
       </div>
@@ -528,11 +256,10 @@ export default function AdminAutoCheckPage() {
   const [status,    setStatus]    = useState(null)
   const [logs,      setLogs]      = useState([])
   const [loading,   setLoading]   = useState(true)
-  const [running,   setRunning]   = useState(null)   // 'reminder' | null
+  const [running,   setRunning]   = useState(null)   // 'reminder' | 'cleanup' | null
   const [logType,   setLogType]   = useState('ALL')
   const [expandLog, setExpandLog] = useState(null)
   const [toast,     setToast]     = useState(null)
-  const [showEdit,  setShowEdit]  = useState(false)
 
   const load = useCallback(() => {
     return Promise.all([
@@ -559,7 +286,10 @@ export default function AdminAutoCheckPage() {
   const trigger = async (type) => {
     setRunning(type)
     try {
-      const res = await api.post('/admin/autocheck/run/reminders')
+      const endpoint = type === 'cleanup'
+        ? '/admin/autocheck/run/cleanup'
+        : '/admin/autocheck/run/reminders'
+      await api.post(endpoint)
       showToast(`✅ ${t('admin.autoCheck.runComplete')}`)
       await load()
     } catch (e) {
@@ -567,12 +297,6 @@ export default function AdminAutoCheckPage() {
     } finally {
       setRunning(null)
     }
-  }
-
-  const handleSettingsSaved = async () => {
-    setShowEdit(false)
-    showToast(`✅ ${t('admin.autoCheck.settingsSaved')}`)
-    await load()
   }
 
   if (loading) return (
@@ -583,7 +307,6 @@ export default function AdminAutoCheckPage() {
 
   const lastReminder = status?.lastRuns?.REMINDER
   const lastCleanup  = status?.lastRuns?.REVISION_CLEANUP
-  const reminderMM   = cronToMyanmarTime(status?.reminderCron)
 
   return (
     <div className="fade-in">
@@ -602,15 +325,6 @@ export default function AdminAutoCheckPage() {
         </div>
       )}
 
-      {/* Settings modal */}
-      {showEdit && (
-        <SettingsModal
-          status={status}
-          onClose={() => setShowEdit(false)}
-          onSaved={handleSettingsSaved}
-        />
-      )}
-
       {/* Header */}
       <div className="d-flex align-items-start justify-content-between flex-wrap gap-3 mb-4">
         <div>
@@ -622,45 +336,15 @@ export default function AdminAutoCheckPage() {
             {t('admin.autoCheck.subtitle')}
           </p>
         </div>
-        <div className="d-flex align-items-center gap-2 flex-wrap">
-          <span style={{
-            display: 'inline-flex', alignItems: 'center', gap: 6,
-            background: status?.enabled ? '#dcfce7' : '#fee2e2',
-            color: status?.enabled ? '#16a34a' : '#dc2626',
-            border: `1px solid ${status?.enabled ? '#86efac' : '#fca5a5'}`,
-            borderRadius: 8, padding: '0.35rem 0.85rem', fontWeight: 700, fontSize: '0.82rem',
-          }}>
-            <span style={{ width: 8, height: 8, borderRadius: '50%',
-              background: status?.enabled ? '#16a34a' : '#dc2626',
-              display: 'inline-block', animation: status?.enabled ? 'pulse 2s infinite' : 'none' }}></span>
-            {status?.enabled ? t('admin.autoCheck.statusActive') : t('admin.autoCheck.statusDisabled')}
-          </span>
-          <button type="button" onClick={() => setShowEdit(true)}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              padding: '0.35rem 0.9rem', borderRadius: 8, border: '1.5px solid var(--border)',
-              background: 'var(--bg-primary)', color: 'var(--text-primary)',
-              fontWeight: 600, fontSize: '0.82rem', cursor: 'pointer',
-            }}>
-             <i className="bi bi-gear"></i> {t('admin.autoCheck.editSettingsBtn')}
-          </button>
-        </div>
       </div>
 
-      {/* Stats row */}
+      {/* Stats row — only today's reminder count + current Myanmar time */}
       <div className="row g-3 mb-4">
-        <div className="col-6 col-md-4">
+        <div className="col-6 col-md-6">
           <StatCard icon="bi-bell-fill" label={t('admin.autoCheck.todayReminders')} value={status?.todayReminders ?? 0}
              color="#d97706" bg="#fffbeb" sub={t('admin.autoCheck.remindersSentSub')} />
         </div>
-        <div className="col-6 col-md-4">
-          <StatCard icon="bi-alarm"
-             label={t('admin.autoCheck.reminderTime')}
-            value={reminderMM ?? '—'}
-            color="#0891b2" bg="#ecfeff"
-             sub={`${t('admin.autoCheck.myanmarTime')} • ${status?.reminderCron ?? ''}`} />
-        </div>
-        <div className="col-6 col-md-4">
+        <div className="col-6 col-md-6">
           <StatCard icon="bi-clock"
              label={t('admin.autoCheck.currentMyanmarTime')}
             value={status?.currentTimeMM?.slice(11, 16) ?? '—'}
@@ -672,123 +356,65 @@ export default function AdminAutoCheckPage() {
       {/* Advertise Section */}
       <AdvertiseSection showToast={showToast} />
 
-      {/* Configuration + Last runs */}
-      <div className="row g-4 mb-4">
-        {/* Scheduler config */}
-        <div className="col-12 col-lg-5">
-          <div className="card-custom h-100">
-            <div className="d-flex align-items-center justify-content-between mb-3">
-              <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>
-                <i className="bi bi-gear me-2" style={{ color: 'var(--primary)' }}></i>
-                 {t('admin.autoCheck.schedulerSettingsTitle')}
-              </h6>
-              <button type="button" onClick={() => setShowEdit(true)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer',
-                  color: 'var(--primary)', fontSize: '0.78rem', fontWeight: 700, padding: 0 }}>
-                 <i className="bi bi-pencil me-1"></i>{t('admin.autoCheck.editSettingsBtn')}
-              </button>
-            </div>
-            <div className="d-flex flex-column gap-3">
-              {[
-                {
-                   label: t('admin.autoCheck.reminderTimeLabel'),
-                   value: reminderMM ? `${reminderMM} (${t('admin.autoCheck.myanmarTime')}) · ${status?.reminderCron}` : (status?.reminderCron ?? '—'),
-                  icon: 'bi-bell', color: '#d97706'
-                },
-                {
-                   label: t('admin.autoCheck.cleanupCronLabel'),
-                  value: status?.revisionCleanupCron ?? '—',
-                  icon: 'bi-trash3', color: '#dc2626'
-                },
-                {
-                   label: t('admin.autoCheck.currentMyanmarTime'),
-                  value: status?.currentTimeMM ?? '—',
-                  icon: 'bi-clock', color: '#0891b2'
-                },
-              ].map(row => (
-                <div key={row.label} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                  <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--bg-secondary)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
-                    <i className={`bi ${row.icon}`} style={{ color: row.color, fontSize: '0.9rem' }}></i>
+      {/* Last Runs */}
+      <div className="card-custom mb-4">
+        <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1.25rem' }}>
+          <i className="bi bi-clock-history me-2" style={{ color: 'var(--primary)' }}></i>
+           {t('admin.autoCheck.lastRunsTitle')}
+        </h6>
+        <div className="d-flex flex-column gap-3">
+          {[
+            { key: 'REMINDER',         data: lastReminder },
+            { key: 'REVISION_CLEANUP', data: lastCleanup  },
+          ].map(({ key, data }) => {
+             const type = TYPE_META[key]
+            return (
+              <div key={key} style={{ background: 'var(--bg-secondary)', borderRadius: 10, padding: '0.85rem 1rem' }}>
+                <div className="d-flex align-items-center justify-content-between gap-2 mb-2">
+                  <div className="d-flex align-items-center gap-2">
+                     <i className={`bi ${type.icon}`} style={{ color: type.color, fontSize: '1rem' }}></i>
+                     <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)' }}>{t(`admin.autoCheck.${type.labelKey}`)}</span>
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)' }}>{row.label}</div>
-                    <code style={{ fontSize: '0.8rem', color: 'var(--text-primary)', fontWeight: 600, wordBreak: 'break-all' }}>
-                      {row.value}
-                    </code>
-                  </div>
+                   {data ? <Badge status={data.status} t={t} /> : <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t('admin.autoCheck.noRecord')}</span>}
                 </div>
-              ))}
-            </div>
-            {status?.settingsUpdatedAt && (
-              <div style={{ marginTop: 12, fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-                 {t('admin.autoCheck.lastUpdatedLabel')}: {new Date(status.settingsUpdatedAt).toLocaleString()}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Last runs */}
-        <div className="col-12 col-lg-7">
-          <div className="card-custom h-100">
-            <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1.25rem' }}>
-              <i className="bi bi-clock-history me-2" style={{ color: 'var(--primary)' }}></i>
-               {t('admin.autoCheck.lastRunsTitle')}
-            </h6>
-            <div className="d-flex flex-column gap-3">
-              {[
-                { key: 'REMINDER',         data: lastReminder },
-                { key: 'REVISION_CLEANUP', data: lastCleanup  },
-              ].map(({ key, data }) => {
-                 const type = TYPE_META[key]
-                return (
-                  <div key={key} style={{ background: 'var(--bg-secondary)', borderRadius: 10, padding: '0.85rem 1rem' }}>
-                    <div className="d-flex align-items-center justify-content-between gap-2 mb-2">
-                      <div className="d-flex align-items-center gap-2">
-                         <i className={`bi ${type.icon}`} style={{ color: type.color, fontSize: '1rem' }}></i>
-                         <span style={{ fontWeight: 700, fontSize: '0.85rem', color: 'var(--text-primary)' }}>{t(`admin.autoCheck.${type.labelKey}`)}</span>
-                      </div>
-                       {data ? <Badge status={data.status} t={t} /> : <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t('admin.autoCheck.noRecord')}</span>}
+                {data && (
+                  <div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: 4 }}>{data.summary}</div>
+                    <div className="d-flex gap-3 flex-wrap">
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                         {t('admin.autoCheck.checkedLabel')}: <b style={{ color: 'var(--text-primary)' }}>{data.totalChecked}</b>
+                      </span>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                         {t('admin.autoCheck.resultLabel')}: <b style={{ color: '#16a34a' }}>{data.affectedCount}</b>
+                      </span>
+                      {data.aiAssisted && (
+                        <span style={{ fontSize: '0.72rem', color: '#d97706', fontWeight: 600 }}>
+                           <i className="bi bi-stars me-1"></i>{t('admin.autoCheck.aiAssisted')}
+                        </span>
+                      )}
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                        {data.createdAt ? new Date(data.createdAt).toLocaleString() : '—'}
+                      </span>
                     </div>
-                    {data && (
-                      <div>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: 4 }}>{data.summary}</div>
-                        <div className="d-flex gap-3 flex-wrap">
-                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                             {t('admin.autoCheck.checkedLabel')}: <b style={{ color: 'var(--text-primary)' }}>{data.totalChecked}</b>
-                          </span>
-                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                             {t('admin.autoCheck.resultLabel')}: <b style={{ color: '#16a34a' }}>{data.affectedCount}</b>
-                          </span>
-                          {data.aiAssisted && (
-                            <span style={{ fontSize: '0.72rem', color: '#d97706', fontWeight: 600 }}>
-                               <i className="bi bi-stars me-1"></i>{t('admin.autoCheck.aiAssisted')}
-                            </span>
-                          )}
-                          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                            {data.createdAt ? new Date(data.createdAt).toLocaleString() : '—'}
-                          </span>
-                        </div>
-                      </div>
-                    )}
                   </div>
-                )
-              })}
-            </div>
-          </div>
+                )}
+              </div>
+            )
+          })}
         </div>
       </div>
 
       {/* Manual trigger buttons */}
       <div className="card-custom mb-4">
-        <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '1rem' }}>
+        <h6 style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
           <i className="bi bi-play-circle me-2" style={{ color: 'var(--primary)' }}></i>
            {t('admin.autoCheck.manualRunTitle')}
         </h6>
         <p style={{ fontSize: '0.83rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-           {t('admin.autoCheck.manualRunDesc')}
+           Run jobs manually. Results appear in the log table below.
         </p>
         <div className="d-flex gap-3 flex-wrap">
+          {/* Send Reminders */}
           <button type="button" onClick={() => trigger('reminder')} disabled={running !== null}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
@@ -801,6 +427,24 @@ export default function AdminAutoCheckPage() {
                ? <><span className="spinner-border spinner-border-sm"></span> {t('admin.autoCheck.sendingLabel')}</>
               : <><i className="bi bi-bell"></i> {t('admin.autoCheck.typeReminder')}</>}
           </button>
+
+          {/* Empty Record / Revision Cleanup */}
+          <button type="button" onClick={() => trigger('cleanup')} disabled={running !== null}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              padding: '0.55rem 1.25rem', borderRadius: 10, border: 'none', cursor: 'pointer',
+              background: running === 'cleanup' ? '#e2e8f0' : 'linear-gradient(135deg, #dc2626, #b91c1c)',
+              color: running === 'cleanup' ? '#64748b' : '#fff',
+              fontWeight: 700, fontSize: '0.85rem', transition: 'all .15s',
+            }}>
+            {running === 'cleanup'
+              ? <><span className="spinner-border spinner-border-sm"></span> Running…</>
+              : <><i className="bi bi-trash3"></i> Empty Record</>}
+          </button>
+        </div>
+        <div style={{ marginTop: '0.6rem', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+          <i className="bi bi-info-circle me-1"></i>
+          <b>Empty Record</b> clears expired revision-requested applications and claims that have passed their 7-day deadline.
         </div>
       </div>
 
