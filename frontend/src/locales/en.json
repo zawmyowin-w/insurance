@@ -629,16 +629,16 @@
     "waitingPeriodMonthsDuration": "Waiting period: {{months}} months",
     "waitingPeriodDaysLeft": "You can claim in {{days}} days at most",
     "claimEligibleFrom": "You can claim from {{date}}",
-    "expired": "Expired",
+    "expired": "Policy Expired",
     "countdownRemaining": "remaining",
-    "expiredOn": "Expired on",
-    "expiredDesc": "This policy has reached its maturity date and is no longer active.",
-    "timeRemaining": "Time Remaining",
-    "premiumWaiverActive": "Premium Waiver Active — All remaining premiums are waived.",
-    "waiverGranted": "Granted: {{date}}",
-    "emergencyPending": "Emergency declaration submitted — awaiting admin review.",
+    "expiredOn": "Date of Expiry",
+    "expiredDesc": "This policy has attained its maturity date and is no longer in force. No further transactions may be conducted under this policy.",
+    "timeRemaining": "Remaining Validity Period",
+    "premiumWaiverActive": "Premium Waiver Approved — All outstanding premium instalments are hereby waived.",
+    "waiverGranted": "Approval Date: {{date}}",
+    "emergencyPending": "Emergency declaration submitted — Pending administrative review and approval.",
     "expiredPoliciesSection": "Expired Policies ({{count}})",
-    "expiredPoliciesSubtitle": "Matured / expired policies"
+    "expiredPoliciesSubtitle": "Policies that have attained maturity or otherwise expired"
   },
   "profile": {
     "title": "My Profile",
@@ -785,15 +785,15 @@
     "freqQUARTERLY": "Quarterly",
     "freqHALF_YEARLY": "Half-Yearly",
     "freqYEARLY": "Yearly",
-    "payMultiple": "Pay Multiple",
-    "cancelMultiSelect": "Cancel",
-    "multiSelectTitle": "Select multiple periods to pay at once",
-    "advancePayBadge": "Advance Pay",
-    "payAdvanceBtn": "Pay Advance",
-    "periodsSelected": "{{count}} period(s) selected",
-    "payPeriods": "Pay {{count}} Period(s)",
-    "batchPaymentLabel": "{{count}} periods — Advance / Batch Payment",
-    "multiPeriodSubmitSuccess": "{{count}} periods submitted for verification"
+    "payMultiple": "Pay Multiple Instalments",
+    "cancelMultiSelect": "Cancel Selection",
+    "multiSelectTitle": "Select multiple instalment periods for a single payment transaction",
+    "advancePayBadge": "Advance Payment",
+    "payAdvanceBtn": "Pay in Advance",
+    "periodsSelected": "{{count}} Period(s) Selected",
+    "payPeriods": "Submit Payment for {{count}} Period(s)",
+    "batchPaymentLabel": "{{count}} Periods — Advance / Batch Premium Payment",
+    "multiPeriodSubmitSuccess": "Payment for {{count}} period(s) has been submitted for verification"
   },
   "submitClaim": {
     "title": "Submit a Claim",
@@ -2313,8 +2313,8 @@
     "townshipPlaceholder": "Township",
     "typePlaceholder": "Type",
     "digitsPlaceholder": "123456",
-    "digitsMoreNeeded": "{{count}} more digit(s) needed (must be exactly 6)",
-    "digitsExactly6": "Must be exactly 6 digits"
+    "digitsMoreNeeded": "{{count}} additional digit(s) required — serial number must comprise exactly 6 digits",
+    "digitsExactly6": "The serial number must comprise exactly 6 digits"
   },
   "customer": {
     "policyTransfer": "Policy Transfer",
