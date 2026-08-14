@@ -24,6 +24,11 @@ export default function AdminApplicationsPage() {
   const [viewItem, setViewItem] = useState(null)
   const [signatureData, setSignatureData] = useState(null)
 
+  // Cancel policy state
+  const [cancelItem, setCancelItem] = useState(null)
+  const [cancelNote, setCancelNote] = useState('')
+  const [cancelling, setCancelling] = useState(false)
+
   const statusLabel = (key) => t(`admin.applications.status_${key}`)
 
   const fetchApps = () => {
@@ -54,6 +59,18 @@ export default function AdminApplicationsPage() {
       )
       setSelected(null); setActionNote(''); setSignatureData(null); fetchApps()
     } catch (err) { apiError(err) } finally { setSubmitting(false) }
+  }
+
+  const handleCancelPolicy = async () => {
+    if (!cancelItem) return
+    setCancelling(true)
+    try {
+      await api.post(`/admin/applications/${cancelItem.id}/cancel-overdue`, {
+        note: cancelNote.trim() || undefined,
+      })
+      toast.success('Policy cancelled successfully.')
+      setCancelItem(null); setCancelNote(''); fetchApps()
+    } catch (err) { apiError(err) } finally { setCancelling(false) }
   }
 
   return (
@@ -132,9 +149,12 @@ export default function AdminApplicationsPage() {
                       </p>
                     )}
                   </div>
-                  {app.status === 'VERIFIED' && (
-                    <div className="col-12 col-md-4 mt-3 mt-md-0">
-                      {selected === app.id ? (
+
+                  {/* Right column — actions */}
+                  <div className="col-12 col-md-4 mt-3 mt-md-0">
+                    {/* VERIFIED → review panel */}
+                    {app.status === 'VERIFIED' && (
+                      selected === app.id ? (
                         <div>
                           <DigitalSignatureCanvas
                             label={t('admin.applications.signatureLabel')}
@@ -167,9 +187,57 @@ export default function AdminApplicationsPage() {
                            onClick={() => { setSelected(app.id); setActionNote(''); setSignatureData(null) }}>
                           {t('admin.applications.reviewApplication')}
                         </button>
-                      )}
-                    </div>
-                  )}
+                      )
+                    )}
+
+                    {/* APPROVED → cancel policy button */}
+                    {app.status === 'APPROVED' && (
+                      cancelItem?.id === app.id ? (
+                        <div>
+                          <div style={{ marginBottom: '0.5rem', fontSize: '0.82rem', color: '#92400e', fontWeight: 600 }}>
+                            <i className="bi bi-exclamation-triangle-fill me-1 text-warning"></i>
+                            Cancel this policy due to non-payment?
+                          </div>
+                          <textarea
+                            rows={2}
+                            className="form-control-custom w-100 mb-2"
+                            style={{ resize: 'vertical' }}
+                            placeholder="Reason (optional)"
+                            value={cancelNote}
+                            onChange={e => setCancelNote(e.target.value)}
+                          />
+                          <div className="d-flex gap-1 flex-wrap">
+                            <button
+                              onClick={handleCancelPolicy}
+                              disabled={cancelling}
+                              style={{ background: '#dc2626', color: '#fff', border: 'none', borderRadius: 6, padding: '0.4rem 0.8rem', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer' }}
+                            >
+                              {cancelling ? <span className="spinner-border spinner-border-sm"></span> : '✗ Confirm Cancel'}
+                            </button>
+                            <button
+                              className="btn-outline-custom"
+                              style={{ padding: '0.3rem 0.6rem', fontSize: '0.82rem' }}
+                              onClick={() => { setCancelItem(null); setCancelNote('') }}
+                            >
+                              {t('admin.common.cancel')}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => { setCancelItem(app); setCancelNote('') }}
+                          style={{
+                            background: 'transparent', color: '#dc2626',
+                            border: '1.5px solid #dc2626', borderRadius: 8,
+                            padding: '0.45rem 1rem', fontSize: '0.85rem', fontWeight: 600,
+                            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5
+                          }}
+                        >
+                          <i className="bi bi-x-circle-fill"></i> Cancel Policy
+                        </button>
+                      )
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

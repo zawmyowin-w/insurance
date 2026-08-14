@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
-import { downloadBlob } from '../../utils/download'
+import PdfDropdownButton from '../../components/PdfDropdownButton'
 
 const STATUS_LABEL = {
   PENDING_TRANSFEREE_SIGNATURE: { labelKey: 'statusPENDING_TRANSFEREE_SIGNATURE', color: '#d97706', bg: '#fef3c7' },
@@ -43,15 +43,6 @@ export default function AdminPolicyTransfersPage() {
     } catch (err) {
       toast.error(err.response?.data?.message || t('admin.transfers.actionFailed'))
     } finally { setSubmitting(false) }
-  }
-
-  const downloadPdf = async (id) => {
-    try {
-      const res = await api.get(`/admin/policy-transfers/${id}/pdf`, { responseType: 'blob' })
-      await downloadBlob(res.data, `transfer_contract_${id}.pdf`, 'application/pdf')
-    } catch {
-      toast.error(t('admin.transfers.pdfFailed'))
-    }
   }
 
   const pending = transfers.filter(t => t.status === 'PENDING_ADMIN_APPROVAL')
@@ -122,10 +113,13 @@ export default function AdminPolicyTransfersPage() {
                   </div>
                   <div className="d-flex gap-2">
                     {(t.status === 'APPROVED' || t.status === 'PENDING_ADMIN_APPROVAL') && (
-                      <button onClick={() => downloadPdf(t.id)}
-                        style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 6, padding: '0.3rem 0.8rem', fontSize: '0.82rem', cursor: 'pointer', color: 'var(--text-secondary)' }}>
-                        <i className="bi bi-file-earmark-pdf me-1"></i>{t('admin.transfers.pdfBtn')}
-                      </button>
+                      <PdfDropdownButton
+                        fetchPdf={() => api.get(`/admin/policy-transfers/${t.id}/pdf`, { responseType: 'blob' }).then(r => r.data)}
+                        filename={`transfer_contract_${t.id}.pdf`}
+                        label={t('admin.transfers.pdfBtn')}
+                        variant="secondary"
+                        size="sm"
+                      />
                     )}
                     {isPending && (
                       <>

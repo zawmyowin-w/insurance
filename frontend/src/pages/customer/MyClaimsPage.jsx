@@ -5,28 +5,17 @@ import api from '../../services/api'
 import { toast } from 'react-toastify'
 import FormDetailModal from '../../components/FormDetailModal'
 import RevisionFormModal from '../../components/RevisionFormModal'
-import { downloadBlob } from '../../utils/download'
+import NotesModal from '../../components/NotesModal'
+import PdfDropdownButton from '../../components/PdfDropdownButton'
 
 export default function MyClaimsPage() {
   const { t } = useTranslation()
-
-  async function downloadPayoutVoucher(claimId, setDownloading) {
-    setDownloading(claimId)
-    try {
-      const res = await api.get(`/customer/claims/${claimId}/payout-voucher`, { responseType: 'blob' })
-      await downloadBlob(res.data, `payout_voucher_claim_${claimId}.pdf`, 'application/pdf')
-    } catch {
-      toast.error(t('customer.payoutVoucherDownloadFailed'))
-    } finally {
-      setDownloading(null)
-    }
-  }
 
   const [claims, setClaims] = useState([])
   const [loading, setLoading] = useState(true)
   const [viewItem, setViewItem] = useState(null)
   const [reviseItem, setReviseItem] = useState(null)
-  const [downloading, setDownloading] = useState(null)
+  const [notesItem, setNotesItem] = useState(null)
 
   const fetchClaims = () => {
     api.get('/customer/claims')
@@ -60,6 +49,7 @@ export default function MyClaimsPage() {
         <div className="d-flex flex-column gap-3">
           {claims.map(claim => {
             const isRevision = claim.status === 'REVISION_REQUESTED'
+            const hasNotes = !!(claim.adminNote || claim.agentNote)
             return (
               <div key={claim.id} className="card-custom">
                 {/* Revision alert banner */}
@@ -102,6 +92,7 @@ export default function MyClaimsPage() {
                       {claim.incidentDate && <span style={{ color: 'var(--text-muted)' }}>{t('myClaims.incidentLabel')}: <strong style={{ color: 'var(--text-primary)' }}>{new Date(claim.incidentDate).toLocaleDateString()}</strong></span>}
                       {claim.agentName && <span style={{ color: 'var(--text-muted)' }}><i className="bi bi-person-badge me-1" style={{ color: '#1d4ed8' }}></i>{t('myClaims.agentLabel')}: <strong style={{ color: '#1d4ed8' }}>{claim.agentName}</strong></span>}
                     </div>
+                    {/* Inline note previews (non-revision) */}
                     {!isRevision && claim.adminNote && <p style={{ color: '#16a34a', fontSize: '0.82rem', margin: '0.4rem 0 0' }}><i className="bi bi-check-circle me-1"></i>{claim.adminNote}</p>}
                     {!isRevision && claim.agentNote && <p style={{ color: '#1d4ed8', fontSize: '0.82rem', margin: '0.25rem 0 0' }}><i className="bi bi-person me-1"></i>{t('customer.agentLabel')} {claim.agentNote}</p>}
                   </div>
@@ -114,6 +105,18 @@ export default function MyClaimsPage() {
                       }}>
                         <i className="bi bi-eye"></i> {t('myClaims.viewFormBtn')}
                       </button>
+
+                      {/* View Notes button */}
+                      {hasNotes && (
+                        <button onClick={() => setNotesItem(claim)} style={{
+                          padding: '0.4rem 0.9rem', borderRadius: 8, border: '1.5px solid #1d4ed8',
+                          background: '#eff6ff', color: '#1d4ed8', cursor: 'pointer',
+                          fontWeight: 600, fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: 4
+                        }}>
+                          <i className="bi bi-chat-left-text-fill"></i> View Notes
+                        </button>
+                      )}
+
                       {isRevision && (
                         <button onClick={() => setReviseItem(claim)} style={{
                           padding: '0.4rem 0.9rem', borderRadius: 8, border: 'none',
@@ -123,16 +126,16 @@ export default function MyClaimsPage() {
                           <i className="bi bi-pencil-square"></i> {t('myClaims.editResubmitBtn')}
                         </button>
                       )}
+
+                      {/* Payout voucher — PDF dropdown (Save as PDF + Print) */}
                       {claim.status === 'APPROVED' && (
-                        <button
-                          onClick={() => downloadPayoutVoucher(claim.id, setDownloading)}
-                          disabled={downloading === claim.id}
-                          style={{ padding: '0.4rem 0.9rem', borderRadius: 8, border: 'none', background: '#16a34a', color: '#fff', cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: 4 }}
-                        >
-                          {downloading === claim.id
-                            ? <span className="spinner-border spinner-border-sm"></span>
-                            : <><i className="bi bi-file-earmark-arrow-down-fill"></i> {t('customer.payoutVoucher')}</>}
-                        </button>
+                        <PdfDropdownButton
+                          fetchPdf={() => api.get(`/customer/claims/${claim.id}/payout-voucher`, { responseType: 'blob' }).then(r => r.data)}
+                          filename={`payout_voucher_claim_${claim.id}.pdf`}
+                          label={t('customer.payoutVoucher')}
+                          variant="success"
+                          size="sm"
+                        />
                       )}
                     </div>
                   </div>
@@ -151,6 +154,15 @@ export default function MyClaimsPage() {
         show={!!reviseItem} onClose={() => setReviseItem(null)}
         type="claim" item={reviseItem}
         onRevised={fetchClaims} />
+
+      <NotesModal
+        show={!!notesItem}
+        onClose={() => setNotesItem(null)}
+        adminNote={notesItem?.adminNote}
+        agentNote={notesItem?.agentNote}
+        agentName={notesItem?.agentName}
+        title="Claim Review Notes"
+      />
     </div>
   )
 }

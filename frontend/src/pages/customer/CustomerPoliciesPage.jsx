@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
-import { downloadBlob } from '../../utils/download'
 import { getTypeMeta } from '../../utils/typeMeta'
 import ConfirmModal from '../../components/ConfirmModal'
+import PdfDropdownButton from '../../components/PdfDropdownButton'
 
 const RISK_META = {
   LOW:    { color: '#16a34a', bg: '#f0fdf4', icon: 'bi-shield-check'       },
@@ -89,8 +89,6 @@ export default function CustomerPoliciesPage() {
   }
   useEffect(() => { fetchPolicies() }, [])
 
-  const [downloading, setDownloading] = useState(null)
-
   const handleRenew = async (id) => { setRenewConfirmId(id) }
 
   const doRenew = async () => {
@@ -105,16 +103,6 @@ export default function CustomerPoliciesPage() {
       setRenewing(null)
       setRenewConfirmId(null)
     }
-  }
-
-  const handleDownloadCertificate = async (policy) => {
-    setDownloading(policy.id)
-    try {
-      const res = await api.get(`/customer/applications/${policy.id}/policy-contract`, { responseType: 'blob' })
-      await downloadBlob(res.data, `policy_certificate_${policy.policyNumber || policy.id}.pdf`, 'application/pdf')
-    } catch {
-      toast.error(t('customer.certDownloadFailed'))
-    } finally { setDownloading(null) }
   }
 
   const activePolicies = policies.filter(p => p.status === 'APPROVED')
@@ -204,15 +192,15 @@ export default function CustomerPoliciesPage() {
             <button onClick={() => setCertPolicy(policy)} className="btn-primary-sm" style={{ flex: '1 1 auto' }}>
               <i className="bi bi-file-earmark-text me-1"></i>{t('policies.certificate')}
             </button>
-            <button
-              onClick={() => handleDownloadCertificate(policy)}
-              disabled={downloading === policy.id}
-              style={{ flex: '1 1 auto', padding: '0.4rem 0.85rem', borderRadius: 8, border: '1.5px solid #1d4ed8', background: '#eff6ff', color: '#1d4ed8', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600 }}
-            >
-              {downloading === policy.id
-                ? <span className="spinner-border spinner-border-sm"></span>
-                : <><i className="bi bi-download me-1"></i>PDF</>}
-            </button>
+            <div style={{ flex: '1 1 auto' }}>
+              <PdfDropdownButton
+                fetchPdf={() => api.get(`/customer/applications/${policy.id}/policy-contract`, { responseType: 'blob' }).then(r => r.data)}
+                filename={`policy_certificate_${policy.policyNumber || policy.id}.pdf`}
+                label="PDF"
+                size="sm"
+                variant="secondary"
+              />
+            </div>
             {!isUsed && (() => {
               // Claim action logic:
               // 1. claimEligibleFrom set and in the past/today → can claim now

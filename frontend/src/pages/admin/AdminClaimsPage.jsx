@@ -6,22 +6,11 @@ import { toast } from 'react-toastify'
 import FormDetailModal from '../../components/FormDetailModal'
 import DigitalSignatureCanvas from '../../components/DigitalSignatureCanvas'
 import { apiError } from '../../utils/apiError'
-import { downloadBlob } from '../../utils/download'
+import PdfDropdownButton from '../../components/PdfDropdownButton'
 
 export default function AdminClaimsPage() {
   const { t } = useTranslation()
 
-  async function downloadPayoutVoucher(claimId, setDownloading) {
-    setDownloading(claimId)
-    try {
-      const res = await api.get(`/admin/claims/${claimId}/payout-voucher`, { responseType: 'blob' })
-      await downloadBlob(res.data, `payout_voucher_claim_${claimId}.pdf`, 'application/pdf')
-    } catch {
-      toast.error(t('admin.claims.downloadVoucherFailed'))
-    } finally {
-      setDownloading(null)
-    }
-  }
   const [searchParams] = useSearchParams()
   const [claims, setClaims] = useState([])
   const [loading, setLoading] = useState(true)
@@ -34,8 +23,6 @@ export default function AdminClaimsPage() {
   const [submitting, setSubmitting] = useState(false)
   const [viewItem, setViewItem] = useState(null)
   const [signatureData, setSignatureData] = useState(null)
-  const [downloading, setDownloading] = useState(null)
-
   const fetchClaims = () => {
     api.get(`/admin/claims${filter !== 'ALL' ? `?status=${filter}` : ''}`)
       .then(res => setClaims(Array.isArray(res.data) ? res.data : []))
@@ -130,15 +117,13 @@ export default function AdminClaimsPage() {
                           <i className="bi bi-arrow-up-right-circle-fill"></i>
                           {t('admin.claims.payout')}: {Number(claim.amount).toLocaleString()} MMK — {t('admin.claims.recorded')}
                         </div>
-                        <button
-                          onClick={() => downloadPayoutVoucher(claim.id, setDownloading)}
-                          disabled={downloading === claim.id}
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '0.35rem 0.85rem', borderRadius: 8, border: '1.5px solid #16a34a', background: '#16a34a', color: '#fff', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer' }}
-                        >
-                          {downloading === claim.id
-                            ? <span className="spinner-border spinner-border-sm"></span>
-                             : <><i className="bi bi-file-earmark-arrow-down-fill"></i> {t('admin.claims.downloadVoucher')}</>}
-                        </button>
+                        <PdfDropdownButton
+                          fetchPdf={() => api.get(`/admin/claims/${claim.id}/payout-voucher`, { responseType: 'blob' }).then(r => r.data)}
+                          filename={`payout_voucher_claim_${claim.id}.pdf`}
+                          label={t('admin.claims.downloadVoucher')}
+                          variant="success"
+                          size="sm"
+                        />
                       </div>
                     )}
                   </div>

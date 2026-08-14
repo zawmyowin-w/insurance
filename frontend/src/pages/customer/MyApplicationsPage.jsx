@@ -6,6 +6,7 @@ import { toast } from 'react-toastify'
 import FormDetailModal from '../../components/FormDetailModal'
 import RevisionFormModal from '../../components/RevisionFormModal'
 import DeleteConfirmModal from '../../components/DeleteConfirmModal'
+import NotesModal from '../../components/NotesModal'
 
 export default function MyApplicationsPage() {
   const { t } = useTranslation()
@@ -14,6 +15,7 @@ export default function MyApplicationsPage() {
   const [viewItem, setViewItem] = useState(null)
   const [reviseItem, setReviseItem] = useState(null)
   const [deleteModal, setDeleteModal] = useState({ open: false, id: null, action: null, loading: false })
+  const [notesItem, setNotesItem] = useState(null)
 
   const fetchApps = () => {
     api.get('/customer/applications')
@@ -73,6 +75,7 @@ export default function MyApplicationsPage() {
         <div className="d-flex flex-column gap-3">
           {apps.map(app => {
             const isRevision = app.status === 'REVISION_REQUESTED'
+            const hasNotes = !!(app.adminNote || app.agentNote)
             return (
               <div key={app.id} className="card-custom">
                 {/* Revision alert banner */}
@@ -117,6 +120,7 @@ export default function MyApplicationsPage() {
                       {app.riskLevel && <span style={{ color: 'var(--text-muted)' }}>{t('myApps.riskLabel')}: <strong style={{ color: app.riskLevel === 'HIGH' ? '#dc2626' : app.riskLevel === 'MEDIUM' ? '#d97706' : '#16a34a' }}>{app.riskLevel}</strong></span>}
                       {app.agentName && <span style={{ color: 'var(--text-muted)' }}><i className="bi bi-person-badge me-1" style={{ color: '#1d4ed8' }}></i>{t('myApps.agentLabel')}: <strong style={{ color: '#1d4ed8' }}>{app.agentName}</strong></span>}
                     </div>
+                    {/* Inline note previews (non-revision) */}
                     {!isRevision && app.adminNote && <p style={{ color: '#16a34a', fontSize: '0.82rem', margin: '0.4rem 0 0' }}><i className="bi bi-check-circle me-1"></i>{app.adminNote}</p>}
                     {!isRevision && app.agentNote && <p style={{ color: '#1d4ed8', fontSize: '0.82rem', margin: '0.25rem 0 0' }}><i className="bi bi-person me-1"></i>{t('customer.agentLabel')} {app.agentNote}</p>}
                   </div>
@@ -129,6 +133,18 @@ export default function MyApplicationsPage() {
                       }}>
                         <i className="bi bi-eye"></i> {t('myApps.viewBtn')}
                       </button>
+
+                      {/* View Notes button — visible whenever any note exists */}
+                      {hasNotes && (
+                        <button onClick={() => setNotesItem(app)} style={{
+                          padding: '0.4rem 0.9rem', borderRadius: 8, border: '1.5px solid #1d4ed8',
+                          background: '#eff6ff', color: '#1d4ed8', cursor: 'pointer',
+                          fontWeight: 600, fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: 4
+                        }}>
+                          <i className="bi bi-chat-left-text-fill"></i> View Notes
+                        </button>
+                      )}
+
                       {(app.status === 'PENDING' || app.status === 'REVISION_REQUESTED' || app.status === 'REJECTED') && (
                         <button onClick={() => setReviseItem(app)} style={{
                           padding: '0.4rem 0.9rem', borderRadius: 8, border: '1.5px solid #d97706',
@@ -184,6 +200,15 @@ export default function MyApplicationsPage() {
         onCancel={() => setDeleteModal({ open: false, id: null, action: null, loading: false })}
         loading={deleteModal.loading}
         confirmLabel={deleteModal.action === 'cancel' ? t('customer.cancel') : t('customer.delete')}
+      />
+
+      <NotesModal
+        show={!!notesItem}
+        onClose={() => setNotesItem(null)}
+        adminNote={notesItem?.adminNote}
+        agentNote={notesItem?.agentNote}
+        agentName={notesItem?.agentName}
+        title="Application Review Notes"
       />
     </div>
   )
