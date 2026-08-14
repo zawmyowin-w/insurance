@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
+import { serverNow, utcMidnightMs } from '../../utils/serverTime'
 import { toast } from 'react-toastify'
 import { getTypeMeta } from '../../utils/typeMeta'
 import ConfirmModal from '../../components/ConfirmModal'
@@ -9,28 +10,34 @@ import PdfDropdownButton from '../../components/PdfDropdownButton'
 import DigitalSignatureCanvas from '../../components/DigitalSignatureCanvas'
 
 /* ─── Policy Countdown Timer ────────────────────────────────────────────────── */
-function PolicyCountdown({ approvedAt, durationYears, maturityDate: maturityStr }) {
+/**
+ * Shows a live hh:mm:ss countdown to the policy's maturity date.
+ *
+ * Clock source : serverNow() — server-synchronised epoch ms.
+ *                Offset is fetched once at app startup (initServerTime in main.jsx)
+ *                so the displayed time matches the server with no drift.
+ *
+ * Maturity boundary: utcMidnightMs(maturityDate) — UTC midnight of the
+ *                maturity date string returned by the server.  The server's
+ *                daily expiry job runs at 00:00 UTC, so this is the exact
+ *                moment the policy transitions to EXPIRED on the server side.
+ *                In Myanmar time (UTC+6:30) this corresponds to 06:30 AM on
+ *                the maturity date — fully consistent with server behaviour.
+ */
+function PolicyCountdown({ maturityDate: maturityStr }) {
   const { t } = useTranslation()
-  const [now, setNow] = useState(() => new Date())
+  // Use serverNow() so every tick is in sync with the backend clock
+  const [nowMs, setNowMs] = useState(() => serverNow())
   useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 1000)
+    const id = setInterval(() => setNowMs(serverNow()), 1000)
     return () => clearInterval(id)
   }, [])
 
-  // Compute maturity date from approvedAt + durationYears, or fall back to maturityStr
-  const maturity = useMemo(() => {
-    if (approvedAt && durationYears) {
-      const d = new Date(approvedAt)
-      d.setFullYear(d.getFullYear() + durationYears)
-      return d
-    }
-    if (maturityStr) return new Date(maturityStr + 'T00:00:00')
-    return null
-  }, [approvedAt, durationYears, maturityStr])
+  // UTC midnight of the maturity date string (matches server expiry logic)
+  const maturityMs = useMemo(() => utcMidnightMs(maturityStr), [maturityStr])
+  if (!maturityMs) return null
 
-  if (!maturity) return null
-
-  const ms = maturity.getTime() - now.getTime()
+  const ms = maturityMs - nowMs
   if (ms <= 0) {
     return (
       <span style={{ color: '#dc2626', fontWeight: 700, fontSize: '0.82rem' }}>
@@ -38,6 +45,7 @@ function PolicyCountdown({ approvedAt, durationYears, maturityDate: maturityStr 
       </span>
     )
   }
+
   const totalSec  = Math.floor(ms / 1000)
   const totalDays = Math.floor(totalSec / 86400)
   const years     = Math.floor(totalDays / 365)
@@ -422,7 +430,7 @@ export default function CustomerPoliciesPage() {
               <div className="col-12">
                 <div style={{ background: 'var(--bg-secondary)', borderRadius: 8, padding: '0.45rem 0.65rem', border: '1px solid var(--border)' }}>
                   <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)' }}>{t('policies.timeRemaining')}</div>
-                  <PolicyCountdown approvedAt={policy.approvedAt} durationYears={policy.duration} maturityDate={policy.maturityDate} />
+                  <PolicyCountdown maturityDate={policy.maturityDate} />
                 </div>
               </div>
             )}

@@ -97,6 +97,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/payment-methods/*/qr").permitAll()
                 .requestMatchers(HttpMethod.GET, "/payment-methods/*/logo").permitAll()
                 .requestMatchers("/contact").permitAll()
+                .requestMatchers(HttpMethod.GET, "/public/server-time").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
                 // Role-scoped portals

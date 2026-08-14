@@ -8,6 +8,10 @@ import './index.css'
 import './i18n.js'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
+import { initServerTime } from './utils/serverTime.js'
+
+// Fire-and-forget — syncs client clock with server before first tick
+initServerTime()
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
