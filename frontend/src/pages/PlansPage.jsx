@@ -16,7 +16,8 @@ function fmt(n) {
 
 function calcPremium(coverage, rate, intervalMonths) {
   if (!coverage || !rate) return null
-  const annual = parseFloat(coverage) * parseFloat(rate)
+  // rate is stored as percentage (e.g. 2.00 = 2%), divide by 100 before multiplying
+  const annual = parseFloat(coverage) * (parseFloat(rate) / 100)
   const perPayment = annual / (12 / (intervalMonths || 1))
   return { annual, perPayment }
 }
@@ -263,7 +264,7 @@ export default function PlansPage() {
                             {t('plans.premiumRate')}
                           </div>
                           <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '0.92rem' }}>
-                            {minRate ? `${(minRate * 100).toFixed(1)}%` : '—'}{t('plans.perYear')}{tiers.length > 1 ? '+' : ''}
+                            {minRate ? `${parseFloat(minRate).toFixed(1)}%` : '—'}{t('plans.perYear')}{tiers.length > 1 ? '+' : ''}
                           </div>
                         </div>
                       </div>
@@ -535,7 +536,7 @@ function PlanDetailModal({ plan, onClose, onApply, user, t, freqLabel, typeLabel
                                   </span>
                                 </td>
                                 <td style={tdS}>
-                                  <span style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '1.05rem' }}>{(tier.premiumRate * 100).toFixed(2)}%</span>
+                                  <span style={{ fontWeight: 800, color: 'var(--primary)', fontSize: '1.05rem' }}>{parseFloat(tier.premiumRate).toFixed(2)}%</span>
                                   <span style={{ color: 'var(--text-muted)', fontSize: '0.72rem', marginLeft: 2 }}>{t('plans.perYear')}</span>
                                 </td>
                                 <td style={{ ...tdS, color: 'var(--text-secondary)' }}>{sample ? `MMK ${fmt(sample.annual)}` : '—'}</td>
@@ -579,7 +580,7 @@ function PlanDetailModal({ plan, onClose, onApply, user, t, freqLabel, typeLabel
                           <select className="form-select-custom w-100" value={calcDuration} onChange={e => setCalcDuration(e.target.value)}>
                             {tiers.map(tier => (
                               <option key={tier.years} value={tier.years}>
-                                {tier.years} {t('plans.yearsUnit')} — {(tier.premiumRate * 100).toFixed(2)}%{t('plans.perYear')}
+                                {tier.years} {t('plans.yearsUnit')} — {parseFloat(tier.premiumRate).toFixed(2)}%{t('plans.perYear')}
                               </option>
                             ))}
                           </select>
@@ -608,7 +609,7 @@ function PlanDetailModal({ plan, onClose, onApply, user, t, freqLabel, typeLabel
                           {[
                             { l: t('plans.calcCoverageRow'), v: `MMK ${fmt(calcCoverage)}`, c: '#1d4ed8' },
                             { l: t('plans.calcDurationRow'), v: `${calcDuration} ${t('plans.yearsUnit')}`, c: meta.color },
-                            { l: t('plans.calcRateRow'),     v: `${((selectedTier?.premiumRate || 0) * 100).toFixed(2)}%${t('plans.perYear')}`, c: '#d97706' },
+                            { l: t('plans.calcRateRow'),     v: `${parseFloat(selectedTier?.premiumRate || 0).toFixed(2)}%${t('plans.perYear')}`, c: '#d97706' },
                             { l: t('plans.anntt'),    v: `MMK ${fmt(calcResult.annual)}`, c: '#16a34a' },
                           ].map((s, i) => (
                             <div key={i} className="col-6 col-md-3">

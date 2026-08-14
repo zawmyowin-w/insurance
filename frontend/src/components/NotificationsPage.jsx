@@ -97,7 +97,7 @@ function AdvertisePopup({ notif, onClose }) {
                     {[
                       { label: 'Coverage', value: pkg.minCoverage ? `${Number(pkg.minCoverage).toLocaleString()} – ${Number(pkg.maxCoverage).toLocaleString()} MMK` : pkg.coverageAmount ? `${Number(pkg.coverageAmount).toLocaleString()} MMK` : '—' },
                       { label: 'Duration', value: pkg.durationYears ? `${pkg.durationYears} year${pkg.durationYears > 1 ? 's' : ''}` : pkg.duration ? `${pkg.duration} yr` : '—' },
-                      { label: 'Premium Rate', value: pkg.premiumRate ? `${(pkg.premiumRate * 100).toFixed(2)}%` : '—' },
+                      { label: 'Premium Rate', value: pkg.premiumRate ? `${parseFloat(pkg.premiumRate).toFixed(2)}%` : '—' },
                     ].map(({ label, value }) => (
                       <div key={label} className="col-4">
                         <div style={{ background: '#fff', borderRadius: 8, padding: '0.45rem 0.6rem', border: '1px solid #bae6fd' }}>

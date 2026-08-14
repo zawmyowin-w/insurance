@@ -50,7 +50,8 @@ function fmt(n) {
 
 function calcPremium(coverage, rate, paymentIntervalMonths) {
   if (!coverage || !rate) return null
-  const annual = parseFloat(coverage) * parseFloat(rate)
+  // rate is stored as percentage (e.g. 2.00 = 2%), divide by 100 before multiplying
+  const annual = parseFloat(coverage) * (parseFloat(rate) / 100)
   const perPayment = annual / (12 / paymentIntervalMonths)
   return { annual, perPayment }
 }
@@ -1027,7 +1028,7 @@ export default function ManagePackagesPage() {
                           <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--primary)' }}>{pkg.type}</span>
                           {tiers.length > 0 && (
                             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                              · {tiers.map(tier => `${tier.years}${t('admin.packages.yearsUnit')}/${(tier.premiumRate * 100).toFixed(1)}%`).join(', ')}
+                              · {tiers.map(tier => `${tier.years}${t('admin.packages.yearsUnit')}/${parseFloat(tier.premiumRate).toFixed(1)}%`).join(', ')}
                             </span>
                           )}
                         </div>
@@ -1208,7 +1209,7 @@ function PackageDetailModal({ pkg, onClose, onEdit }) {
                       return (
                         <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
                           <td style={tdStyle}><strong>{tier.years} {t('admin.packages.yearsUnit')}</strong></td>
-                          <td style={tdStyle}><span style={{ color: 'var(--primary)', fontWeight: 700 }}>{(tier.premiumRate * 100).toFixed(2)}%</span></td>
+                          <td style={tdStyle}><span style={{ color: 'var(--primary)', fontWeight: 700 }}>{parseFloat(tier.premiumRate).toFixed(2)}%</span></td>
                           <td style={tdStyle}>{c ? `MMK ${fmt(c.annual)}` : '—'}</td>
                           <td style={tdStyle}><strong style={{ color: '#16a34a' }}>{c ? `MMK ${fmt(c.perPayment)}` : '—'}</strong></td>
                         </tr>
@@ -1246,7 +1247,7 @@ function PackageDetailModal({ pkg, onClose, onEdit }) {
                         <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
                           <td style={tdStyle}><strong>{band.minAge} {t('admin.packages.ageYearsUnit')}</strong></td>
                           <td style={tdStyle}><strong>{band.maxAge} {t('admin.packages.ageYearsUnit')}</strong></td>
-                          <td style={tdStyle}><span style={{ color: '#7c3aed', fontWeight: 700 }}>{(band.premiumRate * 100).toFixed(2)}%</span></td>
+                          <td style={tdStyle}><span style={{ color: '#7c3aed', fontWeight: 700 }}>{parseFloat(band.premiumRate).toFixed(2)}%</span></td>
                           <td style={tdStyle}>{c ? `MMK ${fmt(c.annual)}` : '—'}</td>
                           <td style={tdStyle}><strong style={{ color: '#16a34a' }}>{c ? `MMK ${fmt(c.perPayment)}` : '—'}</strong></td>
                         </tr>
@@ -1333,7 +1334,7 @@ function PackageDetailModal({ pkg, onClose, onEdit }) {
                   <select className="form-select-custom w-100" value={calcDuration} onChange={e => setCalcDuration(e.target.value)}>
                     {tiers.map(tier => (
                       <option key={tier.years} value={tier.years}>
-                        {tier.years} {t('admin.packages.yearsUnit')} — {(tier.premiumRate * 100).toFixed(2)}%/year
+                        {tier.years} {t('admin.packages.yearsUnit')} — {parseFloat(tier.premiumRate).toFixed(2)}%/year
                       </option>
                     ))}
                   </select>
@@ -1349,7 +1350,7 @@ function PackageDetailModal({ pkg, onClose, onEdit }) {
                     {calcAge !== '' && (
                       <p style={{ fontSize: '0.72rem', margin: '0.25rem 0 0', color: matchedAgeBand ? '#7c3aed' : 'var(--text-muted)', fontWeight: matchedAgeBand ? 700 : 400 }}>
                         {matchedAgeBand
-                          ? <><i className="bi bi-check-circle me-1"></i>{t('admin.packages.calcAgeRateRow', { age: calcAge })}: {(matchedAgeBand.premiumRate * 100).toFixed(2)}%</>
+                          ? <><i className="bi bi-check-circle me-1"></i>{t('admin.packages.calcAgeRateRow', { age: calcAge })}: {parseFloat(matchedAgeBand.premiumRate).toFixed(2)}%</>
                           : <><i className="bi bi-info-circle me-1"></i>{t('admin.packages.calcNoAgeBand')}</>}
                       </p>
                     )}

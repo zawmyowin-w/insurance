@@ -68,8 +68,9 @@ public class PolicyService {
     public BigDecimal calculatePremium(BigDecimal coverage, BigDecimal rate, int duration, String risk) {
         if (rate == null) return BigDecimal.ZERO;
         double multiplier = "HIGH".equals(risk) ? 1.5 : "MEDIUM".equals(risk) ? 1.2 : 1.0;
+        // rate is stored as a percentage (e.g. 2.00 means 2%), so divide by 100 before multiplying
         return coverage
-                .multiply(rate)
+                .multiply(rate.divide(BigDecimal.valueOf(100), 10, RoundingMode.HALF_UP))
                 .multiply(BigDecimal.valueOf(duration))
                 .multiply(BigDecimal.valueOf(multiplier))
                 .setScale(2, RoundingMode.HALF_UP);

@@ -91,7 +91,50 @@ mysql "${mysql_args[@]}" "${DB_NAME}" -e "ALTER TABLE payments MODIFY COLUMN sta
 # Add customer_edited_since_revision if missing (safe on re-runs: column already exists → error silently ignored)
 mysql "${mysql_args[@]}" "${DB_NAME}" -e "ALTER TABLE policy_applications ADD COLUMN customer_edited_since_revision TINYINT(1) NOT NULL DEFAULT 0;" 2>/dev/null
 mysql "${mysql_args[@]}" "${DB_NAME}" -e "ALTER TABLE claims ADD COLUMN customer_edited_since_revision TINYINT(1) NOT NULL DEFAULT 0;" 2>/dev/null
+# Migrate premium_rate column from decimal (0.02) to percentage (2.00) — idempotent: only runs when < 1
+mysql "${mysql_args[@]}" "${DB_NAME}" -e "UPDATE insurance_packages SET premium_rate = ROUND(premium_rate * 100, 4) WHERE premium_rate > 0 AND premium_rate < 1;" 2>/dev/null
 set -e
+
+# ── Migrate premiumRate in JSON tier/band columns from decimal to percentage ──
+# Uses the same mysql_args already configured (socket or TCP). Idempotent.
+_migrate_json() {
+  local j="$1"
+  [ -z "$j" ] && return
+  python3 -c "
+import json, sys
+try:
+    data = json.loads(sys.argv[1])
+    if not isinstance(data, list): sys.exit(0)
+    changed = False
+    for item in data:
+        r = item.get('premiumRate')
+        if r is not None and 0 < float(r) < 1:
+            item['premiumRate'] = round(float(r) * 100, 4)
+            changed = True
+    if changed: print(json.dumps(data))
+except: pass
+" "$j" 2>/dev/null
+}
+while IFS=$'\t' read -r _pkg_id _tiers _bands; do
+  [ -z "$_pkg_id" ] && continue
+  _nt=$(_migrate_json "$_tiers")
+  _nb=$(_migrate_json "$_bands")
+  if [ -n "$_nt" ] || [ -n "$_nb" ]; then
+    _sets=""
+    if [ -n "$_nt" ]; then
+      _esc=$(printf '%s' "$_nt" | sed "s/'/''/g")
+      _sets="duration_tiers='${_esc}'"
+    fi
+    if [ -n "$_nb" ]; then
+      _esc=$(printf '%s' "$_nb" | sed "s/'/''/g")
+      [ -n "$_sets" ] && _sets="${_sets},"
+      _sets="${_sets}age_bands='${_esc}'"
+    fi
+    mysql "${mysql_args[@]}" "${DB_NAME}" -e \
+      "UPDATE insurance_packages SET ${_sets} WHERE id=${_pkg_id};" 2>/dev/null || true
+  fi
+done < <(mysql "${mysql_args[@]}" "${DB_NAME}" -N -B -e \
+  "SELECT id, IFNULL(duration_tiers,''), IFNULL(age_bands,'') FROM insurance_packages;" 2>/dev/null) || true
 
 # Schema and seed data are managed by Hibernate (ddl-auto=update) and DataInitializer on startup.
 
