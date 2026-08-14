@@ -86,6 +86,9 @@ public class PremiumScheduleUtil {
                 if (p.getStatus() == PaymentStatus.VERIFIED) {
                     status = "PAID";
                     paidCount++;
+                } else if (p.getStatus() == PaymentStatus.WAIVED) {
+                    status = "WAIVED";
+                    // Waived counts as settled for reporting purposes
                 } else if (p.getStatus() == PaymentStatus.PENDING) {
                     status = "PENDING_VERIFICATION";
                 } else {

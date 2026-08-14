@@ -38,6 +38,8 @@ const EMPTY = {
   // Maturity / policy expiry payout
   maturityBonusTiers: [{ year: '', bonusPercent: '' }],
   maturityIncludesPremiums: false,
+  // Premium Waiver Benefit
+  premiumWaiverBenefit: false,
 }
 
 function fmt(n) {
@@ -93,6 +95,7 @@ export default function ManagePackagesPage() {
                 [pkg.id]: {
                   APPLICATION: forms.find(f => f.formType === 'APPLICATION') || null,
                   CLAIM: forms.find(f => f.formType === 'CLAIM') || null,
+                  EMERGENCY: forms.find(f => f.formType === 'EMERGENCY') || null,
                 }
               }))
             }).catch(() => {})
@@ -185,6 +188,8 @@ export default function ManagePackagesPage() {
           .filter(t => t.year !== '' && t.bonusPercent !== '')
           .map(t => ({ year: Number(t.year), bonusPercent: Number(t.bonusPercent) })),
         maturityIncludesPremiums: form.maturityIncludesPremiums,
+        // Premium Waiver Benefit
+        premiumWaiverBenefit: form.premiumWaiverBenefit,
       }
 
       if (editing) {
@@ -234,6 +239,8 @@ export default function ManagePackagesPage() {
         ? pkg.maturityBonusTiers.map(t => ({ year: t.year, bonusPercent: t.bonusPercent }))
         : [{ year: '', bonusPercent: '' }],
       maturityIncludesPremiums: pkg.maturityIncludesPremiums === true,
+      // Premium Waiver Benefit
+      premiumWaiverBenefit: pkg.premiumWaiverBenefit === true,
     })
     setShowForm(true)
     setOpenSection('basic')
@@ -937,6 +944,40 @@ export default function ManagePackagesPage() {
                 )}
               </div>
 
+              {/* ── Section 14: PREMIUM WAIVER BENEFIT ── */}
+              <div style={{ border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', marginBottom: '0.75rem' }}>
+                <SectionHeader id="waiver" icon="bi-shield-heart"
+                  label="Premium Waiver Benefit"
+                  badge={form.premiumWaiverBenefit ? 'Enabled' : 'Disabled'} />
+                {openSection === 'waiver' && (
+                  <div style={{ padding: '1.25rem' }}>
+                    <div
+                      style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0.75rem 1rem', background: form.premiumWaiverBenefit ? '#ecfdf5' : 'var(--bg-secondary)', border: `1px solid ${form.premiumWaiverBenefit ? '#6ee7b7' : 'var(--border)'}`, borderRadius: 10, marginBottom: '0.75rem', cursor: 'pointer' }}
+                      onClick={() => setForm(f => ({ ...f, premiumWaiverBenefit: !f.premiumWaiverBenefit }))}>
+                      <div style={{ width: 44, height: 24, borderRadius: 99, background: form.premiumWaiverBenefit ? '#0891b2' : '#cbd5e1', display: 'flex', alignItems: 'center', padding: '0 3px', flexShrink: 0, transition: 'background 0.2s' }}>
+                        <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'transform 0.2s', transform: form.premiumWaiverBenefit ? 'translateX(20px)' : 'translateX(0)' }}></div>
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 700, fontSize: '0.88rem', color: form.premiumWaiverBenefit ? '#0e7490' : 'var(--text-secondary)' }}>
+                          {form.premiumWaiverBenefit ? 'Premium Waiver Benefit Enabled' : 'Premium Waiver Benefit Disabled'}
+                        </div>
+                        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                          {form.premiumWaiverBenefit
+                            ? 'If the payer dies, the customer can submit an emergency declaration. On admin approval, all remaining premiums are waived and the policy matures normally.'
+                            : 'Enable to allow emergency declarations when the payer passes away.'}
+                        </div>
+                      </div>
+                    </div>
+                    {form.premiumWaiverBenefit && (
+                      <div style={{ background: '#e0f2fe', border: '1px solid #7dd3fc', borderRadius: 8, padding: '0.65rem 0.9rem', fontSize: '0.8rem', color: '#0369a1' }}>
+                        <i className="bi bi-info-circle-fill me-1"></i>
+                        <strong>Remember:</strong> Create an <strong>Emergency</strong> form template for this package in Manage Forms so customers can fill their emergency declaration.
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
             </div>{/* end sections */}
 
             <div className="d-flex gap-2 mt-4">
@@ -1010,6 +1051,10 @@ export default function ManagePackagesPage() {
                         onClick={() => navigate('/admin/forms', { state: { packageId: pkg.id } })} />
                       <FormBadge label={t('admin.packages.claimFormLabel')} exists={!!pForms.CLAIM}
                         onClick={() => navigate('/admin/forms', { state: { packageId: pkg.id } })} />
+                      {pkg.premiumWaiverBenefit && (
+                        <FormBadge label="Emergency" exists={!!pForms.EMERGENCY}
+                          onClick={() => navigate('/admin/forms', { state: { packageId: pkg.id } })} />
+                      )}
                     </div>
                   </div>
                   <div className="col-12 col-md-3">

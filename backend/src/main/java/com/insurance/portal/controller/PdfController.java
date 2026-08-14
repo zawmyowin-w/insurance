@@ -403,10 +403,39 @@ public class PdfController {
             }
 
             // ─────────────────────────────────────────────────────────────
-            // SECTION 5: BENEFITS AND COVERAGE
+            // SECTION 5: PREMIUM WAIVER BENEFIT STATUS (if applicable)
+            // ─────────────────────────────────────────────────────────────
+            if (pkg != null && pkg.isPremiumWaiverBenefit()) {
+                DeviceRgb teal = new DeviceRgb(8, 145, 178);
+                DeviceRgb tealLight = new DeviceRgb(224, 242, 254);
+                addContractSection(doc, bold, "SECTION 5: PREMIUM WAIVER BENEFIT   (အပိုင်း ၅: Premium ကင်းလွတ်ခွင့် အကျိုးခံစားခွင့်)", teal, bold);
+                String emergStatus = app.getEmergencyStatus() != null ? app.getEmergencyStatus().name() : "NONE";
+                String waiverInfo = switch (emergStatus) {
+                    case "APPROVED" -> "APPROVED — All remaining premium installments have been waived. "
+                            + "Policy will mature normally. Waiver granted: "
+                            + (app.getWaiverGrantedAt() != null ? app.getWaiverGrantedAt().format(dtFmt) : "N/A");
+                    case "PENDING"  -> "PENDING — Emergency declaration submitted, awaiting admin review.";
+                    case "REJECTED" -> "REJECTED — Emergency declaration was reviewed and not approved.";
+                    default         -> "NOT ACTIVATED — No emergency declaration submitted.";
+                };
+                addMetaTable(doc, bold, regular, tealLight, java.util.List.of(
+                        entry("Benefit Status  (အကျိုးခံစားခွင့် အခြေအနေ)", "ENABLED (ဖွင့်ထားသည်)"),
+                        entry("Emergency Status  (အရေးပေါ် အခြေအနေ)",      waiverInfo),
+                        entry("Policy Number  (ပါလစီနံပါတ်)",               policyNum),
+                        entry("Waiver Note  (ကင်းလွတ်ခွင့် မှတ်ချက်)",
+                              "APPROVED".equals(emergStatus)
+                                  ? "Premium installments after waiver grant date are exempt from payment. "
+                                    + "Policy contract remains valid until original maturity date."
+                                  : "This policy package includes Premium Waiver Benefit. "
+                                    + "In the event of the payer's death, submit an emergency declaration via your portal.")
+                ));
+            }
+
+            // ─────────────────────────────────────────────────────────────
+            // SECTION 6: BENEFITS AND COVERAGE
             // ─────────────────────────────────────────────────────────────
             if (pkg != null) {
-                addContractSection(doc, bold, "SECTION 5: BENEFITS AND COVERAGE   (အပိုင်း ၅: အကျိုးခံစားခွင့်နှင့် Coverage)", blue, bold);
+                addContractSection(doc, bold, "SECTION 6: BENEFITS AND COVERAGE   (အပိုင်း ၆: အကျိုးခံစားခွင့်နှင့် Coverage)", blue, bold);
                 if (pkg.getBenefitsJson() != null && !pkg.getBenefitsJson().isBlank()) {
                     try {
                         @SuppressWarnings("unchecked")

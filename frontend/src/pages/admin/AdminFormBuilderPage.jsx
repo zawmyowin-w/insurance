@@ -39,7 +39,7 @@ const getSystemFields = (t) => [
   { icon: 'bi-person-vcard',   label: t('admin.formBuilder.sysField_nrc_label'),   note: t('admin.formBuilder.sysField_nrc_note') },
 ]
 
-const FORM_TYPES = ['APPLICATION', 'CLAIM']
+const FORM_TYPES = ['APPLICATION', 'CLAIM', 'EMERGENCY']
 
 const emptyField = () => ({ fieldLabel: '', fieldType: 'TEXT', required: false, fieldOptions: '["Yes","No"]' })
 const emptyForm  = (pkgId, formType) => ({
@@ -62,6 +62,7 @@ export default function AdminFormBuilderPage() {
   const formTypeMeta = {
     APPLICATION: { bg: '#dbeafe', color: '#1d4ed8', label: t('admin.formBuilder.applicationForm') },
     CLAIM:       { bg: '#fef3c7', color: '#d97706', label: t('admin.formBuilder.claimForm') },
+    EMERGENCY:   { bg: '#e0f2fe', color: '#0891b2', label: 'Emergency Declaration' },
   }
 
   useEffect(() => {

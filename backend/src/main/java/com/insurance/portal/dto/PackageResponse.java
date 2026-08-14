@@ -47,6 +47,9 @@ public class PackageResponse {
     private List<Map<String, Object>> maturityBonusTiers;
     private boolean maturityIncludesPremiums;
 
+    // Premium Waiver Benefit
+    private boolean premiumWaiverBenefit;
+
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     public static PackageResponse from(InsurancePackage pkg) {
@@ -73,6 +76,7 @@ public class PackageResponse {
         dto.setTransferEligibleAfterYears(pkg.getTransferEligibleAfterYears());
         dto.setTransferEligibleAfterMonths(pkg.getTransferEligibleAfterMonths());
         dto.setMaturityIncludesPremiums(pkg.isMaturityIncludesPremiums());
+        dto.setPremiumWaiverBenefit(pkg.isPremiumWaiverBenefit());
 
         // Parse benefits (newline-separated)
         try {

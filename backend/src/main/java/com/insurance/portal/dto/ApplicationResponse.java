@@ -47,6 +47,16 @@ public class ApplicationResponse {
     private Integer claimWaitingPeriodMonths;
     private boolean transferred;
 
+    // Premium Waiver Benefit
+    private boolean premiumWaiverBenefit;
+    private String emergencyStatus;
+    private String emergencyFormData;
+    private String customerEmergencySignature;
+    private LocalDateTime customerEmergencySignedAt;
+    private String adminWaiverSignature;
+    private LocalDateTime adminWaiverSignedAt;
+    private LocalDateTime waiverGrantedAt;
+
     public static ApplicationResponse from(PolicyApplication app) {
         ApplicationResponse dto = new ApplicationResponse();
         dto.setId(app.getId());
@@ -104,6 +114,19 @@ public class ApplicationResponse {
             dto.setClaimWaitingPeriodMonths(app.getInsurancePackage().getClaimWaitingPeriodMonths());
         }
         dto.setTransferred(app.getTransferredAt() != null);
+        // Premium Waiver Benefit
+        if (app.getInsurancePackage() != null) {
+            dto.setPremiumWaiverBenefit(app.getInsurancePackage().isPremiumWaiverBenefit());
+        }
+        if (app.getEmergencyStatus() != null) {
+            dto.setEmergencyStatus(app.getEmergencyStatus().name());
+        }
+        dto.setEmergencyFormData(app.getEmergencyFormData());
+        dto.setCustomerEmergencySignature(app.getCustomerEmergencySignature());
+        dto.setCustomerEmergencySignedAt(app.getCustomerEmergencySignedAt());
+        dto.setAdminWaiverSignature(app.getAdminWaiverSignature());
+        dto.setAdminWaiverSignedAt(app.getAdminWaiverSignedAt());
+        dto.setWaiverGrantedAt(app.getWaiverGrantedAt());
         return dto;
     }
 }

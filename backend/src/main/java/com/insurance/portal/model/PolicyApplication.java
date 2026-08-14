@@ -1,6 +1,7 @@
 package com.insurance.portal.model;
 
 import com.insurance.portal.model.enums.ApplicationStatus;
+import com.insurance.portal.model.enums.EmergencyStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -137,6 +138,35 @@ public class PolicyApplication {
     /** JSON array of server-stored paths for uploaded supporting documents */
     @Column(name = "documents_path", columnDefinition = "TEXT")
     private String documentsPath;
+
+    // ── Premium Waiver Benefit (PWB) fields ────────────────────────────
+    /** Emergency status for the PWB process. Default = NONE (no emergency declared). */
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    @Column(name = "emergency_status", length = 20)
+    private EmergencyStatus emergencyStatus = EmergencyStatus.NONE;
+
+    /** JSON form data submitted by the customer in the emergency declaration form. */
+    @Column(name = "emergency_form_data", columnDefinition = "TEXT")
+    private String emergencyFormData;
+
+    /** Customer's digital signature at the time of emergency form submission. */
+    @Column(name = "customer_emergency_signature", columnDefinition = "LONGTEXT")
+    private String customerEmergencySignature;
+
+    @Column(name = "customer_emergency_signed_at")
+    private LocalDateTime customerEmergencySignedAt;
+
+    /** Admin's digital signature when approving the waiver. */
+    @Column(name = "admin_waiver_signature", columnDefinition = "LONGTEXT")
+    private String adminWaiverSignature;
+
+    @Column(name = "admin_waiver_signed_at")
+    private LocalDateTime adminWaiverSignedAt;
+
+    /** Timestamp when admin approved the waiver. */
+    @Column(name = "waiver_granted_at")
+    private LocalDateTime waiverGrantedAt;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

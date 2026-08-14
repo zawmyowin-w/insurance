@@ -133,6 +133,16 @@ public class InsurancePackage {
     @Column(name = "maturity_includes_premiums", columnDefinition = "TINYINT(1) NOT NULL DEFAULT 0")
     private boolean maturityIncludesPremiums = false;
 
+    /**
+     * When true, customers holding policies under this package are entitled to
+     * the Premium Waiver Benefit: if the policy payer dies unexpectedly, the
+     * customer can submit an emergency declaration.  On admin approval, all
+     * remaining premium installments are waived and the policy matures normally.
+     */
+    @Builder.Default
+    @Column(name = "premium_waiver_benefit", columnDefinition = "TINYINT(1) NOT NULL DEFAULT 0")
+    private boolean premiumWaiverBenefit = false;
+
     @Builder.Default
     private boolean active = true;
 

@@ -82,6 +82,15 @@ fi
 
 echo "[start-backend] Ensuring database '${DB_NAME}' exists..."
 mysql "${mysql_args[@]}" -e "CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+
+# ── Idempotent ENUM migrations (Hibernate ddl-auto=update cannot alter ENUM columns) ──────────
+mysql "${mysql_args[@]}" "${DB_NAME}" 2>/dev/null <<'ENDSQL'
+-- Premium Waiver Benefit: extend form_type ENUM to include EMERGENCY
+ALTER TABLE form_templates MODIFY COLUMN form_type ENUM('APPLICATION','CLAIM','EMERGENCY') NOT NULL;
+-- Premium Waiver Benefit: extend payments.status to include WAIVED
+ALTER TABLE payments MODIFY COLUMN status ENUM('PENDING','VERIFIED','REJECTED','WAIVED') NULL;
+ENDSQL
+
 # Schema and seed data are managed by Hibernate (ddl-auto=update) and DataInitializer on startup.
 
 echo "[start-backend] Starting Spring Boot application..."

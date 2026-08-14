@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
@@ -6,6 +6,131 @@ import { toast } from 'react-toastify'
 import { getTypeMeta } from '../../utils/typeMeta'
 import ConfirmModal from '../../components/ConfirmModal'
 import PdfDropdownButton from '../../components/PdfDropdownButton'
+import DigitalSignatureCanvas from '../../components/DigitalSignatureCanvas'
+
+/* ─── Emergency Declaration Modal ──────────────────────────────────────────── */
+function EmergencyFormModal({ policy, onClose, onSubmitted }) {
+  const [template, setTemplate] = useState(null)
+  const [loadingTpl, setLoadingTpl] = useState(true)
+  const [formValues, setFormValues] = useState({})
+  const [signature, setSignature] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
+
+  useEffect(() => {
+    if (!policy?.packageId) { setLoadingTpl(false); return }
+    api.get('/forms/public', { params: { packageId: policy.packageId, formType: 'EMERGENCY' } })
+      .then(r => { setTemplate(r.data); setLoadingTpl(false) })
+      .catch(() => { setTemplate(null); setLoadingTpl(false) })
+  }, [policy?.id])
+
+  const handleField = (name, value) => setFormValues(prev => ({ ...prev, [name]: value }))
+
+  const handleSubmit = async () => {
+    if (!signature) { toast.error('Your digital signature is required'); return }
+    setSubmitting(true)
+    try {
+      await api.post(`/customer/applications/${policy.id}/emergency`, {
+        formData: formValues,
+        customerSignature: signature,
+      })
+      toast.success('Emergency declaration submitted. Admin will review shortly.')
+      onSubmitted()
+      onClose()
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Submission failed')
+    } finally { setSubmitting(false) }
+  }
+
+  return (
+    <div className="modal show d-block" tabIndex="-1" style={{ background: 'rgba(0,0,0,0.55)' }}>
+      <div className="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+        <div className="modal-content" style={{ borderRadius: 16 }}>
+          <div className="modal-header" style={{ background: 'linear-gradient(135deg, #0891b2, #0e7490)', borderRadius: '16px 16px 0 0' }}>
+            <div>
+              <h5 className="modal-title" style={{ color: '#fff', fontWeight: 700, margin: 0 }}>
+                <i className="bi bi-shield-heart me-2"></i>Emergency Declaration — Premium Waiver Benefit
+              </h5>
+              <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.8rem', marginTop: 2 }}>
+                Policy: {policy.policyNumber || '#' + policy.id}
+              </div>
+            </div>
+            <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 6, padding: '0.3rem 0.6rem', color: '#fff', cursor: 'pointer' }}>
+              <i className="bi bi-x-lg"></i>
+            </button>
+          </div>
+          <div className="modal-body" style={{ padding: '1.5rem' }}>
+            <div style={{ background: '#ecfdf5', border: '1px solid #6ee7b7', borderRadius: 10, padding: '0.75rem 1rem', marginBottom: '1.25rem', fontSize: '0.82rem', color: '#065f46' }}>
+              <i className="bi bi-info-circle-fill me-1"></i>
+              <strong>Premium Waiver Benefit:</strong> If the primary payer has passed away, you may submit this emergency declaration.
+              Once approved, all remaining premium installments will be waived and your policy will mature normally.
+            </div>
+
+            {loadingTpl ? (
+              <div className="text-center py-3"><div className="spinner-border" style={{ color: '#0891b2' }}></div></div>
+            ) : template && Array.isArray(template.fields) && template.fields.length > 0 ? (
+              <div className="d-flex flex-column gap-3 mb-3">
+                <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)', marginBottom: '0.25rem' }}>
+                  {template.name} — Please fill all required fields
+                </div>
+                {template.fields.map((field, fi) => {
+                  const key = field.fieldLabel || `field_${fi}`
+                  const opts = field.fieldOptions ? field.fieldOptions.split(',').map(s => s.trim()).filter(Boolean) : []
+                  return (
+                    <div key={field.id || fi}>
+                      <label style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: 4, display: 'block' }}>
+                        {field.fieldLabel}{field.required && <span style={{ color: '#dc2626' }}> *</span>}
+                      </label>
+                      {field.fieldType === 'TEXTAREA' ? (
+                        <textarea rows={3} className="form-control-custom w-100" style={{ resize: 'vertical' }}
+                          value={formValues[key] || ''}
+                          onChange={e => handleField(key, e.target.value)} />
+                      ) : field.fieldType === 'SELECT' && opts.length > 0 ? (
+                        <select className="form-control-custom w-100" value={formValues[key] || ''}
+                          onChange={e => handleField(key, e.target.value)}>
+                          <option value="">Select…</option>
+                          {opts.map(o => <option key={o} value={o}>{o}</option>)}
+                        </select>
+                      ) : (
+                        <input type={field.fieldType === 'DATE' ? 'date' : 'text'} className="form-control-custom w-100"
+                          value={formValues[key] || ''}
+                          onChange={e => handleField(key, e.target.value)} />
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div style={{ background: '#f8fafc', border: '1px solid var(--border)', borderRadius: 8, padding: '1rem', marginBottom: '1rem', fontSize: '0.83rem', color: 'var(--text-secondary)' }}>
+                <i className="bi bi-file-earmark-text me-1"></i>
+                Please describe the emergency circumstance (no specific form template configured for this package).
+                <textarea rows={4} className="form-control-custom w-100 mt-2" style={{ resize: 'vertical' }}
+                  placeholder="Describe the situation (e.g. policyholder name, date of death, relationship to payer…)"
+                  value={formValues['description'] || ''}
+                  onChange={e => handleField('description', e.target.value)} />
+              </div>
+            )}
+
+            <DigitalSignatureCanvas
+              label="Your Digital Signature (required)"
+              required
+              onChange={setSignature}
+              height={130}
+            />
+          </div>
+          <div className="modal-footer">
+            <button className="btn-outline-custom" onClick={onClose} disabled={submitting}>Cancel</button>
+            <button
+              onClick={handleSubmit}
+              disabled={submitting}
+              style={{ background: '#0891b2', color: '#fff', border: 'none', borderRadius: 8, padding: '0.5rem 1.25rem', fontWeight: 700, fontSize: '0.88rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+              {submitting ? <><span className="spinner-border spinner-border-sm"></span> Submitting…</> : <><i className="bi bi-send"></i> Submit Emergency Declaration</>}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 const RISK_META = {
   LOW:    { color: '#16a34a', bg: '#f0fdf4', icon: 'bi-shield-check'       },
@@ -73,6 +198,7 @@ export default function CustomerPoliciesPage() {
   const [renewing, setRenewing] = useState(null)
   const [verifiedPaymentIds, setVerifiedPaymentIds] = useState(new Set())
   const [renewConfirmId, setRenewConfirmId] = useState(null)
+  const [emergencyPolicy, setEmergencyPolicy] = useState(null)
 
   const fetchPolicies = () => {
     Promise.all([
@@ -179,6 +305,22 @@ export default function CustomerPoliciesPage() {
             </div>
           )}
 
+          {/* Premium Waiver Benefit — waiver active banner */}
+          {policy.premiumWaiverBenefit && policy.emergencyStatus === 'APPROVED' && (
+            <div style={{ background: '#e0f2fe', border: '1px solid #7dd3fc', borderRadius: 8, padding: '0.6rem 0.75rem', marginBottom: '0.75rem', fontSize: '0.82rem', color: '#0369a1' }}>
+              <i className="bi bi-shield-heart-fill me-1"></i>
+              <strong>Premium Waiver Active</strong> — All remaining premiums are waived.
+              {policy.waiverGrantedAt && <span style={{ marginLeft: 6, color: '#0891b2' }}>Granted: {new Date(policy.waiverGrantedAt).toLocaleDateString()}</span>}
+            </div>
+          )}
+          {/* Premium Waiver Benefit — emergency pending banner */}
+          {policy.premiumWaiverBenefit && policy.emergencyStatus === 'PENDING' && (
+            <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 8, padding: '0.6rem 0.75rem', marginBottom: '0.75rem', fontSize: '0.82rem', color: '#c2410c' }}>
+              <i className="bi bi-hourglass-split me-1"></i>
+              Emergency declaration submitted — awaiting admin review.
+            </div>
+          )}
+
           {/* Used policy notice */}
           {isUsed && (
             <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 8, padding: '0.6rem 0.75rem', marginBottom: '0.75rem', fontSize: '0.82rem', color: '#15803d' }}>
@@ -272,6 +414,15 @@ export default function CustomerPoliciesPage() {
                 {renewing === policy.id ? <span className="spinner-border spinner-border-sm"></span> : <><i className="bi bi-arrow-repeat me-1"></i>{t('policies.renew')}</>}
               </button>
             )}
+            {/* Premium Waiver Benefit — Reinstate Benefit button */}
+            {!isUsed && policy.premiumWaiverBenefit && (policy.emergencyStatus === 'NONE' || policy.emergencyStatus === 'REJECTED') && (
+              <button
+                onClick={() => setEmergencyPolicy(policy)}
+                style={{ padding: '0.4rem 0.85rem', borderRadius: 8, border: '1.5px solid #7dd3fc', background: '#e0f2fe', color: '#0369a1', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <i className="bi bi-shield-heart"></i>
+                {policy.emergencyStatus === 'REJECTED' ? 'Re-submit Emergency' : 'Reinstate Benefit'}
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -343,6 +494,13 @@ export default function CustomerPoliciesPage() {
       )}
 
       {certPolicy && <PolicyCertificate policy={certPolicy} onClose={() => setCertPolicy(null)} />}
+      {emergencyPolicy && (
+        <EmergencyFormModal
+          policy={emergencyPolicy}
+          onClose={() => setEmergencyPolicy(null)}
+          onSubmitted={() => { setEmergencyPolicy(null); fetchPolicies() }}
+        />
+      )}
 
       <ConfirmModal
         open={renewConfirmId !== null}

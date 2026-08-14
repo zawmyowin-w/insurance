@@ -568,6 +568,7 @@ public class CustomerController {
                     m.put("status", app.getStatus().name());
                     m.put("createdAt", app.getCreatedAt());
                     m.put("agentName", app.getAgent() != null ? app.getAgent().getName() : null);
+                    m.put("packageId", app.getInsurancePackage() != null ? app.getInsurancePackage().getId() : null);
                     // Claim eligibility — required for transferred policies and waiting-period policies
                     m.put("claimEligibleFrom", app.getClaimEligibleFrom() != null ? app.getClaimEligibleFrom().toString() : null);
                     if (app.getInsurancePackage() != null) {
@@ -583,8 +584,82 @@ public class CustomerController {
                                 .ifPresent(t -> m.put("transferredAt",
                                         t.getApprovedAt() != null ? t.getApprovedAt().toString() : null));
                     }
+                    // Premium Waiver Benefit fields
+                    var pwbPkg = app.getInsurancePackage();
+                    m.put("premiumWaiverBenefit", pwbPkg != null && pwbPkg.isPremiumWaiverBenefit());
+                    m.put("emergencyStatus", app.getEmergencyStatus() != null ? app.getEmergencyStatus().name() : "NONE");
+                    m.put("waiverGrantedAt", app.getWaiverGrantedAt() != null ? app.getWaiverGrantedAt().toString() : null);
                     return m;
                 }).toList();
+    }
+
+    // ── Premium Waiver Benefit — Emergency Declaration ────────────────
+    @PostMapping("/applications/{id}/emergency")
+    @Transactional
+    public ResponseEntity<?> submitEmergencyDeclaration(
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> req,
+            @AuthenticationPrincipal UserDetails principal) {
+
+        User user = getUser(principal);
+        PolicyApplication app = appRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Application not found"));
+
+        // Ownership check
+        if (!app.getCustomer().getId().equals(user.getId()))
+            return ResponseEntity.status(403).body(Map.of("message", "Forbidden"));
+
+        // Package must have Premium Waiver Benefit enabled
+        var pkg = app.getInsurancePackage();
+        if (pkg == null || !pkg.isPremiumWaiverBenefit())
+            return ResponseEntity.badRequest().body(Map.of("message", "This policy does not include Premium Waiver Benefit"));
+
+        // Policy must be APPROVED
+        if (app.getStatus() != ApplicationStatus.APPROVED)
+            return ResponseEntity.badRequest().body(Map.of("message", "Emergency declaration is only available for active (approved) policies"));
+
+        // Already approved — cannot re-submit
+        if (app.getEmergencyStatus() == com.insurance.portal.model.enums.EmergencyStatus.APPROVED)
+            return ResponseEntity.badRequest().body(Map.of("message", "Premium Waiver Benefit has already been approved for this policy"));
+
+        // Already pending — prevent duplicate submission
+        if (app.getEmergencyStatus() == com.insurance.portal.model.enums.EmergencyStatus.PENDING)
+            return ResponseEntity.badRequest().body(Map.of("message", "An emergency declaration is already under review"));
+
+        String customerSignature = req.containsKey("customerSignature") ? (String) req.get("customerSignature") : null;
+        if (customerSignature == null || customerSignature.isBlank())
+            return ResponseEntity.badRequest().body(Map.of("message", "Your digital signature is required"));
+
+        // Store emergency form data
+        Object formDataObj = req.get("formData");
+        String formDataJson = "{}";
+        try { formDataJson = MAPPER.writeValueAsString(formDataObj != null ? formDataObj : Map.of()); } catch (Exception ignored) {}
+
+        app.setEmergencyStatus(com.insurance.portal.model.enums.EmergencyStatus.PENDING);
+        app.setEmergencyFormData(formDataJson);
+        app.setCustomerEmergencySignature(customerSignature);
+        app.setCustomerEmergencySignedAt(java.time.LocalDateTime.now());
+        appRepo.save(app);
+
+        // Notify admins
+        userRepo.findAll().stream()
+                .filter(u -> u.getRole() == Role.ADMIN && u.isActive())
+                .forEach(admin -> {
+                    var notif = com.insurance.portal.model.Notification.builder()
+                            .recipient(admin)
+                            .title("Emergency Declaration — Premium Waiver Review Required")
+                            .message("Customer " + user.getName() + " (Policy: " + app.getPolicyNumber()
+                                    + ") has submitted an emergency declaration for Premium Waiver Benefit. Please review in Applications.")
+                            .type(com.insurance.portal.model.enums.NotificationType.INFO)
+                            .targetRole("ADMIN")
+                            .build();
+                    notifRepo.save(notif);
+                });
+
+        return ResponseEntity.ok(Map.of(
+                "message", "Emergency declaration submitted successfully. Admin will review shortly.",
+                "emergencyStatus", "PENDING"
+        ));
     }
 
     @PostMapping("/applications/{id}/renew")

@@ -10,6 +10,7 @@ const STATUS_COLORS = {
   PENDING_VERIFICATION: { color: '#7c3aed', bg: '#ede9fe', icon: 'bi-hourglass-split' },
   UPCOMING:             { color: '#64748b', bg: '#f1f5f9', icon: 'bi-calendar-event' },
   PAID:                 { color: '#16a34a', bg: '#dcfce7', icon: 'bi-check-circle-fill' },
+  WAIVED:               { color: '#0891b2', bg: '#e0f2fe', icon: 'bi-shield-heart-fill' },
 }
 
 export default function AdminPremiumSchedulePage() {
@@ -29,6 +30,7 @@ export default function AdminPremiumSchedulePage() {
     PENDING_VERIFICATION: { label: t('admin.premiumSchedule.statusPendingVerification'), ...STATUS_COLORS.PENDING_VERIFICATION },
     UPCOMING:             { label: t('admin.premiumSchedule.statusUpcoming'),           ...STATUS_COLORS.UPCOMING },
     PAID:                 { label: t('admin.premiumSchedule.statusPaid'),               ...STATUS_COLORS.PAID },
+    WAIVED:               { label: 'Waived',                                            ...STATUS_COLORS.WAIVED },
   }
 
   const TABS = [

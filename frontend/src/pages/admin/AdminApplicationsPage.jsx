@@ -7,7 +7,7 @@ import FormDetailModal from '../../components/FormDetailModal'
 import DigitalSignatureCanvas from '../../components/DigitalSignatureCanvas'
 import { apiError } from '../../utils/apiError'
 
-const STATUS_KEYS = ['ALL', 'PENDING', 'VERIFIED', 'APPROVED', 'REJECTED']
+const STATUS_KEYS = ['ALL', 'PENDING', 'VERIFIED', 'APPROVED', 'REJECTED', 'EMERGENCY']
 
 export default function AdminApplicationsPage() {
   const { t } = useTranslation()
@@ -29,15 +29,73 @@ export default function AdminApplicationsPage() {
   const [cancelNote, setCancelNote] = useState('')
   const [cancelling, setCancelling] = useState(false)
 
-  const statusLabel = (key) => t(`admin.applications.status_${key}`)
+  // Waiver review state
+  const [waiverItem, setWaiverItem] = useState(null)
+  const [waiverNote, setWaiverNote] = useState('')
+  const [waiverSignature, setWaiverSignature] = useState(null)
+  const [waiverSubmitting, setWaiverSubmitting] = useState(false)
+  const [maturityItem, setMaturityItem] = useState(null)
+  const [maturitySignature, setMaturitySignature] = useState(null)
+  const [maturitySubmitting, setMaturitySubmitting] = useState(false)
+
+  const statusLabel = (key) => key === 'EMERGENCY' ? '🚨 Emergency' : t(`admin.applications.status_${key}`)
 
   const fetchApps = () => {
-    api.get(`/admin/applications${filter !== 'ALL' ? `?status=${filter}` : ''}`)
-      .then(res => setApps(Array.isArray(res.data) ? res.data : []))
+    // EMERGENCY filter: fetch ALL, then client-side filter by emergencyStatus=PENDING
+    const url = (filter === 'EMERGENCY' || filter === 'ALL')
+      ? '/admin/applications'
+      : `/admin/applications?status=${filter}`
+    api.get(url)
+      .then(res => {
+        let data = Array.isArray(res.data) ? res.data : []
+        if (filter === 'EMERGENCY') {
+          data = data.filter(a => a.emergencyStatus === 'PENDING')
+        }
+        setApps(data)
+      })
       .catch(() => setApps([]))
       .finally(() => setLoading(false))
   }
   useEffect(() => { setLoading(true); fetchApps() }, [filter])
+
+  const handleWaiverApprove = async (id) => {
+    if (!waiverSignature) { toast.error('Admin signature is required'); return }
+    setWaiverSubmitting(true)
+    try {
+      await api.post(`/admin/applications/${id}/waiver/approve`, {
+        adminSignature: waiverSignature,
+        note: waiverNote.trim() || undefined,
+      })
+      toast.success('Waiver approved — all remaining premiums have been waived.')
+      setWaiverItem(null); setWaiverNote(''); setWaiverSignature(null); fetchApps()
+    } catch (err) { toast.error(err.response?.data?.message || 'Failed to approve waiver') }
+    finally { setWaiverSubmitting(false) }
+  }
+
+  const handleWaiverReject = async (id) => {
+    setWaiverSubmitting(true)
+    try {
+      await api.post(`/admin/applications/${id}/waiver/reject`, {
+        note: waiverNote.trim() || undefined,
+      })
+      toast.success('Emergency declaration rejected.')
+      setWaiverItem(null); setWaiverNote(''); setWaiverSignature(null); fetchApps()
+    } catch (err) { toast.error(err.response?.data?.message || 'Failed to reject waiver') }
+    finally { setWaiverSubmitting(false) }
+  }
+
+  const handleMaturityPayout = async (id) => {
+    if (!maturitySignature) { toast.error('Admin signature is required'); return }
+    setMaturitySubmitting(true)
+    try {
+      await api.post(`/admin/applications/${id}/waiver/maturity-payout`, {
+        adminSignature: maturitySignature,
+      })
+      toast.success('Maturity payout issued — claim created and customer notified.')
+      setMaturityItem(null); setMaturitySignature(null); fetchApps()
+    } catch (err) { toast.error(err.response?.data?.message || 'Failed to issue maturity payout') }
+    finally { setMaturitySubmitting(false) }
+  }
 
   const handleAction = async (id, action) => {
     if ((action === 'reject' || action === 'revise') && !actionNote.trim()) {
@@ -119,6 +177,16 @@ export default function AdminApplicationsPage() {
                       <span className={`badge-status badge-${app.status?.toLowerCase()}`}>
                         {statusLabel(app.status) || app.status}
                       </span>
+                      {app.emergencyStatus === 'PENDING' && (
+                        <span style={{ background: '#fff7ed', color: '#c2410c', border: '1px solid #fed7aa', borderRadius: 20, padding: '2px 10px', fontSize: '0.72rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                          <i className="bi bi-exclamation-triangle-fill"></i> Emergency
+                        </span>
+                      )}
+                      {app.emergencyStatus === 'APPROVED' && app.premiumWaiverBenefit && (
+                        <span style={{ background: '#ecfdf5', color: '#065f46', border: '1px solid #6ee7b7', borderRadius: 20, padding: '2px 10px', fontSize: '0.72rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                          <i className="bi bi-shield-check"></i> Waiver Active
+                        </span>
+                      )}
                     </div>
                     <div className="d-flex gap-3 flex-wrap mb-2">
                       {[
@@ -186,6 +254,92 @@ export default function AdminApplicationsPage() {
                         <button className="btn-primary-custom" style={{ fontSize: '0.85rem', padding: '0.45rem 1rem' }}
                            onClick={() => { setSelected(app.id); setActionNote(''); setSignatureData(null) }}>
                           {t('admin.applications.reviewApplication')}
+                        </button>
+                      )
+                    )}
+
+                    {/* EMERGENCY → waiver review panel */}
+                    {app.emergencyStatus === 'PENDING' && (
+                      waiverItem === app.id ? (
+                        <div>
+                          <div style={{ marginBottom: '0.5rem', fontSize: '0.82rem', color: '#c2410c', fontWeight: 700 }}>
+                            <i className="bi bi-exclamation-triangle-fill me-1 text-warning"></i>
+                            Emergency Declaration — Premium Waiver Review
+                          </div>
+                          {app.emergencyFormData && (() => {
+                            try {
+                              const fd = typeof app.emergencyFormData === 'string' ? JSON.parse(app.emergencyFormData) : app.emergencyFormData
+                              const entries = Object.entries(fd).filter(([,v]) => v)
+                              if (entries.length > 0) return (
+                                <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 8, padding: '0.5rem 0.75rem', marginBottom: '0.5rem', fontSize: '0.78rem' }}>
+                                  {entries.map(([k, v]) => <div key={k}><strong>{k}:</strong> {String(v)}</div>)}
+                                </div>
+                              )
+                            } catch {}
+                            return null
+                          })()}
+                          <DigitalSignatureCanvas
+                            label="Your Signature (required for approval)"
+                            required
+                            onChange={setWaiverSignature}
+                            height={100}
+                          />
+                          <textarea rows={2} className="form-control-custom w-100 mb-2" style={{ resize: 'vertical' }}
+                            placeholder="Admin note (optional)"
+                            value={waiverNote} onChange={e => setWaiverNote(e.target.value)} />
+                          <div className="d-flex gap-1 flex-wrap">
+                            <button style={{ background: '#0891b2', color: '#fff', border: 'none', borderRadius: 6, padding: '0.4rem 0.8rem', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer' }}
+                              onClick={() => handleWaiverApprove(app.id)} disabled={waiverSubmitting}>
+                              {waiverSubmitting ? <span className="spinner-border spinner-border-sm"></span> : '✓ Approve Waiver'}
+                            </button>
+                            <button className="btn-danger-sm"
+                              onClick={() => handleWaiverReject(app.id)} disabled={waiverSubmitting}>
+                              ✗ Reject
+                            </button>
+                            <button className="btn-outline-custom" style={{ padding: '0.3rem 0.6rem', fontSize: '0.82rem' }}
+                              onClick={() => { setWaiverItem(null); setWaiverNote(''); setWaiverSignature(null) }}>
+                              {t('admin.common.cancel')}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => { setWaiverItem(app.id); setWaiverNote(''); setWaiverSignature(null) }}
+                          style={{ background: '#fff7ed', color: '#c2410c', border: '1.5px solid #fed7aa', borderRadius: 8, padding: '0.45rem 1rem', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, marginBottom: '0.5rem' }}>
+                          <i className="bi bi-exclamation-triangle-fill"></i> Review Emergency Declaration
+                        </button>
+                      )
+                    )}
+
+                    {/* APPROVED + waiver approved → Issue Maturity Payout */}
+                    {app.status === 'APPROVED' && app.emergencyStatus === 'APPROVED' && (
+                      maturityItem === app.id ? (
+                        <div style={{ marginTop: '0.5rem' }}>
+                          <div style={{ marginBottom: '0.5rem', fontSize: '0.82rem', color: '#0369a1', fontWeight: 700 }}>
+                            <i className="bi bi-cash-coin me-1"></i> Issue Maturity Payout
+                          </div>
+                          <DigitalSignatureCanvas
+                            label="Admin Signature (required)"
+                            required
+                            onChange={setMaturitySignature}
+                            height={100}
+                          />
+                          <div className="d-flex gap-1 flex-wrap mt-2">
+                            <button style={{ background: '#0369a1', color: '#fff', border: 'none', borderRadius: 6, padding: '0.4rem 0.8rem', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer' }}
+                              onClick={() => handleMaturityPayout(app.id)} disabled={maturitySubmitting}>
+                              {maturitySubmitting ? <span className="spinner-border spinner-border-sm"></span> : '✓ Confirm Payout'}
+                            </button>
+                            <button className="btn-outline-custom" style={{ padding: '0.3rem 0.6rem', fontSize: '0.82rem' }}
+                              onClick={() => { setMaturityItem(null); setMaturitySignature(null) }}>
+                              {t('admin.common.cancel')}
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => { setMaturityItem(app.id); setMaturitySignature(null) }}
+                          style={{ background: '#eff6ff', color: '#1d4ed8', border: '1.5px solid #bfdbfe', borderRadius: 8, padding: '0.4rem 0.9rem', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, marginTop: '0.4rem' }}>
+                          <i className="bi bi-cash-coin"></i> Issue Maturity Payout
                         </button>
                       )
                     )}

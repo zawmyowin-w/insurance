@@ -163,6 +163,9 @@ public class PackageController {
         if (req.containsKey("maturityIncludesPremiums"))
             pkg.setMaturityIncludesPremiums(Boolean.TRUE.equals(req.get("maturityIncludesPremiums")));
 
+        if (req.containsKey("premiumWaiverBenefit"))
+            pkg.setPremiumWaiverBenefit(Boolean.TRUE.equals(req.get("premiumWaiverBenefit")));
+
         return pkg;
     }
 

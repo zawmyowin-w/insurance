@@ -7,8 +7,8 @@ import DigitalSignatureCanvas from '../../components/DigitalSignatureCanvas'
 
 const BASE = import.meta.env.VITE_API_BASE_URL || '/api'
 
-const STATUS_COLOR  = { PAID: '#16a34a', OVERDUE: '#dc2626', DUE: '#d97706', PENDING_VERIFICATION: '#7c3aed', UPCOMING: '#64748b' }
-const STATUS_BG     = { PAID: '#dcfce7', OVERDUE: '#fee2e2', DUE: '#fef3c7', PENDING_VERIFICATION: '#ede9fe', UPCOMING: '#f1f5f9' }
+const STATUS_COLOR  = { PAID: '#16a34a', OVERDUE: '#dc2626', DUE: '#d97706', PENDING_VERIFICATION: '#7c3aed', UPCOMING: '#64748b', WAIVED: '#0891b2' }
+const STATUS_BG     = { PAID: '#dcfce7', OVERDUE: '#fee2e2', DUE: '#fef3c7', PENDING_VERIFICATION: '#ede9fe', UPCOMING: '#f1f5f9', WAIVED: '#e0f2fe' }
 const PAY_STATUS_COLOR = s => ({ PENDING: '#d97706', VERIFIED: '#16a34a', REJECTED: '#dc2626' }[s] || '#64748b')
 const PAY_STATUS_BG    = s => ({ PENDING: '#fef3c7', VERIFIED: '#dcfce7', REJECTED: '#fee2e2' }[s] || '#f1f5f9')
 
@@ -112,6 +112,7 @@ export default function MyPaymentsPage() {
     DUE: t('payments.statusDue'),
     PENDING_VERIFICATION: t('payments.statusPendingVerification'),
     UPCOMING: t('payments.statusUpcoming'),
+    WAIVED: 'Waived',
   }
 
   return (

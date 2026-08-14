@@ -85,8 +85,19 @@ export default function MyClaimsPage() {
                           #{claim.id} · {claim.claimType} · {claim.createdAt ? new Date(claim.createdAt).toLocaleDateString() : '—'}
                         </small>
                       </div>
-                      <span className={`badge-status badge-${claim.status?.toLowerCase()}`}>{claim.status}</span>
+                      {claim.claimType === 'PREMIUM_WAIVER'
+                        ? <span style={{ background: '#ecfdf5', color: '#065f46', border: '1px solid #6ee7b7', borderRadius: 20, padding: '2px 10px', fontSize: '0.72rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            <i className="bi bi-shield-heart"></i> Premium Waiver Payout
+                          </span>
+                        : <span className={`badge-status badge-${claim.status?.toLowerCase()}`}>{claim.status}</span>
+                      }
                     </div>
+                    {claim.claimType === 'PREMIUM_WAIVER' && (
+                      <div style={{ background: '#ecfdf5', border: '1px solid #6ee7b7', borderRadius: 8, padding: '0.4rem 0.65rem', marginBottom: '0.35rem', fontSize: '0.79rem', color: '#065f46', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <i className="bi bi-shield-heart-fill"></i>
+                        <span>Policy matured under Premium Waiver Benefit — no further premiums due.</span>
+                      </div>
+                    )}
                     <div className="d-flex gap-3 flex-wrap" style={{ fontSize: '0.83rem' }}>
                       <span style={{ color: 'var(--text-muted)' }}>{t('myClaims.amountLabel')}: <strong style={{ color: 'var(--text-primary)' }}>{Number(claim.amount).toLocaleString()} MMK</strong></span>
                       {claim.incidentDate && <span style={{ color: 'var(--text-muted)' }}>{t('myClaims.incidentLabel')}: <strong style={{ color: 'var(--text-primary)' }}>{new Date(claim.incidentDate).toLocaleDateString()}</strong></span>}
