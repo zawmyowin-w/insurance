@@ -1,0 +1,25 @@
+Policy များကို အကယ်၍ Customer များ ဘက်မှ့ premium ကြေးဆက်လက်၍ မသွင်းတော့ပါက ထို စာချုပ်များကို ဖျက်ချရန် Admin ၏ dashboard တွင် စာချုပ်များကို ထိ့ရောက်စွာ ဖျက်ချ့လို့ရမည့် button တစ်ခု့ ထည့်သွင်းပေးပါ။
+
+////////////////////////
+
+
+Admin များနှင့် Agent များမှ့ သက်ဆိုင်ရာ application များ claims များကို စစ်ဆေးပီးသောအခါ၌ ရေးသားသည့် note များကို customer ဘက်မှ့ ထို notes များကို pop up page တစ်ခု့ဖြင့်အသေးစိတ်တွေ့မြင်ရမည်။ system တွင် user တစ်ယောက်နဲ့တစ်ယောက် notes ရေးတိုင်းလဲ ထို notes များကို pop up page ဖြင့် မည်သူရေးသည်ကို သေချာစွာမြင်ရမည်။
+
+///////////////////////
+
+
+Dynamic pdf files များကို download တန်းမထုတ်ဘဲ print and download ဆို၍ တစ်ခါတည်း printer နှင့်ပါ တန်းထုတ်လို့ရမည့် button အဖြစ်ပြောင်းပေးပါ။ ထို button တွင် dynamic pdf files များကို save as pdf နှင့် print ဟူ၍ နှစ်မျိုးပါအောင်ထည့်ပေးပါ။
+
+////////////////////////
+
+
+Admin dashboard ၏ reminder ပိုင်းတွင်လည်း edit schedule ဟူသော အချိန်တစ်ခု့သတ်မှတ်၍runသည့် auto reminder ပိုင်းကိုဖျက်၍ manual ဘက်မှ့သာ အလုပ်လုပ်အောင်လုပ်ပေးပါ။ ထို့ပြင် empty record ဟူသည်ကိုလည်း manual run မှာ button တစ်ခု့အဖြစ်ထုတ်ပေးပါ။ ထို့အပြင် reminder ၏ အပေါ်ပိုင်းတွင် reminder time ဆိုတာပါဖျောက်ပေးပါ။ 
+ထို့အပြင် Reminder ၏ advertise to customers ဟူသောအပိုင်းတွင် insurance  types များကို ရွေးစရာမလိုဘဲ admin မှ့တကယ်Createထားသော insurance packages များကိုသာ ကြော်ငြာခွင့်ရအောင်လုပ်ပေးပါ ထိုသို့ကြော်ငြာသည့်စာများကိုလည်း customer များဆီသို့ရောက်သောအခါ၌ notification တွင် ထိုစာများကိုအသေးစိတ်ဖတ်ရှု့၍ရအောင်နှင့် ထို package နှင့်ပတ်သက်သောအကြောင်းအရာများကိုပါ pop up page ဖြင့် အသေးစိတ်ကြည့်ရှု့လို့ရ၍ apply now ဆိုသော button ဖြင့် ထို package ဆီသို့ customerကိူတိုက်ရိုက်ပိူ့ပေးပါ။
+
+///////////////////////
+
+
+Admin dashboard တွင် Insurance Package များ create ရာ၌ premium waver benifits ဆို၍ အပိုင်းတစ်ခု့ထပ်ထည့်ပေးရမည်။ ထိုအပိုင်းသည် package တွင် on off button ဖြင့် ပါဝင်ရမည်။ ထိုအပိုင်း၏ အလုပ်လုပ်ပုံမှာ အကယ်၍ မိမိ့ လျှောက်ထားသော အာမခံ (ဥပမာ- ပညာရေးအာမခံ) တွင် မိမိ့၏ အုပ်ထိန်းသူမှ့ မိ့မိ့၏ အနာဂတ်အတွက် premium ကြေးပေးသွင်းရသောအခါ၌ မမျှော်လင့်ဘဲ အာမခံ​ပေးသွင်းသည့် အုပ်ထိန်းသူ မှ့သေဆုံးသွားသောအခါတွင် နောက်ဆက်တွဲ ကျန်ရှိ့သော premium ကြေးများကိုပေးသွင်း စရာမလိုတော့လဲ ထို policy သည် premium ကြေးကင်းလွတ်ခွင့်ရမည်ဖြစ်ပီး policy စာချုပ်ပြည့်တော့မှ့သာ customer မှ့ ထို policy pdf စာချုပ်ဖြင့် လာရောက်တောင်းခံနိုင်မည်ဖြစ်သည်။
+ထို့ပြင် premium waver benefit on ထားသည့် packagesများတွင် form template create ရာ၌ application form, claims form နှင့်တစ်ကွ့ emergency form တစ်ခု့ကို ထည့်သွင်းပေးရမည်။ ထို form တွင်လည်း မိ့မိ့၏ လက်ရှိ့ပတ်သက်သည့်အခြေအနေများကို အခြားform များနှင့် နည်းတူ dynamic form ပုံစံဖြင့် adminစိတ်တိုင်းကျ့ သတ်မှတ်ခွင့်ရရမည်။ ထို့အပြင် premium waver benefit ကို On ထားသည့် policy များတွင်သာ my policy တွင် "Reinstate Benifit" ဟူသော buttonဖြင့် admin မှ့ချ့ပေးထားသော premium waver benefit form ကိူဖြည့်၍ admin ဆီသို့ တိုက်ရိုက်တင်ပေးရမည်။ adminဆိုသို့ထိုတင်ပို့လာသော form ကို admin မှ့ Application တွင် policy application ၌ Emergency status ဖြင့် ပေါ်လာရမည်။ ထို့နောက် admin မှ့ကိုယ်တိုင်စစ်ဆေး၍ approve ပီးနောက်တွင် premium schedule ၌ နောက်ထပ်ပေးဆောင်ရမည့် လစဥ်ကြေးများမှာ ဆက်၍ပေးဆောင်ရန်မလိုဟူသော စာဖြင့် ဖော်ပြ၍ customer ဘက်မှ့ premium ကြေး ပေးသွင်းစရာမလိုတော့ဘဲ စာချုပ်သက်တမ်းပြည့်သည့်အခါမှ့သာ admin ဘက်ကနေ customer ဆီသို့ ငွေလွှဲပြေစာကို Customer ၏ my claims ၌ claim ထုတ်ယူပီးသောစာအနေဖြင့် Premium waver benefits ဟူသော status ဖြင့် ဖော်ပြပေးရမည်။ 
+Customer နှင့် admin မှ့ ထို policy နှင့်ပတ်သက်၍ pdf file download လုပ်ရာတွင်လည်း premium waver benefits ဟူသော အကြောင်းအရာကိုပါဝင်အောင်ထည့်ပေးရမည်။ 
+မည်သည့်အဆင့်ကိုလုပ်​ဆောင်သည်ဖြစ်စေ။ admin နှင့် customer မှ့ digital sign များမဖြစ်မနေထိုးပေးရမည်။
