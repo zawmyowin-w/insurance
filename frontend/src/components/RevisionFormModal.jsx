@@ -3,6 +3,9 @@ import api from '../services/api'
 import { toast } from 'react-toastify'
 import NrcInput from './NrcInput'
 import { getPhoneValidationError, normalisePhone } from '../utils/validation'
+import { openBlobFromApi } from '../utils/download'
+import { apiError } from '../utils/apiError'
+import { fmtMoney } from '../utils/format'
 
 function PhoneField({ value, onValue }) {
   const [error, setError] = useState(null)
@@ -167,7 +170,7 @@ export default function RevisionFormModal({ show, onClose, type, item, onRevised
       onRevised()
       onClose()
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to resubmit')
+      apiError(err, 'Failed to resubmit')
     } finally {
       setSubmitting(false)
     }
@@ -271,7 +274,7 @@ export default function RevisionFormModal({ show, onClose, type, item, onRevised
                   />
                   {pkgLimits && (
                     <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: 3, display: 'block' }}>
-                      {Number(pkgLimits.min).toLocaleString()} – {Number(pkgLimits.max).toLocaleString()} MMK
+                      {Number(pkgLimits.min).toLocaleString()} – {fmtMoney(pkgLimits.max)}
                     </small>
                   )}
                 </div>
@@ -425,9 +428,7 @@ function RevisionField({ field, value, file, existingFilePath, onValue, onFile, 
     setViewingExisting(true)
     try {
       const endpoint = `/${role}/${type === 'application' ? 'applications' : 'claims'}/${itemId}/form-file/${fieldId}`
-      const res = await api.get(endpoint, { responseType: 'blob' })
-      const url = window.URL.createObjectURL(res.data)
-      window.open(url, '_blank')
+      await openBlobFromApi(endpoint)
     } catch { toast.error('Could not load existing file') }
     finally { setViewingExisting(false) }
   }

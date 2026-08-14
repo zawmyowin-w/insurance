@@ -46,3 +46,29 @@ export function fmtNumber(value) {
   if (value === null || value === undefined) return '—'
   return Number(value).toLocaleString('en-US')
 }
+
+/**
+ * Format a number as MMK currency in the active UI locale
+ * (e.g. "1,200,000 MMK"). Use this instead of inline
+ * `Number(x).toLocaleString(locale) + ' MMK'`.
+ */
+export function fmtMoney(value, locale = 'en-US', fallback = '—') {
+  if (value === null || value === undefined || value === '') return fallback
+  const num = Number(value)
+  if (isNaN(num)) return String(value)
+  return num.toLocaleString(locale) + ' MMK'
+}
+
+/** Locale-aware date, e.g. "01/01/2025" for en — with a caller-chosen fallback. */
+export function fmtDateIntl(value, locale, fallback = '—') {
+  if (!value) return fallback
+  const d = new Date(value)
+  return isNaN(d) ? String(value) : d.toLocaleDateString(locale)
+}
+
+/** Locale-aware date and time — with a caller-chosen fallback. */
+export function fmtDateTimeIntl(value, locale, fallback = '—') {
+  if (!value) return fallback
+  const d = new Date(value)
+  return isNaN(d) ? String(value) : d.toLocaleString(locale)
+}

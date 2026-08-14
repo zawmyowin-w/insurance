@@ -9,6 +9,8 @@ import DigitalSignatureCanvas from '../../components/DigitalSignatureCanvas'
 import DynamicFormFields from '../../components/DynamicFormFields'
 import { getTypeMeta } from '../../utils/typeMeta'
 import { getPhoneValidationError } from '../../utils/validation'
+import { apiError } from '../../utils/apiError'
+import { fmtMoney } from '../../utils/format'
 
 export default function ApplyPolicyPage() {
   const { t } = useTranslation()
@@ -161,7 +163,7 @@ export default function ApplyPolicyPage() {
       toast.success(t('applyPolicy.submitSuccess'))
       navigate('/customer/applications')
     } catch (err) {
-      toast.error(err.response?.data?.message || t('applyPolicy.submitFailed'))
+      apiError(err, t('applyPolicy.submitFailed'))
     } finally {
       setSubmitting(false)
     }
@@ -260,7 +262,7 @@ export default function ApplyPolicyPage() {
                       </div>
                       <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '0 0 0.75rem' }}>{plan.description}</p>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
-                        <span style={{ color: 'var(--text-muted)' }}>{Number(plan.coverageMin).toLocaleString()} – {Number(plan.coverageMax).toLocaleString()} MMK</span>
+                        <span style={{ color: 'var(--text-muted)' }}>{Number(plan.coverageMin).toLocaleString()} – {fmtMoney(plan.coverageMax)}</span>
                         <span style={{ fontWeight: 700, color: meta.color }}>{plan.durationTiers?.length > 0 ? `${(Math.min(...plan.durationTiers.map(t => t.premiumRate)) * 100).toFixed(1)}%` : '—'}/{t('applyPolicy.year')}</span>
                       </div>
                       {(plan.minPolicyTerm || plan.policyTerm) && (
@@ -317,7 +319,7 @@ export default function ApplyPolicyPage() {
                   <div style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{selectedPlan.type}</div>
                   <div style={{ color: '#fff', fontWeight: 800, fontSize: '1.15rem', lineHeight: 1.2 }}>{selectedPlan.name}</div>
                   <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.8rem', marginTop: 3 }}>
-                    {(selectedPlan.premiumRate * 100).toFixed(1)}% {t('applyPolicy.premiumRate')} &nbsp;·&nbsp; {Number(selectedPlan.coverageMin).toLocaleString()} – {Number(selectedPlan.coverageMax).toLocaleString()} MMK
+                    {(selectedPlan.premiumRate * 100).toFixed(1)}% {t('applyPolicy.premiumRate')} &nbsp;·&nbsp; {Number(selectedPlan.coverageMin).toLocaleString()} – {fmtMoney(selectedPlan.coverageMax)}
                   </div>
                 </div>
                 <button onClick={() => { setStep(1); setSelectedPlan(null) }} style={{
@@ -346,7 +348,7 @@ export default function ApplyPolicyPage() {
                       min={selectedPlan.coverageMin} max={selectedPlan.coverageMax}
                       onChange={e => setCoverage(e.target.value)} />
                     <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
-                      {t('applyPolicy.rangeLabel')}: {Number(selectedPlan.coverageMin).toLocaleString()} – {Number(selectedPlan.coverageMax).toLocaleString()} MMK
+                      {t('applyPolicy.rangeLabel')}: {Number(selectedPlan.coverageMin).toLocaleString()} – {fmtMoney(selectedPlan.coverageMax)}
                     </small>
                   </div>
                   <div className="col-12 col-sm-6">
@@ -486,7 +488,7 @@ export default function ApplyPolicyPage() {
                 {[
                   [t('applyPolicy.plan'), selectedPlan.name],
                   [t('applyPolicy.type'), selectedPlan.type],
-                  [t('applyPolicy.coverage'), coverage ? Number(coverage).toLocaleString() + ' MMK' : '—'],
+                  [t('applyPolicy.coverage'), coverage ? fmtMoney(coverage) : '—'],
                   [t('applyPolicy.duration'), `${duration} ${duration > 1 ? t('applyPolicy.years') : t('applyPolicy.year')}`],
                   // Show age band rate if matched, otherwise fall back to tier rate
                   ...(hasAgeBands
@@ -507,7 +509,7 @@ export default function ApplyPolicyPage() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '1rem' }}>
                     <span>{t('applyPolicy.estPremium')}</span>
                     <span style={{ color: hasAgeBands && dob && !matchedBand ? 'var(--text-muted)' : 'var(--primary)' }}>
-                      {premium ? Number(premium).toLocaleString() + ' MMK' : '—'}
+                      {premium ? fmtMoney(premium) : '—'}
                     </span>
                   </div>
                   <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)', marginTop: 4 }}>
@@ -529,7 +531,7 @@ export default function ApplyPolicyPage() {
 
               <ReviewRow label={t('applyPolicy.plan')} value={selectedPlan.name} />
               <ReviewRow label={t('applyPolicy.type')} value={selectedPlan.type} />
-              <ReviewRow label={t('applyPolicy.coverage')} value={Number(coverage).toLocaleString() + ' MMK'} />
+              <ReviewRow label={t('applyPolicy.coverage')} value={fmtMoney(coverage)} />
               <ReviewRow label={t('applyPolicy.duration')} value={`${duration} ${duration > 1 ? t('applyPolicy.years') : t('applyPolicy.year')}`} />
               {hasAgeBands && dob && (
                 <ReviewRow
@@ -543,7 +545,7 @@ export default function ApplyPolicyPage() {
                   value={`${(matchedBand.premiumRate * 100).toFixed(2)}% (${t('applyPolicy.ageGroup')}: ${matchedBand.minAge}–${matchedBand.maxAge} ${t('applyPolicy.yrs')})`}
                 />
               )}
-              <ReviewRow label={t('applyPolicy.estPremium')} value={premium ? Number(premium).toLocaleString() + ' MMK' : '—'} />
+              <ReviewRow label={t('applyPolicy.estPremium')} value={premium ? fmtMoney(premium) : '—'} />
               {notes && <ReviewRow label={t('applyPolicy.notes')} value={notes} />}
               {signatureData && (
                 <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border)' }}>

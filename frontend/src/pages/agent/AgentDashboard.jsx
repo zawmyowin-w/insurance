@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
+import { fmtDateIntl, fmtMoney } from '../../utils/format'
 
 export default function AgentDashboard() {
   const { user } = useAuth()
@@ -140,9 +141,9 @@ export default function AgentDashboard() {
                   <tr key={a.id}>
                      <td style={{ fontWeight: 600 }}>{a.customerName || a.customer?.name}</td>
                     <td>{a.packageName || a.package?.name}</td>
-                    <td>{Number(a.coverageAmount).toLocaleString(locale)} MMK</td>
+                    <td>{fmtMoney(a.coverageAmount, locale)}</td>
                      <td><span className={`badge-status badge-${a.status?.toLowerCase()}`}>{APP_STATUS_MAP[a.status] || a.status}</span></td>
-                     <td>{a.createdAt ? new Date(a.createdAt).toLocaleDateString(locale) : t('formModal.na')}</td>
+                     <td>{fmtDateIntl(a.createdAt, locale, t('formModal.na'))}</td>
                   </tr>
                 ))}
               </tbody>

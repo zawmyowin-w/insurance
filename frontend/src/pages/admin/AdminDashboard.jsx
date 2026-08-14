@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../services/api'
+import { fmtDateTimeIntl } from '../../utils/format'
 
 export default function AdminDashboard() {
   const { t, i18n } = useTranslation()
@@ -128,7 +129,7 @@ export default function AdminDashboard() {
                 </div>
                 <div className="flex-grow-1">
                   <div style={{ fontWeight: 500, fontSize: '0.88rem', color: 'var(--text-primary)' }}>{act.description}</div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{act.createdAt ? new Date(act.createdAt).toLocaleString() : ''}</div>
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{fmtDateTimeIntl(act.createdAt, undefined, '')}</div>
                 </div>
               </div>
             ))}

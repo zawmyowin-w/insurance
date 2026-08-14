@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
+import { apiErrorMessage } from '../../utils/apiError'
 
 export default function AgentLoginPage() {
   const { login } = useAuth()
@@ -29,8 +30,7 @@ export default function AgentLoginPage() {
       toast.success(t('agent.login.welcomeBack'))
       navigate(from, { replace: true })
     } catch (err) {
-      const msg = err.response?.data?.message || ''
-      toast.error(msg || t('agent.login.invalidCredentials'))
+      toast.error(apiErrorMessage(err, t('agent.login.invalidCredentials')))
     } finally {
       setLoading(false)
     }

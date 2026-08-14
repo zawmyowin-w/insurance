@@ -7,6 +7,8 @@ import com.insurance.portal.model.enums.*;
 import com.insurance.portal.repository.*;
 import com.insurance.portal.service.PolicyService;
 import com.insurance.portal.util.FileStorageUtil;
+import com.insurance.portal.util.ApiResponseUtil;
+import com.insurance.portal.util.CurrentUserUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -39,7 +41,7 @@ public class CustomerController {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private User getUser(UserDetails principal) {
-        return userRepo.findByEmail(principal.getUsername()).orElseThrow();
+        return CurrentUserUtil.require(userRepo, principal);
     }
 
     // ── Dashboard Stats ──────────────────────────────────────────────
@@ -99,7 +101,7 @@ public class CustomerController {
         InsurancePackage pkg = packageRepo.findById(pkgId)
                 .orElseThrow(() -> new RuntimeException("Package not found"));
         if (!pkg.isActive())
-            return ResponseEntity.badRequest().body(Map.of("message", "This package is no longer available"));
+            return ApiResponseUtil.badRequest("This package is no longer available");
 
         BigDecimal coverage = new BigDecimal(coverageAmount);
         int dur = Integer.parseInt(duration);
@@ -130,9 +132,9 @@ public class CustomerController {
         try {
             documentsJson = FileStorageUtil.toJsonArray(FileStorageUtil.saveDocuments(documents, "applications", "app"));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+            return ApiResponseUtil.badRequest(e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Failed to save uploaded documents"));
+            return ApiResponseUtil.badRequest("Failed to save uploaded documents");
         }
 
         PolicyApplication app = PolicyApplication.builder()
@@ -164,10 +166,10 @@ public class CustomerController {
         if (!app.getCustomer().getId().equals(user.getId()))
             return ResponseEntity.status(403).body(Map.of("message", "Forbidden"));
         if (app.getStatus() != ApplicationStatus.PENDING)
-            return ResponseEntity.badRequest().body(Map.of("message", "Only PENDING applications can be cancelled"));
+            return ApiResponseUtil.badRequest("Only PENDING applications can be cancelled");
         app.setStatus(ApplicationStatus.CANCELLED);
         appRepo.save(app);
-        return ResponseEntity.ok(Map.of("message", "Application cancelled"));
+        return ApiResponseUtil.ok("Application cancelled");
     }
 
     /**
@@ -191,7 +193,7 @@ public class CustomerController {
         if (app.getStatus() != ApplicationStatus.REVISION_REQUESTED
                 && app.getStatus() != ApplicationStatus.PENDING
                 && app.getStatus() != ApplicationStatus.REJECTED)
-            return ResponseEntity.badRequest().body(Map.of("message", "Only PENDING, REVISION_REQUESTED, or REJECTED applications can be edited"));
+            return ApiResponseUtil.badRequest("Only PENDING, REVISION_REQUESTED, or REJECTED applications can be edited");
 
         InsurancePackage pkg = app.getInsurancePackage();
         BigDecimal effectiveCoverage = app.getCoverageAmount();
@@ -211,7 +213,7 @@ public class CustomerController {
                 app.setCoverageAmount(newCoverage);
                 effectiveCoverage = newCoverage;
             } catch (NumberFormatException e) {
-                return ResponseEntity.badRequest().body(Map.of("message", "Invalid coverage amount"));
+                return ApiResponseUtil.badRequest("Invalid coverage amount");
             }
         }
 
@@ -219,11 +221,11 @@ public class CustomerController {
             try {
                 int newDuration = Integer.parseInt(duration);
                 if (newDuration < 1)
-                    return ResponseEntity.badRequest().body(Map.of("message", "Duration must be at least 1 year"));
+                    return ApiResponseUtil.badRequest("Duration must be at least 1 year");
                 app.setDuration(newDuration);
                 effectiveDuration = newDuration;
             } catch (NumberFormatException e) {
-                return ResponseEntity.badRequest().body(Map.of("message", "Invalid duration"));
+                return ApiResponseUtil.badRequest("Invalid duration");
             }
         }
 
@@ -279,9 +281,9 @@ public class CustomerController {
         if (!app.getCustomer().getId().equals(user.getId()))
             return ResponseEntity.status(403).body(Map.of("message", "Forbidden"));
         if (app.getStatus() != ApplicationStatus.CANCELLED)
-            return ResponseEntity.badRequest().body(Map.of("message", "Only CANCELLED applications can be deleted"));
+            return ApiResponseUtil.badRequest("Only CANCELLED applications can be deleted");
         appRepo.delete(app);
-        return ResponseEntity.ok(Map.of("message", "Application deleted"));
+        return ApiResponseUtil.ok("Application deleted");
     }
 
     /**
@@ -300,7 +302,7 @@ public class CustomerController {
         if (!claim.getCustomer().getId().equals(user.getId()))
             return ResponseEntity.status(403).body(Map.of("message", "Forbidden"));
         if (claim.getStatus() != ClaimStatus.REVISION_REQUESTED)
-            return ResponseEntity.badRequest().body(Map.of("message", "Only REVISION_REQUESTED claims can be revised"));
+            return ApiResponseUtil.badRequest("Only REVISION_REQUESTED claims can be revised");
 
         if (formData != null) {
             try {
@@ -366,11 +368,11 @@ public class CustomerController {
         if (!app.getCustomer().getId().equals(user.getId()))
             return ResponseEntity.status(403).body(Map.of("message", "This application does not belong to you"));
         if (app.getStatus() != ApplicationStatus.APPROVED)
-            return ResponseEntity.badRequest().body(Map.of("message", "Claims can only be submitted for APPROVED policies"));
+            return ApiResponseUtil.badRequest("Claims can only be submitted for APPROVED policies");
         if (claimRepo.existsByApplication_Id(app.getId()))
-            return ResponseEntity.badRequest().body(Map.of("message", "A claim has already been submitted for this policy. Only one claim is allowed per policy."));
+            return ApiResponseUtil.badRequest("A claim has already been submitted for this policy. Only one claim is allowed per policy.");
         if (!paymentRepo.existsByApplication_IdAndStatus(app.getId(), PaymentStatus.VERIFIED))
-            return ResponseEntity.badRequest().body(Map.of("message", "You must have at least one verified payment before submitting a claim for this policy"));
+            return ApiResponseUtil.badRequest("You must have at least one verified payment before submitting a claim for this policy");
 
         // Validate waiting period: claim_eligible_from must be in the past (or null)
         if (app.getClaimEligibleFrom() != null && LocalDate.now().isBefore(app.getClaimEligibleFrom())) {
@@ -382,10 +384,10 @@ public class CustomerController {
         // Validate that claim amount does not exceed the policy coverage amount
         BigDecimal claimAmt;
         try { claimAmt = new BigDecimal(amount); } catch (NumberFormatException e) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Invalid claim amount"));
+            return ApiResponseUtil.badRequest("Invalid claim amount");
         }
         if (claimAmt.compareTo(BigDecimal.ZERO) <= 0)
-            return ResponseEntity.badRequest().body(Map.of("message", "Claim amount must be greater than zero"));
+            return ApiResponseUtil.badRequest("Claim amount must be greater than zero");
         if (app.getCoverageAmount() != null && claimAmt.compareTo(app.getCoverageAmount()) > 0)
             return ResponseEntity.badRequest().body(Map.of("message",
                 "Claim amount cannot exceed your policy coverage of " + app.getCoverageAmount().toPlainString() + " MMK"));
@@ -403,9 +405,9 @@ public class CustomerController {
         try {
             documentsJson = FileStorageUtil.toJsonArray(FileStorageUtil.saveDocuments(documents, "claims", "claim"));
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+            return ApiResponseUtil.badRequest(e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Failed to save uploaded documents"));
+            return ApiResponseUtil.badRequest("Failed to save uploaded documents");
         }
 
         Claim claim = Claim.builder()
@@ -465,7 +467,7 @@ public class CustomerController {
         if (!app.getCustomer().getId().equals(user.getId()))
             return ResponseEntity.status(403).body(Map.of("message", "This application does not belong to you"));
         if (app.getStatus() != ApplicationStatus.APPROVED)
-            return ResponseEntity.badRequest().body(Map.of("message", "Payment can only be submitted for APPROVED applications"));
+            return ApiResponseUtil.badRequest("Payment can only be submitted for APPROVED applications");
 
         // For period-based payments: block duplicate submission for same period
         if (periodNumber != null) {
@@ -477,7 +479,7 @@ public class CustomerController {
         } else {
             // Legacy / one-time: block if any pending payment exists
             if (paymentRepo.existsByApplication_IdAndStatus(app.getId(), PaymentStatus.PENDING))
-                return ResponseEntity.badRequest().body(Map.of("message", "A pending payment already exists for this application"));
+                return ApiResponseUtil.badRequest("A pending payment already exists for this application");
         }
 
         // Validate payment method against DB (fall back to built-in list if no DB entries yet)
@@ -493,18 +495,18 @@ public class CustomerController {
                     Set.of("KBZ_PAY", "WAVE_PAY", "AYA_PAY").contains(paymentMethod);
         }
         if (!methodValid)
-            return ResponseEntity.badRequest().body(Map.of("message", "Please select a valid payment method"));
+            return ApiResponseUtil.badRequest("Please select a valid payment method");
         if (screenshot == null || screenshot.isEmpty())
-            return ResponseEntity.badRequest().body(Map.of("message", "A payment proof screenshot is required"));
+            return ApiResponseUtil.badRequest("A payment proof screenshot is required");
 
         // Validate transaction last 6 digits
         if (transactionLastSixDigits == null || transactionLastSixDigits.isBlank())
-            return ResponseEntity.badRequest().body(Map.of("message", "Transaction number (last 6 digits) is required"));
+            return ApiResponseUtil.badRequest("Transaction number (last 6 digits) is required");
         String last6 = transactionLastSixDigits.trim().replaceAll("[^0-9]", "");
         if (last6.length() != 6)
-            return ResponseEntity.badRequest().body(Map.of("message", "Transaction number must be exactly 6 digits"));
+            return ApiResponseUtil.badRequest("Transaction number must be exactly 6 digits");
         if (transactionAmount == null || transactionAmount.compareTo(java.math.BigDecimal.ZERO) <= 0)
-            return ResponseEntity.badRequest().body(Map.of("message", "Transfer amount is required and must be greater than 0"));
+            return ApiResponseUtil.badRequest("Transfer amount is required and must be greater than 0");
 
         // Duplicate transaction check — same last-6 digits already used in any non-rejected payment
         if (paymentRepo.existsByTransactionLastSixDigitsAndStatusNot(last6, PaymentStatus.REJECTED))
@@ -515,9 +517,9 @@ public class CustomerController {
         try {
             screenshotPath = FileStorageUtil.saveDocument(screenshot, "payments", "payment");
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+            return ApiResponseUtil.badRequest(e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Failed to save screenshot"));
+            return ApiResponseUtil.badRequest("Failed to save screenshot");
         }
 
         // Determine installment amount for this period
@@ -597,7 +599,7 @@ public class CustomerController {
         if (!original.getCustomer().getId().equals(user.getId()))
             return ResponseEntity.status(403).body(Map.of("message", "Forbidden"));
         if (original.getStatus() != ApplicationStatus.APPROVED)
-            return ResponseEntity.badRequest().body(Map.of("message", "Only active policies can be renewed"));
+            return ApiResponseUtil.badRequest("Only active policies can be renewed");
         String newPolicyNumber = original.getInsurancePackage() != null
                 ? policyService.generatePolicyNumber(original.getInsurancePackage().getType())
                 : policyService.generatePolicyNumber("POL");

@@ -7,6 +7,7 @@ import com.insurance.portal.model.enums.FieldType;
 import com.insurance.portal.model.enums.FormType;
 import com.insurance.portal.repository.FormTemplateRepository;
 import com.insurance.portal.repository.InsurancePackageRepository;
+import com.insurance.portal.util.ApiResponseUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -79,7 +80,7 @@ public class FormTemplateController {
     @Transactional
     public ResponseEntity<?> delete(@PathVariable Long id) {
         templateRepo.deleteById(id);
-        return ResponseEntity.ok(Map.of("message", "Form deleted"));
+        return ApiResponseUtil.ok("Form deleted");
     }
 
     // ── Public/Authenticated: get active form for a package + formType ─
@@ -89,7 +90,7 @@ public class FormTemplateController {
     public ResponseEntity<?> getPublic(
             @RequestParam(required = false) Long packageId,
             @RequestParam String formType) {
-        if (packageId == null) return ResponseEntity.badRequest().body(Map.of("message", "packageId is required"));
+        if (packageId == null) return ApiResponseUtil.badRequest("packageId is required");
         return templateRepo.findFirstByInsurancePackageIdAndFormTypeAndActiveTrue(packageId, FormType.valueOf(formType))
                 .map(t -> ResponseEntity.ok(toMap(t)))
                 .orElse(ResponseEntity.notFound().build());

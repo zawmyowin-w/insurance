@@ -10,6 +10,9 @@ import {
   EMAIL_ERROR, isEmailValid,
   getPhoneValidationError, isPhoneValid, isStrongPassword,
 } from '../../utils/validation'
+import { apiError } from '../../utils/apiError'
+import { getStatusStyle } from '../../utils/statusMeta'
+import { fmtDateIntl, fmtMoney } from '../../utils/format'
 
 const EMPTY_FORM = { name: '', email: '', phone: '', address: '', password: '', insuranceType: 'LIFE' }
 const EMPTY_EDIT = { name: '', email: '', phone: '', address: '', insuranceType: 'LIFE', newPassword: '' }
@@ -109,7 +112,7 @@ export default function ManageUsersPage() {
       await api.post('/admin/users/agents', { ...createForm, phone: phoneVal })
       toast.success(t('admin.users.agentCreated'))
       setShowCreatePanel(false); setCreateForm(EMPTY_FORM); fetchUsers()
-    } catch (err) { toast.error(err.response?.data?.message || t('admin.users.failedCreate')) }
+    } catch (err) { apiError(err, t('admin.users.failedCreate')) }
     finally { setSaving(false) }
   }
 
@@ -174,7 +177,7 @@ export default function ManageUsersPage() {
       await api.put(`/admin/users/${editingUser.id}`, payload)
       toast.success(t('admin.users.profileUpdated'))
       closeEdit(); fetchUsers()
-    } catch (err) { toast.error(err.response?.data?.message || t('admin.users.failed')) }
+    } catch (err) { apiError(err, t('admin.users.failed')) }
     finally { setEditSaving(false) }
   }
 
@@ -367,7 +370,7 @@ export default function ManageUsersPage() {
                         </span>
                       </td>
                       <td style={{ fontSize: '0.83rem', color: 'var(--text-muted)' }}>
-                        {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}
+                        {fmtDateIntl(u.createdAt, undefined, '—')}
                       </td>
                       <td>
                         <div className="d-flex gap-1">
@@ -449,7 +452,7 @@ export default function ManageUsersPage() {
                   <div style={{ fontWeight: 700, fontSize: '1rem' }}>{previewModal.summary.name}</div>
                   <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{previewModal.summary.email}</div>
                   <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 2 }}>
-                    {t('admin.users.previewRole')}: {previewModal.summary.role} | {t('admin.users.previewJoined')}: {previewModal.summary.joinedAt ? new Date(previewModal.summary.joinedAt).toLocaleDateString() : '—'} |
+                    {t('admin.users.previewRole')}: {previewModal.summary.role} | {t('admin.users.previewJoined')}: {fmtDateIntl(previewModal.summary.joinedAt, undefined, '—')} |
                     {t('admin.users.previewStatus')}: <span style={{ color: previewModal.summary.active ? '#15803d' : '#dc2626', fontWeight: 600 }}>{previewModal.summary.active ? t('admin.users.previewActive') : t('admin.users.previewInactive')}</span>
                   </div>
                 </div>
@@ -479,7 +482,7 @@ export default function ManageUsersPage() {
                         {previewModal.summary.applications.map(a => (
                           <div key={a.id} style={{ fontSize: '0.82rem', padding: '0.35rem 0.6rem', borderRadius: 6, background: 'var(--bg-secondary)', marginBottom: 3, display: 'flex', justifyContent: 'space-between' }}>
                             <span><span style={{ fontFamily: 'monospace', color: 'var(--primary)' }}>{a.policyNumber || `#${a.id}`}</span> — {a.packageName}</span>
-                            <span style={{ color: a.status === 'APPROVED' ? '#15803d' : a.status === 'REJECTED' ? '#dc2626' : '#d97706', fontWeight: 600 }}>{a.status}</span>
+                            <span style={{ color: getStatusStyle(a.status).color, fontWeight: 600 }}>{a.status}</span>
                           </div>
                         ))}
                         {previewModal.summary.applicationCount > 5 && (
@@ -493,8 +496,8 @@ export default function ManageUsersPage() {
                         <div style={{ fontWeight: 600, fontSize: '0.85rem', marginBottom: '0.4rem' }}>{t('admin.users.previewClaimsShowing', { count: 5 })}</div>
                         {previewModal.summary.claims.map(c => (
                           <div key={c.id} style={{ fontSize: '0.82rem', padding: '0.35rem 0.6rem', borderRadius: 6, background: 'var(--bg-secondary)', marginBottom: 3, display: 'flex', justifyContent: 'space-between' }}>
-                            <span>Claim #{c.id} — {Number(c.amount).toLocaleString()} MMK</span>
-                            <span style={{ color: c.status === 'APPROVED' ? '#15803d' : c.status === 'REJECTED' ? '#dc2626' : '#d97706', fontWeight: 600 }}>{c.status}</span>
+                            <span>Claim #{c.id} — {fmtMoney(c.amount)}</span>
+                            <span style={{ color: getStatusStyle(c.status).color, fontWeight: 600 }}>{c.status}</span>
                           </div>
                         ))}
                         {previewModal.summary.claimCount > 5 && (
@@ -515,7 +518,7 @@ export default function ManageUsersPage() {
                     {previewModal.summary.assignedApplications?.map(a => (
                       <div key={a.id} style={{ fontSize: '0.82rem', padding: '0.35rem 0.6rem', borderRadius: 6, background: 'var(--bg-secondary)', marginBottom: 3, display: 'flex', justifyContent: 'space-between' }}>
                         <span><span style={{ fontFamily: 'monospace', color: 'var(--primary)' }}>{a.policyNumber || `#${a.id}`}</span> — {a.customerName}</span>
-                        <span style={{ color: a.status === 'APPROVED' ? '#15803d' : '#d97706', fontWeight: 600 }}>{a.status}</span>
+                        <span style={{ color: getStatusStyle(a.status).color, fontWeight: 600 }}>{a.status}</span>
                       </div>
                     ))}
                     {previewModal.summary.assignedApplicationCount > 5 && (

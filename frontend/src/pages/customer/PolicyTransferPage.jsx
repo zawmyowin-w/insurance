@@ -2,16 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
-import { downloadBlob } from '../../utils/download'
+import { downloadPdfFromApi } from '../../utils/download'
+import { getStatusStyle } from '../../utils/statusMeta'
 import { useAuth } from '../../context/AuthContext'
 import DigitalSignatureCanvas from '../../components/DigitalSignatureCanvas'
-
-const STATUS_LABEL = {
-  PENDING_TRANSFEREE_SIGNATURE: { label: 'customer.statusAwaitingTransferee', color: '#d97706', bg: '#fef3c7' },
-  PENDING_ADMIN_APPROVAL: { label: 'customer.statusAwaitingAdmin', color: '#1d4ed8', bg: '#eff6ff' },
-  APPROVED: { label: 'customer.statusApproved', color: '#15803d', bg: '#f0fdf4' },
-  REJECTED: { label: 'customer.statusRejected', color: '#dc2626', bg: '#fef2f2' },
-}
+import { apiError } from '../../utils/apiError'
+import { fmtDateIntl } from '../../utils/format'
 
 const STATUS_KEY = {
   PENDING_TRANSFEREE_SIGNATURE: 'customer.statusAwaitingTransferee',
@@ -80,7 +76,7 @@ export default function PolicyTransferPage() {
       setEmailName('')
       fetchData()
     } catch (err) {
-      toast.error(err.response?.data?.message || t('customer.transferFailed'))
+      apiError(err, t('customer.transferFailed'))
     } finally { setSubmitting(false) }
   }
 
@@ -94,7 +90,7 @@ export default function PolicyTransferPage() {
       setToSig(null)
       fetchData()
     } catch (err) {
-      toast.error(err.response?.data?.message || t('customer.acceptFailed'))
+      apiError(err, t('customer.acceptFailed'))
     } finally { setSubmitting(false) }
   }
 
@@ -105,14 +101,13 @@ export default function PolicyTransferPage() {
       toast.success(t('customer.transferDeclined'))
       fetchData()
     } catch (err) {
-      toast.error(err.response?.data?.message || t('customer.declineFailed'))
+      apiError(err, t('customer.declineFailed'))
     }
   }
 
   const downloadPdf = async (id) => {
     try {
-      const res = await api.get(`/customer/policy-transfers/${id}/pdf`, { responseType: 'blob' })
-      await downloadBlob(res.data, `transfer_contract_${id}.pdf`, 'application/pdf')
+      await downloadPdfFromApi(`/customer/policy-transfers/${id}/pdf`, `transfer_contract_${id}.pdf`)
     } catch {
       toast.error(t('customer.pdfDownloadFailed'))
     }
@@ -184,7 +179,7 @@ export default function PolicyTransferPage() {
       ) : (
         <div className="d-flex flex-column gap-3">
           {transfers.map(transfer => {
-            const s = STATUS_LABEL[transfer.status] || { label: transfer.status, color: '#64748b', bg: '#f1f5f9' }
+            const s = { label: STATUS_KEY[transfer.status] || transfer.status, ...getStatusStyle(transfer.status) }
             const isSender = transfer.fromCustomerId === myId
             return (
               <div key={transfer.id} className="card-custom">
@@ -220,7 +215,7 @@ export default function PolicyTransferPage() {
                   </div>
                   <div className="col-sm-6">
                     <span style={{ fontWeight: 600 }}>{t('customer.submitted')}: </span>
-                    {transfer.createdAt ? new Date(transfer.createdAt).toLocaleDateString() : '—'}
+                    {fmtDateIntl(transfer.createdAt, undefined, '—')}
                   </div>
                   <div className="col-12">
                     <span style={{ fontWeight: 600 }}>{t('customer.reason')}: </span>{transfer.reason}

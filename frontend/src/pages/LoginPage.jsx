@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import { toast } from 'react-toastify'
+import { apiErrorMessage } from '../utils/apiError'
 
 export default function LoginPage() {
   const { t } = useTranslation()
@@ -28,8 +29,7 @@ export default function LoginPage() {
       )
       navigate(redirect, { replace: true })
     } catch (err) {
-      const msg = err.response?.data?.message || ''
-      toast.error(msg || t('auth.loginError'))
+      toast.error(apiErrorMessage(err, t('auth.loginError')))
     } finally {
       setLoading(false)
     }

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import DeleteConfirmModal from '../../components/DeleteConfirmModal'
+import { apiError } from '../../utils/apiError'
 
 const PAYMENT_FREQ_OPTIONS = [
   { value: 'MONTHLY',     months: 1  },
@@ -196,7 +197,7 @@ export default function ManagePackagesPage() {
       }
       setShowForm(false); setEditing(null); setForm(EMPTY); fetchPackages()
     } catch (err) {
-      toast.error(err.response?.data?.message || t('admin.packages.saveFailed'))
+      apiError(err, t('admin.packages.saveFailed'))
     } finally { setSaving(false) }
   }
 

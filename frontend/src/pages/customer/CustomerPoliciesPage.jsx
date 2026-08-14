@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
-import { downloadBlob } from '../../utils/download'
+import { downloadPdfFromApi } from '../../utils/download'
 import { getTypeMeta } from '../../utils/typeMeta'
 import ConfirmModal from '../../components/ConfirmModal'
+import { apiError } from '../../utils/apiError'
+import { fmtDateIntl, fmtMoney } from '../../utils/format'
 
 const RISK_META = {
   LOW:    { color: '#16a34a', bg: '#f0fdf4', icon: 'bi-shield-check'       },
@@ -38,11 +40,11 @@ function PolicyCertificate({ policy, onClose }) {
                   [t('policies.certPolicyNumber'), policy.policyNumber || t('policies.certPending')],
                   [t('policies.certType'), policy.packageType],
                   [t('policies.certPlan'), policy.packageName],
-                  [t('policies.certCoverage'), `${Number(policy.coverageAmount).toLocaleString()} MMK`],
+                  [t('policies.certCoverage'), fmtMoney(policy.coverageAmount)],
                   [t('policies.certDuration'), `${policy.duration} ${policy.duration > 1 ? t('policies.years') : t('policies.year')}`],
                   [t('policies.certRisk'), policy.riskLevel || '—'],
-                  [t('policies.certPremium'), policy.premiumAmount ? `${Number(policy.premiumAmount).toLocaleString()} MMK` : '—'],
-                  [t('policies.certIssue'), policy.createdAt ? new Date(policy.createdAt).toLocaleDateString() : '—'],
+                  [t('policies.certPremium'), policy.premiumAmount ? fmtMoney(policy.premiumAmount) : '—'],
+                  [t('policies.certIssue'), fmtDateIntl(policy.createdAt, undefined, '—')],
                   [t('policies.certStatus'), policy.status === 'CLAIMED' ? t('customer.policyUsed') : t('policies.active')],
                 ].map(([label, value]) => (
                   <div key={label} className="col-6">
@@ -100,7 +102,7 @@ export default function CustomerPoliciesPage() {
       await api.post(`/customer/applications/${id}/renew`)
       toast.success(t('policies.renewSuccess'))
     } catch (err) {
-      toast.error(err.response?.data?.message || t('policies.renewFailed'))
+      apiError(err, t('policies.renewFailed'))
     } finally {
       setRenewing(null)
       setRenewConfirmId(null)
@@ -110,8 +112,7 @@ export default function CustomerPoliciesPage() {
   const handleDownloadCertificate = async (policy) => {
     setDownloading(policy.id)
     try {
-      const res = await api.get(`/customer/applications/${policy.id}/policy-contract`, { responseType: 'blob' })
-      await downloadBlob(res.data, `policy_certificate_${policy.policyNumber || policy.id}.pdf`, 'application/pdf')
+      await downloadPdfFromApi(`/customer/applications/${policy.id}/policy-contract`, `policy_certificate_${policy.policyNumber || policy.id}.pdf`)
     } catch {
       toast.error(t('customer.certDownloadFailed'))
     } finally { setDownloading(null) }
@@ -160,7 +161,7 @@ export default function CustomerPoliciesPage() {
             <div className="col-6">
               <div style={{ background: 'var(--bg-secondary)', borderRadius: 8, padding: '0.45rem 0.65rem' }}>
                 <div style={{ fontSize: '0.67rem', color: 'var(--text-muted)' }}>{t('policies.coverage')}</div>
-                <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)' }}>{Number(policy.coverageAmount).toLocaleString()} MMK</div>
+                <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)' }}>{fmtMoney(policy.coverageAmount)}</div>
               </div>
             </div>
             <div className="col-6">

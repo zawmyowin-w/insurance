@@ -8,6 +8,7 @@ import {
   isEmailValid,
   PHONE_PATTERN,
 } from '../../utils/validation'
+import { apiError } from '../../utils/apiError'
 
 function handlePhoneChange(val, setter) {
   if (!val) { setter(''); return }
@@ -67,7 +68,7 @@ export default function AdminProfilePage() {
       toast.success(t('admin.profile.updateSuccess'))
       setEditMode(false)
     } catch (err) {
-      toast.error(err.response?.data?.message || t('admin.profile.updateFailed'))
+      apiError(err, t('admin.profile.updateFailed'))
     } finally { setSavingProfile(false) }
   }
 

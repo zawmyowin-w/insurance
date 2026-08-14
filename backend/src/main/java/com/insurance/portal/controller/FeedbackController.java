@@ -4,6 +4,8 @@ import com.insurance.portal.model.Feedback;
 import com.insurance.portal.model.User;
 import com.insurance.portal.repository.FeedbackRepository;
 import com.insurance.portal.repository.UserRepository;
+import com.insurance.portal.util.ApiResponseUtil;
+import com.insurance.portal.util.CurrentUserUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -29,15 +31,15 @@ public class FeedbackController {
             @AuthenticationPrincipal UserDetails principal,
             @RequestBody Map<String, Object> body) {
 
-        User customer = userRepo.findByEmail(principal.getUsername()).orElseThrow();
+        User customer = CurrentUserUtil.require(userRepo, principal);
 
         int rating = Integer.parseInt(body.getOrDefault("rating", "5").toString());
         if (rating < 1 || rating > 5)
-            return ResponseEntity.badRequest().body(Map.of("message", "Rating must be between 1 and 5"));
+            return ApiResponseUtil.badRequest("Rating must be between 1 and 5");
 
         String message = body.getOrDefault("message", "").toString().trim();
         if (message.isEmpty())
-            return ResponseEntity.badRequest().body(Map.of("message", "Message is required"));
+            return ApiResponseUtil.badRequest("Message is required");
 
         String category = body.getOrDefault("category", "General").toString();
 
@@ -50,7 +52,7 @@ public class FeedbackController {
                 .build();
 
         feedbackRepo.save(feedback);
-        return ResponseEntity.ok(Map.of("message", "Feedback submitted successfully"));
+        return ApiResponseUtil.ok("Feedback submitted successfully");
     }
 
     // ── Admin: list all feedbacks ─────────────────────────────────────
@@ -87,7 +89,7 @@ public class FeedbackController {
                 .orElseThrow(() -> new RuntimeException("Feedback not found"));
         f.setRead(true);
         feedbackRepo.save(f);
-        return ResponseEntity.ok(Map.of("message", "Marked as read"));
+        return ApiResponseUtil.ok("Marked as read");
     }
 
     // ── Admin: mark all as read ───────────────────────────────────────
@@ -98,6 +100,6 @@ public class FeedbackController {
                 .stream().filter(f -> !f.isRead()).toList();
         unread.forEach(f -> f.setRead(true));
         feedbackRepo.saveAll(unread);
-        return ResponseEntity.ok(Map.of("message", "All feedback marked as read"));
+        return ApiResponseUtil.ok("All feedback marked as read");
     }
 }

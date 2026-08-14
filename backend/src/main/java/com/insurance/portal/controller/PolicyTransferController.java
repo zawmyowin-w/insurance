@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.*;
 
 import com.insurance.portal.model.enums.PaymentStatus;
 import com.insurance.portal.repository.PaymentRepository;
+import com.insurance.portal.util.ApiResponseUtil;
+import com.insurance.portal.util.CurrentUserUtil;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -41,7 +43,7 @@ public class PolicyTransferController {
     private final NotificationService notifService;
 
     private User getUser(UserDetails principal) {
-        return userRepo.findByEmail(principal.getUsername()).orElseThrow();
+        return CurrentUserUtil.require(userRepo, principal);
     }
 
     // ── Submit transfer request ────────────────────────────────────────
@@ -60,18 +62,18 @@ public class PolicyTransferController {
         String sig      = body.get("fromSignature");
 
         if (appIdStr == null || toEmail == null || relation == null || reason == null)
-            return ResponseEntity.badRequest().body(Map.of("message", "applicationId, toEmail, relationship, and reason are required"));
+            return ApiResponseUtil.badRequest("applicationId, toEmail, relationship, and reason are required");
 
         String sigErr = DigitalSignatureUtil.validationError(sig);
-        if (sigErr != null) return ResponseEntity.badRequest().body(Map.of("message", sigErr));
+        if (sigErr != null) return ApiResponseUtil.badRequest(sigErr);
 
         Long appId = Long.parseLong(appIdStr);
         PolicyApplication app = appRepo.findById(appId).orElse(null);
-        if (app == null) return ResponseEntity.badRequest().body(Map.of("message", "Policy not found"));
+        if (app == null) return ApiResponseUtil.badRequest("Policy not found");
         if (!app.getCustomer().getId().equals(from.getId()))
             return ResponseEntity.status(403).body(Map.of("message", "This policy does not belong to you"));
         if (app.getStatus() != ApplicationStatus.APPROVED)
-            return ResponseEntity.badRequest().body(Map.of("message", "Only approved policies can be transferred"));
+            return ApiResponseUtil.badRequest("Only approved policies can be transferred");
 
         // ── Package-level transfer eligibility checks ─────────────────
         var pkg = app.getInsurancePackage();
@@ -112,14 +114,14 @@ public class PolicyTransferController {
                 TransferStatus.PENDING_TRANSFEREE_SIGNATURE,
                 TransferStatus.PENDING_ADMIN_APPROVAL);
         if (transferRepo.existsByApplication_IdAndStatusIn(appId, activeStatuses))
-            return ResponseEntity.badRequest().body(Map.of("message", "A transfer request for this policy is already in progress"));
+            return ApiResponseUtil.badRequest("A transfer request for this policy is already in progress");
 
         // Find the target customer
         User to = userRepo.findByEmail(toEmail.trim().toLowerCase()).orElse(null);
         if (to == null || to.getRole() != Role.CUSTOMER || !to.isActive())
-            return ResponseEntity.badRequest().body(Map.of("message", "No active customer account found with that email"));
+            return ApiResponseUtil.badRequest("No active customer account found with that email");
         if (to.getId().equals(from.getId()))
-            return ResponseEntity.badRequest().body(Map.of("message", "You cannot transfer a policy to yourself"));
+            return ApiResponseUtil.badRequest("You cannot transfer a policy to yourself");
 
         PolicyTransfer transfer = PolicyTransfer.builder()
                 .application(app)
@@ -176,11 +178,11 @@ public class PolicyTransferController {
         if (!transfer.getToCustomer().getId().equals(user.getId()))
             return ResponseEntity.status(403).body(Map.of("message", "This transfer is not addressed to you"));
         if (transfer.getStatus() != TransferStatus.PENDING_TRANSFEREE_SIGNATURE)
-            return ResponseEntity.badRequest().body(Map.of("message", "This transfer is no longer awaiting your signature"));
+            return ApiResponseUtil.badRequest("This transfer is no longer awaiting your signature");
 
         String sig = body.get("toSignature");
         String sigErr = DigitalSignatureUtil.validationError(sig);
-        if (sigErr != null) return ResponseEntity.badRequest().body(Map.of("message", sigErr));
+        if (sigErr != null) return ApiResponseUtil.badRequest(sigErr);
 
         transfer.setToSignature(sig);
         transfer.setToSignedAt(LocalDateTime.now());
@@ -226,7 +228,7 @@ public class PolicyTransferController {
         if (!transfer.getToCustomer().getId().equals(user.getId()))
             return ResponseEntity.status(403).body(Map.of("message", "This transfer is not addressed to you"));
         if (transfer.getStatus() != TransferStatus.PENDING_TRANSFEREE_SIGNATURE)
-            return ResponseEntity.badRequest().body(Map.of("message", "This transfer is no longer awaiting your response"));
+            return ApiResponseUtil.badRequest("This transfer is no longer awaiting your response");
 
         transfer.setStatus(TransferStatus.REJECTED);
         transfer.setAdminNote(body != null ? body.get("note") : null);

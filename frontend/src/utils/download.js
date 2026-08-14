@@ -1,3 +1,5 @@
+import api from '../services/api'
+
 /**
  * Downloads a blob through an object URL.
  *
@@ -28,4 +30,41 @@ export async function downloadBlob(data, filename, mimeType = 'application/octet
     URL.revokeObjectURL(url)
     anchor.remove()
   }, 1000)
+}
+
+/**
+ * Fetches a JWT-protected endpoint as a blob and returns an object URL for it.
+ * Callers own the returned URL and must revoke it when done.
+ */
+export async function fetchBlobUrl(path, config = {}) {
+  const res = await api.get(path, { ...config, responseType: 'blob' })
+  return URL.createObjectURL(res.data)
+}
+
+/** Fetches a JWT-protected file as a blob and opens it in a new tab. */
+export async function openBlobFromApi(path, config = {}) {
+  const url = await fetchBlobUrl(path, config)
+  window.open(url, '_blank')
+  return url
+}
+
+/**
+ * Fetches a JWT-protected file as a blob and saves it to disk.
+ * Every file endpoint is behind the axios auth interceptor, so plain links and
+ * <img src> cannot be used — the blob must be fetched and then downloaded.
+ */
+export async function downloadFromApi(path, filename, {
+  mimeType = 'application/octet-stream', method = 'get', body = null, ...config
+} = {}) {
+  const requestConfig = { ...config, responseType: 'blob' }
+  const res = method === 'post'
+    ? await api.post(path, body, requestConfig)
+    : await api.get(path, requestConfig)
+  await downloadBlob(res.data, filename, mimeType)
+  return res
+}
+
+/** Fetches a JWT-protected PDF and saves it to disk. */
+export function downloadPdfFromApi(path, filename, options = {}) {
+  return downloadFromApi(path, filename, { ...options, mimeType: 'application/pdf' })
 }

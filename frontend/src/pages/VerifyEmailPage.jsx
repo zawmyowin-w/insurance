@@ -5,6 +5,7 @@ import { toast } from 'react-toastify'
 import { verifyOtp, getPendingRegistration, clearPendingRegistration, MAX_OTP_ATTEMPTS } from '../services/otpService'
 import { useAuth } from '../context/AuthContext'
 import { useOtpInput } from '../hooks/useOtpInput'
+import { apiError } from '../utils/apiError'
 
 export default function VerifyEmailPage() {
   const { t } = useTranslation()
@@ -75,7 +76,7 @@ export default function VerifyEmailPage() {
         clearPendingRegistration(email)
       } catch (err) {
         setLoading(false)
-        toast.error(err.response?.data?.message || t('auth.registerError'))
+        apiError(err, t('auth.registerError'))
         return
       }
     }

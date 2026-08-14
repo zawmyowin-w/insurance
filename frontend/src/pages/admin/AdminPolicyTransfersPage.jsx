@@ -2,13 +2,16 @@ import { useEffect, useState } from 'react'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
-import { downloadBlob } from '../../utils/download'
+import { downloadPdfFromApi } from '../../utils/download'
+import { getStatusStyle } from '../../utils/statusMeta'
+import { apiError } from '../../utils/apiError'
+import { fmtDateIntl } from '../../utils/format'
 
-const STATUS_LABEL = {
-  PENDING_TRANSFEREE_SIGNATURE: { labelKey: 'statusPENDING_TRANSFEREE_SIGNATURE', color: '#d97706', bg: '#fef3c7' },
-  PENDING_ADMIN_APPROVAL: { labelKey: 'statusPENDING_ADMIN_APPROVAL', color: '#1d4ed8', bg: '#eff6ff' },
-  APPROVED: { labelKey: 'statusAPPROVED', color: '#15803d', bg: '#f0fdf4' },
-  REJECTED: { labelKey: 'statusREJECTED', color: '#dc2626', bg: '#fef2f2' },
+const STATUS_LABEL_KEY = {
+  PENDING_TRANSFEREE_SIGNATURE: 'statusPENDING_TRANSFEREE_SIGNATURE',
+  PENDING_ADMIN_APPROVAL: 'statusPENDING_ADMIN_APPROVAL',
+  APPROVED: 'statusAPPROVED',
+  REJECTED: 'statusREJECTED',
 }
 
 export default function AdminPolicyTransfersPage() {
@@ -41,14 +44,13 @@ export default function AdminPolicyTransfersPage() {
       setNote('')
       fetchData()
     } catch (err) {
-      toast.error(err.response?.data?.message || t('admin.transfers.actionFailed'))
+      apiError(err, t('admin.transfers.actionFailed'))
     } finally { setSubmitting(false) }
   }
 
   const downloadPdf = async (id) => {
     try {
-      const res = await api.get(`/admin/policy-transfers/${id}/pdf`, { responseType: 'blob' })
-      await downloadBlob(res.data, `transfer_contract_${id}.pdf`, 'application/pdf')
+      await downloadPdfFromApi(`/admin/policy-transfers/${id}/pdf`, `transfer_contract_${id}.pdf`)
     } catch {
       toast.error(t('admin.transfers.pdfFailed'))
     }
@@ -77,7 +79,7 @@ export default function AdminPolicyTransfersPage() {
       {/* Filter tabs */}
       <div className="d-flex gap-2 mb-4 flex-wrap">
         {['ALL', 'PENDING_ADMIN_APPROVAL', 'PENDING_TRANSFEREE_SIGNATURE', 'APPROVED', 'REJECTED'].map(s => {
-          const label = s === 'ALL' ? t('admin.transfers.tabAll') : t(`admin.transfers.${STATUS_LABEL[s]?.labelKey}`)
+          const label = s === 'ALL' ? t('admin.transfers.tabAll') : t(`admin.transfers.${STATUS_LABEL_KEY[s]}`)
           return (
             <button key={s} onClick={() => setFilter(s)}
               style={{
@@ -101,7 +103,7 @@ export default function AdminPolicyTransfersPage() {
       ) : (
         <div className="d-flex flex-column gap-3">
           {transfers.map(t => {
-            const s = STATUS_LABEL[t.status] || { labelKey: null, color: '#64748b', bg: '#f1f5f9' }
+            const s = { labelKey: STATUS_LABEL_KEY[t.status] || null, ...getStatusStyle(t.status) }
             const isPending = t.status === 'PENDING_ADMIN_APPROVAL'
             const statusLabel = s.labelKey ? t(`admin.transfers.${s.labelKey}`) : t.status
             return (
@@ -167,7 +169,7 @@ export default function AdminPolicyTransfersPage() {
                   </div>
                   <div className="col-sm-4">
                     <span style={{ fontWeight: 600 }}>{t('admin.transfers.submitted')}: </span>
-                    {t.createdAt ? new Date(t.createdAt).toLocaleDateString() : '—'}
+                    {fmtDateIntl(t.createdAt, undefined, '—')}
                   </div>
                   {t.approvedAt && (
                     <div className="col-sm-4">

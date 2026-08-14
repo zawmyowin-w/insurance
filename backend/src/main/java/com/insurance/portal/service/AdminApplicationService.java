@@ -8,6 +8,7 @@ import com.insurance.portal.model.enums.NotificationType;
 import com.insurance.portal.repository.PolicyApplicationRepository;
 import com.insurance.portal.repository.UserRepository;
 import com.insurance.portal.util.DigitalSignatureUtil;
+import com.insurance.portal.util.ApiResponseUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -29,10 +30,10 @@ public class AdminApplicationService {
         PolicyApplication app = appRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Application not found"));
         if (app.getStatus() != ApplicationStatus.VERIFIED)
-            return ResponseEntity.badRequest().body(Map.of("message", "Only VERIFIED applications can be approved"));
+            return ApiResponseUtil.badRequest("Only VERIFIED applications can be approved");
         String signatureError = DigitalSignatureUtil.validationError(signature);
         if (signatureError != null)
-            return ResponseEntity.badRequest().body(Map.of("message", signatureError));
+            return ApiResponseUtil.badRequest(signatureError);
         app.setStatus(ApplicationStatus.APPROVED);
         app.setAdminNote(note);
         app.setAdminSignature(signature);
@@ -92,7 +93,7 @@ public class AdminApplicationService {
         PolicyApplication app = appRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Application not found"));
         if (app.getStatus() != ApplicationStatus.APPROVED)
-            return ResponseEntity.badRequest().body(Map.of("message", "Only APPROVED (active) applications can receive an overdue warning"));
+            return ApiResponseUtil.badRequest("Only APPROVED (active) applications can receive an overdue warning");
         String packageName = app.getInsurancePackage() != null ? app.getInsurancePackage().getName() : "your policy";
         notifService.send(app.getCustomer(),
                 "⚠️ Premium Payment Overdue Notice",
@@ -100,7 +101,7 @@ public class AdminApplicationService {
                         + "Please submit your payment as soon as possible to keep your policy active. "
                         + "Failure to pay may result in policy cancellation.",
                 NotificationType.REMINDER);
-        return ResponseEntity.ok(Map.of("message", "Overdue warning notification sent to customer"));
+        return ApiResponseUtil.ok("Overdue warning notification sent to customer");
     }
 
     /**
@@ -111,7 +112,7 @@ public class AdminApplicationService {
         PolicyApplication app = appRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Application not found"));
         if (app.getStatus() != ApplicationStatus.APPROVED)
-            return ResponseEntity.badRequest().body(Map.of("message", "Only APPROVED (active) applications can be cancelled for non-payment"));
+            return ApiResponseUtil.badRequest("Only APPROVED (active) applications can be cancelled for non-payment");
         String packageName = app.getInsurancePackage() != null ? app.getInsurancePackage().getName() : "your policy";
         String reason = (note != null && !note.isBlank()) ? note : "Premium payment overdue — policy cancelled due to non-payment";
         app.setStatus(ApplicationStatus.REJECTED);

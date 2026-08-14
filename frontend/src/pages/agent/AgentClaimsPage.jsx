@@ -6,6 +6,7 @@ import { toast } from 'react-toastify'
 import FormDetailModal from '../../components/FormDetailModal'
 import DigitalSignatureCanvas from '../../components/DigitalSignatureCanvas'
 import { apiError } from '../../utils/apiError'
+import { fmtDateIntl, fmtMoney } from '../../utils/format'
 
 const FILTERS = ['ALL', 'PENDING', 'VERIFIED', 'REVISION_REQUESTED', 'REJECTED']
 
@@ -172,9 +173,9 @@ export default function AgentClaimsPage() {
                   <div className="row g-2 mb-3">
                     {[
                       { label: t('agent.claims.policyLabel'),   value: claim.policyName || claim.policy?.packageName },
-                      { label: t('agent.claims.amountLabel'),   value: `${Number(claim.amount).toLocaleString(locale)} MMK` },
-                       { label: t('agent.claims.incidentLabel'), value: claim.incidentDate ? new Date(claim.incidentDate).toLocaleDateString(locale) : t('formModal.na') },
-                       { label: t('agent.claims.submittedLabel'),value: claim.createdAt ? new Date(claim.createdAt).toLocaleDateString(locale) : t('formModal.na') },
+                      { label: t('agent.claims.amountLabel'),   value: fmtMoney(claim.amount, locale) },
+                       { label: t('agent.claims.incidentLabel'), value: fmtDateIntl(claim.incidentDate, locale, t('formModal.na')) },
+                       { label: t('agent.claims.submittedLabel'),value: fmtDateIntl(claim.createdAt, locale, t('formModal.na')) },
                     ].map(item => (
                       <div key={item.label} className="col-6">
                         <div style={{ background: 'var(--bg-secondary)', borderRadius: 6, padding: '0.5rem 0.75rem' }}>

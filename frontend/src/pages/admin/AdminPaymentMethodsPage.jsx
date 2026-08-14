@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import DeleteConfirmModal from '../../components/DeleteConfirmModal'
+import { apiError } from '../../utils/apiError'
 
 const EMPTY = { name: '', methodKey: '', color: '#1d4ed8', active: true }
 
@@ -68,7 +69,7 @@ export default function AdminPaymentMethodsPage() {
       }
       setShowForm(false); resetForm(); fetch()
     } catch (err) {
-      toast.error(err.response?.data?.message || t('admin.paymentMethods.saveFailed'))
+      apiError(err, t('admin.paymentMethods.saveFailed'))
     } finally { setSaving(false) }
   }
 

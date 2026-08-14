@@ -4,7 +4,9 @@ import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import { apiError } from '../../utils/apiError'
+import { fetchBlobUrl } from '../../utils/download'
 import PaymentMethodIcon, { PAYMENT_METHODS } from '../../components/PaymentMethodIcon'
+import { fmtDateIntl, fmtMoney } from '../../utils/format'
 
 export default function AdminPaymentsPage() {
   const { t } = useTranslation()
@@ -48,8 +50,7 @@ export default function AdminPaymentsPage() {
     setScreenshotFor(payment)
     setScreenshotLoading(true)
     try {
-      const res = await api.get(`/admin/payments/${payment.id}/screenshot`, { responseType: 'blob' })
-      setScreenshotUrl(URL.createObjectURL(res.data))
+      setScreenshotUrl(await fetchBlobUrl(`/admin/payments/${payment.id}/screenshot`))
     } catch {
       toast.error(t('admin.payments.screenshotFailed'))
       setScreenshotFor(null)
@@ -127,7 +128,7 @@ export default function AdminPaymentsPage() {
                     <td style={{ fontSize: '0.85rem' }}>{p.policyName} <span style={{ color: 'var(--text-muted)' }}>({p.policyNumber})</span></td>
                     {/* Expected installment amount */}
                     <td style={{ fontSize: '0.85rem' }}>
-                      {p.amount != null ? Number(p.amount).toLocaleString() + ' MMK' : '—'}
+                      {p.amount != null ? fmtMoney(p.amount) : '—'}
                     </td>
                     {/* Actual transfer amount from customer */}
                     <td style={{ fontSize: '0.85rem' }}>
@@ -137,7 +138,7 @@ export default function AdminPaymentsPage() {
                           color: (p.amount != null && Math.abs(Number(p.transactionAmount) - Number(p.amount)) / Number(p.amount) > 0.01)
                             ? '#dc2626' : '#16a34a'
                         }}>
-                          {Number(p.transactionAmount).toLocaleString()} MMK
+                          {fmtMoney(p.transactionAmount)}
                         </span>
                       ) : <span style={{ color: 'var(--text-muted)' }}>—</span>}
                     </td>
@@ -169,7 +170,7 @@ export default function AdminPaymentsPage() {
                       ) : <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{t('admin.payments.noneLabel')}</span>}
                     </td>
                     <td><span className={`badge-status badge-${p.status?.toLowerCase()}`}>{p.status}</span></td>
-                    <td style={{ fontSize: '0.82rem' }}>{p.createdAt ? new Date(p.createdAt).toLocaleDateString() : '—'}</td>
+                    <td style={{ fontSize: '0.82rem' }}>{fmtDateIntl(p.createdAt, undefined, '—')}</td>
                     <td>
                       {p.status === 'PENDING' ? (
                         actionId === p.id ? (
@@ -246,12 +247,12 @@ export default function AdminPaymentsPage() {
                         Math.abs(Number(screenshotFor.transactionAmount) - Number(screenshotFor.amount)) / Number(screenshotFor.amount) > 0.01)
                         ? '#dc2626' : '#16a34a',
                     }}>
-                      {Number(screenshotFor.transactionAmount).toLocaleString()} MMK
+                      {fmtMoney(screenshotFor.transactionAmount)}
                     </span>
                   ) : <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>—</span>}
                   {screenshotFor.amount != null && (
                     <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: 1 }}>
-                      {t('admin.payments.tableAmount')}: {Number(screenshotFor.amount).toLocaleString()} MMK
+                      {t('admin.payments.tableAmount')}: {fmtMoney(screenshotFor.amount)}
                     </div>
                   )}
                 </div>

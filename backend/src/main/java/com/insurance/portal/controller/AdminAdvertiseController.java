@@ -7,6 +7,7 @@ import com.insurance.portal.model.enums.Role;
 import com.insurance.portal.repository.NotificationRepository;
 import com.insurance.portal.repository.UserRepository;
 import com.insurance.portal.service.NotificationService;
+import com.insurance.portal.util.ApiResponseUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -68,7 +69,7 @@ public class AdminAdvertiseController {
         String message = req.getOrDefault("message", "").toString().trim();
 
         if (title.isBlank() || message.isBlank()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Title and message are required"));
+            return ApiResponseUtil.badRequest("Title and message are required");
         }
 
         List<User> customers = userRepo.findAllByRole(Role.CUSTOMER).stream()

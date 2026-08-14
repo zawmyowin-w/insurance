@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import api from '../services/api'
+import { fetchBlobUrl } from '../utils/download'
 import { toast } from 'react-toastify'
 import { useTranslation } from 'react-i18next'
+import { apiError } from '../utils/apiError'
 
 /**
  * Displays a user's profile picture (fetched via blob + object URL, since the
@@ -21,10 +23,10 @@ export default function ProfileAvatar({
     let currentUrl = null
     let cancelled = false
     if (hasPicture && fetchUrl) {
-      api.get(fetchUrl, { responseType: 'blob' }).then(res => {
-        if (cancelled) return
-        currentUrl = URL.createObjectURL(res.data)
-        setObjectUrl(currentUrl)
+      fetchBlobUrl(fetchUrl).then(url => {
+        if (cancelled) { URL.revokeObjectURL(url); return }
+        currentUrl = url
+        setObjectUrl(url)
       }).catch(() => { if (!cancelled) setObjectUrl(null) })
     } else {
       setObjectUrl(null)
@@ -53,7 +55,7 @@ export default function ProfileAvatar({
       toast.success(t('profile.avatarUpdated'))
       onUploaded?.(data)
     } catch (err) {
-      toast.error(err.response?.data?.message || t('profile.avatarUploadFailed'))
+      apiError(err, t('profile.avatarUploadFailed'))
     } finally {
       setUploading(false)
       if (fileInputRef.current) fileInputRef.current.value = ''

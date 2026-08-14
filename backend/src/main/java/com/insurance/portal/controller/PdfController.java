@@ -20,6 +20,8 @@ import com.insurance.portal.model.Payment;
 import com.insurance.portal.model.enums.PaymentStatus;
 import com.insurance.portal.repository.PaymentRepository;
 import com.insurance.portal.util.PremiumScheduleUtil;
+import com.insurance.portal.util.CurrentUserUtil;
+import com.insurance.portal.util.PdfResponseUtil;
 import com.itextpdf.layout.element.LineSeparator;
 import com.itextpdf.kernel.pdf.canvas.draw.SolidLine;
 import com.itextpdf.io.font.constants.StandardFonts;
@@ -40,8 +42,6 @@ import com.itextpdf.layout.element.Table;
 import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.layout.properties.UnitValue;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -81,7 +81,7 @@ public class PdfController {
     @Transactional(readOnly = true)
     public ResponseEntity<byte[]> agentApplicationPdf(@PathVariable Long id,
             @AuthenticationPrincipal UserDetails principal) {
-        User agent = userRepo.findByEmail(principal.getUsername()).orElseThrow();
+        User agent = CurrentUserUtil.require(userRepo, principal);
         PolicyApplication app = appRepo.findById(id).orElseThrow();
         if (app.getAgent() == null || !app.getAgent().getId().equals(agent.getId()))
             return ResponseEntity.status(403).build();
@@ -94,7 +94,7 @@ public class PdfController {
     @Transactional(readOnly = true)
     public ResponseEntity<byte[]> customerApplicationPdf(@PathVariable Long id,
             @AuthenticationPrincipal UserDetails principal) {
-        User customer = userRepo.findByEmail(principal.getUsername()).orElseThrow();
+        User customer = CurrentUserUtil.require(userRepo, principal);
         PolicyApplication app = appRepo.findById(id).orElseThrow();
         if (!app.getCustomer().getId().equals(customer.getId()))
             return ResponseEntity.status(403).build();
@@ -116,7 +116,7 @@ public class PdfController {
     @Transactional(readOnly = true)
     public ResponseEntity<byte[]> agentClaimPdf(@PathVariable Long id,
             @AuthenticationPrincipal UserDetails principal) {
-        User agent = userRepo.findByEmail(principal.getUsername()).orElseThrow();
+        User agent = CurrentUserUtil.require(userRepo, principal);
         Claim claim = claimRepo.findById(id).orElseThrow();
         if (claim.getAgent() == null || !claim.getAgent().getId().equals(agent.getId()))
             return ResponseEntity.status(403).build();
@@ -129,7 +129,7 @@ public class PdfController {
     @Transactional(readOnly = true)
     public ResponseEntity<byte[]> customerClaimPdf(@PathVariable Long id,
             @AuthenticationPrincipal UserDetails principal) {
-        User customer = userRepo.findByEmail(principal.getUsername()).orElseThrow();
+        User customer = CurrentUserUtil.require(userRepo, principal);
         Claim claim = claimRepo.findById(id).orElseThrow();
         if (!claim.getCustomer().getId().equals(customer.getId()))
             return ResponseEntity.status(403).build();
@@ -151,7 +151,7 @@ public class PdfController {
     @Transactional(readOnly = true)
     public ResponseEntity<byte[]> customerTransferPdf(@PathVariable Long id,
             @AuthenticationPrincipal UserDetails principal) {
-        User user = userRepo.findByEmail(principal.getUsername()).orElseThrow();
+        User user = CurrentUserUtil.require(userRepo, principal);
         PolicyTransfer transfer = transferRepo.findById(id).orElseThrow();
         boolean isSender   = transfer.getFromCustomer().getId().equals(user.getId());
         boolean isReceiver = transfer.getToCustomer().getId().equals(user.getId());
@@ -176,7 +176,7 @@ public class PdfController {
     @Transactional(readOnly = true)
     public ResponseEntity<byte[]> customerPayoutVoucher(@PathVariable Long id,
             @AuthenticationPrincipal UserDetails principal) {
-        User customer = userRepo.findByEmail(principal.getUsername()).orElseThrow();
+        User customer = CurrentUserUtil.require(userRepo, principal);
         Claim claim = claimRepo.findById(id).orElseThrow();
         if (!claim.getCustomer().getId().equals(customer.getId()))
             return ResponseEntity.status(403).build();
@@ -201,7 +201,7 @@ public class PdfController {
     @Transactional(readOnly = true)
     public ResponseEntity<byte[]> customerPolicyContract(@PathVariable Long id,
             @AuthenticationPrincipal UserDetails principal) {
-        User customer = userRepo.findByEmail(principal.getUsername()).orElseThrow();
+        User customer = CurrentUserUtil.require(userRepo, principal);
         PolicyApplication app = appRepo.findById(id).orElseThrow();
         if (!app.getCustomer().getId().equals(customer.getId()))
             return ResponseEntity.status(403).build();
@@ -215,7 +215,7 @@ public class PdfController {
     @Transactional(readOnly = true)
     public ResponseEntity<byte[]> agentPolicyContract(@PathVariable Long id,
             @AuthenticationPrincipal UserDetails principal) {
-        User agent = userRepo.findByEmail(principal.getUsername()).orElseThrow();
+        User agent = CurrentUserUtil.require(userRepo, principal);
         PolicyApplication app = appRepo.findById(id).orElseThrow();
         if (app.getAgent() == null || !app.getAgent().getId().equals(agent.getId()))
             return ResponseEntity.status(403).build();
@@ -569,7 +569,7 @@ public class PdfController {
                     .setBorderTop(new SolidBorder(light, 0.5f)).setPaddingTop(8).setMarginTop(12));
 
             doc.close();
-            return pdfResponse(baos.toByteArray(), "policy_certificate_" + policyNum + ".pdf");
+            return PdfResponseUtil.attachment(baos.toByteArray(), "policy_certificate_" + policyNum + ".pdf");
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
         }
@@ -709,7 +709,7 @@ public class PdfController {
                     .setBorderTop(new SolidBorder(light, 0.5f)).setPaddingTop(8).setMarginTop(12));
 
             doc.close();
-            return pdfResponse(baos.toByteArray(), "application_" + app.getId() + ".pdf");
+            return PdfResponseUtil.attachment(baos.toByteArray(), "application_" + app.getId() + ".pdf");
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
         }
@@ -832,7 +832,7 @@ public class PdfController {
                     .setBorderTop(new SolidBorder(lightB, 0.5f)).setPaddingTop(8).setMarginTop(12));
 
             doc.close();
-            return pdfResponse(baos.toByteArray(), "claim_" + claim.getId() + ".pdf");
+            return PdfResponseUtil.attachment(baos.toByteArray(), "claim_" + claim.getId() + ".pdf");
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
         }
@@ -1270,7 +1270,7 @@ public class PdfController {
                     .setBorderTop(new SolidBorder(light, 0.5f)).setPaddingTop(8).setMarginTop(8));
 
             doc.close();
-            return pdfResponse(baos.toByteArray(), "transfer_contract_" + transfer.getId() + ".pdf");
+            return PdfResponseUtil.attachment(baos.toByteArray(), "transfer_contract_" + transfer.getId() + ".pdf");
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
         }
@@ -1284,13 +1284,6 @@ public class PdfController {
     private Cell valueCell(String text, PdfFont font, DeviceRgb color) {
         return new Cell().add(new Paragraph(text != null ? text : "—").setFont(font).setFontSize(9f).setFontColor(color))
                 .setPadding(4).setBorder(new SolidBorder(new DeviceRgb(241, 245, 249), 0.3f));
-    }
-
-    private ResponseEntity<byte[]> pdfResponse(byte[] data, String filename) {
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
-                .contentType(MediaType.APPLICATION_PDF)
-                .body(data);
     }
 
     private Map.Entry<String, String> entry(String k, String v) {
@@ -1479,7 +1472,7 @@ public class PdfController {
                     .setBorderTop(new SolidBorder(lightSlate, 0.5f)).setPaddingTop(8).setMarginTop(8));
 
             doc.close();
-            return pdfResponse(baos.toByteArray(), "payout_voucher_claim_" + claim.getId() + ".pdf");
+            return PdfResponseUtil.attachment(baos.toByteArray(), "payout_voucher_claim_" + claim.getId() + ".pdf");
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
         }

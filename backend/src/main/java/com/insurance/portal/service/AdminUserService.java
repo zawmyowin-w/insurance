@@ -9,6 +9,7 @@ import com.insurance.portal.util.EmailValidationUtil;
 import com.insurance.portal.util.FileStorageUtil;
 import com.insurance.portal.util.PasswordValidationUtil;
 import com.insurance.portal.util.PhoneValidationUtil;
+import com.insurance.portal.util.ApiResponseUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -34,13 +35,13 @@ public class AdminUserService {
     public ResponseEntity<?> createAgent(Map<String, Object> req) {
         String email = req.get("email").toString();
         if (!EmailValidationUtil.isValid(email))
-            return ResponseEntity.badRequest().body(Map.of("message", EmailValidationUtil.ERROR_MESSAGE));
+            return ApiResponseUtil.badRequest(EmailValidationUtil.ERROR_MESSAGE);
         if (userRepo.existsByEmail(email))
-            return ResponseEntity.badRequest().body(Map.of("message", "Email already in use"));
+            return ApiResponseUtil.badRequest("Email already in use");
 
         String password = req.get("password").toString();
         if (!PasswordValidationUtil.isStrong(password))
-            return ResponseEntity.badRequest().body(Map.of("message", PasswordValidationUtil.ERROR_MESSAGE));
+            return ApiResponseUtil.badRequest(PasswordValidationUtil.ERROR_MESSAGE);
 
         String insuranceType = req.containsKey("insuranceType") ? req.get("insuranceType").toString() : "ALL";
         if (!"ALL".equals(insuranceType)) {
@@ -54,7 +55,7 @@ public class AdminUserService {
         if (agentPhone != null && !agentPhone.isBlank()) {
             String phoneErr = PhoneValidationUtil.validate(agentPhone);
             if (phoneErr != null)
-                return ResponseEntity.badRequest().body(Map.of("message", phoneErr));
+                return ApiResponseUtil.badRequest(phoneErr);
             agentPhone = PhoneValidationUtil.normalize(agentPhone);
             if (userRepo.existsByPhone(agentPhone))
                 return ResponseEntity.status(409).body(Map.of("message", PhoneValidationUtil.DUPLICATE_ERROR));
@@ -77,19 +78,19 @@ public class AdminUserService {
     public ResponseEntity<?> createAdmin(Map<String, Object> req) {
         String email = req.get("email").toString();
         if (!EmailValidationUtil.isValid(email))
-            return ResponseEntity.badRequest().body(Map.of("message", EmailValidationUtil.ERROR_MESSAGE));
+            return ApiResponseUtil.badRequest(EmailValidationUtil.ERROR_MESSAGE);
         if (userRepo.existsByEmail(email))
-            return ResponseEntity.badRequest().body(Map.of("message", "Email already in use"));
+            return ApiResponseUtil.badRequest("Email already in use");
 
         String password = req.get("password").toString();
         if (!PasswordValidationUtil.isStrong(password))
-            return ResponseEntity.badRequest().body(Map.of("message", PasswordValidationUtil.ERROR_MESSAGE));
+            return ApiResponseUtil.badRequest(PasswordValidationUtil.ERROR_MESSAGE);
 
         String adminPhone = req.containsKey("phone") ? req.get("phone").toString() : null;
         if (adminPhone != null && !adminPhone.isBlank()) {
             String phoneErr = PhoneValidationUtil.validate(adminPhone);
             if (phoneErr != null)
-                return ResponseEntity.badRequest().body(Map.of("message", phoneErr));
+                return ApiResponseUtil.badRequest(phoneErr);
             adminPhone = PhoneValidationUtil.normalize(adminPhone);
             if (userRepo.existsByPhone(adminPhone))
                 return ResponseEntity.status(409).body(Map.of("message", PhoneValidationUtil.DUPLICATE_ERROR));
@@ -114,15 +115,15 @@ public class AdminUserService {
         if (req.getName() != null && !req.getName().isBlank()) user.setName(req.getName());
         if (req.getEmail() != null && !req.getEmail().isBlank() && !req.getEmail().equalsIgnoreCase(user.getEmail())) {
             if (!EmailValidationUtil.isValid(req.getEmail()))
-                return ResponseEntity.badRequest().body(Map.of("message", EmailValidationUtil.ERROR_MESSAGE));
+                return ApiResponseUtil.badRequest(EmailValidationUtil.ERROR_MESSAGE);
             if (userRepo.existsByEmail(req.getEmail()))
-                return ResponseEntity.badRequest().body(Map.of("message", "Email already in use"));
+                return ApiResponseUtil.badRequest("Email already in use");
             user.setEmail(req.getEmail());
         }
         if (req.getPhone() != null && !req.getPhone().isBlank()) {
             String phoneErr = PhoneValidationUtil.validate(req.getPhone());
             if (phoneErr != null)
-                return ResponseEntity.badRequest().body(Map.of("message", phoneErr));
+                return ApiResponseUtil.badRequest(phoneErr);
             String normalizedPhone = PhoneValidationUtil.normalize(req.getPhone());
             if (userRepo.existsByPhoneAndIdNot(normalizedPhone, id))
                 return ResponseEntity.status(409).body(Map.of("message", PhoneValidationUtil.DUPLICATE_ERROR));
@@ -141,7 +142,7 @@ public class AdminUserService {
         }
         if (req.getNewPassword() != null && !req.getNewPassword().isBlank()) {
             if (!PasswordValidationUtil.isStrong(req.getNewPassword()))
-                return ResponseEntity.badRequest().body(Map.of("message", PasswordValidationUtil.ERROR_MESSAGE));
+                return ApiResponseUtil.badRequest(PasswordValidationUtil.ERROR_MESSAGE);
             user.setPassword(passwordEncoder.encode(req.getNewPassword()));
         }
         return ResponseEntity.ok(UserResponse.from(userRepo.save(user)));
@@ -154,13 +155,13 @@ public class AdminUserService {
             String oldPath = user.getProfilePicture();
             String newPath = FileStorageUtil.saveImage(file, "profile-pictures", "user_" + id);
             if (newPath == null)
-                return ResponseEntity.badRequest().body(Map.of("message", "No file provided"));
+                return ApiResponseUtil.badRequest("No file provided");
             user.setProfilePicture(newPath);
             userRepo.save(user);
             FileStorageUtil.deleteFileQuietly(oldPath);
             return ResponseEntity.ok(UserResponse.from(user));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+            return ApiResponseUtil.badRequest(e.getMessage());
         }
     }
 
@@ -185,6 +186,6 @@ public class AdminUserService {
             appRepo.clearAgentFromApplications(user);
         }
         userRepo.delete(user);
-        return ResponseEntity.ok(Map.of("message", "User deleted"));
+        return ApiResponseUtil.ok("User deleted");
     }
 }

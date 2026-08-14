@@ -6,6 +6,7 @@ import { toast } from 'react-toastify'
 import FormDetailModal from '../../components/FormDetailModal'
 import DigitalSignatureCanvas from '../../components/DigitalSignatureCanvas'
 import { apiError } from '../../utils/apiError'
+import { fmtMoney } from '../../utils/format'
 
 const FILTERS = ['ALL', 'PENDING', 'VERIFIED', 'REVISION_REQUESTED', 'REJECTED']
 
@@ -173,7 +174,7 @@ export default function AgentApplicationsPage() {
                     {[
                       { label: t('agent.apps.planLabel'),     value: app.packageName || app.package?.name },
                       { label: t('agent.apps.typeLabel'),     value: app.packageType || app.package?.type },
-                      { label: t('agent.apps.coverageLabel'), value: `${Number(app.coverageAmount).toLocaleString(locale)} MMK` },
+                      { label: t('agent.apps.coverageLabel'), value: fmtMoney(app.coverageAmount, locale) },
                       { label: t('agent.apps.durationLabel'), value: `${app.duration} ${app.duration > 1 ? t('agent.apps.yearsSuffix') : t('agent.apps.yearSuffix')}` },
                     ].map(item => (
                       <div key={item.label} className="col-6">

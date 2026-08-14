@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
-import { downloadBlob } from '../../utils/download'
+import { downloadPdfFromApi } from '../../utils/download'
+import { fmtDateIntl, fmtMoney } from '../../utils/format'
 
 // ── Colour palette by insurance type ────────────────────────────────────────
 const TYPE_COLORS = {
@@ -10,7 +11,7 @@ const TYPE_COLORS = {
   PROPERTY:  '#ca8a04', OTHER:    '#64748b',
 }
 const typeColor = t => TYPE_COLORS[t] || TYPE_COLORS.OTHER
-const MMK = n => (n == null ? '—' : Number(n).toLocaleString() + ' MMK')
+const MMK = n => (n == null ? '—' : fmtMoney(n))
 const Pct = n => (n == null ? '—' : Number(n).toFixed(1) + '%')
 const shortMonth = key => key?.split(' ')[0] || key
 
@@ -182,11 +183,6 @@ function StatCard({ label, value, icon, color, bg, sub }) {
   )
 }
 
-// ── Blob-download helper ──────────────────────────────────────────────────────
-function triggerBlobDownload(data, filename, mime = 'application/pdf') {
-  return downloadBlob(data, filename, mime)
-}
-
 // ── Main Component ────────────────────────────────────────────────────────────
 const TABS = [
   { key: 'overview',  labelKey: 'tabOverviewLabel', icon: 'bi-graph-up-arrow' },
@@ -256,12 +252,10 @@ export default function AdminReportsPage() {
     setPdfBusy(true)
     try {
       const now = new Date()
-      const res = await api.get('/admin/reports/monthly-pdf', {
-        params: { year: now.getFullYear(), month: now.getMonth() + 1 },
-        responseType: 'blob',
-      })
       const filename = `monthly-report-${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}.pdf`
-      await triggerBlobDownload(res.data, filename)
+      await downloadPdfFromApi('/admin/reports/monthly-pdf', filename, {
+        params: { year: now.getFullYear(), month: now.getMonth() + 1 },
+      })
     } catch {
       showToast(t('admin.reports.downloadError'), false)
     } finally {
@@ -275,9 +269,8 @@ export default function AdminReportsPage() {
     setResetBusy(true)
     try {
       const now = new Date()
-      const res = await api.post('/admin/reports/monthly-reset', null, { responseType: 'blob' })
       const filename = `period-report-${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}.pdf`
-      await triggerBlobDownload(res.data, filename)
+      await downloadPdfFromApi('/admin/reports/monthly-reset', filename, { method: 'post' })
       showToast(t('admin.reports.monthlyResetSuccess'))
       // Reload everything — analytics now shows zero, snapshots table updated
       const [snaps, newReports, newReset] = await Promise.all([
@@ -298,9 +291,8 @@ export default function AdminReportsPage() {
   // Re-download an archived snapshot PDF
   const handleSnapshotDownload = async (id, year, month) => {
     try {
-      const res = await api.get(`/admin/reports/monthly-snapshots/${id}/pdf`, { responseType: 'blob' })
       const filename = `monthly-report-${year}-${String(month).padStart(2,'0')}.pdf`
-      await triggerBlobDownload(res.data, filename)
+      await downloadPdfFromApi(`/admin/reports/monthly-snapshots/${id}/pdf`, filename)
     } catch {
       showToast(t('admin.reports.downloadError'), false)
     }
@@ -1183,11 +1175,11 @@ function ClaimsPayoutTab({ claimsPayoutByCustomer, totalClaimsPaid, monthlyClaim
                                 </div>
                                 <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
                                   {claim.insuranceType && <span className="type-badge-pill" style={{ padding: '0.05rem 0.35rem', borderRadius: 3, marginRight: 4 }}>{claim.insuranceType}</span>}
-                                  {claim.approvedAt ? new Date(claim.approvedAt).toLocaleDateString() : '—'}
+                                  {fmtDateIntl(claim.approvedAt, undefined, '—')}
                                 </div>
                               </div>
                             </div>
-                            <span style={{ fontWeight: 800, fontSize: '0.9rem', color: '#dc2626' }}>{Number(claim.amount).toLocaleString()} MMK</span>
+                            <span style={{ fontWeight: 800, fontSize: '0.9rem', color: '#dc2626' }}>{fmtMoney(claim.amount)}</span>
                           </div>
                         ))}
                       </div>
@@ -1518,8 +1510,8 @@ function WalletTab({ wallet, walletLoaded }) {
                               </div>
                             </div>
                             <div style={{ textAlign: 'right' }}>
-                              <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#16a34a' }}>{Number(tx.amount).toLocaleString()} MMK</div>
-                              <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{tx.createdAt ? new Date(tx.createdAt).toLocaleDateString() : '—'}</div>
+                              <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#16a34a' }}>{fmtMoney(tx.amount)}</div>
+                              <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{fmtDateIntl(tx.createdAt, undefined, '—')}</div>
                             </div>
                           </div>
                         ))}

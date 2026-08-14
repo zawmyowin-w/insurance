@@ -6,6 +6,8 @@ import { toast } from 'react-toastify'
 import FormDetailModal from '../../components/FormDetailModal'
 import RevisionFormModal from '../../components/RevisionFormModal'
 import DeleteConfirmModal from '../../components/DeleteConfirmModal'
+import { apiError } from '../../utils/apiError'
+import { fmtDateIntl, fmtMoney } from '../../utils/format'
 
 export default function MyApplicationsPage() {
   const { t } = useTranslation()
@@ -44,7 +46,7 @@ export default function MyApplicationsPage() {
       setDeleteModal({ open: false, id: null, action: null, loading: false })
       fetchApps()
     } catch (err) {
-      toast.error(err.response?.data?.message || (deleteModal.action === 'cancel' ? t('myApps.cancelFailed') : t('myApps.deleteFailed')))
+      apiError(err, (deleteModal.action === 'cancel' ? t('myApps.cancelFailed') : t('myApps.deleteFailed')))
       setDeleteModal(m => ({ ...m, loading: false }))
     }
   }
@@ -105,15 +107,15 @@ export default function MyApplicationsPage() {
                           {app.packageName || app.package?.name}
                         </div>
                         <small style={{ color: 'var(--text-muted)' }}>
-                          #{app.id} · {app.packageType} · {t('customer.applied')} {app.createdAt ? new Date(app.createdAt).toLocaleDateString() : '—'}
+                          #{app.id} · {app.packageType} · {t('customer.applied')} {fmtDateIntl(app.createdAt, undefined, '—')}
                         </small>
                       </div>
                       <span className={`badge-status badge-${app.status?.toLowerCase()}`}>{app.status}</span>
                     </div>
                     <div className="d-flex gap-3 flex-wrap" style={{ fontSize: '0.83rem' }}>
-                      <span style={{ color: 'var(--text-muted)' }}>{t('myApps.coverageLabel')}: <strong style={{ color: 'var(--text-primary)' }}>{Number(app.coverageAmount).toLocaleString()} MMK</strong></span>
+                      <span style={{ color: 'var(--text-muted)' }}>{t('myApps.coverageLabel')}: <strong style={{ color: 'var(--text-primary)' }}>{fmtMoney(app.coverageAmount)}</strong></span>
                       <span style={{ color: 'var(--text-muted)' }}>{t('myApps.durationLabel')}: <strong style={{ color: 'var(--text-primary)' }}>{app.duration} {t('myApps.year')}</strong></span>
-                      {app.premiumAmount && <span style={{ color: 'var(--text-muted)' }}>{t('myApps.premiumLabel')}: <strong style={{ color: 'var(--primary)' }}>{Number(app.premiumAmount).toLocaleString()} MMK</strong></span>}
+                      {app.premiumAmount && <span style={{ color: 'var(--text-muted)' }}>{t('myApps.premiumLabel')}: <strong style={{ color: 'var(--primary)' }}>{fmtMoney(app.premiumAmount)}</strong></span>}
                       {app.riskLevel && <span style={{ color: 'var(--text-muted)' }}>{t('myApps.riskLabel')}: <strong style={{ color: app.riskLevel === 'HIGH' ? '#dc2626' : app.riskLevel === 'MEDIUM' ? '#d97706' : '#16a34a' }}>{app.riskLevel}</strong></span>}
                       {app.agentName && <span style={{ color: 'var(--text-muted)' }}><i className="bi bi-person-badge me-1" style={{ color: '#1d4ed8' }}></i>{t('myApps.agentLabel')}: <strong style={{ color: '#1d4ed8' }}>{app.agentName}</strong></span>}
                     </div>

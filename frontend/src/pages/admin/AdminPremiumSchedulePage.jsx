@@ -2,15 +2,9 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
-import { downloadBlob } from '../../utils/download'
-
-const STATUS_COLORS = {
-  OVERDUE:              { color: '#dc2626', bg: '#fee2e2', icon: 'bi-exclamation-triangle-fill' },
-  DUE:                  { color: '#d97706', bg: '#fef3c7', icon: 'bi-clock-fill' },
-  PENDING_VERIFICATION: { color: '#7c3aed', bg: '#ede9fe', icon: 'bi-hourglass-split' },
-  UPCOMING:             { color: '#64748b', bg: '#f1f5f9', icon: 'bi-calendar-event' },
-  PAID:                 { color: '#16a34a', bg: '#dcfce7', icon: 'bi-check-circle-fill' },
-}
+import { downloadPdfFromApi } from '../../utils/download'
+import { getStatusStyle } from '../../utils/statusMeta'
+import { apiError } from '../../utils/apiError'
 
 export default function AdminPremiumSchedulePage() {
   const { t } = useTranslation()
@@ -24,11 +18,11 @@ export default function AdminPremiumSchedulePage() {
   }
 
   const STATUS_META = {
-    OVERDUE:              { label: t('admin.premiumSchedule.statusOverdue'),            ...STATUS_COLORS.OVERDUE },
-    DUE:                  { label: t('admin.premiumSchedule.statusDue'),                ...STATUS_COLORS.DUE },
-    PENDING_VERIFICATION: { label: t('admin.premiumSchedule.statusPendingVerification'), ...STATUS_COLORS.PENDING_VERIFICATION },
-    UPCOMING:             { label: t('admin.premiumSchedule.statusUpcoming'),           ...STATUS_COLORS.UPCOMING },
-    PAID:                 { label: t('admin.premiumSchedule.statusPaid'),               ...STATUS_COLORS.PAID },
+    OVERDUE:              { label: t('admin.premiumSchedule.statusOverdue'),             ...getStatusStyle('OVERDUE') },
+    DUE:                  { label: t('admin.premiumSchedule.statusDue'),                 ...getStatusStyle('DUE') },
+    PENDING_VERIFICATION: { label: t('admin.premiumSchedule.statusPendingVerification'), ...getStatusStyle('PENDING_VERIFICATION') },
+    UPCOMING:             { label: t('admin.premiumSchedule.statusUpcoming'),            ...getStatusStyle('UPCOMING') },
+    PAID:                 { label: t('admin.premiumSchedule.statusPaid'),                ...getStatusStyle('PAID') },
   }
 
   const TABS = [
@@ -99,7 +93,7 @@ export default function AdminPremiumSchedulePage() {
       toast.success(t('admin.premiumSchedule.cancelSuccess'))
       fetchData()
     } catch (err) {
-      toast.error(err?.response?.data?.message || t('admin.premiumSchedule.cancelFailed'))
+      apiError(err, t('admin.premiumSchedule.cancelFailed'))
     } finally {
       setActionLoading(prev => ({ ...prev, [appId]: null }))
     }
@@ -123,8 +117,7 @@ export default function AdminPremiumSchedulePage() {
 
   const downloadPolicy = async (appId, policyNumber) => {
     try {
-      const res = await api.get(`/admin/applications/${appId}/policy-contract`, { responseType: 'blob' })
-      await downloadBlob(res.data, `policy_contract_${policyNumber || appId}.pdf`, 'application/pdf')
+      await downloadPdfFromApi(`/admin/applications/${appId}/policy-contract`, `policy_contract_${policyNumber || appId}.pdf`)
     } catch {
       toast.error(t('admin.premiumSchedule.pdfFailed'))
     }

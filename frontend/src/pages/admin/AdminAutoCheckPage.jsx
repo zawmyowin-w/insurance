@@ -1,13 +1,10 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
+import { apiErrorMessage } from '../../utils/apiError'
+import { getStatusStyle } from '../../utils/statusMeta'
+import { fmtDateIntl, fmtDateTimeIntl, fmtMoney } from '../../utils/format'
 
-const STATUS_STYLE = {
-  SUCCESS: { bg: '#dcfce7', color: '#16a34a', icon: 'bi-check-circle-fill' },
-  PARTIAL:  { bg: '#fef9c3', color: '#ca8a04', icon: 'bi-exclamation-triangle-fill' },
-  SKIPPED:  { bg: '#f1f5f9', color: '#64748b', icon: 'bi-skip-forward-circle' },
-  ERROR:    { bg: '#fee2e2', color: '#dc2626', icon: 'bi-x-circle-fill' },
-}
 const TYPE_META = {
   REMINDER:         { icon: 'bi-bell-fill',    color: '#d97706', labelKey: 'typeReminder' },
   REVISION_CLEANUP: { icon: 'bi-trash3-fill', color: '#dc2626', labelKey: 'typeCleanup' },
@@ -39,7 +36,7 @@ function cronToMyanmarTime(cron) {
 }
 
 function Badge({ status, t }) {
-  const s = STATUS_STYLE[status] || STATUS_STYLE.SKIPPED
+  const s = getStatusStyle(status)
   return (
     <span style={{ background: s.bg, color: s.color, borderRadius: 6, padding: '0.15rem 0.55rem',
       fontSize: '0.75rem', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
@@ -92,7 +89,7 @@ function SettingsModal({ status, onClose, onSaved }) {
       await api.put('/admin/autocheck/settings', form)
       onSaved()
     } catch (e) {
-      setErr(e?.response?.data?.message || t('admin.autoCheck.settingsSaveFailed'))
+      setErr(apiErrorMessage(e, t('admin.autoCheck.settingsSaveFailed')))
     } finally { setSaving(false) }
   }
 
@@ -339,7 +336,7 @@ function AdvertiseSection({ showToast }) {
       const h = await api.get('/admin/advertise/history').catch(() => ({ data: [] }))
       setHistory(Array.isArray(h.data) ? h.data : [])
     } catch (e) {
-      showToast('❌ ' + (e?.response?.data?.message || t('admin.autoCheck.errorOccurred')), false)
+      showToast('❌ ' + apiErrorMessage(e, t('admin.autoCheck.errorOccurred')), false)
     } finally { setSending(false) }
   }
 
@@ -511,7 +508,7 @@ function AdvertiseSection({ showToast }) {
                     whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{h.message}</div>
                 </div>
                 <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                  {h.sentAt ? new Date(h.sentAt).toLocaleDateString() : '—'}
+                  {fmtDateIntl(h.sentAt, undefined, '—')}
                 </div>
               </div>
             ))}
@@ -563,7 +560,7 @@ export default function AdminAutoCheckPage() {
       showToast(`✅ ${t('admin.autoCheck.runComplete')}`)
       await load()
     } catch (e) {
-      showToast('❌ ' + (e?.response?.data?.message || t('admin.autoCheck.errorOccurred')), false)
+      showToast('❌ ' + apiErrorMessage(e, t('admin.autoCheck.errorOccurred')), false)
     } finally {
       setRunning(null)
     }
@@ -766,7 +763,7 @@ export default function AdminAutoCheckPage() {
                             </span>
                           )}
                           <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                            {data.createdAt ? new Date(data.createdAt).toLocaleString() : '—'}
+                            {fmtDateTimeIntl(data.createdAt, undefined, '—')}
                           </span>
                         </div>
                       </div>
@@ -857,7 +854,7 @@ export default function AdminAutoCheckPage() {
                       </span>
                        {log.aiAssisted && <i className="bi bi-stars" style={{ color: '#d97706', fontSize: '0.85rem' }} title={t('admin.autoCheck.aiAssisted')}></i>}
                       <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                        {log.createdAt ? new Date(log.createdAt).toLocaleString() : '—'}
+                        {fmtDateTimeIntl(log.createdAt, undefined, '—')}
                       </span>
                       <i className={`bi bi-chevron-${isOpen ? 'up' : 'down'}`} style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}></i>
                     </div>
@@ -872,7 +869,7 @@ export default function AdminAutoCheckPage() {
                       <div className="d-flex flex-column gap-1" style={{ maxHeight: 280, overflowY: 'auto' }}>
                         {log.details.map((d, i) => {
                           const outcome = d.outcome || d.status || 'UNKNOWN'
-                          const s = STATUS_STYLE[outcome] || STATUS_STYLE.SKIPPED
+                          const s = getStatusStyle(outcome)
                           return (
                             <div key={i} style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.25rem 0.75rem',
                               background: 'var(--bg-primary)', borderRadius: 7, padding: '0.4rem 0.75rem',
@@ -883,7 +880,7 @@ export default function AdminAutoCheckPage() {
                               {d.customer    && <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{d.customer}</span>}
                               {d.customerName && <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{d.customerName}</span>}
                               {d.policy      && <span style={{ color: 'var(--text-secondary)' }}>{d.policy}</span>}
-                              {d.amount      && <span style={{ color: '#16a34a', fontWeight: 700 }}>{Number(d.amount).toLocaleString()} MMK</span>}
+                              {d.amount      && <span style={{ color: '#16a34a', fontWeight: 700 }}>{fmtMoney(d.amount)}</span>}
                               {d.period      && <span style={{ color: '#7c3aed' }}>{d.period}</span>}
                               {d.urgency     && <span style={{ color: d.urgency === 'OVERDUE' ? '#dc2626' : '#d97706', fontWeight: 600 }}>{d.urgency}</span>}
                               {d.reason      && <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>({d.reason})</span>}

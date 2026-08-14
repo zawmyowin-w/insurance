@@ -11,6 +11,8 @@ import com.insurance.portal.repository.PolicyApplicationRepository;
 import com.insurance.portal.repository.UserRepository;
 import com.insurance.portal.service.NotificationService;
 import com.insurance.portal.util.FileStorageUtil;
+import com.insurance.portal.util.ApiResponseUtil;
+import com.insurance.portal.util.CurrentUserUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -60,9 +62,9 @@ public class AdminPaymentController {
                                            @AuthenticationPrincipal UserDetails principal) {
         Payment payment = paymentRepo.findById(id).orElseThrow(() -> new RuntimeException("Payment not found"));
         if (payment.getStatus() != PaymentStatus.PENDING) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Only PENDING payments can be verified"));
+            return ApiResponseUtil.badRequest("Only PENDING payments can be verified");
         }
-        User admin = userRepo.findByEmail(principal.getUsername()).orElse(null);
+        User admin = CurrentUserUtil.orNull(userRepo, principal);
         payment.setStatus(PaymentStatus.VERIFIED);
         payment.setVerifiedBy(admin != null ? admin.getName() : "Admin");
         if (req != null && req.get("note") != null) payment.setNotes(req.get("note"));
@@ -97,7 +99,7 @@ public class AdminPaymentController {
     public ResponseEntity<?> rejectPayment(@PathVariable Long id, @RequestBody(required = false) Map<String, String> req) {
         Payment payment = paymentRepo.findById(id).orElseThrow(() -> new RuntimeException("Payment not found"));
         if (payment.getStatus() != PaymentStatus.PENDING) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Only PENDING payments can be rejected"));
+            return ApiResponseUtil.badRequest("Only PENDING payments can be rejected");
         }
         String note = req != null ? req.getOrDefault("note", "N/A") : "N/A";
         payment.setStatus(PaymentStatus.REJECTED);

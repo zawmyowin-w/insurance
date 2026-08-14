@@ -5,6 +5,7 @@ import com.insurance.portal.dto.PackageResponse;
 import com.insurance.portal.model.InsurancePackage;
 import com.insurance.portal.repository.InsurancePackageRepository;
 import com.insurance.portal.repository.InsuranceTypeRepository;
+import com.insurance.portal.util.ApiResponseUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -80,7 +81,7 @@ public class PackageController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> deletePackage(@PathVariable Long id) {
         packageRepository.deleteById(id);
-        return ResponseEntity.ok(Map.of("message", "Package deleted"));
+        return ApiResponseUtil.ok("Package deleted");
     }
 
     private InsurancePackage buildPackageFromMap(Map<String, Object> req, InsurancePackage pkg) {

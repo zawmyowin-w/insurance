@@ -6,6 +6,7 @@ import { toast } from 'react-toastify'
 import FormDetailModal from '../../components/FormDetailModal'
 import DigitalSignatureCanvas from '../../components/DigitalSignatureCanvas'
 import { apiError } from '../../utils/apiError'
+import { fmtDateIntl, fmtMoney } from '../../utils/format'
 
 const STATUS_KEYS = ['ALL', 'PENDING', 'VERIFIED', 'APPROVED', 'REJECTED']
 
@@ -107,10 +108,10 @@ export default function AdminApplicationsPage() {
                       {[
                         { label: t('admin.applications.planLabel'),     value: app.packageName || app.package?.name },
                         { label: t('admin.applications.typeLabel'),     value: app.packageType || app.package?.type },
-                        { label: t('admin.applications.coverageLabel'), value: `${Number(app.coverageAmount).toLocaleString()} MMK` },
+                        { label: t('admin.applications.coverageLabel'), value: fmtMoney(app.coverageAmount) },
                         { label: t('admin.applications.durationLabel'), value: `${app.duration} ${t('admin.applications.yearSuffix')}` },
                         { label: t('admin.applications.agentLabel'),    value: app.agentName || app.agent?.name || t('admin.common.na') },
-                        { label: t('admin.applications.appliedLabel'),  value: app.createdAt ? new Date(app.createdAt).toLocaleDateString() : '—' },
+                        { label: t('admin.applications.appliedLabel'),  value: fmtDateIntl(app.createdAt, undefined, '—') },
                       ].map(item => (
                         <div key={item.label} style={{ minWidth: 100 }}>
                           <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{item.label}</div>

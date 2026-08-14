@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
+import { apiError } from '../../utils/apiError'
 
 const CATEGORIES = [
   { key: 'general', value: 'General' },
@@ -30,7 +31,7 @@ export default function SendFeedbackPage() {
       setSubmitted(true)
       toast.success(t('feedback.submitSuccess'))
     } catch (err) {
-      toast.error(err.response?.data?.message || t('feedback.submitFailed'))
+      apiError(err, t('feedback.submitFailed'))
     } finally {
       setSubmitting(false)
     }

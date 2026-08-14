@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
 import api from '../../services/api'
+import { fmtDateIntl, fmtMoney } from '../../utils/format'
 
 /* ── 3-D floating protection scene (inline SVG) ─────────────────── */
 function ProtectionScene() {
@@ -248,10 +249,10 @@ export default function CustomerDashboard() {
                 {recentApps.map(app => (
                   <tr key={app.id}>
                     <td style={{ fontWeight: 600 }}>{app.packageName || app.package?.name}</td>
-                    <td>{Number(app.coverageAmount).toLocaleString()} MMK</td>
+                    <td>{fmtMoney(app.coverageAmount)}</td>
                     <td>{app.duration} {app.duration > 1 ? t('dash.years') : t('dash.year')}</td>
                     <td><span className={`badge-status badge-${app.status?.toLowerCase()}`}>{app.status}</span></td>
-                    <td>{app.createdAt ? new Date(app.createdAt).toLocaleDateString() : '—'}</td>
+                    <td>{fmtDateIntl(app.createdAt, undefined, '—')}</td>
                   </tr>
                 ))}
               </tbody>

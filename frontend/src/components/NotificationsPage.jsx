@@ -3,6 +3,7 @@ import api from '../services/api'
 import { toast } from 'react-toastify'
 import { useNotifCount } from '../context/NotifCountContext'
 import { useTranslation } from 'react-i18next'
+import { fmtDateTimeIntl } from '../utils/format'
 
 const ICON_MAP  = { APPROVAL: 'bi-check-circle-fill', REJECTION: 'bi-x-circle-fill', PAYMENT: 'bi-credit-card-fill', CLAIM: 'bi-file-earmark-medical-fill', INFO: 'bi-info-circle-fill', REMINDER: 'bi-bell-fill' }
 const COLOR_MAP = { APPROVAL: '#16a34a', REJECTION: '#dc2626', PAYMENT: '#1d4ed8', CLAIM: '#f59e0b', INFO: '#6b7280', REMINDER: '#9333ea' }
@@ -93,7 +94,7 @@ export default function NotificationsPage({ subtitle }) {
                   <div style={{ fontWeight: n.read ? 400 : 600, color: 'var(--text-primary)', fontSize: '0.9rem' }}>{n.title}</div>
                   <div style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.2rem' }}>{n.message}</div>
                   <div style={{ color: 'var(--text-muted)', fontSize: '0.78rem', marginTop: '0.3rem' }}>
-                    {n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}
+                    {fmtDateTimeIntl(n.createdAt, undefined, '')}
                   </div>
                 </div>
                 {!n.read && <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#1d4ed8', flexShrink: 0, marginTop: 4 }}></div>}

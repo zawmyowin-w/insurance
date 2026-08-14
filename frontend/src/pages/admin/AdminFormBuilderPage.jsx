@@ -5,6 +5,7 @@ import api from '../../services/api'
 import { toast } from 'react-toastify'
 import { getTypeMeta } from '../../utils/typeMeta'
 import DeleteConfirmModal from '../../components/DeleteConfirmModal'
+import { apiError } from '../../utils/apiError'
 
 const FIELD_TYPE_VALUES = [
   'NAME', 'EMAIL', 'PHONE', 'TEXT',
@@ -136,7 +137,7 @@ export default function AdminFormBuilderPage() {
       }
       loadForms(selectedPkg)
       closePanel()
-    } catch (err) { toast.error(err.response?.data?.message || t('admin.formBuilder.saveFailed')) }
+    } catch (err) { apiError(err, t('admin.formBuilder.saveFailed')) }
     finally { setSaving(false) }
   }
 

@@ -4,6 +4,7 @@ import com.insurance.portal.model.*;
 import com.insurance.portal.model.enums.*;
 import com.insurance.portal.repository.*;
 import com.insurance.portal.service.NotificationService;
+import com.insurance.portal.util.ApiResponseUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -57,7 +58,7 @@ public class AdminController {
     public ResponseEntity<?> createInsuranceType(@RequestBody Map<String, Object> body) {
         String name = body.getOrDefault("name", "").toString().trim().toUpperCase();
         if (name.isBlank())
-            return ResponseEntity.badRequest().body(Map.of("message", "Name is required"));
+            return ApiResponseUtil.badRequest("Name is required");
         if (insuranceTypeRepo.findByNameIgnoreCase(name).isPresent())
             return ResponseEntity.status(409).body(Map.of("message", "\"" + name + "\" သည် ရှိပြီးသားဖြစ်သည်"));
         String description = body.getOrDefault("description", "").toString().trim();
@@ -88,7 +89,7 @@ public class AdminController {
     public ResponseEntity<?> deleteInsuranceType(@PathVariable Long id) {
         if (!insuranceTypeRepo.existsById(id)) return ResponseEntity.notFound().build();
         insuranceTypeRepo.deleteById(id);
-        return ResponseEntity.ok(Map.of("message", "Deleted"));
+        return ApiResponseUtil.ok("Deleted");
     }
 
     // ── Dashboard Stats ───────────────────────────────────────────────

@@ -7,6 +7,7 @@ import ProfileAvatar from '../../components/ProfileAvatar'
 import PasswordStrengthWidget from '../../components/PasswordStrengthWidget'
 import { issueOtp, verifyOtp, otpSecondsLeft } from '../../services/otpService'
 import { getPhoneValidationError, isPhoneValid, isStrongPassword } from '../../utils/validation'
+import { apiError } from '../../utils/apiError'
 
 const OTP_TYPE = 'profile-change'
 const OTP_BOX_COUNT = 6
@@ -117,7 +118,7 @@ export default function CustomerProfilePage() {
       resetOtpFlow()
       setShowPwdModal(false)
     } catch (err) {
-      toast.error(err.response?.data?.message || t('profile.pwdFailed'))
+      apiError(err, t('profile.pwdFailed'))
     } finally { setSavingOtpPwd(false) }
   }
 
@@ -171,7 +172,7 @@ export default function CustomerProfilePage() {
       toast.success(t('profile.updateSuccess'))
       setEditMode(false)
     } catch (err) {
-      toast.error(err.response?.data?.message || t('profile.updateFailed'))
+      apiError(err, t('profile.updateFailed'))
     } finally { setSavingProfile(false) }
   }
 
@@ -202,7 +203,7 @@ export default function CustomerProfilePage() {
       toast.success(t('profile.pwdChanged'))
       setShowPwdModal(false)
     } catch (err) {
-      toast.error(err.response?.data?.message || t('profile.pwdFailed'))
+      apiError(err, t('profile.pwdFailed'))
     } finally { setSavingPwd(false) }
   }
 

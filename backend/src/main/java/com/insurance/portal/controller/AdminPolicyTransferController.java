@@ -4,6 +4,8 @@ import com.insurance.portal.model.*;
 import com.insurance.portal.model.enums.*;
 import com.insurance.portal.repository.*;
 import com.insurance.portal.service.NotificationService;
+import com.insurance.portal.util.ApiResponseUtil;
+import com.insurance.portal.util.CurrentUserUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -37,7 +39,7 @@ public class AdminPolicyTransferController {
     private final NotificationService notifService;
 
     private User getAdmin(UserDetails principal) {
-        return userRepo.findByEmail(principal.getUsername()).orElseThrow();
+        return CurrentUserUtil.require(userRepo, principal);
     }
 
     @GetMapping
@@ -83,7 +85,7 @@ public class AdminPolicyTransferController {
         PolicyTransfer transfer = transferRepo.findById(id).orElse(null);
         if (transfer == null) return ResponseEntity.notFound().build();
         if (transfer.getStatus() != TransferStatus.PENDING_ADMIN_APPROVAL)
-            return ResponseEntity.badRequest().body(Map.of("message", "Transfer is not in PENDING_ADMIN_APPROVAL status"));
+            return ApiResponseUtil.badRequest("Transfer is not in PENDING_ADMIN_APPROVAL status");
 
         User newOwner = transfer.getToCustomer();
         User oldOwner = transfer.getFromCustomer();
@@ -161,7 +163,7 @@ public class AdminPolicyTransferController {
         PolicyTransfer transfer = transferRepo.findById(id).orElse(null);
         if (transfer == null) return ResponseEntity.notFound().build();
         if (transfer.getStatus() != TransferStatus.PENDING_ADMIN_APPROVAL)
-            return ResponseEntity.badRequest().body(Map.of("message", "Transfer is not pending admin approval"));
+            return ApiResponseUtil.badRequest("Transfer is not pending admin approval");
 
         transfer.setStatus(TransferStatus.REJECTED);
         if (body != null && body.get("note") != null) transfer.setAdminNote(body.get("note").trim());

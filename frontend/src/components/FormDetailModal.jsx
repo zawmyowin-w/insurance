@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import api from '../services/api'
-import { downloadBlob } from '../utils/download'
+import { downloadPdfFromApi, openBlobFromApi } from '../utils/download'
+import { statusChipStyle } from '../utils/statusMeta'
+import { fmtMoney } from '../utils/format'
 
 /**
  * Reusable modal for viewing submitted application or claim form data.
@@ -46,8 +48,7 @@ export default function FormDetailModal({ show, onClose, type, item, role }) {
       : `/${role}/claims/${item.id}/pdf`
     setPdfLoading(true)
     try {
-      const res = await api.get(path, { responseType: 'blob' })
-      await downloadBlob(res.data, `${type}_${item.id}.pdf`, 'application/pdf')
+      await downloadPdfFromApi(path, `${type}_${item.id}.pdf`)
     } catch { alert(t('formModal.downloadFailed')) }
     finally { setPdfLoading(false) }
   }
@@ -68,22 +69,7 @@ export default function FormDetailModal({ show, onClose, type, item, role }) {
   }
   const statusText = STATUS_MAP[statusValue] || statusValue
 
-  const statusBadgeStyle = {
-    display: 'inline-block',
-    padding: '0.2rem 0.7rem',
-    borderRadius: 99,
-    fontSize: '0.72rem',
-    fontWeight: 700,
-    letterSpacing: '0.04em',
-    background: statusValue === 'APPROVED' ? '#dcfce7'
-      : statusValue === 'REJECTED' ? '#fee2e2'
-      : statusValue === 'PENDING'  ? '#fef9c3'
-      : '#e0e7ff',
-    color: statusValue === 'APPROVED' ? '#15803d'
-      : statusValue === 'REJECTED' ? '#b91c1c'
-      : statusValue === 'PENDING'  ? '#854d0e'
-      : '#3730a3',
-  }
+  const statusBadgeStyle = statusChipStyle(statusValue)
 
   return (
     <div style={{
@@ -185,12 +171,12 @@ export default function FormDetailModal({ show, onClose, type, item, role }) {
             position: 'relative', zIndex: 1, flexWrap: 'wrap',
           }}>
             {isApp ? <>
-              {item.coverageAmount && <StatPill icon="bi-shield-check" label={t('formModal.coverage')} value={Number(item.coverageAmount).toLocaleString(locale) + ' MMK'} />}
-              {item.premiumAmount  && <StatPill icon="bi-cash-coin"    label={t('formModal.premium')}  value={Number(item.premiumAmount).toLocaleString(locale) + ' MMK'} />}
+              {item.coverageAmount && <StatPill icon="bi-shield-check" label={t('formModal.coverage')} value={fmtMoney(item.coverageAmount, locale)} />}
+              {item.premiumAmount  && <StatPill icon="bi-cash-coin"    label={t('formModal.premium')}  value={fmtMoney(item.premiumAmount, locale)} />}
               {item.duration       && <StatPill icon="bi-calendar3"    label={t('formModal.duration')} value={item.duration + ' ' + t('formModal.year')} />}
               {item.riskLevel      && <StatPill icon="bi-activity"     label={t('formModal.risk')}     value={item.riskLevel} />}
             </> : <>
-              {item.amount       && <StatPill icon="bi-cash-coin"          label={t('formModal.claimAmount')}  value={Number(item.amount).toLocaleString(locale) + ' MMK'} />}
+              {item.amount       && <StatPill icon="bi-cash-coin"          label={t('formModal.claimAmount')}  value={fmtMoney(item.amount, locale)} />}
               {item.incidentDate && <StatPill icon="bi-calendar-event"     label={t('formModal.incidentDate')} value={item.incidentDate} />}
               {item.claimType    && <StatPill icon="bi-tag"                label={t('formModal.claimType')}    value={item.claimType} />}
               {item.customerName && <StatPill icon="bi-person"             label={t('formModal.customer')}     value={item.customerName} />}
@@ -262,19 +248,19 @@ function PersonalInfoSection({ item, type, formData, typeColor, locale }) {
     if (item.packageName)     rows.push({ icon: 'bi-box-seam',           label: t('formModal.pi.package'),        value: item.packageName })
     if (item.packageType)     rows.push({ icon: 'bi-tag',                label: t('formModal.pi.packageType'),    value: item.packageType })
     if (item.policyNumber)    rows.push({ icon: 'bi-hash',               label: t('formModal.pi.policyNumber'),   value: item.policyNumber })
-    if (item.coverageAmount)  rows.push({ icon: 'bi-shield-check',       label: t('formModal.pi.coverage'),       value: Number(item.coverageAmount).toLocaleString(locale) + ' MMK' })
-    if (item.premiumAmount)   rows.push({ icon: 'bi-cash-coin',          label: t('formModal.pi.premium'),        value: Number(item.premiumAmount).toLocaleString(locale) + ' MMK' })
+    if (item.coverageAmount)  rows.push({ icon: 'bi-shield-check',       label: t('formModal.pi.coverage'),       value: fmtMoney(item.coverageAmount, locale) })
+    if (item.premiumAmount)   rows.push({ icon: 'bi-cash-coin',          label: t('formModal.pi.premium'),        value: fmtMoney(item.premiumAmount, locale) })
     if (item.duration)        rows.push({ icon: 'bi-calendar3',          label: t('formModal.pi.duration'),       value: item.duration + ' ' + t('formModal.year') })
     if (item.paymentFrequency) rows.push({ icon: 'bi-arrow-repeat',     label: t('formModal.pi.paymentFreq'),    value: item.paymentFrequency })
-    if (item.installmentAmount) rows.push({ icon: 'bi-receipt',         label: t('formModal.pi.installment'),    value: Number(item.installmentAmount).toLocaleString(locale) + ' MMK' })
+    if (item.installmentAmount) rows.push({ icon: 'bi-receipt',         label: t('formModal.pi.installment'),    value: fmtMoney(item.installmentAmount, locale) })
     if (item.totalInstallments) rows.push({ icon: 'bi-list-ol',         label: t('formModal.pi.totalInst'),      value: item.totalInstallments })
     if (item.riskLevel)       rows.push({ icon: 'bi-activity',           label: t('formModal.pi.riskLevel'),      value: item.riskLevel })
     if (item.createdAt)       rows.push({ icon: 'bi-calendar-event',     label: t('formModal.pi.submittedAt'),    value: new Date(item.createdAt).toLocaleString(locale) })
   } else {
     if (item.policyName)      rows.push({ icon: 'bi-file-earmark-text',  label: t('formModal.pi.policy'),         value: item.policyName })
     if (item.claimType)       rows.push({ icon: 'bi-tag',                label: t('formModal.pi.claimType'),      value: item.claimType })
-    if (item.amount)          rows.push({ icon: 'bi-cash-coin',          label: t('formModal.pi.claimAmount'),    value: Number(item.amount).toLocaleString(locale) + ' MMK' })
-    if (item.coverageAmount)  rows.push({ icon: 'bi-shield-check',       label: t('formModal.pi.coverage'),       value: Number(item.coverageAmount).toLocaleString(locale) + ' MMK' })
+    if (item.amount)          rows.push({ icon: 'bi-cash-coin',          label: t('formModal.pi.claimAmount'),    value: fmtMoney(item.amount, locale) })
+    if (item.coverageAmount)  rows.push({ icon: 'bi-shield-check',       label: t('formModal.pi.coverage'),       value: fmtMoney(item.coverageAmount, locale) })
     if (item.incidentDate)    rows.push({ icon: 'bi-calendar-event',     label: t('formModal.pi.incidentDate'),   value: item.incidentDate })
     if (item.createdAt)       rows.push({ icon: 'bi-clock-history',      label: t('formModal.pi.submittedAt'),    value: new Date(item.createdAt).toLocaleString(locale) })
   }
@@ -502,10 +488,7 @@ function FileLink({ path, label, isImage, role, type, itemId, fieldId }) {
     setLoading(true)
     try {
       const endpoint = `/${role}/${type === 'application' ? 'applications' : 'claims'}/${itemId}/form-file/${fieldId}`
-      const res = await api.get(endpoint, { responseType: 'blob' })
-      const objUrl = window.URL.createObjectURL(res.data)
-      setUrl(objUrl)
-      window.open(objUrl, '_blank')
+      setUrl(await openBlobFromApi(endpoint))
     } catch { alert(t('formModal.couldNotLoad')) }
     finally { setLoading(false) }
   }

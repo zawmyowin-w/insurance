@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
+import { fmtDateTimeIntl } from '../../utils/format'
 
 const STAR_COLOR = '#f59e0b'
 const CATEGORY_COLORS = {
@@ -180,7 +181,7 @@ export default function AdminFeedbackPage() {
                       {fb.message}
                     </div>
                     <div style={{ fontSize: '0.73rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
-                      {fb.createdAt ? new Date(fb.createdAt).toLocaleString() : ''}
+                      {fmtDateTimeIntl(fb.createdAt, undefined, '')}
                     </div>
                   </div>
                 </div>
@@ -237,7 +238,7 @@ export default function AdminFeedbackPage() {
                   <div className="col-12">
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem' }}>{t('admin.feedback.submittedAt')}</div>
                     <div style={{ fontSize: '0.88rem', color: 'var(--text-secondary)' }}>
-                      {selected.createdAt ? new Date(selected.createdAt).toLocaleString() : ''}
+                      {fmtDateTimeIntl(selected.createdAt, undefined, '')}
                     </div>
                   </div>
                 </div>

@@ -8,6 +8,8 @@ import AgentProfileCard from '../../components/AgentProfileCard'
 import DigitalSignatureCanvas from '../../components/DigitalSignatureCanvas'
 import DynamicFormFields from '../../components/DynamicFormFields'
 import { getPhoneValidationError } from '../../utils/validation'
+import { apiError } from '../../utils/apiError'
+import { fmtMoney } from '../../utils/format'
 
 const CLAIM_TYPES = [
   { key: 'accident', label: 'Accident' },
@@ -191,7 +193,7 @@ export default function SubmitClaimPage() {
       toast.success(t('submitClaim.submitSuccess'))
       navigate('/customer/claims')
     } catch (err) {
-      toast.error(err.response?.data?.message || t('customer.claimSubmitFailed'))
+      apiError(err, t('customer.claimSubmitFailed'))
     } finally {
       setLoading(false)
     }
@@ -218,7 +220,7 @@ export default function SubmitClaimPage() {
                   <option value="">{t('submitClaim.choosePolicy')}</option>
                   {availablePolicies.map(p => (
                     <option key={p.id} value={p.id}>
-                      {p.packageName || p.package?.name} — {Number(p.coverageAmount).toLocaleString()} MMK
+                      {p.packageName || p.package?.name} — {fmtMoney(p.coverageAmount)}
                     </option>
                   ))}
                 </select>

@@ -3,6 +3,7 @@ package com.insurance.portal.controller;
 import com.insurance.portal.model.PaymentMethodConfig;
 import com.insurance.portal.repository.PaymentMethodConfigRepository;
 import com.insurance.portal.util.FileStorageUtil;
+import com.insurance.portal.util.ApiResponseUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,7 +43,7 @@ public class AdminPaymentMethodController {
 
         String key = methodKey.trim().toUpperCase().replaceAll("[^A-Z0-9_]", "_");
         if (repo.existsByMethodKey(key))
-            return ResponseEntity.badRequest().body(Map.of("message", "Method key '" + key + "' already exists"));
+            return ApiResponseUtil.badRequest("Method key '" + key + "' already exists");
 
         try {
             String logoPath  = logo   != null && !logo.isEmpty()   ? FileStorageUtil.saveImage(logo,   "payment-logos", "logo")   : null;
@@ -58,7 +59,7 @@ public class AdminPaymentMethodController {
                     .build();
             return ResponseEntity.ok(toMap(repo.save(cfg)));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
+            return ApiResponseUtil.badRequest(e.getMessage());
         }
     }
 

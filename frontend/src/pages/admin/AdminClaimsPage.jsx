@@ -6,7 +6,8 @@ import { toast } from 'react-toastify'
 import FormDetailModal from '../../components/FormDetailModal'
 import DigitalSignatureCanvas from '../../components/DigitalSignatureCanvas'
 import { apiError } from '../../utils/apiError'
-import { downloadBlob } from '../../utils/download'
+import { downloadPdfFromApi } from '../../utils/download'
+import { fmtDateIntl, fmtMoney } from '../../utils/format'
 
 export default function AdminClaimsPage() {
   const { t } = useTranslation()
@@ -14,8 +15,7 @@ export default function AdminClaimsPage() {
   async function downloadPayoutVoucher(claimId, setDownloading) {
     setDownloading(claimId)
     try {
-      const res = await api.get(`/admin/claims/${claimId}/payout-voucher`, { responseType: 'blob' })
-      await downloadBlob(res.data, `payout_voucher_claim_${claimId}.pdf`, 'application/pdf')
+      await downloadPdfFromApi(`/admin/claims/${claimId}/payout-voucher`, `payout_voucher_claim_${claimId}.pdf`)
     } catch {
       toast.error(t('admin.claims.downloadVoucherFailed'))
     } finally {
@@ -104,10 +104,10 @@ export default function AdminClaimsPage() {
                     <div className="d-flex gap-3 flex-wrap mb-2">
                       {[
                         { label: t('admin.claims.policyLabel'), value: claim.policyName || claim.policy?.packageName },
-                        { label: t('admin.claims.claimAmountLabel'), value: `${Number(claim.amount).toLocaleString()} MMK` },
-                        claim.coverageAmount ? { label: t('admin.claims.coverageLimitLabel'), value: `${Number(claim.coverageAmount).toLocaleString()} MMK` } : null,
-                        { label: t('admin.claims.incidentDateLabel'), value: claim.incidentDate ? new Date(claim.incidentDate).toLocaleDateString() : '—' },
-                        { label: t('admin.claims.submittedLabel'), value: claim.createdAt ? new Date(claim.createdAt).toLocaleDateString() : '—' },
+                        { label: t('admin.claims.claimAmountLabel'), value: fmtMoney(claim.amount) },
+                        claim.coverageAmount ? { label: t('admin.claims.coverageLimitLabel'), value: fmtMoney(claim.coverageAmount) } : null,
+                        { label: t('admin.claims.incidentDateLabel'), value: fmtDateIntl(claim.incidentDate, undefined, '—') },
+                        { label: t('admin.claims.submittedLabel'), value: fmtDateIntl(claim.createdAt, undefined, '—') },
                         { label: t('admin.claims.claimAgentLabel'), value: claim.agentName || claim.agent?.name || t('admin.common.na') },
                       ].filter(Boolean).map(item => (
                         <div key={item.label} style={{ minWidth: 100 }}>
@@ -128,7 +128,7 @@ export default function AdminClaimsPage() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: '0.6rem', flexWrap: 'wrap' }}>
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '0.35rem 0.75rem', borderRadius: 8, background: '#f0fdf4', border: '1px solid #86efac', fontSize: '0.82rem', color: '#15803d', fontWeight: 600 }}>
                           <i className="bi bi-arrow-up-right-circle-fill"></i>
-                          {t('admin.claims.payout')}: {Number(claim.amount).toLocaleString()} MMK — {t('admin.claims.recorded')}
+                          {t('admin.claims.payout')}: {fmtMoney(claim.amount)} — {t('admin.claims.recorded')}
                         </div>
                         <button
                           onClick={() => downloadPayoutVoucher(claim.id, setDownloading)}

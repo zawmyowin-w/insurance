@@ -3,6 +3,7 @@ package com.insurance.portal.controller;
 import com.insurance.portal.model.*;
 import com.insurance.portal.model.enums.*;
 import com.insurance.portal.repository.*;
+import com.insurance.portal.util.PdfResponseUtil;
 import java.time.format.DateTimeFormatter;
 import com.itextpdf.kernel.colors.ColorConstants;
 import com.itextpdf.kernel.colors.DeviceRgb;
@@ -22,8 +23,6 @@ import com.itextpdf.layout.properties.TextAlignment;
 import com.itextpdf.layout.properties.UnitValue;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
@@ -85,10 +84,7 @@ public class MonthlyReportController {
         byte[] pdf = buildMonthlyReportPdf(y, m);
         String filename = String.format("monthly-report-%d-%02d.pdf", y, m);
 
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
-                .contentType(MediaType.APPLICATION_PDF)
-                .body(pdf);
+        return PdfResponseUtil.attachment(pdf, filename);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -176,10 +172,7 @@ public class MonthlyReportController {
                 .build());
 
         String attachment = String.format("period-report-%d-%02d.pdf", y, m);
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + attachment + "\"")
-                .contentType(MediaType.APPLICATION_PDF)
-                .body(pdf);
+        return PdfResponseUtil.attachment(pdf, attachment);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -239,17 +232,11 @@ public class MonthlyReportController {
             // File was deleted — regenerate on the fly
             byte[] pdf = buildMonthlyReportPdf(snapshot.getYear(), snapshot.getMonth());
             String filename = String.format("monthly-report-%d-%02d.pdf", snapshot.getYear(), snapshot.getMonth());
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
-                    .contentType(MediaType.APPLICATION_PDF)
-                    .body(pdf);
+            return PdfResponseUtil.attachment(pdf, filename);
         }
         byte[] pdf = Files.readAllBytes(file);
         String filename = String.format("monthly-report-%d-%02d.pdf", snapshot.getYear(), snapshot.getMonth());
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
-                .contentType(MediaType.APPLICATION_PDF)
-                .body(pdf);
+        return PdfResponseUtil.attachment(pdf, filename);
     }
 
     // ─────────────────────────────────────────────────────────────────────────

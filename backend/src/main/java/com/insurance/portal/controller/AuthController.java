@@ -23,6 +23,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.insurance.portal.util.FileStorageUtil;
+import com.insurance.portal.util.CurrentUserUtil;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -240,7 +241,7 @@ public class AuthController {
 
     @GetMapping("/me")
     public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal UserDetails principal) {
-        User user = userRepository.findByEmail(principal.getUsername()).orElseThrow();
+        User user = CurrentUserUtil.require(userRepository, principal);
         return ResponseEntity.ok(UserResponse.from(user));
     }
 
@@ -255,7 +256,7 @@ public class AuthController {
     @PutMapping("/profile")
     public ResponseEntity<?> updateProfile(@AuthenticationPrincipal UserDetails principal,
                                             @RequestBody UpdateProfileRequest req) {
-        User user = userRepository.findByEmail(principal.getUsername()).orElseThrow();
+        User user = CurrentUserUtil.require(userRepository, principal);
 
         if (user.getRole() == Role.AGENT) {
             return ResponseEntity.status(403).body(new ErrorResponse(
@@ -320,7 +321,7 @@ public class AuthController {
     @PutMapping("/profile/password-otp")
     public ResponseEntity<?> changePasswordViaOtp(@AuthenticationPrincipal UserDetails principal,
                                                     @RequestBody Map<String, String> body) {
-        User user = userRepository.findByEmail(principal.getUsername()).orElseThrow();
+        User user = CurrentUserUtil.require(userRepository, principal);
         if (user.getRole() == Role.AGENT) {
             return ResponseEntity.status(403).body(new ErrorResponse(
                     "Agent profiles can only be updated by an admin. Please contact your administrator."));
@@ -341,7 +342,7 @@ public class AuthController {
     @PostMapping(value = "/profile/picture", consumes = "multipart/form-data")
     public ResponseEntity<?> uploadOwnPicture(@AuthenticationPrincipal UserDetails principal,
                                                @RequestParam("file") MultipartFile file) {
-        User user = userRepository.findByEmail(principal.getUsername()).orElseThrow();
+        User user = CurrentUserUtil.require(userRepository, principal);
         if (user.getRole() == Role.AGENT) {
             return ResponseEntity.status(403).body(new ErrorResponse(
                     "Agent profiles can only be updated by an admin. Please contact your administrator."));
@@ -364,7 +365,7 @@ public class AuthController {
     /** Stream the current user's own profile picture. */
     @GetMapping("/profile/picture")
     public ResponseEntity<?> getOwnPicture(@AuthenticationPrincipal UserDetails principal) throws IOException {
-        User user = userRepository.findByEmail(principal.getUsername()).orElseThrow();
+        User user = CurrentUserUtil.require(userRepository, principal);
         String path = user.getProfilePicture();
         if (path == null || path.isBlank()) {
             return ResponseEntity.notFound().build();

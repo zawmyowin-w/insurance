@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
+import { apiError } from '../../utils/apiError'
 
 export default function AgentMessagesPage() {
   const { t } = useTranslation()
@@ -43,7 +44,7 @@ export default function AgentMessagesPage() {
       setSubject(''); setBody(''); setRecipientId('')
       setTimeout(() => setSent(false), 3000)
     } catch (err) {
-      toast.error(err.response?.data?.message || t('agent.messages.sendFailed'))
+      apiError(err, t('agent.messages.sendFailed'))
     } finally { setSending(false) }
   }
 

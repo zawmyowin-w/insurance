@@ -5,7 +5,8 @@ import api from '../../services/api'
 import { toast } from 'react-toastify'
 import FormDetailModal from '../../components/FormDetailModal'
 import RevisionFormModal from '../../components/RevisionFormModal'
-import { downloadBlob } from '../../utils/download'
+import { downloadPdfFromApi } from '../../utils/download'
+import { fmtDateIntl, fmtMoney } from '../../utils/format'
 
 export default function MyClaimsPage() {
   const { t } = useTranslation()
@@ -13,8 +14,7 @@ export default function MyClaimsPage() {
   async function downloadPayoutVoucher(claimId, setDownloading) {
     setDownloading(claimId)
     try {
-      const res = await api.get(`/customer/claims/${claimId}/payout-voucher`, { responseType: 'blob' })
-      await downloadBlob(res.data, `payout_voucher_claim_${claimId}.pdf`, 'application/pdf')
+      await downloadPdfFromApi(`/customer/claims/${claimId}/payout-voucher`, `payout_voucher_claim_${claimId}.pdf`)
     } catch {
       toast.error(t('customer.payoutVoucherDownloadFailed'))
     } finally {
@@ -92,13 +92,13 @@ export default function MyClaimsPage() {
                           {claim.policyName || claim.policy?.packageName}
                         </div>
                         <small style={{ color: 'var(--text-muted)' }}>
-                          #{claim.id} · {claim.claimType} · {claim.createdAt ? new Date(claim.createdAt).toLocaleDateString() : '—'}
+                          #{claim.id} · {claim.claimType} · {fmtDateIntl(claim.createdAt, undefined, '—')}
                         </small>
                       </div>
                       <span className={`badge-status badge-${claim.status?.toLowerCase()}`}>{claim.status}</span>
                     </div>
                     <div className="d-flex gap-3 flex-wrap" style={{ fontSize: '0.83rem' }}>
-                      <span style={{ color: 'var(--text-muted)' }}>{t('myClaims.amountLabel')}: <strong style={{ color: 'var(--text-primary)' }}>{Number(claim.amount).toLocaleString()} MMK</strong></span>
+                      <span style={{ color: 'var(--text-muted)' }}>{t('myClaims.amountLabel')}: <strong style={{ color: 'var(--text-primary)' }}>{fmtMoney(claim.amount)}</strong></span>
                       {claim.incidentDate && <span style={{ color: 'var(--text-muted)' }}>{t('myClaims.incidentLabel')}: <strong style={{ color: 'var(--text-primary)' }}>{new Date(claim.incidentDate).toLocaleDateString()}</strong></span>}
                       {claim.agentName && <span style={{ color: 'var(--text-muted)' }}><i className="bi bi-person-badge me-1" style={{ color: '#1d4ed8' }}></i>{t('myClaims.agentLabel')}: <strong style={{ color: '#1d4ed8' }}>{claim.agentName}</strong></span>}
                     </div>

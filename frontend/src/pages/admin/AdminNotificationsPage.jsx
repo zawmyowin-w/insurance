@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
+import { apiError } from '../../utils/apiError'
+import { fmtDateTimeIntl } from '../../utils/format'
 
 export default function AdminNotificationsPage() {
   const { t } = useTranslation()
@@ -23,7 +25,7 @@ export default function AdminNotificationsPage() {
       toast.success(t('admin.notifications.sentSuccess'))
       setForm({ targetRole: 'ALL', targetUserId: '', title: '', message: '', type: 'INFO' })
       api.get('/admin/notifications/sent').then(res => setSent(Array.isArray(res.data) ? res.data : [])).catch(() => {})
-    } catch (err) { toast.error(err.response?.data?.message || t('admin.notifications.sendFailed')) } finally { setSending(false) }
+    } catch (err) { apiError(err, t('admin.notifications.sendFailed')) } finally { setSending(false) }
   }
 
   const typeColors = { INFO: '#6b7280', APPROVAL: '#16a34a', REJECTION: '#dc2626', PAYMENT: '#1d4ed8', CLAIM: '#f59e0b', REMINDER: '#9333ea' }
@@ -103,7 +105,7 @@ export default function AdminNotificationsPage() {
                         <div style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--text-primary)' }}>{n.title}</div>
                         <div style={{ color: 'var(--text-secondary)', fontSize: '0.83rem' }}>{n.message}</div>
                         <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.25rem' }}>
-                          {t('admin.notifications.to')}: {n.targetRole === 'SPECIFIC_AGENT' ? t('admin.notifications.specificAgent') : n.targetRole === 'SPECIFIC' ? t('admin.notifications.specificUser') : n.targetRole || 'Specific'} · {n.createdAt ? new Date(n.createdAt).toLocaleString() : ''}
+                          {t('admin.notifications.to')}: {n.targetRole === 'SPECIFIC_AGENT' ? t('admin.notifications.specificAgent') : n.targetRole === 'SPECIFIC' ? t('admin.notifications.specificUser') : n.targetRole || 'Specific'} · {fmtDateTimeIntl(n.createdAt, undefined, '')}
                         </div>
                       </div>
                     </div>

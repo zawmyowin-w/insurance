@@ -4,13 +4,12 @@ import api from '../../services/api'
 import { toast } from 'react-toastify'
 import PaymentMethodIcon, { PAYMENT_METHODS as FALLBACK_METHODS } from '../../components/PaymentMethodIcon'
 import DigitalSignatureCanvas from '../../components/DigitalSignatureCanvas'
+import { apiError } from '../../utils/apiError'
+import { getStatusStyle } from '../../utils/statusMeta'
+import { fmtDateIntl, fmtMoney } from '../../utils/format'
 
 const BASE = import.meta.env.VITE_API_BASE_URL || '/api'
 
-const STATUS_COLOR  = { PAID: '#16a34a', OVERDUE: '#dc2626', DUE: '#d97706', PENDING_VERIFICATION: '#7c3aed', UPCOMING: '#64748b' }
-const STATUS_BG     = { PAID: '#dcfce7', OVERDUE: '#fee2e2', DUE: '#fef3c7', PENDING_VERIFICATION: '#ede9fe', UPCOMING: '#f1f5f9' }
-const PAY_STATUS_COLOR = s => ({ PENDING: '#d97706', VERIFIED: '#16a34a', REJECTED: '#dc2626' }[s] || '#64748b')
-const PAY_STATUS_BG    = s => ({ PENDING: '#fef3c7', VERIFIED: '#dcfce7', REJECTED: '#fee2e2' }[s] || '#f1f5f9')
 
 export default function MyPaymentsPage() {
   const { t } = useTranslation()
@@ -87,7 +86,7 @@ export default function MyPaymentsPage() {
       closeModal()
       fetchData()
     } catch (err) {
-      toast.error(err.response?.data?.message || t('customer.paymentSubmitFailed'))
+      apiError(err, t('customer.paymentSubmitFailed'))
     } finally { setSubmitting(false) }
   }
 
@@ -230,11 +229,11 @@ export default function MyPaymentsPage() {
                               <td>
                                 <span style={{
                                   fontSize: '0.72rem', fontWeight: 700, padding: '0.2rem 0.6rem',
-                                  borderRadius: 99, background: PAY_STATUS_BG(p.status), color: PAY_STATUS_COLOR(p.status)
+                                  borderRadius: 99, background: getStatusStyle(p.status).bg, color: getStatusStyle(p.status).color
                                 }}>{p.status}</span>
                               </td>
                               <td style={{ fontSize: '0.82rem', whiteSpace: 'nowrap' }}>
-                                {p.createdAt ? new Date(p.createdAt).toLocaleDateString() : '—'}
+                                {fmtDateIntl(p.createdAt, undefined, '—')}
                               </td>
                               <td style={{ color: 'var(--text-secondary)', fontSize: '0.82rem' }}>{p.verifiedBy || '—'}</td>
                             </tr>
@@ -301,7 +300,7 @@ function PolicyScheduleCard({ sched, onPay, statusLabel }) {
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t('payments.installmentLabel')}</div>
             <div style={{ fontWeight: 800, fontSize: '1.05rem', color: 'var(--primary)' }}>
-              {Number(sched.installmentAmount).toLocaleString()} MMK
+              {fmtMoney(sched.installmentAmount)}
             </div>
           </div>
           {!isOneTime && (
@@ -385,12 +384,12 @@ function InstallmentRow({ entry, onPay, highlight, statusLabel }) {
       </div>
       <div className="d-flex align-items-center gap-2">
         <span style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--text-primary)' }}>
-          {Number(entry.amount).toLocaleString()} MMK
+          {fmtMoney(entry.amount)}
         </span>
         <span style={{
           fontSize: '0.7rem', fontWeight: 700, padding: '0.15rem 0.5rem', borderRadius: 99,
-          background: STATUS_BG[entry.status] || '#f1f5f9',
-          color: STATUS_COLOR[entry.status] || '#64748b',
+          background: getStatusStyle(entry.status).bg,
+          color: getStatusStyle(entry.status).color,
         }}>{statusLabel[entry.status] || entry.status}</span>
         {canPay && (
           <button type="button" onClick={onPay}
@@ -497,7 +496,7 @@ function PaymentModal({ payForm, setPayForm, payMethods, selectedMethod, paySign
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: '0.75rem' }}>
                       <i className="bi bi-exclamation-circle-fill" style={{ color: selectedMethod.color, fontSize: '1rem' }}></i>
                       <span style={{ fontWeight: 700, color: selectedMethod.color, fontSize: '0.88rem' }}>
-                        {t('payments.payTo', { method: selectedMethod.name })} {payForm.installmentAmount != null ? `${Number(payForm.installmentAmount).toLocaleString()} MMK` : ''}
+                        {t('payments.payTo', { method: selectedMethod.name })} {payForm.installmentAmount != null ? fmtMoney(payForm.installmentAmount) : ''}
                       </span>
                     </div>
 

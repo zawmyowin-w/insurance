@@ -11,6 +11,7 @@ import {
   passwordStrengthLevel, isStrongPassword,
 } from '../utils/validation'
 import PasswordStrengthWidget from '../components/PasswordStrengthWidget'
+import { apiError } from '../utils/apiError'
 
 export default function RegisterPage() {
   const { t, i18n } = useTranslation()
@@ -90,7 +91,7 @@ export default function RegisterPage() {
     try {
       await api.get(`/auth/validate-email?email=${encodeURIComponent(normalizedEmail)}`)
     } catch (err) {
-      toast.error(err.response?.data?.message || EMAIL_ERROR[lang])
+      apiError(err, EMAIL_ERROR[lang])
       setLoading(false)
       return
     }
@@ -99,7 +100,7 @@ export default function RegisterPage() {
     try {
       await api.get(`/auth/check-email?email=${encodeURIComponent(normalizedEmail)}`)
     } catch (err) {
-      toast.error(err.response?.data?.message || t('auth.registerError'))
+      apiError(err, t('auth.registerError'))
       setLoading(false)
       return
     }

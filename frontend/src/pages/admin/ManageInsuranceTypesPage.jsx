@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { toast } from 'react-toastify'
 import DeleteConfirmModal from '../../components/DeleteConfirmModal'
+import { apiError } from '../../utils/apiError'
 
 const ICON_MAP = {
   LIFE: '❤️', HEALTH: '🏥', VEHICLE: '🚗', PROPERTY: '🏠',
@@ -62,7 +63,7 @@ export default function ManageInsuranceTypesPage() {
       setForm(emptyForm)
       load()
     } catch (err) {
-      toast.error(err.response?.data?.message || t('admin.insuranceTypes.addFailed'))
+      apiError(err, t('admin.insuranceTypes.addFailed'))
     } finally {
       setSaving(false)
     }
@@ -82,7 +83,7 @@ export default function ManageInsuranceTypesPage() {
       setDeleteModal({ open: false, id: null, name: '', loading: false })
       load()
     } catch (err) {
-      toast.error(err.response?.data?.message || t('admin.insuranceTypes.deleteFailed'))
+      apiError(err, t('admin.insuranceTypes.deleteFailed'))
       setDeleteModal(m => ({ ...m, loading: false }))
     } finally {
       setDeletingId(null)
@@ -104,7 +105,7 @@ export default function ManageInsuranceTypesPage() {
       setEditingId(null)
       load()
     } catch (err) {
-      toast.error(err.response?.data?.message || t('admin.insuranceTypes.saveFailed'))
+      apiError(err, t('admin.insuranceTypes.saveFailed'))
     } finally {
       setSaving(false)
     }

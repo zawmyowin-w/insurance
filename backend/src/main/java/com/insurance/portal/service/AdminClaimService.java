@@ -11,6 +11,7 @@ import com.insurance.portal.repository.ClaimRepository;
 import com.insurance.portal.repository.PaymentRepository;
 import com.insurance.portal.repository.PolicyApplicationRepository;
 import com.insurance.portal.util.DigitalSignatureUtil;
+import com.insurance.portal.util.ApiResponseUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -33,10 +34,10 @@ public class AdminClaimService {
         Claim claim = claimRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Claim not found"));
         if (claim.getStatus() != ClaimStatus.VERIFIED)
-            return ResponseEntity.badRequest().body(Map.of("message", "Only VERIFIED claims can be approved"));
+            return ApiResponseUtil.badRequest("Only VERIFIED claims can be approved");
         String signatureError = DigitalSignatureUtil.validationError(signature);
         if (signatureError != null)
-            return ResponseEntity.badRequest().body(Map.of("message", signatureError));
+            return ApiResponseUtil.badRequest(signatureError);
         claim.setStatus(ClaimStatus.APPROVED);
         claim.setAdminNote(note);
         claim.setAdminSignature(signature);

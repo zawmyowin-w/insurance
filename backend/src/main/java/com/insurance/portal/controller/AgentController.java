@@ -7,6 +7,8 @@ import com.insurance.portal.repository.*;
 import com.insurance.portal.service.NotificationService;
 import com.insurance.portal.util.FileStorageUtil;
 import com.insurance.portal.util.DigitalSignatureUtil;
+import com.insurance.portal.util.ApiResponseUtil;
+import com.insurance.portal.util.CurrentUserUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -28,7 +30,7 @@ public class AgentController {
     private final NotificationService notifService;
 
     private User getAgent(UserDetails principal) {
-        return userRepo.findByEmail(principal.getUsername()).orElseThrow();
+        return CurrentUserUtil.require(userRepo, principal);
     }
 
     @GetMapping("/dashboard/stats")
@@ -132,11 +134,11 @@ public class AgentController {
             return ResponseEntity.status(403).body(Map.of("message", "You are not assigned to this application"));
         }
         if (app.getStatus() != ApplicationStatus.PENDING && app.getStatus() != ApplicationStatus.REVISION_REQUESTED) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Application is not in a verifiable state"));
+            return ApiResponseUtil.badRequest("Application is not in a verifiable state");
         }
         String signatureError = DigitalSignatureUtil.validationError(req.get("signature"));
         if (signatureError != null)
-            return ResponseEntity.badRequest().body(Map.of("message", signatureError));
+            return ApiResponseUtil.badRequest(signatureError);
         app.setStatus(ApplicationStatus.VERIFIED);
         app.setAgentNote(req.get("note"));
         app.setAgentSignature(req.get("signature"));
@@ -157,7 +159,7 @@ public class AgentController {
             return ResponseEntity.status(403).body(Map.of("message", "You are not assigned to this application"));
         }
         if (app.getStatus() != ApplicationStatus.PENDING && app.getStatus() != ApplicationStatus.REVISION_REQUESTED) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Application cannot be rejected at this stage"));
+            return ApiResponseUtil.badRequest("Application cannot be rejected at this stage");
         }
         app.setStatus(ApplicationStatus.REJECTED);
         app.setAgentNote(req.get("note"));
@@ -181,7 +183,7 @@ public class AgentController {
         if (app.getAgent() == null || !app.getAgent().getId().equals(agent.getId()))
             return ResponseEntity.status(403).body(Map.of("message", "You are not assigned to this application"));
         if (app.getStatus() != ApplicationStatus.REVISION_REQUESTED)
-            return ResponseEntity.badRequest().body(Map.of("message", "Application is not in revision state"));
+            return ApiResponseUtil.badRequest("Application is not in revision state");
         String note = req.get("note");
         app.setAgentNote(note);
         appRepo.save(app);
@@ -205,7 +207,7 @@ public class AgentController {
         if (claim.getAgent() == null || !claim.getAgent().getId().equals(agent.getId()))
             return ResponseEntity.status(403).body(Map.of("message", "You are not assigned to this claim"));
         if (claim.getStatus() != ClaimStatus.REVISION_REQUESTED)
-            return ResponseEntity.badRequest().body(Map.of("message", "Claim is not in revision state"));
+            return ApiResponseUtil.badRequest("Claim is not in revision state");
         String note = req.get("note");
         claim.setAgentNote(note);
         claimRepo.save(claim);
@@ -247,11 +249,11 @@ public class AgentController {
             return ResponseEntity.status(403).body(Map.of("message", "You are not assigned to this claim"));
         }
         if (claim.getStatus() != ClaimStatus.PENDING && claim.getStatus() != ClaimStatus.REVISION_REQUESTED) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Claim is not in a verifiable state"));
+            return ApiResponseUtil.badRequest("Claim is not in a verifiable state");
         }
         String signatureError = DigitalSignatureUtil.validationError(req.get("signature"));
         if (signatureError != null)
-            return ResponseEntity.badRequest().body(Map.of("message", signatureError));
+            return ApiResponseUtil.badRequest(signatureError);
         claim.setStatus(ClaimStatus.VERIFIED);
         claim.setAgentNote(req.get("note"));
         claim.setAgentSignature(req.get("signature"));
@@ -272,7 +274,7 @@ public class AgentController {
             return ResponseEntity.status(403).body(Map.of("message", "You are not assigned to this claim"));
         }
         if (claim.getStatus() != ClaimStatus.PENDING && claim.getStatus() != ClaimStatus.REVISION_REQUESTED) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Claim cannot be rejected at this stage"));
+            return ApiResponseUtil.badRequest("Claim cannot be rejected at this stage");
         }
         claim.setStatus(ClaimStatus.REJECTED);
         claim.setAgentNote(req.get("note"));
