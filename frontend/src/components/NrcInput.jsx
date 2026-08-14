@@ -123,17 +123,50 @@ export default function NrcInput({ value, onChange, required, readOnly }) {
         </select>
 
         {/* ── Serial digits ── */}
-        <input
-          className="form-control-custom"
-          style={{ width: 110, flexShrink: 0, ...inputStyle }}
-          placeholder={t('nrc.digitsPlaceholder')}
-          maxLength={6}
-          value={parsed.digits}
-          readOnly={readOnly}
-          required={required && !readOnly}
-          onChange={e => handleChange('digits', e.target.value.replace(/[^0-9၀-၉]/g, ''))}
-        />
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          <input
+            className="form-control-custom"
+            style={{
+              width: 110, paddingRight: 34, ...inputStyle,
+              ...(parsed.digits && toAR(parsed.digits).length !== 6
+                ? { borderColor: '#dc2626', boxShadow: '0 0 0 2px #fecaca' }
+                : parsed.digits && toAR(parsed.digits).length === 6
+                ? { borderColor: '#16a34a' }
+                : {}),
+            }}
+            placeholder={t('nrc.digitsPlaceholder')}
+            maxLength={6}
+            minLength={6}
+            pattern="[0-9၀-၉]{6}"
+            inputMode="numeric"
+            value={parsed.digits}
+            readOnly={readOnly}
+            required={required && !readOnly}
+            onChange={e => handleChange('digits', e.target.value.replace(/[^0-9၀-၉]/g, ''))}
+          />
+          {/* digit counter badge */}
+          {!readOnly && (
+            <span style={{
+              position: 'absolute', right: 6, top: '50%', transform: 'translateY(-50%)',
+              fontSize: '0.65rem', fontWeight: 700, pointerEvents: 'none',
+              color: toAR(parsed.digits).length === 6 ? '#16a34a'
+                : parsed.digits ? '#dc2626' : '#94a3b8',
+            }}>
+              {toAR(parsed.digits).length}/6
+            </span>
+          )}
+        </div>
       </div>
+
+      {/* ── Digit count error ── */}
+      {!readOnly && parsed.digits && toAR(parsed.digits).length !== 6 && (
+        <div style={{ fontSize: '0.74rem', color: '#dc2626', marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+          <i className="bi bi-exclamation-circle-fill"></i>
+          {toAR(parsed.digits).length < 6
+            ? `${6 - toAR(parsed.digits).length} digit${6 - toAR(parsed.digits).length > 1 ? 's' : ''} more needed (must be exactly 6)`
+            : 'Must be exactly 6 digits'}
+        </div>
+      )}
 
       {/* ── Live preview ── */}
       {preview && (
