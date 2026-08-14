@@ -408,12 +408,6 @@ export default function CustomerPoliciesPage() {
                 )
               }
             })()}
-            {!isUsed && (
-              <button onClick={() => handleRenew(policy.id)} disabled={renewing === policy.id}
-                style={{ padding: '0.4rem 0.85rem', borderRadius: 8, border: '1.5px solid var(--border)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600 }}>
-                {renewing === policy.id ? <span className="spinner-border spinner-border-sm"></span> : <><i className="bi bi-arrow-repeat me-1"></i>{t('policies.renew')}</>}
-              </button>
-            )}
             {/* Premium Waiver Benefit — Reinstate Benefit button */}
             {!isUsed && policy.premiumWaiverBenefit && (policy.emergencyStatus === 'NONE' || policy.emergencyStatus === 'REJECTED') && (
               <button
