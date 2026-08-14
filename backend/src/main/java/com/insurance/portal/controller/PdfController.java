@@ -49,8 +49,11 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import com.insurance.portal.util.FileStorageUtil;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.Base64;
 
@@ -1038,8 +1041,29 @@ public class PdfController {
                 } else {
                     displayValue = "true".equalsIgnoreCase(value) ? "✓ Yes" : "false".equalsIgnoreCase(value) ? "✗ No" : value;
                 }
-            } else if (field.getFieldType() == FieldType.IMAGE_UPLOAD || field.getFieldType() == FieldType.PDF_UPLOAD) {
-                displayValue = value.isBlank() ? "—" : "[Uploaded file: " + java.nio.file.Paths.get(value).getFileName() + "]";
+            } else if (field.getFieldType() == FieldType.IMAGE_UPLOAD) {
+                // Embed uploaded image directly in the PDF
+                table.addCell(new Cell().add(new Paragraph(field.getFieldLabel()).setFont(boldFont).setFontSize(9))
+                        .setBackgroundColor(labelBg).setPadding(5));
+                Cell imgCell = new Cell().setPadding(5);
+                if (!value.isBlank()) {
+                    try {
+                        File imgFile = FileStorageUtil.resolveUploadedFile(value);
+                        byte[] imgBytes = Files.readAllBytes(imgFile.toPath());
+                        Image img = new Image(ImageDataFactory.create(imgBytes))
+                                .setMaxWidth(280).setAutoScale(true);
+                        imgCell.add(img);
+                    } catch (Exception ex) {
+                        imgCell.add(new Paragraph("[Image: " + java.nio.file.Paths.get(value).getFileName() + "]")
+                                .setFont(regularFont).setFontSize(9));
+                    }
+                } else {
+                    imgCell.add(new Paragraph("—").setFont(regularFont).setFontSize(9));
+                }
+                table.addCell(imgCell);
+                continue;
+            } else if (field.getFieldType() == FieldType.PDF_UPLOAD) {
+                displayValue = value.isBlank() ? "—" : "Document: " + java.nio.file.Paths.get(value).getFileName();
             } else {
                 displayValue = value.isBlank() ? "—" : value;
             }

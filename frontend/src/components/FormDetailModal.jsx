@@ -496,31 +496,68 @@ function FileLink({ path, label, isImage, role, type, itemId, fieldId }) {
   const { t } = useTranslation()
   const [url, setUrl] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [dlLoading, setDlLoading] = useState(false)
+
+  const fetchUrl = async () => {
+    if (url) return url
+    const endpoint = `/${role}/${type === 'application' ? 'applications' : 'claims'}/${itemId}/form-file/${fieldId}`
+    const res = await api.get(endpoint, { responseType: 'blob' })
+    const objUrl = window.URL.createObjectURL(res.data)
+    setUrl(objUrl)
+    return objUrl
+  }
 
   const load = async () => {
-    if (url) { window.open(url, '_blank'); return }
     setLoading(true)
     try {
-      const endpoint = `/${role}/${type === 'application' ? 'applications' : 'claims'}/${itemId}/form-file/${fieldId}`
-      const res = await api.get(endpoint, { responseType: 'blob' })
-      const objUrl = window.URL.createObjectURL(res.data)
-      setUrl(objUrl)
+      const objUrl = await fetchUrl()
       window.open(objUrl, '_blank')
     } catch { alert(t('formModal.couldNotLoad')) }
     finally { setLoading(false) }
   }
 
+  const download = async () => {
+    setDlLoading(true)
+    try {
+      const objUrl = await fetchUrl()
+      const a = document.createElement('a')
+      a.href = objUrl
+      const filename = path ? path.split(/[/\\]/).pop() : (isImage ? 'image.jpg' : 'document.pdf')
+      a.download = filename
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+    } catch { alert(t('formModal.couldNotLoad')) }
+    finally { setDlLoading(false) }
+  }
+
+  const busy = loading || dlLoading
+
   return (
-    <button onClick={load} disabled={loading} style={{
-      padding: '0.3rem 0.75rem', borderRadius: 6,
-      border: '1.5px solid var(--primary)', background: 'transparent',
-      color: 'var(--primary)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 600,
-      display: 'inline-flex', alignItems: 'center', gap: 4,
-    }}>
-      {loading
-        ? <><span className="spinner-border spinner-border-sm"></span> {t('formModal.loading')}</>
-        : <><i className={`bi ${isImage ? 'bi-image' : 'bi-file-earmark-pdf'}`}></i> {label}</>}
-    </button>
+    <div style={{ display: 'inline-flex', gap: 6, flexWrap: 'wrap' }}>
+      {/* View / open in tab */}
+      <button onClick={load} disabled={busy} style={{
+        padding: '0.3rem 0.75rem', borderRadius: 6,
+        border: '1.5px solid var(--primary)', background: 'transparent',
+        color: 'var(--primary)', cursor: busy ? 'not-allowed' : 'pointer', fontSize: '0.8rem', fontWeight: 600,
+        display: 'inline-flex', alignItems: 'center', gap: 4, opacity: busy ? 0.6 : 1,
+      }}>
+        {loading
+          ? <><span className="spinner-border spinner-border-sm"></span> {t('formModal.loading')}</>
+          : <><i className={`bi ${isImage ? 'bi-image' : 'bi-file-earmark-pdf'}`}></i> {label}</>}
+      </button>
+      {/* Download */}
+      <button onClick={download} disabled={busy} style={{
+        padding: '0.3rem 0.75rem', borderRadius: 6,
+        border: '1.5px solid #16a34a', background: 'transparent',
+        color: '#16a34a', cursor: busy ? 'not-allowed' : 'pointer', fontSize: '0.8rem', fontWeight: 600,
+        display: 'inline-flex', alignItems: 'center', gap: 4, opacity: busy ? 0.6 : 1,
+      }}>
+        {dlLoading
+          ? <><span className="spinner-border spinner-border-sm"></span> {t('formModal.loading')}</>
+          : <><i className="bi bi-download"></i> Download</>}
+      </button>
+    </div>
   )
 }
 

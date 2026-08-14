@@ -124,6 +124,26 @@ export default function ApplyPolicyPage() {
         }
       }
 
+      // Validate coverage amount against package limits
+      if (selectedPlan) {
+        const coverageNum = parseFloat(coverage)
+        if (!coverage || isNaN(coverageNum) || coverageNum <= 0) {
+          toast.error(t('applyPolicy.coverageRequired') || 'Please enter a valid coverage amount.')
+          setSubmitting(false)
+          return
+        }
+        if (selectedPlan.coverageMin != null && coverageNum < parseFloat(selectedPlan.coverageMin)) {
+          toast.error(`Minimum coverage for this plan is ${Number(selectedPlan.coverageMin).toLocaleString()} MMK`)
+          setSubmitting(false)
+          return
+        }
+        if (selectedPlan.coverageMax != null && coverageNum > parseFloat(selectedPlan.coverageMax)) {
+          toast.error(`Maximum coverage for this plan is ${Number(selectedPlan.coverageMax).toLocaleString()} MMK`)
+          setSubmitting(false)
+          return
+        }
+      }
+
       if (!signatureData) {
         toast.error(t('applyPolicy.sigMissing'))
         setSubmitting(false)

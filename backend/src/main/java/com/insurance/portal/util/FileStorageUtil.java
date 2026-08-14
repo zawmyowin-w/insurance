@@ -47,6 +47,11 @@ public final class FileStorageUtil {
         return root;
     }
 
+    /** Public accessor used by PDF generation to embed uploaded files. */
+    public static File resolveUploadedFile(String storedPath) throws IOException {
+        return resolveStoredFile(storedPath);
+    }
+
     private static File resolveStoredFile(String storedPath) throws IOException {
         if (storedPath == null || storedPath.isBlank()) {
             throw new IOException("File path is empty");

@@ -91,20 +91,20 @@ export default function AdminPolicyTransfersPage() {
         </div>
       ) : (
         <div className="d-flex flex-column gap-3">
-          {transfers.map(t => {
-            const s = STATUS_LABEL[t.status] || { labelKey: null, color: '#64748b', bg: '#f1f5f9' }
-            const isPending = t.status === 'PENDING_ADMIN_APPROVAL'
-            const statusLabel = s.labelKey ? t(`admin.transfers.${s.labelKey}`) : t.status
+          {transfers.map(tr => {
+            const s = STATUS_LABEL[tr.status] || { labelKey: null, color: '#64748b', bg: '#f1f5f9' }
+            const isPending = tr.status === 'PENDING_ADMIN_APPROVAL'
+            const statusLabel = s.labelKey ? t(`admin.transfers.${s.labelKey}`) : tr.status
             return (
-              <div key={t.id} className="card-custom" style={isPending ? { borderLeft: '4px solid #1d4ed8' } : {}}>
+              <div key={tr.id} className="card-custom" style={isPending ? { borderLeft: '4px solid #1d4ed8' } : {}}>
                 <div className="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-2">
                   <div>
-                    <span style={{ fontWeight: 700, fontSize: '1rem' }}>{t('admin.transfers.transferId', { id: t.id })}</span>
+                    <span style={{ fontWeight: 700, fontSize: '1rem' }}>{t('admin.transfers.transferId', { id: tr.id })}</span>
                     <span style={{ marginLeft: 8, fontWeight: 600, color: 'var(--primary)' }}>
-                      {t.policyNumber || `Policy #${t.applicationId}`}
+                      {tr.policyNumber || `Policy #${tr.applicationId}`}
                     </span>
                     <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginLeft: 8 }}>
-                      {t.packageName} ({t.packageType})
+                      {tr.packageName} ({tr.packageType})
                     </span>
                     <span style={{
                       display: 'inline-block', marginLeft: 8, padding: '2px 10px', borderRadius: 20,
@@ -112,10 +112,10 @@ export default function AdminPolicyTransfersPage() {
                     }}>{statusLabel}</span>
                   </div>
                   <div className="d-flex gap-2">
-                    {(t.status === 'APPROVED' || t.status === 'PENDING_ADMIN_APPROVAL') && (
+                    {(tr.status === 'APPROVED' || tr.status === 'PENDING_ADMIN_APPROVAL') && (
                       <PdfDropdownButton
-                        fetchPdf={() => api.get(`/admin/policy-transfers/${t.id}/pdf`, { responseType: 'blob' }).then(r => r.data)}
-                        filename={`transfer_contract_${t.id}.pdf`}
+                        fetchPdf={() => api.get(`/admin/policy-transfers/${tr.id}/pdf`, { responseType: 'blob' }).then(r => r.data)}
+                        filename={`transfer_contract_${tr.id}.pdf`}
                         label={t('admin.transfers.pdfBtn')}
                         variant="secondary"
                         size="sm"
@@ -123,11 +123,11 @@ export default function AdminPolicyTransfersPage() {
                     )}
                     {isPending && (
                       <>
-                        <button onClick={() => { setActionModal({ type: 'approve', transfer: t }); setNote('') }}
+                        <button onClick={() => { setActionModal({ type: 'approve', transfer: tr }); setNote('') }}
                           style={{ background: '#15803d', color: 'white', border: 'none', borderRadius: 6, padding: '0.3rem 0.9rem', fontSize: '0.82rem', cursor: 'pointer', fontWeight: 600 }}>
                           <i className="bi bi-check-circle me-1"></i>{t('admin.transfers.approveBtn')}
                         </button>
-                        <button onClick={() => { setActionModal({ type: 'reject', transfer: t }); setNote('') }}
+                        <button onClick={() => { setActionModal({ type: 'reject', transfer: tr }); setNote('') }}
                           style={{ background: '#dc2626', color: 'white', border: 'none', borderRadius: 6, padding: '0.3rem 0.9rem', fontSize: '0.82rem', cursor: 'pointer', fontWeight: 600 }}>
                           <i className="bi bi-x-circle me-1"></i>{t('admin.transfers.rejectBtn')}
                         </button>
@@ -140,41 +140,41 @@ export default function AdminPolicyTransfersPage() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: 8, background: 'var(--bg-secondary)', borderRadius: 8, padding: '0.75rem 1rem', marginBottom: '0.75rem' }}>
                   <div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600, marginBottom: 2 }}>{t('admin.transfers.fromLabel')}</div>
-                    <div style={{ fontWeight: 700 }}>{t.fromCustomerName}</div>
-                    <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{t.fromCustomerEmail}</div>
-                    {t.fromSignedAt && <div style={{ fontSize: '0.75rem', color: '#15803d', marginTop: 2 }}><i className="bi bi-pen-fill me-1"></i>{t('admin.transfers.signedOn', { date: new Date(t.fromSignedAt).toLocaleDateString() })}</div>}
+                    <div style={{ fontWeight: 700 }}>{tr.fromCustomerName}</div>
+                    <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{tr.fromCustomerEmail}</div>
+                    {tr.fromSignedAt && <div style={{ fontSize: '0.75rem', color: '#15803d', marginTop: 2 }}><i className="bi bi-pen-fill me-1"></i>{t('admin.transfers.signedOn', { date: new Date(tr.fromSignedAt).toLocaleDateString() })}</div>}
                   </div>
                   <div style={{ textAlign: 'center', fontSize: '1.5rem', color: 'var(--primary)' }}>
                     <i className="bi bi-arrow-right-circle-fill"></i>
                   </div>
                   <div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontWeight: 600, marginBottom: 2 }}>{t('admin.transfers.toLabel')}</div>
-                    <div style={{ fontWeight: 700 }}>{t.toCustomerName}</div>
-                    <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{t.toCustomerEmail}</div>
-                    {t.toSignedAt && <div style={{ fontSize: '0.75rem', color: '#15803d', marginTop: 2 }}><i className="bi bi-pen-fill me-1"></i>{t('admin.transfers.signedOn', { date: new Date(t.toSignedAt).toLocaleDateString() })}</div>}
+                    <div style={{ fontWeight: 700 }}>{tr.toCustomerName}</div>
+                    <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{tr.toCustomerEmail}</div>
+                    {tr.toSignedAt && <div style={{ fontSize: '0.75rem', color: '#15803d', marginTop: 2 }}><i className="bi bi-pen-fill me-1"></i>{t('admin.transfers.signedOn', { date: new Date(tr.toSignedAt).toLocaleDateString() })}</div>}
                   </div>
                 </div>
 
                 <div className="row g-2" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                   <div className="col-sm-4">
-                    <span style={{ fontWeight: 600 }}>{t('admin.transfers.relationship')}: </span>{t.relationship}
+                    <span style={{ fontWeight: 600 }}>{t('admin.transfers.relationship')}: </span>{tr.relationship}
                   </div>
                   <div className="col-sm-4">
                     <span style={{ fontWeight: 600 }}>{t('admin.transfers.submitted')}: </span>
-                    {t.createdAt ? new Date(t.createdAt).toLocaleDateString() : '—'}
+                    {tr.createdAt ? new Date(tr.createdAt).toLocaleDateString() : '—'}
                   </div>
-                  {t.approvedAt && (
+                  {tr.approvedAt && (
                     <div className="col-sm-4">
-                      <span style={{ fontWeight: 600 }}>{t('admin.transfers.decided')}: </span>{new Date(t.approvedAt).toLocaleDateString()}
-                      {t.approvedByName && <> {t('admin.transfers.byLabel')} {t.approvedByName}</>}
+                      <span style={{ fontWeight: 600 }}>{t('admin.transfers.decided')}: </span>{new Date(tr.approvedAt).toLocaleDateString()}
+                      {tr.approvedByName && <> {t('admin.transfers.byLabel')} {tr.approvedByName}</>}
                     </div>
                   )}
                   <div className="col-12">
-                    <span style={{ fontWeight: 600 }}>{t('admin.transfers.reasonLabel')}: </span>{t.reason}
+                    <span style={{ fontWeight: 600 }}>{t('admin.transfers.reasonLabel')}: </span>{tr.reason}
                   </div>
-                  {t.adminNote && (
-                    <div className="col-12" style={{ color: t.status === 'REJECTED' ? '#dc2626' : '#1d4ed8' }}>
-                      <span style={{ fontWeight: 600 }}>{t('admin.transfers.adminNoteLabel')}: </span>{t.adminNote}
+                  {tr.adminNote && (
+                    <div className="col-12" style={{ color: tr.status === 'REJECTED' ? '#dc2626' : '#1d4ed8' }}>
+                      <span style={{ fontWeight: 600 }}>{t('admin.transfers.adminNoteLabel')}: </span>{tr.adminNote}
                     </div>
                   )}
                 </div>
