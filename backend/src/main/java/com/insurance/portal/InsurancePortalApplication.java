@@ -3,6 +3,7 @@ package com.insurance.portal;
 import com.insurance.portal.model.User;
 import com.insurance.portal.model.enums.Role;
 import com.insurance.portal.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -13,6 +14,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 @SpringBootApplication
 @EnableScheduling
+@Slf4j
 public class InsurancePortalApplication {
 
     public static void main(String[] args) {
@@ -30,6 +32,11 @@ public class InsurancePortalApplication {
         return args -> {
             // Create default admin if none exists — credentials injected via Spring properties
             // (set app.admin.email / app.admin.password in profile-specific properties or env vars)
+            if (adminPassword == null || adminPassword.isBlank()) {
+                log.warn("ADMIN_PASSWORD is not set — skipping admin bootstrap. "
+                        + "Set ADMIN_EMAIL/ADMIN_PASSWORD to create the initial admin account.");
+                return;
+            }
             if (!userRepository.existsByEmail(adminEmail)) {
                 User admin = User.builder()
                         .name("Admin")

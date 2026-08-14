@@ -4,7 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.insurance.portal.model.InsuranceType;
 import com.insurance.portal.repository.InsurancePackageRepository;
 import com.insurance.portal.repository.InsuranceTypeRepository;
+import com.insurance.portal.util.RateLimiter;
+import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +21,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/ai")
 @RequiredArgsConstructor
@@ -25,12 +30,29 @@ public class AiChatController {
     @Value("${XAI_API_KEY:}")
     private String xaiApiKey;
 
+    /** This endpoint is unauthenticated and spends xAI credits — throttle per client IP. */
+    @Value("${app.rate-limit.ai-chat:20}")
+    private int chatMax;
+    private RateLimiter chatLimiter;
+
+    @PostConstruct
+    void initLimiter() {
+        chatLimiter = new RateLimiter(chatMax, 15 * 60_000L);
+    }
+
     private final InsuranceTypeRepository insuranceTypeRepo;
     private final InsurancePackageRepository packageRepo;
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     @PostMapping("/chat")
-    public ResponseEntity<?> chat(@RequestBody Map<String, Object> body) {
+    public ResponseEntity<?> chat(@RequestBody Map<String, Object> body, HttpServletRequest request) {
+        String ip = RateLimiter.clientIp(request);
+        if (!chatLimiter.tryAcquire(ip)) {
+            log.warn("[RateLimit] ai/chat blocked for IP: {}", ip);
+            return ResponseEntity.status(429).body(Map.of(
+                    "reply", "Too many requests. Please wait a few minutes before asking again."));
+        }
+
         String message = body.getOrDefault("message", "").toString().trim();
         if (message.isBlank())
             return ResponseEntity.badRequest().body(Map.of("reply", "Please enter a question."));

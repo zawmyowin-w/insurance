@@ -8,10 +8,13 @@ import com.insurance.portal.security.JwtTokenProvider;
 import com.insurance.portal.service.EmailValidationService;
 import com.insurance.portal.util.EmailValidationUtil;
 import com.insurance.portal.util.PhoneValidationUtil;
+import com.insurance.portal.util.RateLimiter;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
@@ -52,6 +55,20 @@ public class AuthController {
     private static final int  VALID_MAX    = 30;
     private static final long WINDOW_MS    = 15 * 60_000L;
 
+    // Login: throttled per IP and per account to slow credential stuffing / password guessing
+    @Value("${app.rate-limit.login:10}")
+    private int loginMax;
+    private RateLimiter loginLimiter;
+
+    /** Expected audience for Google access tokens; when blank, audience is not enforced. */
+    @Value("${app.google.client-id:}")
+    private String googleClientId;
+
+    @PostConstruct
+    void initLimiters() {
+        loginLimiter = new RateLimiter(loginMax, WINDOW_MS);
+    }
+
     private String clientIp(HttpServletRequest req) {
         String xff = req.getHeader("X-Forwarded-For");
         return (xff != null && !xff.isBlank()) ? xff.split(",")[0].trim() : req.getRemoteAddr();
@@ -71,11 +88,22 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest req) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest req, HttpServletRequest request) {
+        String ip = clientIp(request);
+        String emailKey = "email:" + EmailValidationUtil.normalize(req.getEmail());
+        String ipKey = "ip:" + ip;
+        if (!loginLimiter.tryAcquire(ipKey) || !loginLimiter.tryAcquire(emailKey)) {
+            log.warn("[RateLimit] login blocked for IP: {}", ip);
+            return ResponseEntity.status(429).body(new ErrorResponse(
+                "Too many login attempts. Please wait a few minutes and try again."));
+        }
+
         Authentication auth = authManager.authenticate(
                 new UsernamePasswordAuthenticationToken(req.getEmail(), req.getPassword()));
         String token = tokenProvider.generateToken(req.getEmail());
         User user = userRepository.findByEmail(req.getEmail()).orElseThrow();
+        loginLimiter.reset(ipKey);
+        loginLimiter.reset(emailKey);
         return ResponseEntity.ok(new AuthResponse(token, UserResponse.from(user)));
     }
 
@@ -203,10 +231,27 @@ public class AuthController {
             return ResponseEntity.badRequest().body(new ErrorResponse("Missing Google access token"));
         }
 
-        // Verify token and fetch profile from Google
-        Map<String, String> info;
+        RestTemplate restTemplate = new RestTemplate();
+
+        // Confirm the token was issued for this application — a token minted for any other
+        // OAuth client must not be accepted as proof of identity here.
+        if (googleClientId != null && !googleClientId.isBlank()) {
+            try {
+                Map<String, Object> tokenInfo = restTemplate.getForObject(
+                    "https://oauth2.googleapis.com/tokeninfo?access_token=" + accessToken, Map.class);
+                Object aud = tokenInfo != null ? tokenInfo.get("aud") : null;
+                if (aud == null || !googleClientId.equals(aud.toString())) {
+                    log.warn("[Auth] Rejected Google token issued for another client: {}", aud);
+                    return ResponseEntity.status(401).body(new ErrorResponse("Invalid Google token"));
+                }
+            } catch (Exception e) {
+                return ResponseEntity.status(401).body(new ErrorResponse("Invalid or expired Google token"));
+            }
+        }
+
+        // Fetch profile from Google
+        Map<String, Object> info;
         try {
-            RestTemplate restTemplate = new RestTemplate();
             info = restTemplate.getForObject(
                 "https://www.googleapis.com/oauth2/v3/userinfo?access_token=" + accessToken,
                 Map.class
@@ -218,9 +263,12 @@ public class AuthController {
         if (info == null || info.get("email") == null) {
             return ResponseEntity.badRequest().body(new ErrorResponse("Could not retrieve Google account info"));
         }
+        if (!Boolean.parseBoolean(String.valueOf(info.get("email_verified")))) {
+            return ResponseEntity.badRequest().body(new ErrorResponse("Google account email is not verified"));
+        }
 
-        String email = info.get("email");
-        String name  = info.getOrDefault("name", email.split("@")[0]);
+        String email = EmailValidationUtil.normalize(info.get("email").toString());
+        String name  = info.get("name") != null ? info.get("name").toString() : email.split("@")[0];
 
         // Find existing user or create a new CUSTOMER account
         User user = userRepository.findByEmail(email).orElseGet(() -> {

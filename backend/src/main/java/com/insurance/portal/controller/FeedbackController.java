@@ -6,6 +6,7 @@ import com.insurance.portal.repository.FeedbackRepository;
 import com.insurance.portal.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,11 +20,15 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class FeedbackController {
 
+    private static final int MESSAGE_MAX = 2000;
+    private static final int CATEGORY_MAX = 50;
+
     private final FeedbackRepository feedbackRepo;
     private final UserRepository userRepo;
 
     // ── Customer: submit feedback ─────────────────────────────────────
     @PostMapping("/customer/feedback")
+    @PreAuthorize("hasRole('CUSTOMER')")
     @Transactional
     public ResponseEntity<?> submitFeedback(
             @AuthenticationPrincipal UserDetails principal,
@@ -31,15 +36,27 @@ public class FeedbackController {
 
         User customer = userRepo.findByEmail(principal.getUsername()).orElseThrow();
 
-        int rating = Integer.parseInt(body.getOrDefault("rating", "5").toString());
+        int rating;
+        try {
+            rating = Integer.parseInt(body.getOrDefault("rating", "5").toString().trim());
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Rating must be a number between 1 and 5"));
+        }
         if (rating < 1 || rating > 5)
             return ResponseEntity.badRequest().body(Map.of("message", "Rating must be between 1 and 5"));
 
         String message = body.getOrDefault("message", "").toString().trim();
         if (message.isEmpty())
             return ResponseEntity.badRequest().body(Map.of("message", "Message is required"));
+        if (message.length() > MESSAGE_MAX)
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Message must be at most " + MESSAGE_MAX + " characters"));
 
-        String category = body.getOrDefault("category", "General").toString();
+        String category = body.getOrDefault("category", "General").toString().trim();
+        if (category.isEmpty()) category = "General";
+        if (category.length() > CATEGORY_MAX)
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Category must be at most " + CATEGORY_MAX + " characters"));
 
         Feedback feedback = Feedback.builder()
                 .customer(customer)
@@ -55,6 +72,7 @@ public class FeedbackController {
 
     // ── Admin: list all feedbacks ─────────────────────────────────────
     @GetMapping("/admin/feedback")
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional(readOnly = true)
     public List<Map<String, Object>> getAllFeedback() {
         return feedbackRepo.findAllByOrderByCreatedAtDesc().stream()
@@ -74,6 +92,7 @@ public class FeedbackController {
 
     // ── Admin: unread count (for sidebar badge) ───────────────────────
     @GetMapping("/admin/feedback/unread-count")
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional(readOnly = true)
     public Map<String, Object> getUnreadCount() {
         return Map.of("count", feedbackRepo.countByReadFalse());
@@ -81,6 +100,7 @@ public class FeedbackController {
 
     // ── Admin: mark one as read ───────────────────────────────────────
     @PutMapping("/admin/feedback/{id}/read")
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public ResponseEntity<?> markRead(@PathVariable Long id) {
         Feedback f = feedbackRepo.findById(id)
@@ -92,6 +112,7 @@ public class FeedbackController {
 
     // ── Admin: mark all as read ───────────────────────────────────────
     @PutMapping("/admin/feedback/read-all")
+    @PreAuthorize("hasRole('ADMIN')")
     @Transactional
     public ResponseEntity<?> markAllRead() {
         List<Feedback> unread = feedbackRepo.findAllByOrderByCreatedAtDesc()

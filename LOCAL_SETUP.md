@@ -73,13 +73,21 @@ App → **http://localhost:5000**
 
 ---
 
-## Default Login
+## First Login
 
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | admin@dicp.com.mm | Admin@123 |
+There is no built-in default password. Set your own in `backend/.env` before the
+first run and the admin account is created on startup:
 
-Demo agents and customers are seeded automatically on first run.
+```dotenv
+ADMIN_EMAIL=admin@dicp.com.mm
+ADMIN_PASSWORD=<choose a strong password>
+```
+
+If `ADMIN_PASSWORD` is empty the startup log says the admin bootstrap was skipped.
+
+Demo agents and customers (well-known passwords) are **not** seeded by default.
+For local testing only, set `DEMO_DATA_ENABLED=true` in `backend/.env`.
+Swagger UI is likewise off unless you set `SWAGGER_ENABLED=true`.
 
 ---
 

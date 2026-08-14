@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.3</version>
+        <version>3.2.12</version>
         <relativePath/>
     </parent>
 
@@ -52,11 +52,11 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- H2 for testing/development fallback -->
+        <!-- H2 for tests only — not on the runtime classpath -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <scope>runtime</scope>
+            <scope>test</scope>
         </dependency>
 
         <!-- JWT -->

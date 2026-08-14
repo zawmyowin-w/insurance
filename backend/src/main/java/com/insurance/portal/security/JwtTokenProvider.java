@@ -2,11 +2,13 @@ package com.insurance.portal.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 
@@ -19,8 +21,20 @@ public class JwtTokenProvider {
     @Value("${app.jwt.expiration}")
     private long jwtExpirationMs;
 
+    /** Minimum key length for HMAC-SHA256 (256 bits). */
+    private static final int MIN_SECRET_BYTES = 32;
+
+    @PostConstruct
+    void validateSecret() {
+        if (jwtSecret == null || jwtSecret.getBytes(StandardCharsets.UTF_8).length < MIN_SECRET_BYTES) {
+            throw new IllegalStateException(
+                    "app.jwt.secret is missing or too short — set the JWT_SECRET environment variable "
+                    + "to a random value of at least " + MIN_SECRET_BYTES + " characters.");
+        }
+    }
+
     private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(jwtSecret.getBytes());
+        return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
     }
 
     public String generateToken(Authentication authentication) {

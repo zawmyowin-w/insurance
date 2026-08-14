@@ -62,11 +62,19 @@ public class SecurityConfig {
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
+        List<String> origins = Arrays.stream(allowedOriginsRaw.split(","))
+                .map(String::trim)
+                .filter(o -> !o.isEmpty())
+                .toList();
+        if (origins.isEmpty() || origins.contains("*")) {
+            throw new IllegalStateException(
+                    "app.cors.allowed-origins must list explicit origins (no wildcard) — "
+                    + "set CORS_ALLOWED_ORIGINS to a comma-separated list of allowed origins.");
+        }
+
         CorsConfiguration config = new CorsConfiguration();
-        // allowedOriginPatterns supports credentials + wildcard; use "*" so any
-        // origin (including Replit dev domains) is accepted in development.
-        // In production, set CORS_ALLOWED_ORIGINS to restrict to specific domains.
-        config.setAllowedOriginPatterns(List.of("*"));
+        // Patterns (not "*") so credentialed requests stay limited to configured origins.
+        config.setAllowedOriginPatterns(origins);
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "X-Requested-With"));
         config.setExposedHeaders(List.of("Authorization", "Content-Disposition"));
@@ -98,7 +106,6 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/payment-methods/*/logo").permitAll()
                 .requestMatchers("/contact").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
-                .requestMatchers("/h2-console/**").permitAll()
                 // Role-scoped portals
                 .requestMatchers("/customer/**").hasRole("CUSTOMER")
                 .requestMatchers("/agent/**").hasRole("AGENT")
@@ -108,8 +115,7 @@ public class SecurityConfig {
                 .requestMatchers("/auth/me").authenticated()
                 .anyRequest().authenticated()
             )
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-            .headers(headers -> headers.frameOptions(fo -> fo.disable())); // for H2 console (dev only)
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

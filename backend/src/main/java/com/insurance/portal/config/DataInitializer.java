@@ -9,6 +9,7 @@ import com.insurance.portal.repository.InsuranceTypeRepository;
 import com.insurance.portal.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
@@ -28,12 +29,20 @@ public class DataInitializer implements ApplicationRunner {
     private final UserRepository userRepo;
     private final PasswordEncoder passwordEncoder;
 
+    /** Demo agent/customer accounts use well-known passwords — never seed them outside local dev. */
+    @Value("${app.demo-data.enabled:false}")
+    private boolean demoDataEnabled;
+
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
         seedInsuranceTypes();
         seedPackages();
-        seedDemoUsers();
+        if (demoDataEnabled) {
+            seedDemoUsers();
+        } else {
+            log.info("Demo user seeding disabled (app.demo-data.enabled=false)");
+        }
     }
 
     private void seedInsuranceTypes() {

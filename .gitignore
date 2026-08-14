@@ -1,4 +1,7 @@
 .mysql/
+.env
+.env.*
+!.env.example
 backend/target/
 backend/uploads/
 frontend/dist/

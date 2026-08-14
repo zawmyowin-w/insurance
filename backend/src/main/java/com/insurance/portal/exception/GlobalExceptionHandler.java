@@ -53,8 +53,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<?> handleGeneral(Exception e) {
         // Log the full stack trace — this should never happen in normal operation
         log.error("Unhandled checked exception [{}]: {}", e.getClass().getName(), e.getMessage(), e);
-        String detail = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+        // Internal exception details stay in the logs — they can leak class names, paths and SQL.
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("message", "An internal error occurred: " + detail));
+                .body(Map.of("message", "An internal error occurred. Please try again later."));
     }
 }

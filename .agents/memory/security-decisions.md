@@ -22,6 +22,28 @@ description: Durable auth/security patterns decided during build — JWT, CORS, 
 - Dev fallbacks in `application-dev.properties` only; startup log never prints credential values
 - **Why:** Known fallback credentials in production are an easy takeover vector
 
+## Local vs production profiles
+- Dev-only fallbacks (JWT secret, admin password, demo seeding, Swagger) live in `application-local.properties`; the default profile leaves them empty/disabled
+- `start-backend.sh` generates an ephemeral `JWT_SECRET` when unset instead of relying on a committed default
+- **Why:** anything committed as a default becomes a production credential the moment the env var is forgotten
+
+## Demo data
+- `app.demo-data.enabled` (default `false`) gates `DataInitializer.seedDemoUsers()`, which creates agents/customers with well-known passwords
+- **Why:** demo accounts with published passwords are live accounts in production
+
+## Rate limiting
+- `RateLimiter` (in-memory, per instance) throttles unauthenticated abuse: `/auth/login` per IP + per email, `/ai/chat` per IP (spends xAI credits)
+- Tuned via `app.rate-limit.login` / `app.rate-limit.ai-chat`; needs a shared store (Redis) if the app is ever scaled out
+- **Why:** unauthenticated endpoints are otherwise free brute-force / cost-amplification targets
+
+## Google sign-in
+- Access token audience is checked against `app.google.client-id` via `oauth2.googleapis.com/tokeninfo`, and `email_verified` must be true
+- **Why:** a userinfo lookup alone accepts tokens minted for *any* other Google OAuth client, allowing account takeover by email
+
+## Error responses
+- `GlobalExceptionHandler` returns a generic 500 message; exception details are logged server-side only
+- **Why:** raw exception messages leak class names, SQL, and filesystem paths
+
 ## Object-level authorization (IDOR prevention)
 - Every ID-based mutation verifies the resource belongs to the authenticated principal before acting
 - Returns HTTP 403 on mismatch — must be applied to all new ID-accepting endpoints

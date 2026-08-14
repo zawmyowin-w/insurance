@@ -88,8 +88,26 @@ echo "[start-backend] Starting Spring Boot application..."
 cd "$ROOT_DIR/backend"
 # Use SESSION_SECRET as the JWT signing key when available (Replit secret)
 JWT_SECRET_VAL="${JWT_SECRET:-${SESSION_SECRET:-}}"
+# Local convenience: generate an ephemeral signing key rather than shipping a
+# committed default. Tokens are invalidated on restart, which is fine for dev.
+if [ -z "$JWT_SECRET_VAL" ]; then
+  JWT_SECRET_VAL="$(openssl rand -hex 32 2>/dev/null || head -c 48 /dev/urandom | base64 | tr -d '\n')"
+  echo "[start-backend] JWT_SECRET not set — generated an ephemeral development key."
+fi
+
+ADMIN_PASSWORD_VAL="${ADMIN_PASSWORD:-}"
+if [ -z "$ADMIN_PASSWORD_VAL" ]; then
+  echo "[start-backend] ADMIN_PASSWORD not set — admin account will not be bootstrapped."
+fi
+
 exec env DB_HOST="$DB_HOST" DB_PORT="$DB_PORT" DB_NAME="$DB_NAME" DB_USER="$DB_USER" \
   FILE_STORAGE_DIR="$FILE_STORAGE_DIR" \
   JWT_SECRET="$JWT_SECRET_VAL" \
+  ADMIN_EMAIL="${ADMIN_EMAIL:-admin@dicp.com.mm}" \
+  ADMIN_PASSWORD="$ADMIN_PASSWORD_VAL" \
+  DEMO_DATA_ENABLED="${DEMO_DATA_ENABLED:-false}" \
+  SWAGGER_ENABLED="${SWAGGER_ENABLED:-false}" \
+  CORS_ALLOWED_ORIGINS="${CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:5000}" \
+  GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID:-${VITE_GOOGLE_CLIENT_ID:-}}" \
   XAI_API_KEY="${XAI_API_KEY:-}" \
   mvn -q spring-boot:run
