@@ -1064,6 +1064,8 @@ public class PdfController {
                 continue;
             } else if (field.getFieldType() == FieldType.PDF_UPLOAD) {
                 displayValue = value.isBlank() ? "—" : "Document: " + java.nio.file.Paths.get(value).getFileName();
+            } else if (field.getFieldType() == FieldType.NRC) {
+                displayValue = value.isBlank() ? "—" : formatNrcForPdf(value);
             } else {
                 displayValue = value.isBlank() ? "—" : value;
             }
@@ -1074,6 +1076,33 @@ public class PdfController {
                     .setPadding(5));
         }
         doc.add(table);
+    }
+
+    /**
+     * Converts a stored NRC string such as "10/မဒန(နိုင်)241890" into a
+     * Helvetica-safe representation "10/မဒန(N)241890" by:
+     *   1. Replacing the Myanmar citizen-type inside () with its English short code.
+     *   2. Converting Myanmar digits (၀-၉) to ASCII digits (0-9).
+     * The township abbreviation (Myanmar script) is left as-is — iText will
+     * render a box/fallback for those glyphs, but at least the critical fields
+     * (state number, citizen type, serial) will be readable.
+     */
+    private static String formatNrcForPdf(String stored) {
+        if (stored == null || stored.isBlank()) return "—";
+
+        // 1. Map Myanmar citizen types to English short codes
+        String result = stored
+            .replace("(နိုင်)", "(N)")
+            .replace("(ဧည့်)", "(AC)")
+            .replace("(ပြု)", "(TH)");
+
+        // 2. Convert Myanmar digits ၀-၉ → 0-9
+        StringBuilder sb = new StringBuilder(result.length());
+        for (char c : result.toCharArray()) {
+            int mmIdx = "၀၁၂၃၄၅၆၇၈၉".indexOf(c);
+            sb.append(mmIdx >= 0 ? (char)('0' + mmIdx) : c);
+        }
+        return sb.toString();
     }
 
     private void addNotesSection(Document doc, PdfFont boldFont, PdfFont regularFont,
