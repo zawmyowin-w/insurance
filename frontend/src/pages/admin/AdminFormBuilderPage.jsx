@@ -426,8 +426,20 @@ function FieldEditor({ field, index, onUpdate, onRemove, onMoveUp, onMoveDown, i
     try { parsedOptions = JSON.parse(field.fieldOptions) } catch {}
   }
 
+  // Local raw text so pressing Enter to add a new line doesn't snap the cursor back
+  const [rawOptionsText, setRawOptionsText] = useState(parsedOptions.join('\n'))
+  useEffect(() => {
+    setRawOptionsText(parsedOptions.join('\n'))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [field.fieldOptions, field.fieldType])
+
   const updateOptions = (options) => {
     onUpdate('fieldOptions', JSON.stringify(options))
+  }
+
+  const commitOptions = (text) => {
+    const opts = text.split('\n').filter(o => o.trim())
+    updateOptions(opts.length ? opts : ['Yes', 'No'])
   }
 
   return (
@@ -473,14 +485,12 @@ function FieldEditor({ field, index, onUpdate, onRemove, onMoveUp, onMoveDown, i
               ))}
             </div>
           )}
-          <textarea rows={2} className="form-control-custom w-100"
+          <textarea rows={4} className="form-control-custom w-100"
             style={{ fontSize: '0.82rem', resize: 'vertical', padding: '0.35rem 0.5rem' }}
-             placeholder={t('admin.formBuilder.optionsPlaceholder')}
-            value={parsedOptions.join('\n')}
-            onChange={e => {
-              const opts = e.target.value.split('\n').filter(o => o.trim())
-              updateOptions(opts.length ? opts : ['Yes', 'No'])
-            }} />
+            placeholder={t('admin.formBuilder.optionsPlaceholder')}
+            value={rawOptionsText}
+            onChange={e => setRawOptionsText(e.target.value)}
+            onBlur={e => commitOptions(e.target.value)} />
         </div>
       )}
 
