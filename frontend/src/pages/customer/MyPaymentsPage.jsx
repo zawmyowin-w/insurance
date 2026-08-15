@@ -49,10 +49,14 @@ export default function MyPaymentsPage() {
   useEffect(() => { fetchData() }, [])
 
   const openModal = ({ appId = '', periodNumber = null, periodLabel = '', installmentAmount = null, selectedPeriods = [] } = {}) => {
+    // Auto-fill total amount for batch payments so customer doesn't have to calculate manually
+    const autoAmount = selectedPeriods.length > 1
+      ? String(selectedPeriods.length * Number(installmentAmount))
+      : ''
     setPayForm({
       applicationId: String(appId), paymentMethod: '', screenshot: null, notes: '',
       periodNumber, periodLabel, installmentAmount,
-      transactionLastSixDigits: '', transactionAmount: '',
+      transactionLastSixDigits: '', transactionAmount: autoAmount,
       selectedPeriods,
     })
     setPaySignature(null)
@@ -183,8 +187,8 @@ export default function MyPaymentsPage() {
                       key={sched.applicationId}
                       sched={sched}
                       statusLabel={STATUS_LABEL}
-                      onPay={({ periodNumber, periodLabel, installmentAmount }) =>
-                        openModal({ appId: sched.applicationId, periodNumber, periodLabel, installmentAmount })}
+                      onPay={({ periodNumber, periodLabel, installmentAmount, selectedPeriods }) =>
+                        openModal({ appId: sched.applicationId, periodNumber, periodLabel, installmentAmount, selectedPeriods })}
                     />
                   ))}
                 </div>
@@ -647,7 +651,11 @@ function PaymentModal({ payForm, setPayForm, payMethods, selectedMethod, paySign
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: '0.75rem' }}>
                       <i className="bi bi-exclamation-circle-fill" style={{ color: selectedMethod.color, fontSize: '1rem' }}></i>
                       <span style={{ fontWeight: 700, color: selectedMethod.color, fontSize: '0.88rem' }}>
-                        {t('payments.payTo', { method: selectedMethod.name })} {payForm.installmentAmount != null ? `${Number(payForm.installmentAmount).toLocaleString()} MMK` : ''}
+                        {t('payments.payTo', { method: selectedMethod.name })} {payForm.installmentAmount != null
+                          ? `${(payForm.selectedPeriods?.length > 1
+                              ? payForm.selectedPeriods.length * Number(payForm.installmentAmount)
+                              : Number(payForm.installmentAmount)).toLocaleString()} MMK`
+                          : ''}
                       </span>
                     </div>
 

@@ -269,6 +269,37 @@ export default function AdminReportsPage() {
     }
   }
 
+  // Print current-month PDF — open in new tab then trigger browser print dialog
+  const handlePrintPdf = async () => {
+    setPdfBusy(true)
+    try {
+      const now = new Date()
+      const res = await api.get('/admin/reports/monthly-pdf', {
+        params: { year: now.getFullYear(), month: now.getMonth() + 1 },
+        responseType: 'blob',
+      })
+      const url = URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+      const win = window.open(url, '_blank')
+      if (win) {
+        win.addEventListener('load', () => {
+          win.focus()
+          win.print()
+        })
+        // Clean up object URL after a delay
+        setTimeout(() => URL.revokeObjectURL(url), 30000)
+      } else {
+        // Popup blocked — fall back to download
+        const filename = `monthly-report-${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}.pdf`
+        await triggerBlobDownload(res.data, filename)
+        showToast(t('admin.reports.printPopupBlocked') || 'Popup blocked — PDF downloaded instead.', false)
+      }
+    } catch {
+      showToast(t('admin.reports.downloadError'), false)
+    } finally {
+      setPdfBusy(false)
+    }
+  }
+
   // Monthly reset — exports full-period PDF, then resets all analytics to zero
   const handleReset = async () => {
     setShowResetModal(false)
@@ -910,19 +941,32 @@ export default function AdminReportsPage() {
               </div>
               <div className="col-12 col-md-5">
                 <div className="d-flex flex-column gap-2">
-                  {/* Download PDF (current month, no reset) */}
-                  <button type="button" onClick={handleDownloadPdf} disabled={pdfBusy}
-                    style={{
-                      padding: '0.7rem 1.25rem', borderRadius: 10, border: 'none', cursor: pdfBusy ? 'not-allowed' : 'pointer',
-                      background: 'rgba(255,255,255,0.15)', color: '#fff', fontWeight: 700, fontSize: '0.88rem',
-                      display: 'flex', alignItems: 'center', gap: 8, opacity: pdfBusy ? 0.7 : 1,
-                      backdropFilter: 'blur(4px)', transition: 'all .15s',
-                    }}>
-                    {pdfBusy
-                      ? <><div className="spinner-border spinner-border-sm" style={{ width: 16, height: 16, borderWidth: 2 }}></div>{t('admin.reports.generatingPdf')}</>
-                      : <><i className="bi bi-file-earmark-pdf-fill" style={{ fontSize: '1rem' }}></i>{t('admin.reports.downloadMonthlyPdf')}</>
-                    }
-                  </button>
+                  {/* Download PDF + Print — side by side */}
+                  <div className="d-flex gap-2">
+                    <button type="button" onClick={handleDownloadPdf} disabled={pdfBusy}
+                      style={{
+                        flex: 1, padding: '0.7rem 1rem', borderRadius: 10, border: 'none', cursor: pdfBusy ? 'not-allowed' : 'pointer',
+                        background: 'rgba(255,255,255,0.15)', color: '#fff', fontWeight: 700, fontSize: '0.85rem',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: pdfBusy ? 0.7 : 1,
+                        backdropFilter: 'blur(4px)', transition: 'all .15s',
+                      }}>
+                      {pdfBusy
+                        ? <><div className="spinner-border spinner-border-sm" style={{ width: 16, height: 16, borderWidth: 2 }}></div>{t('admin.reports.generatingPdf')}</>
+                        : <><i className="bi bi-file-earmark-pdf-fill" style={{ fontSize: '1rem' }}></i>{t('admin.reports.downloadMonthlyPdf')}</>
+                      }
+                    </button>
+                    <button type="button" onClick={handlePrintPdf} disabled={pdfBusy}
+                      title={t('admin.reports.printMonthlyPdf') || 'Print PDF'}
+                      style={{
+                        padding: '0.7rem 1rem', borderRadius: 10, border: '1.5px solid rgba(255,255,255,0.4)', cursor: pdfBusy ? 'not-allowed' : 'pointer',
+                        background: 'rgba(255,255,255,0.08)', color: '#fff', fontWeight: 700, fontSize: '0.85rem',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: pdfBusy ? 0.7 : 1,
+                        backdropFilter: 'blur(4px)', transition: 'all .15s', whiteSpace: 'nowrap',
+                      }}>
+                      <i className="bi bi-printer-fill" style={{ fontSize: '1rem' }}></i>
+                      {t('admin.reports.printMonthlyPdf') || 'Print'}
+                    </button>
+                  </div>
                   {/* Monthly Reset — archives PDF and records period end */}
                   <button type="button" onClick={() => setShowResetModal(true)} disabled={resetBusy}
                     style={{
