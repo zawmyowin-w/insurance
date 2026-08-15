@@ -801,6 +801,8 @@
     "quickPayAllRemaining": "All ({{count}} remaining)",
     "yearUnit": "year",
     "monthUnit": "month",
+    "claimWaitingNotice": "Advance payment allowed · Claim eligible from {{date}}",
+    "claimWaitingMonths": "{{months}}-month claim waiting period applies after first payment verified",
     "periodSearchPlaceholder": "Search by customer, policy or period...",
     "periodSearchLabel": "Search",
     "freqPAY_ALL": "One-time (full)"

@@ -187,8 +187,8 @@ export default function MyPaymentsPage() {
                       key={sched.applicationId}
                       sched={sched}
                       statusLabel={STATUS_LABEL}
-                      onPay={({ periodNumber, periodLabel, installmentAmount, selectedPeriods }) =>
-                        openModal({ appId: sched.applicationId, periodNumber, periodLabel, installmentAmount, selectedPeriods })}
+                      onPay={({ periodNumber, periodLabel, installmentAmount, selectedPeriods, intervalMonths }) =>
+                        openModal({ appId: sched.applicationId, periodNumber, periodLabel, installmentAmount, selectedPeriods, intervalMonths })}
                     />
                   ))}
                 </div>
@@ -365,6 +365,29 @@ function PolicyScheduleCard({ sched, onPay, statusLabel }) {
             <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 2 }}>
               {sched.policyNumber} · {t(`payments.freq${sched.paymentFrequency}`) || sched.paymentFrequency || t('payments.onceFreq')}
             </div>
+            {/* Claim waiting period notice — informational only, payments remain unrestricted */}
+            {sched.claimEligibleFrom && new Date(sched.claimEligibleFrom) > new Date() && (
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                marginTop: 5, padding: '0.2rem 0.55rem', borderRadius: 6,
+                background: '#fef3c7', border: '1px solid #fcd34d', fontSize: '0.72rem', fontWeight: 600, color: '#92400e',
+              }}>
+                <i className="bi bi-hourglass-split"></i>
+                {t('payments.claimWaitingNotice', {
+                  date: new Date(sched.claimEligibleFrom).toLocaleDateString(),
+                })}
+              </div>
+            )}
+            {sched.claimWaitingPeriodMonths > 0 && !sched.claimEligibleFrom && (
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                marginTop: 5, padding: '0.2rem 0.55rem', borderRadius: 6,
+                background: '#f0f9ff', border: '1px solid #bae6fd', fontSize: '0.72rem', fontWeight: 600, color: '#0369a1',
+              }}>
+                <i className="bi bi-info-circle"></i>
+                {t('payments.claimWaitingMonths', { months: sched.claimWaitingPeriodMonths })}
+              </div>
+            )}
           </div>
         </div>
 

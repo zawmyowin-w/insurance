@@ -24,6 +24,12 @@ public class PremiumScheduleResponse {
     private long paidCount;
     private List<InstallmentEntry> schedule;
 
+    /** Date from which the customer can file claims (null = immediately). */
+    private java.time.LocalDate claimEligibleFrom;
+
+    /** Package-level claim waiting period in months (null or 0 = no waiting). */
+    private Integer claimWaitingPeriodMonths;
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor

@@ -801,6 +801,8 @@
     "quickPayAllRemaining": "ကျန်သည့်အားလုံး ({{count}})",
     "yearUnit": "နှစ်",
     "monthUnit": "လ",
+    "claimWaitingNotice": "ကြိုပေးချေ၍ရသည် · {{date}} မှ claim တင်ပြ၍ရမည်",
+    "claimWaitingMonths": "ပထမဆုံးငွေတည်းအချိန်မှ {{months}} လ claim တင်ဆိုင်ရာ စောင့်ဆိုင်းချိန် ရှိသည်",
     "periodSearchPlaceholder": "ဖောက်သည်၊ policy သို့မဟုတ် ကာလဖြင့် ရှာပါ...",
     "periodSearchLabel": "ရှာဖွေရန်",
     "freqPAY_ALL": "တစ်ကြိမ်တည်း (အပြည့်)"

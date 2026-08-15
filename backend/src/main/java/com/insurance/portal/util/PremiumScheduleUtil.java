@@ -141,6 +141,9 @@ public class PremiumScheduleUtil {
         res.setTotalInstallments(totalInstallments);
         res.setPaidCount(paidCount);
         res.setSchedule(schedule);
+        // Claim eligibility — surfaces the waiting period without blocking payments
+        res.setClaimEligibleFrom(app.getClaimEligibleFrom());
+        res.setClaimWaitingPeriodMonths(pkg != null ? pkg.getClaimWaitingPeriodMonths() : null);
         return res;
     }
 
