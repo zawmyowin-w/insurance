@@ -24,4 +24,10 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     /** Same transaction allowed within the same application (multi-period batch); block only if used in a DIFFERENT application. */
     boolean existsByTransactionLastSixDigitsAndStatusNotAndApplication_IdNot(String transactionLastSixDigits, PaymentStatus status, Long applicationId);
+
+    /** Find all payment records belonging to the same batch. */
+    List<Payment> findAllByBatchRef(String batchRef);
+
+    /** Find all non-null batch refs with a given status (for grouped admin view). */
+    List<Payment> findAllByBatchRefNotNull();
 }

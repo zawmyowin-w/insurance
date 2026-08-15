@@ -68,6 +68,14 @@ public class Payment {
     @Column(name = "transaction_amount", precision = 20, scale = 2)
     private BigDecimal transactionAmount;
 
+    /**
+     * Shared reference UUID for multi-period batch payments.
+     * All Payment records created in the same batch submission share this value.
+     * Null for single-period or legacy one-time payments.
+     */
+    @Column(name = "batch_ref", length = 36)
+    private String batchRef;
+
     @Column(name = "verified_by")
     private String verifiedBy;
 

@@ -136,6 +136,12 @@ while IFS=$'\t' read -r _pkg_id _tiers _bands; do
 done < <(mysql "${mysql_args[@]}" "${DB_NAME}" -N -B -e \
   "SELECT id, IFNULL(duration_tiers,''), IFNULL(age_bands,'') FROM insurance_packages;" 2>/dev/null) || true
 
+# ── Add batch_ref column to payments if missing ─────────────────────────────
+set +e
+mysql "${mysql_args[@]}" "${DB_NAME}" -e \
+  "ALTER TABLE payments ADD COLUMN batch_ref VARCHAR(36) NULL;" 2>/dev/null
+set -e
+
 # Schema and seed data are managed by Hibernate (ddl-auto=update) and DataInitializer on startup.
 
 echo "[start-backend] Starting Spring Boot application..."

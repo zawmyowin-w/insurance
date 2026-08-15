@@ -793,7 +793,8 @@
     "transactionDigitsMissing": "ငွေလွှဲမှတ်တမ်း နံပါတ်၏ နောက်ဆုံးဂဏန်း ၆ လုံး ထည့်ပါ",
     "transactionAmount": "လွှဲပို့သောငွေ (ကျပ်) *",
     "transactionAmountHint": "လွှဲပို့သော ငွေပမာဏ အတိအကျ ထည့်ပါ",
-    "transactionAmountMissing": "လွှဲပို့သောငွေ ထည့်ပါ"
+    "transactionAmountMissing": "လွှဲပို့သောငွေ ထည့်ပါ",
+    "periodCoveredLabel": "ပေးဆောင်သော ကာလ"
   },
   "submitClaim": {
     "title": "တောင်းဆိုမှု တင်ပြရန်",
@@ -1286,7 +1287,16 @@
       "tableLastSix": "နောက်ဆုံး ၆ လုံး",
       "tableTxAmount": "လွှဲငွေပမာဏ",
       "txAmountLabel": "လွှဲငွေပမာဏ",
-      "txLastSixLabel": "နောက်ဆုံး ၆ လုံး"
+      "txLastSixLabel": "နောက်ဆုံး ၆ လုံး",
+      "tablePeriods": "ပေးဆောင်သောကာလ(များ)",
+      "batchPayment": "စုပေါင်းပေးချေမှု",
+      "periods": "ကာလ",
+      "perPeriod": "တစ်ကာလ",
+      "totalTransferred": "စုစုပေါင်းလွှဲပြီး",
+      "more": "ထပ်ကြည့်",
+      "collapse": "လျော့",
+      "batchActionNote": "ဤလုပ်ဆောင်မှုသည် ဤ batch ရှိ ကာလ {{count}} ခုအားလုံးသို့ အကျုံးဝင်မည်ဖြစ်သည်။",
+      "periodsCovered": "ဤ batch တွင် ပေးဆောင်သော ကာလများ"
     },
     "paymentMethods": {
       "title": "ငွေပေးနည်းများ",

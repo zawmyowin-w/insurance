@@ -603,7 +603,9 @@ public class CustomerController {
         }
 
         // Multi-period batch — one Payment record per period, same screenshot/transaction
-        List<PaymentResponse> responses = new java.util.ArrayList<>();
+        // All records in the same batch share a batchRef UUID so admin can view/verify them together.
+        String batchRef = java.util.UUID.randomUUID().toString();
+        List<Payment> batchPayments = new java.util.ArrayList<>();
         for (Integer pn : periods) {
             java.time.LocalDate dueDate = (intervalMonths != null && intervalMonths > 0)
                 ? startDate.plusMonths((long)(pn - 1) * intervalMonths) : startDate;
@@ -616,10 +618,11 @@ public class CustomerController {
                     .periodNumber(pn).periodLabel(lbl)
                     .transactionLastSixDigits(last6)
                     .transactionAmount(transactionAmount)
+                    .batchRef(batchRef)
                     .status(PaymentStatus.PENDING).build();
-            responses.add(PaymentResponse.from(paymentRepo.save(p)));
+            batchPayments.add(paymentRepo.save(p));
         }
-        return ResponseEntity.ok(responses);
+        return ResponseEntity.ok(PaymentResponse.fromBatch(batchPayments));
     }
 
     // ── Active Policies ─────────────────────────────────────────────

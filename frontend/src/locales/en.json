@@ -793,7 +793,8 @@
     "periodsSelected": "{{count}} Period(s) Selected",
     "payPeriods": "Submit Payment for {{count}} Period(s)",
     "batchPaymentLabel": "{{count}} Periods — Advance / Batch Premium Payment",
-    "multiPeriodSubmitSuccess": "Payment for {{count}} period(s) has been submitted for verification"
+    "multiPeriodSubmitSuccess": "Payment for {{count}} period(s) has been submitted for verification",
+    "periodCoveredLabel": "Period Covered"
   },
   "submitClaim": {
     "title": "Submit a Claim",
@@ -1286,7 +1287,16 @@
       "tableLastSix": "Last 6 Digits",
       "tableTxAmount": "Transfer Amount",
       "txAmountLabel": "Transfer Amount",
-      "txLastSixLabel": "Last 6 Digits"
+      "txLastSixLabel": "Last 6 Digits",
+      "tablePeriods": "Period(s) Covered",
+      "batchPayment": "Batch Payment",
+      "periods": "periods",
+      "perPeriod": "per period",
+      "totalTransferred": "total transferred",
+      "more": "more",
+      "collapse": "less",
+      "batchActionNote": "This action will apply to all {{count}} periods in this batch.",
+      "periodsCovered": "Periods covered in this batch"
     },
     "paymentMethods": {
       "title": "Payment Methods",

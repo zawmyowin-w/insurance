@@ -566,38 +566,67 @@ function PaymentModal({ payForm, setPayForm, payMethods, selectedMethod, paySign
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8,
                 }}>
                   {payForm.selectedPeriods && payForm.selectedPeriods.length > 1 ? (
-                    <>
-                      <div>
-                        <div style={{ fontSize: '0.8rem', color: '#1e40af', fontWeight: 700 }}>
-                          <i className="bi bi-collection me-1"></i>
-                          {t('payments.batchPaymentLabel', { count: payForm.selectedPeriods.length })}
+                    /* ── Batch payment summary ── */
+                    <div style={{ width: '100%' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                        <div>
+                          <div style={{ fontSize: '0.82rem', color: '#1e40af', fontWeight: 800 }}>
+                            <i className="bi bi-collection me-1"></i>
+                            {t('payments.batchPaymentLabel', { count: payForm.selectedPeriods.length })}
+                          </div>
+                          <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: 2 }}>
+                            {payForm.selectedPeriods.length} × {Number(payForm.installmentAmount).toLocaleString()} MMK
+                          </div>
                         </div>
-                        <div style={{ fontSize: '0.74rem', color: '#3b82f6', marginTop: 3, lineHeight: 1.5 }}>
-                          {payForm.selectedPeriods.map(p => p.periodLabel || `Period ${p.periodNumber}`).join(' · ')}
-                        </div>
-                        <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: 2 }}>
-                          {payForm.selectedPeriods.length} × {Number(payForm.installmentAmount).toLocaleString()} MMK
+                        <div style={{ fontWeight: 900, fontSize: '1.5rem', color: '#1d4ed8' }}>
+                          {(payForm.selectedPeriods.length * Number(payForm.installmentAmount)).toLocaleString()}
+                          <span style={{ fontSize: '0.85rem', fontWeight: 600 }}> MMK</span>
                         </div>
                       </div>
-                      <div style={{ fontWeight: 900, fontSize: '1.5rem', color: '#1d4ed8' }}>
-                        {(payForm.selectedPeriods.length * Number(payForm.installmentAmount)).toLocaleString()} <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>MMK</span>
+                      {/* Period tags */}
+                      <div style={{ marginTop: '0.65rem', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        {payForm.selectedPeriods.map((sp, i) => (
+                          <span key={i} style={{
+                            fontSize: '0.75rem', fontWeight: 700, padding: '0.2rem 0.55rem', borderRadius: 8,
+                            background: '#dbeafe', color: '#1d4ed8', border: '1px solid #93c5fd',
+                          }}>
+                            <i className="bi bi-calendar3 me-1" style={{ fontSize: '0.68rem' }}></i>
+                            {sp.periodLabel || `Period ${sp.periodNumber}`}
+                          </span>
+                        ))}
                       </div>
-                    </>
+                    </div>
                   ) : (
-                    <>
-                      <div>
-                        <div style={{ fontSize: '0.8rem', color: '#1e40af', fontWeight: 600 }}>
-                          <i className="bi bi-info-circle me-1"></i>
-                          {payForm.periodLabel ? `${t('payments.periodPrefix')}${payForm.periodLabel}` : t('payments.amountDueLabel')}
+                    /* ── Single period payment summary ── */
+                    <div style={{ width: '100%' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                        <div>
+                          <div style={{ fontSize: '0.82rem', color: '#1e40af', fontWeight: 700 }}>
+                            <i className="bi bi-calendar3 me-1"></i>
+                            {t('payments.periodCoveredLabel') || 'Period Covered'}
+                          </div>
+                          {payForm.periodLabel ? (
+                            <div style={{ marginTop: 4 }}>
+                              <span style={{
+                                fontSize: '0.82rem', fontWeight: 800, padding: '0.2rem 0.65rem',
+                                borderRadius: 8, background: '#dbeafe', color: '#1d4ed8', border: '1px solid #93c5fd',
+                              }}>
+                                <i className="bi bi-calendar3 me-1" style={{ fontSize: '0.72rem' }}></i>
+                                {payForm.periodLabel}
+                              </span>
+                            </div>
+                          ) : (
+                            <div style={{ fontSize: '0.78rem', color: '#3b82f6', marginTop: 2 }}>
+                              {t('payments.amountDueLabel')}
+                            </div>
+                          )}
                         </div>
-                        <div style={{ fontSize: '0.78rem', color: '#3b82f6', marginTop: 2 }}>
-                          {t('payments.amountDueLabel')}
+                        <div style={{ fontWeight: 900, fontSize: '1.5rem', color: '#1d4ed8' }}>
+                          {Number(payForm.installmentAmount).toLocaleString()}
+                          <span style={{ fontSize: '0.85rem', fontWeight: 600 }}> MMK</span>
                         </div>
                       </div>
-                      <div style={{ fontWeight: 900, fontSize: '1.5rem', color: '#1d4ed8' }}>
-                        {Number(payForm.installmentAmount).toLocaleString()} <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>MMK</span>
-                      </div>
-                    </>
+                    </div>
                   )}
                 </div>
               )}
