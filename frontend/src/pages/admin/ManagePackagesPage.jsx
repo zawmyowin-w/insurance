@@ -10,7 +10,6 @@ const PAYMENT_FREQ_OPTIONS = [
   { value: 'QUARTERLY',   months: 3,  labelKey: 'freqQUARTERLY'   },
   { value: 'HALF_YEARLY', months: 6,  labelKey: 'freqHALF_YEARLY' },
   { value: 'YEARLY',      months: 12, labelKey: 'freqYEARLY'      },
-  { value: 'PAY_ALL',     months: 0,  labelKey: 'freqPAY_ALL'     },
 ]
 
 const DURATION_UNIT_OPTIONS = [
