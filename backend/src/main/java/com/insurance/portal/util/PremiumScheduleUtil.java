@@ -142,14 +142,37 @@ public class PremiumScheduleUtil {
         PremiumScheduleResponse schedule = buildSchedule(app, payments);
         LocalDate today = LocalDate.now();
 
-        // Find the most relevant period: first OVERDUE, then DUE, then earliest UPCOMING
-        PremiumScheduleResponse.InstallmentEntry current = schedule.getSchedule().stream()
-                .filter(e -> "OVERDUE".equals(e.getStatus()) || "DUE".equals(e.getStatus()))
-                .findFirst()
-                .orElse(schedule.getSchedule().stream()
-                        .filter(e -> "UPCOMING".equals(e.getStatus()) || "PENDING_VERIFICATION".equals(e.getStatus()))
+        // Priority: OVERDUE/DUE → PENDING_VERIFICATION → last PAID/WAIVED (so paid policies
+        // appear in the PAID tab even when the next period is still UPCOMING) → UPCOMING → last entry
+        PremiumScheduleResponse.InstallmentEntry current =
+                schedule.getSchedule().stream()
+                        .filter(e -> "OVERDUE".equals(e.getStatus()) || "DUE".equals(e.getStatus()))
                         .findFirst()
-                        .orElse(schedule.getSchedule().isEmpty() ? null : schedule.getSchedule().get(schedule.getSchedule().size() - 1)));
+                        .orElse(null);
+
+        if (current == null) {
+            current = schedule.getSchedule().stream()
+                    .filter(e -> "PENDING_VERIFICATION".equals(e.getStatus()))
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        if (current == null && schedule.getPaidCount() > 0) {
+            // No urgent period — show the most recently paid installment so the entry
+            // surfaces in the PAID tab while the next period is still upcoming.
+            current = schedule.getSchedule().stream()
+                    .filter(e -> "PAID".equals(e.getStatus()) || "WAIVED".equals(e.getStatus()))
+                    .reduce((a, b) -> b)   // last matching entry
+                    .orElse(null);
+        }
+
+        if (current == null) {
+            current = schedule.getSchedule().stream()
+                    .filter(e -> "UPCOMING".equals(e.getStatus()))
+                    .findFirst()
+                    .orElse(schedule.getSchedule().isEmpty() ? null
+                            : schedule.getSchedule().get(schedule.getSchedule().size() - 1));
+        }
 
         if (current == null) return null;
 
