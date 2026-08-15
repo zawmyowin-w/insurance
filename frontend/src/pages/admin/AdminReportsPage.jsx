@@ -15,19 +15,30 @@ const Pct = n => (n == null ? '—' : Number(n).toFixed(1) + '%')
 const shortMonth = key => key?.split(' ')[0] || key
 
 // ── SVG Chart Primitives ──────────────────────────────────────────────────────
+function niceMax(rawMax, ticks) {
+  if (rawMax <= 0) return ticks
+  const rawStep = rawMax / ticks
+  const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)))
+  const niceStep = Math.ceil(rawStep / magnitude) * magnitude
+  return niceStep * ticks
+}
+function fmtVal(v) {
+  return v >= 1e6 ? (v / 1e6).toFixed(1) + 'M' : v >= 1e3 ? (v / 1e3).toFixed(0) + 'K' : Math.round(v)
+}
+
 function BarChart({ data, color = 'var(--primary)', height = 180 }) {
   const entries = Object.entries(data || {})
   if (!entries.length) return <Empty />
   const vals = entries.map(([, v]) => Number(v))
   if (vals.every(v => v === 0)) return <Empty />
-  const maxV = Math.max(...vals, 1)
+  const yTicks = 4
+  const maxV = niceMax(Math.max(...vals), yTicks)
   const W = 600, H = height, PAD_L = 60, PAD_B = 28, PAD_T = 16, PAD_R = 8
   const bw = Math.floor((W - PAD_L - PAD_R) / entries.length)
   const barW = Math.max(bw - 6, 4)
   const barX = i => PAD_L + i * bw + (bw - barW) / 2
   const barH = v => Math.max(((v / maxV) * (H - PAD_T - PAD_B)), 2)
   const barY = v => H - PAD_B - barH(v)
-  const yTicks = 4
   return (
     <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display: 'block', overflow: 'visible' }}>
       {Array.from({ length: yTicks + 1 }, (_, i) => {
@@ -37,7 +48,7 @@ function BarChart({ data, color = 'var(--primary)', height = 180 }) {
           <g key={i}>
             <line x1={PAD_L} x2={W - PAD_R} y1={y} y2={y} stroke="var(--border)" strokeWidth={0.8} />
             <text x={PAD_L - 4} y={y + 4} textAnchor="end" fontSize={9} fill="var(--text-muted)">
-              {yv >= 1000000 ? (yv/1000000).toFixed(1)+'M' : yv >= 1000 ? (yv/1000).toFixed(0)+'K' : Math.round(yv)}
+              {fmtVal(yv)}
             </text>
           </g>
         )
@@ -47,7 +58,7 @@ function BarChart({ data, color = 'var(--primary)', height = 180 }) {
           <rect x={barX(i)} y={barY(Number(v))} width={barW} height={barH(Number(v))}
             fill={Array.isArray(color) ? color[i % color.length] : color} rx={3} opacity={0.9} />
           <text x={barX(i) + barW / 2} y={barY(Number(v)) - 3} textAnchor="middle" fontSize={8.5} fill="var(--text-muted)" fontWeight={600}>
-            {Number(v) >= 1000000 ? (Number(v)/1000000).toFixed(1)+'M' : Number(v) >= 1000 ? (Number(v)/1000).toFixed(0)+'K' : Math.round(Number(v))}
+            {fmtVal(Number(v))}
           </text>
           <text x={barX(i) + barW / 2} y={H - PAD_B + 12} textAnchor="middle" fontSize={8} fill="var(--text-muted)">
             {shortMonth(k)}
@@ -64,7 +75,8 @@ function GroupedBarChart({ data1, data2, label1, label2, height = 200 }) {
   const keys = Object.keys(data1 || {})
   if (!keys.length) return <Empty />
   const allVals = [...Object.values(data1 || {}).map(Number), ...Object.values(data2 || {}).map(Number)]
-  const maxV = Math.max(...allVals, 1)
+  const yTicks = 4
+  const maxV = niceMax(Math.max(...allVals, 0), yTicks)
   const W = 620, H = height, PAD_L = 64, PAD_B = 30, PAD_T = 16, PAD_R = 8
   const gw = Math.floor((W - PAD_L - PAD_R) / keys.length)
   const bw = Math.max(Math.floor(gw / 2) - 3, 3)
@@ -72,14 +84,14 @@ function GroupedBarChart({ data1, data2, label1, label2, height = 200 }) {
   const barY = v => H - PAD_B - barH(v)
   return (
     <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{ display: 'block', overflow: 'visible' }}>
-      {Array.from({ length: 5 }, (_, i) => {
-        const yv = (maxV * i) / 4
-        const y  = H - PAD_B - (i / 4) * (H - PAD_T - PAD_B)
+      {Array.from({ length: yTicks + 1 }, (_, i) => {
+        const yv = (maxV * i) / yTicks
+        const y  = H - PAD_B - (i / yTicks) * (H - PAD_T - PAD_B)
         return (
           <g key={i}>
             <line x1={PAD_L} x2={W - PAD_R} y1={y} y2={y} stroke="var(--border)" strokeWidth={0.6} />
             <text x={PAD_L - 4} y={y + 4} textAnchor="end" fontSize={8.5} fill="var(--text-muted)">
-              {yv >= 1e6 ? (yv/1e6).toFixed(1)+'M' : yv >= 1e3 ? (yv/1e3).toFixed(0)+'K' : Math.round(yv)}
+              {fmtVal(yv)}
             </text>
           </g>
         )
