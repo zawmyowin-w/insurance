@@ -112,8 +112,8 @@ function GroupedBarChart({ data1, data2, label1, label2, height = 200 }) {
       <line x1={PAD_L} x2={W - PAD_R} y1={H - PAD_B} y2={H - PAD_B} stroke="var(--border)" strokeWidth={1} />
       <rect x={PAD_L} y={4} width={10} height={10} fill="#16a34a" rx={2} />
       <text x={PAD_L + 13} y={13} fontSize={9} fill="var(--text-secondary)">{label1}</text>
-      <rect x={PAD_L + 70} y={4} width={10} height={10} fill="#dc2626" rx={2} />
-      <text x={PAD_L + 83} y={13} fontSize={9} fill="var(--text-secondary)">{label2}</text>
+      <rect x={PAD_L + 130} y={4} width={10} height={10} fill="#dc2626" rx={2} />
+      <text x={PAD_L + 143} y={13} fontSize={9} fill="var(--text-secondary)">{label2}</text>
     </svg>
   )
 }
