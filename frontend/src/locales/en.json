@@ -794,7 +794,16 @@
     "payPeriods": "Submit Payment for {{count}} Period(s)",
     "batchPaymentLabel": "{{count}} Periods — Advance / Batch Premium Payment",
     "multiPeriodSubmitSuccess": "Payment for {{count}} period(s) has been submitted for verification",
-    "periodCoveredLabel": "Period Covered"
+    "periodCoveredLabel": "Period Covered",
+    "quickPayTitle": "Quick Pay",
+    "quickPayInstallments": "installment(s)",
+    "quickPayCovering": "Covering:",
+    "quickPayAllRemaining": "All ({{count}} remaining)",
+    "yearUnit": "year",
+    "monthUnit": "month",
+    "periodSearchPlaceholder": "Search by customer, policy or period...",
+    "periodSearchLabel": "Search",
+    "freqPAY_ALL": "One-time (full)"
   },
   "submitClaim": {
     "title": "Submit a Claim",

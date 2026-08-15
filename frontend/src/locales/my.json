@@ -794,7 +794,16 @@
     "transactionAmount": "လွှဲပို့သောငွေ (ကျပ်) *",
     "transactionAmountHint": "လွှဲပို့သော ငွေပမာဏ အတိအကျ ထည့်ပါ",
     "transactionAmountMissing": "လွှဲပို့သောငွေ ထည့်ပါ",
-    "periodCoveredLabel": "ပေးဆောင်သော ကာလ"
+    "periodCoveredLabel": "ပေးဆောင်သော ကာလ",
+    "quickPayTitle": "မြန်ဆန်သော ငွေပေးချေမှု",
+    "quickPayInstallments": "ကြိမ်",
+    "quickPayCovering": "ပါဝင်သောကာလ:",
+    "quickPayAllRemaining": "ကျန်သည့်အားလုံး ({{count}})",
+    "yearUnit": "နှစ်",
+    "monthUnit": "လ",
+    "periodSearchPlaceholder": "ဖောက်သည်၊ policy သို့မဟုတ် ကာလဖြင့် ရှာပါ...",
+    "periodSearchLabel": "ရှာဖွေရန်",
+    "freqPAY_ALL": "တစ်ကြိမ်တည်း (အပြည့်)"
   },
   "submitClaim": {
     "title": "တောင်းဆိုမှု တင်ပြရန်",

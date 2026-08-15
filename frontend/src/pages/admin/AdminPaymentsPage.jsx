@@ -22,6 +22,7 @@ export default function AdminPaymentsPage() {
   const [screenshotUrl, setScreenshotUrl] = useState(null)
   const [screenshotLoading, setScreenshotLoading] = useState(false)
   const [expandedBatch, setExpandedBatch] = useState(null) // batchRef of expanded batch
+  const [search, setSearch] = useState('')
 
   const fetchPayments = () => {
     api.get(`/admin/payments${filter !== 'ALL' ? `?status=${filter}` : ''}`)
@@ -30,6 +31,18 @@ export default function AdminPaymentsPage() {
       .finally(() => setLoading(false))
   }
   useEffect(() => { setLoading(true); fetchPayments() }, [filter])
+
+  const filtered = search.trim()
+    ? payments.filter(p => {
+        const q = search.toLowerCase()
+        return (
+          p.customerName?.toLowerCase().includes(q) ||
+          p.policyNumber?.toLowerCase().includes(q) ||
+          p.periodLabel?.toLowerCase().includes(q) ||
+          p.batchPeriods?.some(bp => bp.periodLabel?.toLowerCase().includes(q))
+        )
+      })
+    : payments
 
   const handleAction = async (id, action) => {
     if (action === 'reject' && !actionNote.trim()) { toast.error(t('admin.payments.rejectionReason')); return }
@@ -70,6 +83,28 @@ export default function AdminPaymentsPage() {
       <div className="mb-4">
         <h4 style={{ fontWeight: 700, color: 'var(--text-primary)', margin: 0 }}>{t('admin.payments.title')}</h4>
         <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>{t('admin.payments.subtitle')}</p>
+      </div>
+
+      {/* Period / customer search */}
+      <div style={{ marginBottom: '1rem', display: 'flex', gap: 8, alignItems: 'center', maxWidth: 440 }}>
+        <div style={{ position: 'relative', flex: 1 }}>
+          <i className="bi bi-search" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)', fontSize: '0.85rem' }}></i>
+          <input
+            type="text" value={search} onChange={e => setSearch(e.target.value)}
+            placeholder={t('payments.periodSearchPlaceholder')}
+            style={{ width: '100%', paddingLeft: 32, paddingRight: search ? 32 : 10, height: 36, borderRadius: 20, border: '1.5px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none' }}
+          />
+          {search && (
+            <button onClick={() => setSearch('')} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '0.85rem', padding: 0 }}>
+              <i className="bi bi-x-circle-fill"></i>
+            </button>
+          )}
+        </div>
+        {search && (
+          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+            {filtered.length} {t('admin.common.results') || 'results'}
+          </span>
+        )}
       </div>
 
       <div className="d-flex gap-2 mb-4 flex-wrap">
@@ -119,7 +154,7 @@ export default function AdminPaymentsPage() {
                 </tr>
               </thead>
               <tbody>
-                {payments.map(p => {
+                {filtered.map(p => {
                   const isBatch = p.batchSize > 1
                   const isBatchExpanded = expandedBatch === p.batchRef
 
