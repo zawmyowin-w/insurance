@@ -15,3 +15,4 @@
 - [Bash set -e with mysql migrations](bash-set-e-mysql.md) — start-backend.sh uses set -e; any mysql command exit ≠ 0 kills the script; use set +e / set -e around migration blocks
 - [Agent revise + one-edit cycle](agent-revise-cycle.md) — customerEditedSinceRevision boolean on PolicyApplication+Claim; reset by admin/agent revise, set true by customer on submission; DTOs expose the flag
 - [Multi-period advance payment + policy expiry](multi-period-payment-expiry.md) — periodsJson batch payment, EXPIRED status, daily expiry job, real-time countdown in policy cards
+- [Duration unit + customer payment schedule](duration-unit-payment-schedule.md) — tiers now YEARS/MONTHS/WEEKS; customers pick schedule at apply; PAY_ALL=1 installment; coverage validated real-time

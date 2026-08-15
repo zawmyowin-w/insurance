@@ -6,10 +6,17 @@ import { toast } from 'react-toastify'
 import DeleteConfirmModal from '../../components/DeleteConfirmModal'
 
 const PAYMENT_FREQ_OPTIONS = [
-  { value: 'MONTHLY',     months: 1  },
-  { value: 'QUARTERLY',   months: 3  },
-  { value: 'HALF_YEARLY', months: 6  },
-  { value: 'YEARLY',      months: 12 },
+  { value: 'MONTHLY',     months: 1,  labelKey: 'freqMONTHLY'     },
+  { value: 'QUARTERLY',   months: 3,  labelKey: 'freqQUARTERLY'   },
+  { value: 'HALF_YEARLY', months: 6,  labelKey: 'freqHALF_YEARLY' },
+  { value: 'YEARLY',      months: 12, labelKey: 'freqYEARLY'      },
+  { value: 'PAY_ALL',     months: 0,  labelKey: 'freqPAY_ALL'     },
+]
+
+const DURATION_UNIT_OPTIONS = [
+  { value: 'YEARS',  labelKey: 'durationUnitYEARS'  },
+  { value: 'MONTHS', labelKey: 'durationUnitMONTHS' },
+  { value: 'WEEKS',  labelKey: 'durationUnitWEEKS'  },
 ]
 
 const EMPTY = {
@@ -20,10 +27,9 @@ const EMPTY = {
   coverageMax: '',
   maxClaimAmount: '',
   claimWaitingPeriodMonths: '',
-  durationTiers: [{ years: 1, premiumRate: '' }],
+  durationTiers: [{ value: 1, unit: 'YEARS', premiumRate: '' }],
   ageBands: [],
-  paymentFrequency: 'MONTHLY',
-  paymentIntervalMonths: 1,
+  allowedPaymentFrequencies: ['MONTHLY'],
   benefitsList: [''],
   requiredDocuments: [''],
   eligibility: '',
@@ -124,7 +130,7 @@ export default function ManagePackagesPage() {
 
   // Duration Tiers
   const handleTierChange = (i, field, v) => setForm(f => { const tiers = [...f.durationTiers]; tiers[i] = { ...tiers[i], [field]: v }; return { ...f, durationTiers: tiers } })
-  const addTier = () => setForm(f => ({ ...f, durationTiers: [...f.durationTiers, { years: '', premiumRate: '' }] }))
+  const addTier = () => setForm(f => ({ ...f, durationTiers: [...f.durationTiers, { value: '', unit: 'YEARS', premiumRate: '' }] }))
   const removeTier = i => setForm(f => ({ ...f, durationTiers: f.durationTiers.length > 1 ? f.durationTiers.filter((_, idx) => idx !== i) : f.durationTiers }))
 
   // Age Bands
@@ -137,10 +143,12 @@ export default function ManagePackagesPage() {
   const addMaturityTier = () => setForm(f => ({ ...f, maturityBonusTiers: [...f.maturityBonusTiers, { year: '', bonusPercent: '' }] }))
   const removeMaturityTier = i => setForm(f => ({ ...f, maturityBonusTiers: f.maturityBonusTiers.length > 1 ? f.maturityBonusTiers.filter((_, idx) => idx !== i) : f.maturityBonusTiers }))
 
-  const handlePaymentFreq = e => {
-    const freq = e.target.value
-    const opt = PAYMENT_FREQ_OPTIONS.find(o => o.value === freq)
-    setForm(f => ({ ...f, paymentFrequency: freq, paymentIntervalMonths: opt ? opt.months : 1 }))
+  const togglePaymentFreq = (val) => {
+    setForm(f => {
+      const cur = f.allowedPaymentFrequencies || []
+      const next = cur.includes(val) ? cur.filter(v => v !== val) : [...cur, val]
+      return { ...f, allowedPaymentFrequencies: next }
+    })
   }
 
   const handleSubmit = async e => {
@@ -148,8 +156,8 @@ export default function ManagePackagesPage() {
     setSaving(true)
     try {
       const validTiers = form.durationTiers
-        .filter(tier => tier.years && tier.premiumRate)
-        .map(tier => ({ years: Number(tier.years), premiumRate: Number(tier.premiumRate) }))
+        .filter(tier => tier.value && tier.premiumRate)
+        .map(tier => ({ value: Number(tier.value), unit: tier.unit || 'YEARS', premiumRate: Number(tier.premiumRate) }))
 
       if (validTiers.length === 0) {
         toast.error(t('admin.packages.minDurationTier'))
@@ -171,8 +179,7 @@ export default function ManagePackagesPage() {
         claimWaitingPeriodMonths: form.claimWaitingPeriodMonths ? Number(form.claimWaitingPeriodMonths) : null,
         durationTiers: validTiers,
         ageBands: validAgeBands,
-        paymentFrequency: form.paymentFrequency,
-        paymentIntervalMonths: Number(form.paymentIntervalMonths),
+        allowedPaymentFrequencies: form.allowedPaymentFrequencies.length > 0 ? form.allowedPaymentFrequencies : ['MONTHLY'],
         benefits: form.benefitsList.map(b => b.trim()).filter(Boolean),
         requiredDocuments: form.requiredDocuments.map(d => d.trim()).filter(Boolean),
         eligibility: form.eligibility || null,
@@ -209,9 +216,16 @@ export default function ManagePackagesPage() {
   const handleEdit = pkg => {
     setEditing(pkg.id)
     const tiers = Array.isArray(pkg.durationTiers) && pkg.durationTiers.length > 0
-      ? pkg.durationTiers.map(tier => ({ years: tier.years, premiumRate: tier.premiumRate }))
-      : [{ years: 1, premiumRate: '' }]
-    const freqOpt = PAYMENT_FREQ_OPTIONS.find(o => o.value === pkg.paymentFrequency)
+      ? pkg.durationTiers.map(tier => ({
+          value: tier.value ?? tier.years ?? 1,
+          unit: tier.unit || 'YEARS',
+          premiumRate: tier.premiumRate,
+        }))
+      : [{ value: 1, unit: 'YEARS', premiumRate: '' }]
+    // Hydrate allowed payment frequencies (fall back to single paymentFrequency for old packages)
+    const allowedFreqs = Array.isArray(pkg.allowedPaymentFrequencies) && pkg.allowedPaymentFrequencies.length > 0
+      ? pkg.allowedPaymentFrequencies
+      : (pkg.paymentFrequency ? [pkg.paymentFrequency] : ['MONTHLY'])
     setForm({
       name: pkg.name || '',
       type: pkg.type || '',
@@ -221,8 +235,7 @@ export default function ManagePackagesPage() {
       maxClaimAmount: pkg.maxClaimAmount || '',
       claimWaitingPeriodMonths: pkg.claimWaitingPeriodMonths != null ? String(pkg.claimWaitingPeriodMonths) : '',
       durationTiers: tiers,
-      paymentFrequency: pkg.paymentFrequency || 'MONTHLY',
-      paymentIntervalMonths: pkg.paymentIntervalMonths || (freqOpt?.months ?? 1),
+      allowedPaymentFrequencies: allowedFreqs,
       ageBands: Array.isArray(pkg.ageBands) ? pkg.ageBands.map(b => ({ minAge: b.minAge, maxAge: b.maxAge, premiumRate: b.premiumRate })) : [],
       benefitsList: (pkg.benefits || []).length ? pkg.benefits : [''],
       requiredDocuments: (pkg.requiredDocuments || []).length ? pkg.requiredDocuments : [''],
@@ -278,7 +291,9 @@ export default function ManagePackagesPage() {
   const midCoverage = form.coverageMin && form.coverageMax
     ? (Number(form.coverageMin) + Number(form.coverageMax)) / 2 : null
 
-  const freqLabel = t(`admin.packages.freq${form.paymentFrequency}`)
+  const previewFreq = form.allowedPaymentFrequencies?.[0] || 'MONTHLY'
+  const previewIntervalMonths = PAYMENT_FREQ_OPTIONS.find(o => o.value === previewFreq)?.months ?? 1
+  const freqLabel = t(`admin.packages.freq${previewFreq}`)
 
   const SectionHeader = ({ id, icon, label, badge }) => (
     <button type="button" onClick={() => setOpenSection(openSection === id ? null : id)}
@@ -469,15 +484,21 @@ export default function ManagePackagesPage() {
                         </thead>
                         <tbody>
                           {form.durationTiers.map((tier, i) => {
-                            const calc = midCoverage && tier.premiumRate ? calcPremium(midCoverage, tier.premiumRate, form.paymentIntervalMonths) : null
+                            const calc = midCoverage && tier.premiumRate ? calcPremium(midCoverage, tier.premiumRate, previewIntervalMonths) : null
                             return (
                               <tr key={i} style={{ borderBottom: '1px solid var(--border)' }}>
                                 <td style={tdStyle}>
-                                  <div className="d-flex align-items-center gap-2">
-                                     <input type="number" min="1" max="40" className="form-control-custom"
-                                       style={{ width: 80 }} placeholder={t('admin.packages.tierYearsPlaceholder')} value={tier.years}
-                                      onChange={e => handleTierChange(i, 'years', e.target.value)} />
-                                    <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>{t('admin.packages.yearsUnit')}</span>
+                                  <div className="d-flex align-items-center gap-1 flex-wrap">
+                                    <input type="number" min="1" max="999" className="form-control-custom"
+                                      style={{ width: 70 }} placeholder={t('admin.packages.tierValuePlaceholder')} value={tier.value ?? ''}
+                                      onChange={e => handleTierChange(i, 'value', e.target.value)} />
+                                    <select className="form-select-custom" style={{ width: 90 }}
+                                      value={tier.unit || 'YEARS'}
+                                      onChange={e => handleTierChange(i, 'unit', e.target.value)}>
+                                      {DURATION_UNIT_OPTIONS.map(o => (
+                                        <option key={o.value} value={o.value}>{t(`admin.packages.${o.labelKey}`)}</option>
+                                      ))}
+                                    </select>
                                   </div>
                                 </td>
                                 <td style={tdStyle}>
@@ -629,35 +650,43 @@ export default function ManagePackagesPage() {
               <div style={{ border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
                 <SectionHeader id="payment" icon="bi-credit-card"
                   label={t('admin.packages.sec4Label')}
-                  badge={freqLabel} />
+                  badge={t('admin.packages.payFreqCountBadge', { count: (form.allowedPaymentFrequencies || []).length })} />
                 {openSection === 'payment' && (
-                  <div className="row g-3" style={{ padding: '1rem' }}>
-                    <div className="col-12 col-md-6">
-                      <label className="form-label-custom">{t('admin.packages.paymentFreqLabel')}</label>
-                      <select className="form-select-custom w-100" value={form.paymentFrequency} onChange={handlePaymentFreq}>
-                        {PAYMENT_FREQ_OPTIONS.map(o => (
-                          <option key={o.value} value={o.value}>{t(`admin.packages.freq${o.value}`)}</option>
-                        ))}
-                      </select>
-                      <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', margin: '0.25rem 0 0' }}>
-                        {t('admin.packages.paymentFreqHint')}
-                      </p>
+                  <div style={{ padding: '1rem' }}>
+                    <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
+                      <i className="bi bi-info-circle me-1"></i>
+                      {t('admin.packages.allowedPaymentFreqHint')}
+                    </p>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.6rem' }}>
+                      {PAYMENT_FREQ_OPTIONS.map(o => {
+                        const checked = (form.allowedPaymentFrequencies || []).includes(o.value)
+                        return (
+                          <label key={o.value} style={{
+                            display: 'flex', alignItems: 'center', gap: 10,
+                            padding: '0.6rem 0.85rem', borderRadius: 8,
+                            border: `1.5px solid ${checked ? 'var(--primary)' : 'var(--border)'}`,
+                            background: checked ? 'var(--primary)10' : 'var(--bg-secondary)',
+                            cursor: 'pointer', fontSize: '0.88rem', fontWeight: checked ? 700 : 400,
+                            color: checked ? 'var(--primary)' : 'var(--text-secondary)',
+                            transition: 'all 0.15s',
+                          }}>
+                            <input type="checkbox" checked={checked} onChange={() => togglePaymentFreq(o.value)}
+                              style={{ accentColor: 'var(--primary)', width: 16, height: 16, flexShrink: 0 }} />
+                            {t(`admin.packages.freq${o.value}`)}
+                          </label>
+                        )
+                      })}
                     </div>
-                    <div className="col-12 col-md-6">
-                      <label className="form-label-custom">{t('admin.packages.paymentInfoLabel')}</label>
-                      <div style={{ background: 'var(--bg-secondary)', borderRadius: 8, padding: '0.75rem 1rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                        <i className="bi bi-calendar-check me-2" style={{ color: 'var(--primary)' }}></i>
-                        <strong style={{ color: 'var(--text-primary)' }}>
-                          {t('admin.packages.paymentEvery', { months: form.paymentIntervalMonths })}
-                        </strong>
-                        {midCoverage && form.durationTiers[0]?.premiumRate && (() => {
-                          const c = calcPremium(midCoverage, form.durationTiers[0].premiumRate, form.paymentIntervalMonths)
-                          return c ? (
-                            <span> — {t('admin.packages.tier1Amount')}: <strong style={{ color: 'var(--primary)' }}>MMK {fmt(c.perPayment)}</strong></span>
-                          ) : null
-                        })()}
-                      </div>
-                    </div>
+                    {midCoverage && form.durationTiers[0]?.premiumRate && previewIntervalMonths > 0 && (() => {
+                      const c = calcPremium(midCoverage, form.durationTiers[0].premiumRate, previewIntervalMonths)
+                      return c ? (
+                        <div style={{ marginTop: '0.75rem', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                          <i className="bi bi-calculator me-1"></i>
+                          {freqLabel}: <strong style={{ color: 'var(--primary)' }}>MMK {fmt(c.perPayment)}</strong>
+                          <span style={{ marginLeft: 8, opacity: 0.6 }}>{t('admin.packages.tiersMidpointNote', { amount: fmt(midCoverage) })}</span>
+                        </div>
+                      ) : null
+                    })()}
                   </div>
                 )}
               </div>

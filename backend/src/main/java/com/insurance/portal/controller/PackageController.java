@@ -115,6 +115,24 @@ public class PackageController {
         if (req.containsKey("exclusions"))    pkg.setExclusions((String) req.get("exclusions"));
 
         // New fields
+        // Allowed payment frequencies (customer-selectable list)
+        if (req.containsKey("allowedPaymentFrequencies")) {
+            Object apf = req.get("allowedPaymentFrequencies");
+            try { pkg.setAllowedPaymentFrequenciesJson(MAPPER.writeValueAsString(apf)); } catch (Exception ignored) {}
+            // Derive legacy paymentFrequency from first allowed option
+            if (apf instanceof List<?> list && !list.isEmpty()) {
+                String firstFreq = list.get(0).toString();
+                pkg.setPaymentFrequency(firstFreq);
+                int interval = switch (firstFreq.toUpperCase()) {
+                    case "QUARTERLY"  -> 3;
+                    case "HALF_YEARLY"-> 6;
+                    case "YEARLY"     -> 12;
+                    case "PAY_ALL"    -> 0;
+                    default           -> 1; // MONTHLY
+                };
+                pkg.setPaymentIntervalMonths(interval);
+            }
+        }
         if (req.containsKey("paymentFrequency"))     pkg.setPaymentFrequency((String) req.get("paymentFrequency"));
         if (req.containsKey("paymentIntervalMonths") && req.get("paymentIntervalMonths") != null)
             pkg.setPaymentIntervalMonths(((Number) req.get("paymentIntervalMonths")).intValue());

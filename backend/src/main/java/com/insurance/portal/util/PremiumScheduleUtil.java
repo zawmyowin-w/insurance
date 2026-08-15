@@ -26,15 +26,27 @@ public class PremiumScheduleUtil {
             List<Payment> payments) {
 
         var pkg = app.getInsurancePackage();
-        Integer intervalMonths = pkg != null ? pkg.getPaymentIntervalMonths() : null;
-        String frequency = pkg != null ? pkg.getPaymentFrequency() : null;
+        // Use customer's selected payment frequency if available; else fallback to package default
+        String frequency = app.getSelectedPaymentFrequency() != null
+                ? app.getSelectedPaymentFrequency()
+                : (pkg != null ? pkg.getPaymentFrequency() : null);
+        Integer intervalMonths = app.getSelectedPaymentIntervalMonths() != null
+                ? app.getSelectedPaymentIntervalMonths()
+                : (pkg != null ? pkg.getPaymentIntervalMonths() : null);
+
         BigDecimal totalPremium = app.getPremiumAmount() != null ? app.getPremiumAmount() : BigDecimal.ZERO;
-        int durationYears = app.getDuration() != null ? app.getDuration() : 1;
+        int totalDurationMonths = durationToMonths(
+                app.getDuration() != null ? app.getDuration() : 1,
+                app.getDurationUnit());
 
         int totalInstallments;
         BigDecimal installmentAmount;
-        if (intervalMonths != null && intervalMonths > 0) {
-            totalInstallments = (durationYears * 12) / intervalMonths;
+        if ("PAY_ALL".equalsIgnoreCase(frequency)) {
+            // Single lump-sum payment
+            totalInstallments = 1;
+            installmentAmount = totalPremium;
+        } else if (intervalMonths != null && intervalMonths > 0) {
+            totalInstallments = totalDurationMonths / intervalMonths;
             if (totalInstallments < 1) totalInstallments = 1;
             installmentAmount = totalPremium.divide(BigDecimal.valueOf(totalInstallments), 2, RoundingMode.HALF_UP);
         } else {
@@ -203,11 +215,22 @@ public class PremiumScheduleUtil {
     public static String buildPeriodLabel(String frequency, int n, LocalDate dueDate) {
         if (frequency == null) return "Period " + n;
         return switch (frequency.toUpperCase()) {
-            case "MONTHLY" -> dueDate.format(DateTimeFormatter.ofPattern("yyyy-MM"));
-            case "QUARTERLY" -> "Q" + ((n - 1) % 4 + 1) + " " + dueDate.getYear();
+            case "MONTHLY"     -> dueDate.format(DateTimeFormatter.ofPattern("yyyy-MM"));
+            case "QUARTERLY"   -> "Q" + ((n - 1) % 4 + 1) + " " + dueDate.getYear();
             case "HALF_YEARLY" -> (n % 2 == 1 ? "1st Half " : "2nd Half ") + dueDate.getYear();
-            case "YEARLY" -> "Year " + n;
-            default -> "Period " + n;
+            case "YEARLY"      -> "Year " + n;
+            case "PAY_ALL"     -> "Full Payment";
+            default            -> "Period " + n;
+        };
+    }
+
+    /** Convert a duration value + unit to total months. */
+    public static int durationToMonths(int value, String unit) {
+        if (unit == null) return value * 12;
+        return switch (unit.toUpperCase()) {
+            case "MONTHS" -> value;
+            case "WEEKS"  -> (int) Math.round(value * 7.0 / 30.0);
+            default       -> value * 12; // YEARS
         };
     }
 }

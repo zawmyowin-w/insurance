@@ -46,7 +46,14 @@ public class PolicyApplication {
     private BigDecimal coverageAmount;
 
     @Column(nullable = false)
-    private Integer duration; // years
+    private Integer duration; // numeric value (unit determined by durationUnit)
+
+    /**
+     * Unit for the duration field: YEARS (default/legacy), MONTHS, WEEKS.
+     */
+    @Column(name = "duration_unit", length = 10)
+    @Builder.Default
+    private String durationUnit = "YEARS";
 
     @Enumerated(EnumType.STRING)
     @Builder.Default
@@ -167,6 +174,21 @@ public class PolicyApplication {
     /** Timestamp when admin approved the waiver. */
     @Column(name = "waiver_granted_at")
     private LocalDateTime waiverGrantedAt;
+
+    /**
+     * Payment schedule chosen by the customer at apply-time.
+     * If null, falls back to the package's default paymentFrequency.
+     * Values: MONTHLY, QUARTERLY, HALF_YEARLY, YEARLY, PAY_ALL
+     */
+    @Column(name = "selected_payment_frequency", length = 20)
+    private String selectedPaymentFrequency;
+
+    /**
+     * Interval in months corresponding to selectedPaymentFrequency.
+     * PAY_ALL → total duration months (1 installment).
+     */
+    @Column(name = "selected_payment_interval_months")
+    private Integer selectedPaymentIntervalMonths;
 
     /**
      * Set to true when the customer submits a revision for the current revision cycle.

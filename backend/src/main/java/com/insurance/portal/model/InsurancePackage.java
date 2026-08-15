@@ -60,10 +60,18 @@ public class InsurancePackage {
 
     // Payment schedule
     @Column(name = "payment_frequency", length = 20)
-    private String paymentFrequency; // MONTHLY, QUARTERLY, HALF_YEARLY, YEARLY
+    private String paymentFrequency; // MONTHLY, QUARTERLY, HALF_YEARLY, YEARLY (legacy / default)
 
     @Column(name = "payment_interval_months")
     private Integer paymentIntervalMonths; // e.g. 1=monthly, 3=quarterly, 6=half-yearly, 12=yearly
+
+    /**
+     * JSON array of payment frequency options admin allows customers to choose from.
+     * e.g. ["MONTHLY","QUARTERLY","HALF_YEARLY","YEARLY","PAY_ALL"]
+     * If null/empty, falls back to paymentFrequency (legacy behaviour).
+     */
+    @Column(name = "allowed_payment_frequencies", columnDefinition = "TEXT")
+    private String allowedPaymentFrequenciesJson;
 
     // Maximum claimable amount
     @Column(name = "max_claim_amount", precision = 20, scale = 2)

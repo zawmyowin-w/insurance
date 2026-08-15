@@ -142,6 +142,19 @@ mysql "${mysql_args[@]}" "${DB_NAME}" -e \
   "ALTER TABLE payments ADD COLUMN batch_ref VARCHAR(36) NULL;" 2>/dev/null
 set -e
 
+# ── Duration unit + selected payment schedule on policy_applications ─────────
+set +e
+mysql "${mysql_args[@]}" "${DB_NAME}" -e \
+  "ALTER TABLE policy_applications ADD COLUMN duration_unit VARCHAR(10) NOT NULL DEFAULT 'YEARS';" 2>/dev/null
+mysql "${mysql_args[@]}" "${DB_NAME}" -e \
+  "ALTER TABLE policy_applications ADD COLUMN selected_payment_frequency VARCHAR(20) NULL;" 2>/dev/null
+mysql "${mysql_args[@]}" "${DB_NAME}" -e \
+  "ALTER TABLE policy_applications ADD COLUMN selected_payment_interval_months INT NULL;" 2>/dev/null
+# ── Allowed payment frequencies on insurance_packages ───────────────────────
+mysql "${mysql_args[@]}" "${DB_NAME}" -e \
+  "ALTER TABLE insurance_packages ADD COLUMN allowed_payment_frequencies TEXT NULL;" 2>/dev/null
+set -e
+
 # Schema and seed data are managed by Hibernate (ddl-auto=update) and DataInitializer on startup.
 
 echo "[start-backend] Starting Spring Boot application..."

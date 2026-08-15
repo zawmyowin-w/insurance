@@ -23,6 +23,9 @@ public class ApplicationResponse {
     private Long agentId;
     private BigDecimal coverageAmount;
     private Integer duration;
+    private String durationUnit;       // YEARS (default), MONTHS, WEEKS
+    private String selectedPaymentFrequency;
+    private Integer selectedPaymentIntervalMonths;
     private String status;
     private String notes;
     private String agentNote;
@@ -72,16 +75,31 @@ public class ApplicationResponse {
             dto.setPackageId(pkg.getId());
             dto.setPackageName(pkg.getName());
             dto.setPackageType(pkg.getType());
-            dto.setPaymentFrequency(pkg.getPaymentFrequency());
-            dto.setPaymentIntervalMonths(pkg.getPaymentIntervalMonths());
+
+            // Use customer's selected payment frequency if set; else fall back to package default
+            String effFreq = app.getSelectedPaymentFrequency() != null
+                    ? app.getSelectedPaymentFrequency() : pkg.getPaymentFrequency();
+            Integer effInterval = app.getSelectedPaymentIntervalMonths() != null
+                    ? app.getSelectedPaymentIntervalMonths() : pkg.getPaymentIntervalMonths();
+
+            dto.setPaymentFrequency(effFreq);
+            dto.setPaymentIntervalMonths(effInterval);
+            dto.setSelectedPaymentFrequency(app.getSelectedPaymentFrequency());
+            dto.setSelectedPaymentIntervalMonths(app.getSelectedPaymentIntervalMonths());
+
             // Calculate installment amount
-            if (pkg.getPaymentIntervalMonths() != null && pkg.getPaymentIntervalMonths() > 0
-                    && app.getDuration() != null && app.getPremiumAmount() != null) {
-                int total = (app.getDuration() * 12) / pkg.getPaymentIntervalMonths();
-                if (total > 0) {
-                    dto.setTotalInstallments(total);
-                    dto.setInstallmentAmount(app.getPremiumAmount()
-                            .divide(BigDecimal.valueOf(total), 2, RoundingMode.HALF_UP));
+            if (app.getDuration() != null && app.getPremiumAmount() != null) {
+                int totalMonths = durationToMonths(app.getDuration(), app.getDurationUnit());
+                if ("PAY_ALL".equalsIgnoreCase(effFreq)) {
+                    dto.setTotalInstallments(1);
+                    dto.setInstallmentAmount(app.getPremiumAmount());
+                } else if (effInterval != null && effInterval > 0) {
+                    int total = totalMonths / effInterval;
+                    if (total > 0) {
+                        dto.setTotalInstallments(total);
+                        dto.setInstallmentAmount(app.getPremiumAmount()
+                                .divide(BigDecimal.valueOf(total), 2, RoundingMode.HALF_UP));
+                    }
                 }
             }
             if (dto.getTotalInstallments() == 0) {
@@ -130,6 +148,17 @@ public class ApplicationResponse {
         dto.setAdminWaiverSignature(app.getAdminWaiverSignature());
         dto.setAdminWaiverSignedAt(app.getAdminWaiverSignedAt());
         dto.setWaiverGrantedAt(app.getWaiverGrantedAt());
+        dto.setDurationUnit(app.getDurationUnit() != null ? app.getDurationUnit() : "YEARS");
         return dto;
+    }
+
+    /** Convert a duration value + unit to total months. */
+    private static int durationToMonths(int value, String unit) {
+        if (unit == null) return value * 12;
+        return switch (unit.toUpperCase()) {
+            case "MONTHS" -> value;
+            case "WEEKS"  -> (int) Math.round(value * 7.0 / 30.0);
+            default       -> value * 12; // YEARS
+        };
     }
 }

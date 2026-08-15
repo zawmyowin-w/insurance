@@ -25,7 +25,10 @@ export default function ApplyPolicyPage() {
   const [typeFilter, setTypeFilter] = useState('ALL')
   const [selectedPlan, setSelectedPlan] = useState(null)
   const [coverage, setCoverage] = useState('')
+  const [coverageError, setCoverageError] = useState(null)
   const [duration, setDuration] = useState(1)
+  const [durationUnit, setDurationUnit] = useState('YEARS')
+  const [selectedPaymentFrequency, setSelectedPaymentFrequency] = useState(null)
   const [dob, setDob] = useState('')
   const [notes, setNotes] = useState('')
 
@@ -78,9 +81,30 @@ export default function ApplyPolicyPage() {
   const selectPlan = (plan) => {
     setSelectedPlan(plan)
     setCoverage(String(plan.coverageMin || ''))
-    setDuration((plan.durationTiers?.[0]?.years) || 1)
+    setCoverageError(null)
+    const firstTier = plan.durationTiers?.[0]
+    setDuration(firstTier?.value ?? firstTier?.years ?? 1)
+    setDurationUnit(firstTier?.unit || 'YEARS')
+    // Default to first allowed payment frequency
+    setSelectedPaymentFrequency(plan.allowedPaymentFrequencies?.[0] || null)
     setDob('')
     setStep(2)
+  }
+
+  // Real-time coverage validation
+  const handleCoverageChange = (val) => {
+    setCoverage(val)
+    if (!selectedPlan) return
+    const num = parseFloat(val)
+    if (!val || isNaN(num) || num <= 0) {
+      setCoverageError(t('applyPolicy.coverageTooLow', { min: Number(selectedPlan.coverageMin).toLocaleString() }))
+    } else if (selectedPlan.coverageMin != null && num < parseFloat(selectedPlan.coverageMin)) {
+      setCoverageError(t('applyPolicy.coverageTooLow', { min: Number(selectedPlan.coverageMin).toLocaleString() }))
+    } else if (selectedPlan.coverageMax != null && num > parseFloat(selectedPlan.coverageMax)) {
+      setCoverageError(t('applyPolicy.coverageTooHigh', { max: Number(selectedPlan.coverageMax).toLocaleString() }))
+    } else {
+      setCoverageError(null)
+    }
   }
 
   const handleFieldValue = (fieldId, value) => setFieldValues(v => ({ ...v, [String(fieldId)]: value }))
@@ -168,6 +192,8 @@ export default function ApplyPolicyPage() {
       fd.append('packageId', selectedPlan.id)
       fd.append('coverageAmount', coverage)
       fd.append('duration', duration)
+      fd.append('durationUnit', durationUnit)
+      if (selectedPaymentFrequency) fd.append('selectedPaymentFrequency', selectedPaymentFrequency)
       fd.append('notes', notes)
       fd.append('formData', JSON.stringify(mergedFormData))
       // Send DOB as commonInfo so the backend can look up the age-band rate
@@ -188,8 +214,10 @@ export default function ApplyPolicyPage() {
   }
 
   const filteredPlans = typeFilter === 'ALL' ? plans : plans.filter(p => p.type === typeFilter)
-  const durations = selectedPlan?.durationTiers?.map(t => t.years) || []
-  const selectedTier = selectedPlan?.durationTiers?.find(t => t.years === duration)
+  const durationTiers = selectedPlan?.durationTiers || []
+  const selectedTier = durationTiers.find(t =>
+    String(t.value ?? t.years) === String(duration) && (t.unit || 'YEARS') === durationUnit
+  ) || durationTiers[0]
   const hasAgeBands = (selectedPlan?.ageBands?.length ?? 0) > 0
 
   // Derive age from DOB and find matching age-band rate
@@ -201,8 +229,13 @@ export default function ApplyPolicyPage() {
     : null
   const effectiveRate = matchedBand?.premiumRate ?? selectedTier?.premiumRate ?? null
 
+  // Duration in years (fractional for month/week policies)
+  const durationInYears = durationUnit === 'MONTHS' ? duration / 12
+    : durationUnit === 'WEEKS' ? duration / 52
+    : duration
+
   const premium = effectiveRate != null && coverage
-    ? Math.round(Number(coverage) * (effectiveRate / 100) * duration)
+    ? Math.round(Number(coverage) * (effectiveRate / 100) * durationInYears)
     : null
   const meta2 = selectedPlan ? getTypeMeta(selectedPlan.type) : {}
 
@@ -364,19 +397,62 @@ export default function ApplyPolicyPage() {
                     <input type="number" className="form-control-custom w-100"
                       value={coverage}
                       min={selectedPlan.coverageMin} max={selectedPlan.coverageMax}
-                      onChange={e => setCoverage(e.target.value)} />
-                    <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
-                      {t('applyPolicy.rangeLabel')}: {Number(selectedPlan.coverageMin).toLocaleString()} – {Number(selectedPlan.coverageMax).toLocaleString()} MMK
-                    </small>
+                      style={{ borderColor: coverageError ? '#ef4444' : undefined }}
+                      onChange={e => handleCoverageChange(e.target.value)} />
+                    {coverageError ? (
+                      <small style={{ color: '#ef4444', fontSize: '0.75rem' }}>
+                        <i className="bi bi-exclamation-circle me-1"></i>{coverageError}
+                      </small>
+                    ) : (
+                      <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>
+                        {t('applyPolicy.rangeLabel')}: {Number(selectedPlan.coverageMin).toLocaleString()} – {Number(selectedPlan.coverageMax).toLocaleString()} MMK
+                      </small>
+                    )}
                   </div>
                   <div className="col-12 col-sm-6">
                     <label className="form-label-custom">{t('applyPolicy.durationYears')}</label>
-                    <select className="form-select-custom w-100" value={duration} onChange={e => setDuration(Number(e.target.value))}>
-                      {(Array.isArray(durations) ? durations : String(durations).split(',').map(Number)).map(d => (
-                        <option key={d} value={d}>{d} {d > 1 ? t('applyPolicy.years') : t('applyPolicy.year')}</option>
-                      ))}
+                    <select className="form-select-custom w-100" value={duration} onChange={e => {
+                      const tier = durationTiers.find(t => String(t.value ?? t.years) === e.target.value)
+                      if (tier) {
+                        setDuration(tier.value ?? tier.years)
+                        setDurationUnit(tier.unit || 'YEARS')
+                      }
+                    }}>
+                      {durationTiers.map(d => {
+                        const val = d.value ?? d.years
+                        const unit = d.unit || 'YEARS'
+                        const unitLabel = t(`applyPolicy.durationUnit${unit}`)
+                        return <option key={`${val}-${unit}`} value={val}>{val} {unitLabel}</option>
+                      })}
                     </select>
                   </div>
+
+                  {/* Payment Schedule selector — shown when admin set multiple options */}
+                  {(selectedPlan.allowedPaymentFrequencies?.length ?? 0) > 0 && (
+                    <div className="col-12">
+                      <label className="form-label-custom">{t('applyPolicy.paymentScheduleLabel')}</label>
+                      <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+                        {t('applyPolicy.paymentScheduleHint')}
+                      </p>
+                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        {selectedPlan.allowedPaymentFrequencies.map(freq => {
+                          const isSelected = selectedPaymentFrequency === freq
+                          return (
+                            <button type="button" key={freq} onClick={() => setSelectedPaymentFrequency(freq)}
+                              style={{
+                                padding: '0.4rem 0.9rem', borderRadius: 20, border: `2px solid ${isSelected ? meta2.color : 'var(--border)'}`,
+                                background: isSelected ? meta2.color : 'var(--bg-secondary)',
+                                color: isSelected ? '#fff' : 'var(--text-secondary)',
+                                fontWeight: isSelected ? 700 : 400, fontSize: '0.82rem', cursor: 'pointer',
+                                transition: 'all 0.15s',
+                              }}>
+                              {t(`applyPolicy.paySchedule${freq}`)}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Age-based pricing: show DOB field when the package has age bands */}
                   {hasAgeBands && (
@@ -478,6 +554,10 @@ export default function ApplyPolicyPage() {
               <div className="d-flex gap-2 mt-4">
                 <button
                   onClick={() => {
+                    if (coverageError) {
+                      toast.error(coverageError)
+                      return
+                    }
                     if (!signatureData) {
                       toast.error(t('applyPolicy.sigMissing'))
                       return
@@ -486,7 +566,7 @@ export default function ApplyPolicyPage() {
                   }}
                   className="btn-primary-custom flex-grow-1"
                   style={{ justifyContent: 'center', background: meta2.color, borderColor: meta2.color }}
-                  disabled={templateLoading}
+                  disabled={templateLoading || !!coverageError}
                 >
                   {t('applyPolicy.reviewBtn')}
                 </button>
@@ -507,7 +587,8 @@ export default function ApplyPolicyPage() {
                   [t('applyPolicy.plan'), selectedPlan.name],
                   [t('applyPolicy.type'), selectedPlan.type],
                   [t('applyPolicy.coverage'), coverage ? Number(coverage).toLocaleString() + ' MMK' : '—'],
-                  [t('applyPolicy.duration'), `${duration} ${duration > 1 ? t('applyPolicy.years') : t('applyPolicy.year')}`],
+                  [t('applyPolicy.duration'), `${duration} ${t(`applyPolicy.durationUnit${durationUnit}`)}`],
+                  ...(selectedPaymentFrequency ? [[t('applyPolicy.paymentScheduleLabel'), t(`applyPolicy.paySchedule${selectedPaymentFrequency}`)]] : []),
                   // Show age band rate if matched, otherwise fall back to tier rate
                   ...(hasAgeBands
                     ? [[t('applyPolicy.dateOfBirth'), dob || '—'],
@@ -550,7 +631,10 @@ export default function ApplyPolicyPage() {
               <ReviewRow label={t('applyPolicy.plan')} value={selectedPlan.name} />
               <ReviewRow label={t('applyPolicy.type')} value={selectedPlan.type} />
               <ReviewRow label={t('applyPolicy.coverage')} value={Number(coverage).toLocaleString() + ' MMK'} />
-              <ReviewRow label={t('applyPolicy.duration')} value={`${duration} ${duration > 1 ? t('applyPolicy.years') : t('applyPolicy.year')}`} />
+              <ReviewRow label={t('applyPolicy.duration')} value={`${duration} ${t(`applyPolicy.durationUnit${durationUnit}`)}`} />
+              {selectedPaymentFrequency && (
+                <ReviewRow label={t('applyPolicy.paymentScheduleLabel')} value={t(`applyPolicy.paySchedule${selectedPaymentFrequency}`)} />
+              )}
               {hasAgeBands && dob && (
                 <ReviewRow
                   label={t('applyPolicy.dateOfBirth')}

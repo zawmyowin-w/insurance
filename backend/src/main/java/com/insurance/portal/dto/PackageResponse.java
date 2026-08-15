@@ -50,6 +50,9 @@ public class PackageResponse {
     // Premium Waiver Benefit
     private boolean premiumWaiverBenefit;
 
+    // Allowed payment schedules customers can choose from
+    private List<String> allowedPaymentFrequencies;
+
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     public static PackageResponse from(InsurancePackage pkg) {
@@ -88,14 +91,28 @@ public class PackageResponse {
             dto.setBenefits(List.of());
         }
 
-        // Parse duration tiers JSON and derive durations list from them
+        // Parse duration tiers JSON — normalize to {value, unit, premiumRate} format
+        // Backward-compat: old tiers stored as {years, premiumRate} → normalized to {value, unit='YEARS', premiumRate}
         try {
             if (pkg.getDurationTiersJson() != null && !pkg.getDurationTiersJson().isBlank()) {
-                List<Map<String, Object>> tiers = MAPPER.readValue(pkg.getDurationTiersJson(),
+                List<Map<String, Object>> raw = MAPPER.readValue(pkg.getDurationTiersJson(),
                         new TypeReference<List<Map<String, Object>>>() {});
+                List<Map<String, Object>> tiers = raw.stream().map(t -> {
+                    java.util.LinkedHashMap<String, Object> m = new java.util.LinkedHashMap<>(t);
+                    // Normalise legacy {years} → {value, unit}
+                    if (!m.containsKey("value") && m.containsKey("years")) {
+                        m.put("value", m.get("years"));
+                        m.put("unit", "YEARS");
+                    } else if (!m.containsKey("unit")) {
+                        m.put("unit", "YEARS");
+                    }
+                    return (Map<String, Object>) m;
+                }).toList();
                 dto.setDurationTiers(tiers);
+                // Legacy durations list (years only, for backward compat consumers)
                 dto.setDurations(tiers.stream()
-                        .map(t -> t.get("years") instanceof Number n ? n.intValue() : 0)
+                        .filter(t -> "YEARS".equals(t.get("unit")))
+                        .map(t -> t.get("value") instanceof Number n ? n.intValue() : 0)
                         .filter(y -> y > 0)
                         .toList());
             } else {
@@ -105,6 +122,18 @@ public class PackageResponse {
         } catch (Exception e) {
             dto.setDurationTiers(List.of());
             dto.setDurations(List.of());
+        }
+
+        // Parse allowed payment frequencies
+        try {
+            if (pkg.getAllowedPaymentFrequenciesJson() != null && !pkg.getAllowedPaymentFrequenciesJson().isBlank()) {
+                dto.setAllowedPaymentFrequencies(MAPPER.readValue(pkg.getAllowedPaymentFrequenciesJson(),
+                        new TypeReference<List<String>>() {}));
+            } else {
+                dto.setAllowedPaymentFrequencies(List.of());
+            }
+        } catch (Exception e) {
+            dto.setAllowedPaymentFrequencies(List.of());
         }
 
         // Parse required documents JSON

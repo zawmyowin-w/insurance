@@ -88,6 +88,8 @@ public class CustomerController {
             @RequestParam String packageId,
             @RequestParam String coverageAmount,
             @RequestParam String duration,
+            @RequestParam(required = false, defaultValue = "YEARS") String durationUnit,
+            @RequestParam(required = false) String selectedPaymentFrequency,
             @RequestParam(required = false) String notes,
             @RequestParam(required = false) String commonInfo,
             @RequestParam(required = false) String extraInfo,
@@ -104,11 +106,41 @@ public class CustomerController {
 
         BigDecimal coverage = new BigDecimal(coverageAmount);
         int dur = Integer.parseInt(duration);
+        String effDurationUnit = (durationUnit == null || durationUnit.isBlank()) ? "YEARS" : durationUnit.toUpperCase();
+
+        // Compute duration in years (as decimal) for premium calculation
+        java.math.BigDecimal durationInYears = switch (effDurationUnit) {
+            case "MONTHS" -> java.math.BigDecimal.valueOf(dur).divide(java.math.BigDecimal.valueOf(12), 6, java.math.RoundingMode.HALF_UP);
+            case "WEEKS"  -> java.math.BigDecimal.valueOf(dur).divide(java.math.BigDecimal.valueOf(52), 6, java.math.RoundingMode.HALF_UP);
+            default       -> java.math.BigDecimal.valueOf(dur);
+        };
 
         String riskLevel = policyService.calculateRisk(pkg.getType(), commonInfo, extraInfo);
         BigDecimal ageBandRate = policyService.getAgeBandRate(pkg.getAgeBandsJson(), commonInfo);
         BigDecimal effectiveRate = ageBandRate != null ? ageBandRate : pkg.getPremiumRate();
-        BigDecimal premiumAmount = policyService.calculatePremium(coverage, effectiveRate, dur, riskLevel);
+        // Calculate premium with fractional years support
+        double riskMult = "HIGH".equals(riskLevel) ? 1.5 : "MEDIUM".equals(riskLevel) ? 1.2 : 1.0;
+        BigDecimal premiumAmount = effectiveRate == null ? BigDecimal.ZERO :
+                coverage
+                    .multiply(effectiveRate.divide(BigDecimal.valueOf(100), 10, java.math.RoundingMode.HALF_UP))
+                    .multiply(durationInYears)
+                    .multiply(BigDecimal.valueOf(riskMult))
+                    .setScale(2, java.math.RoundingMode.HALF_UP);
+
+        // Resolve selected payment schedule
+        String effFreq = (selectedPaymentFrequency != null && !selectedPaymentFrequency.isBlank())
+                ? selectedPaymentFrequency.toUpperCase() : null;
+        Integer selectedIntervalMonths = null;
+        if (effFreq != null) {
+            int totalMonths = com.insurance.portal.util.PremiumScheduleUtil.durationToMonths(dur, effDurationUnit);
+            selectedIntervalMonths = switch (effFreq) {
+                case "QUARTERLY"   -> 3;
+                case "HALF_YEARLY" -> 6;
+                case "YEARLY"      -> 12;
+                case "PAY_ALL"     -> totalMonths;
+                default            -> 1; // MONTHLY
+            };
+        }
         String policyNumber = policyService.generatePolicyNumber(pkg.getType());
 
         List<User> agents = userRepo.findAllByRoleAndActive(Role.AGENT, true);
@@ -142,6 +174,7 @@ public class CustomerController {
                 .agent(agent)
                 .coverageAmount(coverage)
                 .duration(dur)
+                .durationUnit(effDurationUnit)
                 .notes(notes)
                 .commonInfo(commonInfo)
                 .extraInfo(extraInfo)
@@ -150,6 +183,8 @@ public class CustomerController {
                 .premiumAmount(premiumAmount)
                 .policyNumber(policyNumber)
                 .documentsPath(documentsJson)
+                .selectedPaymentFrequency(effFreq)
+                .selectedPaymentIntervalMonths(selectedIntervalMonths)
                 .status(ApplicationStatus.PENDING)
                 .build();
         return ResponseEntity.ok(ApplicationResponse.from(appRepo.save(app)));
