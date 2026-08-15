@@ -54,9 +54,17 @@ public class PolicyTransfer {
     @Column(nullable = false, length = 100)
     private String relationship;
 
+    /** Free-text detail when relationship is "Other", "Other Relative", or "Business Partner". */
+    @Column(name = "relationship_detail", columnDefinition = "TEXT")
+    private String relationshipDetail;
+
     /** Reason for transferring ownership. */
     @Column(nullable = false, columnDefinition = "TEXT")
     private String reason;
+
+    /** JSON array of file paths for supporting evidence documents (images/PDFs). */
+    @Column(name = "evidence_files_json", columnDefinition = "TEXT")
+    private String evidenceFilesJson;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

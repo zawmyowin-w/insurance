@@ -5,6 +5,7 @@ import com.insurance.portal.model.enums.*;
 import com.insurance.portal.repository.*;
 import com.insurance.portal.service.NotificationService;
 import com.insurance.portal.util.DigitalSignatureUtil;
+import com.insurance.portal.util.FileStorageUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -12,10 +13,12 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.insurance.portal.model.enums.PaymentStatus;
 import com.insurance.portal.repository.PaymentRepository;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -45,19 +48,19 @@ public class PolicyTransferController {
     }
 
     // ── Submit transfer request ────────────────────────────────────────
-    @PostMapping
+    @PostMapping(consumes = { "multipart/form-data", "application/x-www-form-urlencoded", "application/json" })
     @Transactional
     public ResponseEntity<?> submitTransfer(
             @AuthenticationPrincipal UserDetails principal,
-            @RequestBody Map<String, String> body) {
+            @RequestParam(value = "applicationId",      required = false) String appIdStr,
+            @RequestParam(value = "toEmail",            required = false) String toEmail,
+            @RequestParam(value = "relationship",       required = false) String relation,
+            @RequestParam(value = "relationshipDetail", required = false) String relationshipDetail,
+            @RequestParam(value = "reason",             required = false) String reason,
+            @RequestParam(value = "fromSignature",      required = false) String sig,
+            @RequestParam(value = "evidenceFiles",      required = false) List<MultipartFile> evidenceFiles) {
 
         User from = getUser(principal);
-
-        String appIdStr = body.get("applicationId");
-        String toEmail  = body.get("toEmail");
-        String relation = body.get("relationship");
-        String reason   = body.get("reason");
-        String sig      = body.get("fromSignature");
 
         if (appIdStr == null || toEmail == null || relation == null || reason == null)
             return ResponseEntity.badRequest().body(Map.of("message", "applicationId, toEmail, relationship, and reason are required"));
@@ -121,12 +124,29 @@ public class PolicyTransferController {
         if (to.getId().equals(from.getId()))
             return ResponseEntity.badRequest().body(Map.of("message", "You cannot transfer a policy to yourself"));
 
+        // Save evidence files
+        List<String> filePaths = new ArrayList<>();
+        if (evidenceFiles != null) {
+            for (MultipartFile f : evidenceFiles) {
+                if (f != null && !f.isEmpty()) {
+                    try {
+                        String path = FileStorageUtil.saveDocument(f, "transfer_evidence", "transfer_" + appIdStr);
+                        if (path != null) filePaths.add(path);
+                    } catch (IOException e) {
+                        return ResponseEntity.badRequest().body(Map.of("message", "File upload failed: " + e.getMessage()));
+                    }
+                }
+            }
+        }
+
         PolicyTransfer transfer = PolicyTransfer.builder()
                 .application(app)
                 .fromCustomer(from)
                 .toCustomer(to)
                 .relationship(relation.trim())
+                .relationshipDetail(relationshipDetail != null && !relationshipDetail.isBlank() ? relationshipDetail.trim() : null)
                 .reason(reason.trim())
+                .evidenceFilesJson(FileStorageUtil.toJsonArray(filePaths))
                 .fromSignature(sig)
                 .fromSignedAt(LocalDateTime.now())
                 .status(TransferStatus.PENDING_TRANSFEREE_SIGNATURE)
@@ -243,6 +263,27 @@ public class PolicyTransferController {
         return ResponseEntity.ok(toDto(transfer));
     }
 
+    // ── Serve evidence file ───────────────────────────────────────────
+    @GetMapping("/{id}/evidence/{index}")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> serveEvidenceFile(
+            @PathVariable Long id,
+            @PathVariable int index,
+            @AuthenticationPrincipal UserDetails principal) {
+
+        User user = getUser(principal);
+        PolicyTransfer transfer = transferRepo.findById(id).orElse(null);
+        if (transfer == null) return ResponseEntity.notFound().build();
+        // Only sender or recipient may view evidence files
+        if (!transfer.getFromCustomer().getId().equals(user.getId()) &&
+            !transfer.getToCustomer().getId().equals(user.getId()))
+            return ResponseEntity.status(403).build();
+
+        List<String> paths = FileStorageUtil.fromJsonArray(transfer.getEvidenceFilesJson());
+        if (index < 0 || index >= paths.size()) return ResponseEntity.notFound().build();
+        return FileStorageUtil.streamFile(paths.get(index));
+    }
+
     // ── Email validation check ────────────────────────────────────────
     @GetMapping("/check-email")
     @Transactional(readOnly = true)
@@ -288,7 +329,12 @@ public class PolicyTransferController {
         }
 
         m.put("relationship", t.getRelationship());
+        m.put("relationshipDetail", t.getRelationshipDetail());
         m.put("reason", t.getReason());
+
+        // Evidence file serving paths (frontend fetches via /customer/policy-transfers/{id}/evidence/{index})
+        List<String> evidencePaths = FileStorageUtil.fromJsonArray(t.getEvidenceFilesJson());
+        m.put("evidenceFileCount", evidencePaths.size());
         m.put("status", t.getStatus().name());
         m.put("fromSignedAt", t.getFromSignedAt() != null ? t.getFromSignedAt().toString() : null);
         m.put("toSignedAt", t.getToSignedAt() != null ? t.getToSignedAt().toString() : null);

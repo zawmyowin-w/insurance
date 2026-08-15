@@ -136,6 +136,14 @@ while IFS=$'\t' read -r _pkg_id _tiers _bands; do
 done < <(mysql "${mysql_args[@]}" "${DB_NAME}" -N -B -e \
   "SELECT id, IFNULL(duration_tiers,''), IFNULL(age_bands,'') FROM insurance_packages;" 2>/dev/null) || true
 
+# ── Add evidence + relationship_detail columns to policy_transfers ───────────
+set +e
+mysql "${mysql_args[@]}" "${DB_NAME}" -e \
+  "ALTER TABLE policy_transfers ADD COLUMN relationship_detail TEXT NULL;" 2>/dev/null
+mysql "${mysql_args[@]}" "${DB_NAME}" -e \
+  "ALTER TABLE policy_transfers ADD COLUMN evidence_files_json TEXT NULL;" 2>/dev/null
+set -e
+
 # ── Add batch_ref column to payments if missing ─────────────────────────────
 set +e
 mysql "${mysql_args[@]}" "${DB_NAME}" -e \

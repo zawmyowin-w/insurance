@@ -4,6 +4,7 @@ import com.insurance.portal.model.*;
 import com.insurance.portal.model.enums.*;
 import com.insurance.portal.repository.*;
 import com.insurance.portal.service.NotificationService;
+import com.insurance.portal.util.FileStorageUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -62,6 +63,19 @@ public class AdminPolicyTransferController {
         PolicyTransfer t = transferRepo.findById(id).orElse(null);
         if (t == null) return ResponseEntity.notFound().build();
         return ResponseEntity.ok(PolicyTransferController.toDto(t));
+    }
+
+    // ── Serve evidence file ───────────────────────────────────────────
+    @GetMapping("/{id}/evidence/{index}")
+    @Transactional(readOnly = true)
+    public ResponseEntity<?> serveEvidenceFile(
+            @PathVariable Long id,
+            @PathVariable int index) {
+        PolicyTransfer transfer = transferRepo.findById(id).orElse(null);
+        if (transfer == null) return ResponseEntity.notFound().build();
+        List<String> paths = FileStorageUtil.fromJsonArray(transfer.getEvidenceFilesJson());
+        if (index < 0 || index >= paths.size()) return ResponseEntity.notFound().build();
+        return FileStorageUtil.streamFile(paths.get(index));
     }
 
     @GetMapping("/pending-count")

@@ -157,7 +157,9 @@ export default function AdminPolicyTransfersPage() {
 
                 <div className="row g-2" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                   <div className="col-sm-4">
-                    <span style={{ fontWeight: 600 }}>{t('admin.transfers.relationship')}: </span>{tr.relationship}
+                    <span style={{ fontWeight: 600 }}>{t('admin.transfers.relationship')}: </span>
+                    {tr.relationship}
+                    {tr.relationshipDetail && <span style={{ color: 'var(--text-primary)' }}> — {tr.relationshipDetail}</span>}
                   </div>
                   <div className="col-sm-4">
                     <span style={{ fontWeight: 600 }}>{t('admin.transfers.submitted')}: </span>
@@ -172,6 +174,25 @@ export default function AdminPolicyTransfersPage() {
                   <div className="col-12">
                     <span style={{ fontWeight: 600 }}>{t('admin.transfers.reasonLabel')}: </span>{tr.reason}
                   </div>
+                  {tr.evidenceFileCount > 0 && (
+                    <div className="col-12">
+                      <span style={{ fontWeight: 600 }}><i className="bi bi-paperclip me-1"></i>{t('admin.transfers.evidenceFiles')}: </span>
+                      <div style={{ display: 'inline-flex', gap: 6, flexWrap: 'wrap', marginTop: 4 }}>
+                        {Array.from({ length: tr.evidenceFileCount }, (_, i) => (
+                          <button key={i} type="button"
+                            onClick={async () => {
+                              try {
+                                const res = await api.get(`/admin/policy-transfers/${tr.id}/evidence/${i}`, { responseType: 'blob' })
+                                window.open(URL.createObjectURL(res.data), '_blank')
+                              } catch { toast.error(t('admin.transfers.evidenceViewFailed')) }
+                            }}
+                            style={{ padding: '0.2rem 0.65rem', borderRadius: 6, border: '1px solid #93c5fd', background: '#eff6ff', color: '#1d4ed8', fontSize: '0.78rem', cursor: 'pointer', fontWeight: 600 }}>
+                            <i className="bi bi-file-earmark me-1"></i>{t('admin.transfers.file')} {i + 1}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   {tr.adminNote && (
                     <div className="col-12" style={{ color: tr.status === 'REJECTED' ? '#dc2626' : '#1d4ed8' }}>
                       <span style={{ fontWeight: 600 }}>{t('admin.transfers.adminNoteLabel')}: </span>{tr.adminNote}
