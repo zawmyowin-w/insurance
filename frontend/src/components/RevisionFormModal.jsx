@@ -414,7 +414,7 @@ function RevisionField({ field, value, file, existingFilePath, onValue, onFile, 
   }
 
   let options = []
-  if (field.fieldType === 'CHECKBOX' && field.fieldOptions) {
+  if ((field.fieldType === 'CHECKBOX' || field.fieldType === 'RADIO') && field.fieldOptions) {
     try { options = JSON.parse(field.fieldOptions) } catch { options = ['Yes', 'No'] }
   }
   const selectedOptions = Array.isArray(value) ? value : []
@@ -475,6 +475,29 @@ function RevisionField({ field, value, file, existingFilePath, onValue, onFile, 
               <input type="checkbox"
                 checked={selectedOptions.includes(opt)}
                 onChange={e => onCheckboxOption(opt, e.target.checked)} />
+              {opt}
+            </label>
+          ))}
+        </div>
+      )}
+      {field.fieldType === 'RADIO' && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: 4 }}>
+          {options.map(opt => (
+            <label key={opt} style={{
+              display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer',
+              padding: '0.35rem 0.75rem', borderRadius: 8, fontSize: '0.88rem',
+              color: 'var(--text-primary)',
+              border: value === opt ? '1.5px solid var(--primary)' : '1.5px solid var(--border)',
+              background: value === opt ? 'var(--bg-secondary)' : 'transparent',
+            }}>
+              <input
+                type="radio"
+                name={`rev_radio_${field.id}`}
+                value={opt}
+                checked={value === opt}
+                required={field.required && !value}
+                onChange={() => onValue(opt)}
+              />
               {opt}
             </label>
           ))}
