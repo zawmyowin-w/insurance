@@ -1838,7 +1838,13 @@
       "noHistory": "No notifications sent yet",
       "to": "To",
       "sentSuccess": "Notification sent successfully",
-      "sendFailed": "Failed to send"
+      "sendFailed": "Failed to send",
+      "tabReceived": "Inbox",
+      "tabSend": "Send Notification",
+      "tabHistory": "Sent History",
+      "allMarkedRead": "All notifications marked as read",
+      "markAllRead": "Mark All as Read",
+      "noReceived": "No notifications in inbox"
     },
     "profile": {
       "title": "My Profile",
@@ -2026,7 +2032,9 @@
       "snapshotDate": "Archived On",
       "snapshotDownload": "PDF",
       "generatingPdf": "Generating PDF…",
-      "resetting": "Saving & Downloading…"
+      "resetting": "Saving & Downloading…",
+      "printMonthlyPdf": "Print PDF",
+      "printPopupBlocked": "Pop-up was blocked — PDF has been downloaded instead."
     },
     "autoCheck": {
       "title": "Reminder",
