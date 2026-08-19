@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import Navbar from '../components/Navbar'
+import Footer from '../components/Footer'
 import api from '../services/api'
 import { getTypeMeta } from '../utils/typeMeta'
 
@@ -349,6 +350,7 @@ export default function PlansPage() {
         )}
 
       </div>
+      <Footer />
     </div>
   )
 }
