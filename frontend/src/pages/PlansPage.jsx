@@ -87,6 +87,7 @@ export default function PlansPage() {
   const freqLabel = freq => t(`plans.freq${freq}`, freq || '—')
   const typeLabel = type => t(`plans.typeLabels.${type}`, { defaultValue: getTypeMeta(type).label })
   const occLabel = key => t(`plans.occupations.${key}`, { defaultValue: key })
+  const canApply = user?.role !== 'ADMIN' && user?.role !== 'AGENT'
 
   return (
     <div>
@@ -99,6 +100,7 @@ export default function PlansPage() {
           onClose={() => setDetailPlan(null)}
           onApply={() => { setDetailPlan(null); handleApply(detailPlan) }}
           user={user}
+           canApply={canApply}
           t={t}
           freqLabel={freqLabel}
           typeLabel={typeLabel}
@@ -331,11 +333,11 @@ export default function PlansPage() {
                         padding: '0.5rem 0.85rem', borderRadius: 8,
                         border: `1.5px solid ${meta.color}`, background: 'transparent',
                         color: meta.color, cursor: 'pointer', fontWeight: 600, fontSize: '0.82rem',
-                        flex: user?.role === 'ADMIN' ? '1 1 auto' : '0 0 auto',
+                         flex: canApply ? '0 0 auto' : '1 1 auto',
                       }}>
                         <i className="bi bi-eye me-1"></i>{t('plans.detailBtn')}
                       </button>
-                      {user?.role !== 'ADMIN' && (
+                       {canApply && (
                         <button onClick={() => handleApply(plan)} className="btn-primary-custom flex-grow-1"
                           style={{ justifyContent: 'center', background: meta.color, borderColor: meta.color }}>
                           <i className="bi bi-check-circle me-2"></i>{t('plans.applyBtn')}
@@ -356,7 +358,7 @@ export default function PlansPage() {
 }
 
 // ── Plan Detail Modal ──────────────────────────────────────────────────────────
-function PlanDetailModal({ plan, onClose, onApply, user, t, freqLabel, typeLabel }) {
+function PlanDetailModal({ plan, onClose, onApply, user, canApply, t, freqLabel, typeLabel }) {
   const meta = getTypeMeta(plan.type)
   const tiers = Array.isArray(plan.durationTiers) && plan.durationTiers.length > 0 ? plan.durationTiers : []
   const [calcCoverage, setCalcCoverage] = useState('')
@@ -701,7 +703,7 @@ function PlanDetailModal({ plan, onClose, onApply, user, t, freqLabel, typeLabel
           <button onClick={onClose} className="btn-outline-custom" style={{ fontSize: '0.88rem' }}>
             {t('plans.closeBtn')}
           </button>
-          {user?.role !== 'ADMIN' && (
+          {canApply && (
             <button onClick={onApply} className="btn-primary-custom"
               style={{ justifyContent: 'center', background: meta.color, borderColor: meta.color, minWidth: 150 }}>
               <i className="bi bi-check-circle me-2"></i>
