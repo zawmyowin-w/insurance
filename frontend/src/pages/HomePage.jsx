@@ -260,13 +260,18 @@ export default function HomePage() {
               <div className="cta-box-3d">
                 <div className="cta-box-orb cta-box-orb-1" />
                 <div className="cta-box-orb cta-box-orb-2" />
-                <div style={{ position: 'relative', zIndex: 1 }}>
-                  <div style={{ fontSize: '2.5rem', marginBottom: '1rem' }}>🛡️</div>
-                  <h3 style={{ fontWeight: 800, marginBottom: '1rem', fontSize: '1.4rem' }}>{t('home.ctaBoxTitle')}</h3>
-                  <p style={{ opacity: 0.85, marginBottom: '2rem', lineHeight: 1.7, fontSize: '0.95rem' }}>{t('home.ctaBoxDesc')}</p>
-                  <div className="d-flex flex-column gap-2">
-                    <Link to="/register" className="cta-box-btn-primary">{t('home.ctaBoxBtn1')}</Link>
-                    <Link to="/plans"    className="cta-box-btn-ghost">{t('home.ctaBoxBtn2')}</Link>
+                <div className="cta-box-content">
+                  <div className="cta-box-copy">
+                    <div className="cta-box-icon"><i className="bi bi-shield-check"></i></div>
+                    <h3>{t('home.ctaBoxTitle')}</h3>
+                    <p>{t('home.ctaBoxDesc')}</p>
+                  </div>
+                  <div className="cta-box-image-wrap">
+                    <img
+                      src="/digital-insurance-cta.png"
+                      alt="Digital insurance coverage for families, vehicles, travel and property"
+                      className="cta-box-image"
+                    />
                   </div>
                 </div>
               </div>

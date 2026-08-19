@@ -936,7 +936,7 @@ body {
 .cta-box-3d {
   background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #6d28d9 100%);
   border-radius: 24px;
-  padding: 3rem 2.5rem;
+  padding: 1.4rem;
   color: #fff;
   position: relative;
   overflow: hidden;
@@ -961,6 +961,59 @@ body {
   width: 200px; height: 200px;
   background: radial-gradient(circle, rgba(236,72,153,0.35), transparent 70%);
   bottom: -60px; left: -40px;
+}
+.cta-box-content {
+  position: relative;
+  z-index: 1;
+}
+.cta-box-copy {
+  padding: 1rem 1rem 1.25rem;
+}
+.cta-box-icon {
+  width: 46px;
+  height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.9rem;
+  border: 1px solid rgba(255,255,255,0.28);
+  border-radius: 14px;
+  background: rgba(255,255,255,0.14);
+  color: #fff;
+  font-size: 1.45rem;
+  box-shadow: 0 8px 20px rgba(20, 10, 90, 0.18);
+}
+.cta-box-copy h3 {
+  font-weight: 800;
+  margin: 0 0 0.7rem;
+  font-size: 1.45rem;
+  letter-spacing: -0.02em;
+}
+.cta-box-copy p {
+  opacity: 0.88;
+  margin: 0;
+  line-height: 1.7;
+  font-size: 0.95rem;
+}
+.cta-box-image-wrap {
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.28);
+  border-radius: 17px;
+  background: #071d6e;
+  box-shadow: 0 14px 32px rgba(10, 7, 67, 0.28);
+}
+.cta-box-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 2 / 1;
+  object-fit: cover;
+  transition: transform 0.35s ease;
+}
+.cta-box-image-wrap:hover .cta-box-image {
+  transform: scale(1.025);
+}
+[data-theme="dark"] .cta-box-image-wrap {
+  border-color: rgba(147,197,253,0.35);
 }
 [data-theme="dark"] .cta-box-orb-1 {
   background: radial-gradient(circle, rgba(59,130,246,0.4), transparent 70%);
