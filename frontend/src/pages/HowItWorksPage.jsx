@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
@@ -113,26 +112,6 @@ export default function HowItWorksPage() {
                 </div>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section style={{ background: 'var(--primary)', padding: '4rem 0' }}>
-        <div className="container text-center">
-          <h2 style={{ color: '#fff', fontWeight: 700, marginBottom: '1rem' }}>{t('how.ctaTitle')}</h2>
-          <p style={{ color: 'rgba(255,255,255,0.8)', marginBottom: '2rem', maxWidth: 460, margin: '0 auto 2rem' }}>
-            {t('how.ctaDesc')}
-          </p>
-          <div className="d-flex justify-content-center gap-3 flex-wrap">
-            <Link to="/register" style={{
-              background: '#fff', color: 'var(--primary)', padding: '0.75rem 2rem',
-              borderRadius: 8, fontWeight: 600, textDecoration: 'none'
-            }}>{t('how.registerNow')}</Link>
-            <Link to="/plans" style={{
-              border: '2px solid rgba(255,255,255,0.5)', color: '#fff', padding: '0.75rem 2rem',
-              borderRadius: 8, fontWeight: 600, textDecoration: 'none'
-            }}>{t('how.viewPlans')}</Link>
           </div>
         </div>
       </section>
