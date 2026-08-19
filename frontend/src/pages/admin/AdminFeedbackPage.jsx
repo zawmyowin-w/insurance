@@ -14,6 +14,7 @@ const CATEGORY_KEY_MAP = {
   Policies: 'categoryPolicies', Applications: 'categoryApplications',
   Support: 'categorySupport', Other: 'categoryOther',
 }
+const RATING_COLORS = ['#dc2626', '#f97316', '#f59e0b', '#84cc16', '#16a34a']
 
 function StarDisplay({ rating }) {
   return (
@@ -23,6 +24,95 @@ function StarDisplay({ rating }) {
           style={{ color: s <= rating ? STAR_COLOR : 'var(--border)', fontSize: '0.85rem', marginRight: 1 }} />
       ))}
     </span>
+  )
+}
+
+function RatingOverview({ feedbacks, t }) {
+  const ratings = feedbacks
+    .map(feedback => Number(feedback.rating))
+    .filter(rating => Number.isInteger(rating) && rating >= 1 && rating <= 5)
+  const counts = [1, 2, 3, 4, 5].map(rating => ratings.filter(value => value === rating).length)
+  const ratingCount = ratings.length
+  const totalScore = ratings.reduce((sum, rating) => sum + rating, 0)
+  const average = ratingCount > 0 ? totalScore / ratingCount : 0
+  const maxCount = Math.max(...counts, 1)
+  const averagePercent = (average / 5) * 100
+  const averageColor = average >= 4 ? '#16a34a' : average >= 3 ? '#f59e0b' : '#dc2626'
+
+  return (
+    <div className="card-custom mb-4">
+      <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+        <div>
+          <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
+            <i className="bi bi-bar-chart-fill me-2" style={{ color: 'var(--primary)' }}></i>
+            {t('admin.feedback.ratingOverview')}
+          </div>
+          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 2 }}>
+            {ratingCount > 0
+              ? t('admin.feedback.basedOnRatings', { count: ratingCount })
+              : t('admin.feedback.noRatingsYet')}
+          </div>
+        </div>
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: 7, padding: '0.35rem 0.7rem',
+          borderRadius: 20, background: averageColor + '14', color: averageColor, fontWeight: 700, fontSize: '0.8rem',
+        }}>
+          <i className="bi bi-star-fill"></i>{t('admin.feedback.averageRating')}
+        </div>
+      </div>
+
+      <div className="row g-4 align-items-center">
+        <div className="col-12 col-md-4">
+          <div style={{
+            padding: '1rem 1.15rem', borderRadius: 14, background: 'var(--bg-secondary)',
+            border: '1px solid var(--border)', textAlign: 'center',
+          }}>
+            <div style={{ fontSize: '2.35rem', lineHeight: 1, fontWeight: 800, color: averageColor }}>
+              {ratingCount > 0 ? average.toFixed(2) : '—'}
+            </div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 5 }}>
+              {t('admin.feedback.outOfFive')}
+            </div>
+            <div style={{ height: 7, borderRadius: 999, background: 'var(--border-light)', overflow: 'hidden', marginTop: '0.85rem' }}>
+              <div style={{
+                width: `${averagePercent}%`, height: '100%', borderRadius: 'inherit',
+                background: `linear-gradient(90deg, #f59e0b, ${averageColor})`, transition: 'width 0.3s ease',
+              }} />
+            </div>
+          </div>
+        </div>
+
+        <div className="col-12 col-md-8">
+          <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>
+            {t('admin.feedback.ratingDistribution')}
+          </div>
+          <div style={{ height: 140, display: 'flex', alignItems: 'stretch', gap: 10, padding: '0 2px', borderBottom: '1px solid var(--border)' }}>
+            {counts.map((count, index) => {
+              const rating = index + 1
+              const percent = ratingCount > 0 ? (count / ratingCount) * 100 : 0
+              const barHeight = count > 0 ? Math.max((count / maxCount) * 100, 8) : 2
+              return (
+                <div key={rating} style={{ flex: 1, minWidth: 34, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', gap: 5 }}>
+                  <div style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--text-primary)' }}>{count}</div>
+                  <div style={{ width: '100%', height: 100, display: 'flex', alignItems: 'flex-end' }}>
+                    <div
+                      title={`${rating} star: ${count} (${percent.toFixed(1)}%)`}
+                      style={{
+                        width: '100%', height: `${barHeight}%`, minHeight: count > 0 ? 8 : 2, borderRadius: '6px 6px 2px 2px',
+                        background: RATING_COLORS[index], opacity: count > 0 ? 0.9 : 0.25, transition: 'height 0.3s ease',
+                      }}
+                    />
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: RATING_COLORS[index], fontWeight: 700, whiteSpace: 'nowrap' }}>
+                    {rating}<i className="bi bi-star-fill ms-1" style={{ fontSize: '0.65rem' }}></i>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -123,6 +213,8 @@ export default function AdminFeedbackPage() {
           )}
         </div>
       </div>
+
+      {!loading && <RatingOverview feedbacks={feedbacks} t={t} />}
 
       <div className="row g-4">
         {/* Left: list */}
