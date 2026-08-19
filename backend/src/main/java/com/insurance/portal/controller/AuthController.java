@@ -7,6 +7,7 @@ import com.insurance.portal.repository.UserRepository;
 import com.insurance.portal.security.JwtTokenProvider;
 import com.insurance.portal.service.EmailValidationService;
 import com.insurance.portal.util.EmailValidationUtil;
+import com.insurance.portal.util.NameValidationUtil;
 import com.insurance.portal.util.PhoneValidationUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -159,6 +160,13 @@ public class AuthController {
             return ResponseEntity.badRequest().body(new ErrorResponse(validationError));
         }
 
+        // Full name validation — name must be real text, not a number or special-character string.
+        String nameError = NameValidationUtil.validate(req.getName());
+        if (nameError != null) {
+            return ResponseEntity.badRequest().body(new ErrorResponse(nameError));
+        }
+        String name = NameValidationUtil.normalize(req.getName());
+
         // Rules 21-22: Uniqueness check
         if (userRepository.existsByEmail(email)) {
             return ResponseEntity.status(409).body(new ErrorResponse("Email already in use"));
@@ -181,7 +189,7 @@ public class AuthController {
 
         // Rule 40: Account is activated immediately — OTP verification was completed on the frontend
         User user = User.builder()
-                .name(req.getName())
+                .name(name)
                 .email(email)
                 .password(passwordEncoder.encode(req.getPassword()))
                 .role(Role.CUSTOMER)

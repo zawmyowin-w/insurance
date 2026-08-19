@@ -7,6 +7,7 @@ import api from '../services/api'
 import {
   EMAIL_ERROR,
   getEmailValidationError, normalizeEmail,
+  getNameValidationError,
   getPhoneValidationError, isPhoneValid,
   passwordStrengthLevel, isStrongPassword,
 } from '../utils/validation'
@@ -23,6 +24,7 @@ export default function RegisterPage() {
   const [showPwd, setShowPwd] = useState(false)
   const [agree, setAgree] = useState(false)
   const [pwdFocused, setPwdFocused] = useState(false)
+  const [nameTouched, setNameTouched] = useState(false)
   const [emailTouched, setEmailTouched] = useState(false)
   const [phoneTouched, setPhoneTouched] = useState(false)
 
@@ -44,11 +46,13 @@ export default function RegisterPage() {
   }
 
   const handleEmailBlur = () => setEmailTouched(true)
+  const handleNameBlur = () => setNameTouched(true)
   const handlePhoneBlur = () => {
     if (form.phone === '+959') setForm(f => ({ ...f, phone: '' }))
     setPhoneTouched(true)
   }
 
+  const nameError    = nameTouched ? getNameValidationError(form.name) : null
   const emailError   = emailTouched ? getEmailValidationError(form.email) : null
   const emailValid   = emailError === null
   const phoneError   = phoneTouched ? getPhoneValidationError(form.phone) : null
@@ -57,6 +61,7 @@ export default function RegisterPage() {
 
   const handleSubmit = async e => {
     e.preventDefault()
+    setNameTouched(true)
     setEmailTouched(true)
 
     const normalizedEmail = form.email.trim()
@@ -69,6 +74,11 @@ export default function RegisterPage() {
     }
 
     setPhoneTouched(true)
+    const nameErr = getNameValidationError(form.name)
+    if (nameErr) {
+      toast.error(nameErr[lang])
+      return
+    }
     const emailErr = getEmailValidationError(normalizedEmail)
     if (emailErr) {
       toast.error(emailErr[lang])
@@ -149,7 +159,18 @@ export default function RegisterPage() {
             <div className="col-12">
               <label className="form-label-custom">{t('auth.fullName')} <span style={{color: 'red'}}>*</span></label>
               <input name="name" required className="form-control-custom w-100" placeholder="John Doe"
-                value={form.name} onChange={handleChange} />
+                value={form.name} onChange={handleChange} onBlur={handleNameBlur}
+                autoComplete="name" maxLength={100}
+                style={nameError ? { borderColor: '#ef4444' } : undefined} />
+              {nameError ? (
+                <p style={{ fontSize: '0.76rem', color: '#ef4444', margin: '0.25rem 0 0', lineHeight: 1.4 }}>
+                  <i className="bi bi-exclamation-circle me-1"></i>{nameError[lang]}
+                </p>
+              ) : (
+                <p style={{ fontSize: '0.73rem', color: 'var(--text-muted)', margin: '0.2rem 0 0' }}>
+                  {lang === 'my' ? 'အက္ခရာ အနည်းဆုံး ၆ လုံးပါရမည်။ ဂဏန်းနှင့် Special Character မပါရပါ။' : 'At least 6 letters. Numbers and special characters are not allowed.'}
+                </p>
+              )}
             </div>
             <div className="col-12">
               <label className="form-label-custom">{t('auth.email')} <span style={{color: 'red'}}>*</span></label>

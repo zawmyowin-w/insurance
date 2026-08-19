@@ -30,6 +30,46 @@ export function normalizeEmail(raw) {
   return typeof raw === 'string' ? raw.trim().toLowerCase() : ''
 }
 
+// ── Name ───────────────────────────────────────────────────────────────────
+
+/**
+ * Validates a person's full name for account registration.
+ * Names can be written in any language, including Myanmar, but must contain
+ * at least six letters and use letters/spaces only.
+ */
+export function getNameValidationError(rawName) {
+  if (rawName === undefined || rawName === null || rawName.trim() === '') {
+    return {
+      en: 'Full name is required.',
+      my: 'အမည်အပြည့်အစုံ ဖြည့်သွင်းရန် လိုအပ်ပါသည်။',
+    }
+  }
+
+  if (rawName !== rawName.trim() || /\s{2,}/.test(rawName)) {
+    return {
+      en: 'Full name must use single spaces only, with no space at the beginning or end.',
+      my: 'အမည်တွင် အစ/အဆုံး၌ Space မပါရဘဲ စကားလုံးများကြားတွင် Space တစ်လုံးသာ ထည့်ပါ။',
+    }
+  }
+
+  if (!/^[\p{L}\p{M}]+(?: [\p{L}\p{M}]+)*$/u.test(rawName)) {
+    return {
+      en: 'Full name may contain letters and spaces only. Numbers and special characters are not allowed.',
+      my: 'အမည်တွင် အက္ခရာနှင့် Space သာ ပါရမည်။ ဂဏန်းနှင့် Special Character များ မပါရပါ။',
+    }
+  }
+
+  const letterCount = [...rawName].filter(char => /[\p{L}\p{M}]/u.test(char)).length
+  if (letterCount < 6) {
+    return {
+      en: 'Full name must contain at least 6 letters.',
+      my: 'အမည်အပြည့်အစုံတွင် အက္ခရာ အနည်းဆုံး ၆ လုံး ပါရမည်။',
+    }
+  }
+
+  return null
+}
+
 // ── Reserved / blacklisted usernames ─────────────────────────────────────
 const RESERVED_USERNAMES = new Set([
   'admin', 'root', 'system', 'test',
@@ -395,6 +435,14 @@ export function getPhoneValidationError(rawPhone) {
     return {
       en: 'Phone number contains a duplicated country code (+95959…). Enter only the subscriber digits after +959.',
       my: '+95959… ကဲ့သို့ Country Code ထပ်နေသော Format များကို လက်မခံပါ။ +959 နောက်တွင် ဂဏန်းများသာ ဖြည့်ပါ။',
+    }
+  }
+
+  // A Myanmar mobile subscriber number must not begin with 0 after +959.
+  if (digits.startsWith('0')) {
+    return {
+      en: 'The digit immediately after +959 must not be 0. Enter a valid Myanmar mobile number.',
+      my: '+959 ၏နောက်တွင် 0 မဖြစ်ရပါ။ မှန်ကန်သော မြန်မာမိုဘိုင်းဖုန်းနံပါတ်ကို ဖြည့်ပါ။',
     }
   }
 

@@ -12,7 +12,7 @@ package com.insurance.portal.util;
  *  6.  Only digits and a single leading '+' are allowed — no letters,
  *      Myanmar script, emoji, or other Unicode symbols
  *  7.  Digits after +959: exactly 7 or 9 digits (8 digits are rejected)
- *  8.  No duplicated country code (+95959…, +959095…)
+ *  8.  No duplicated country code (+95959…, +959095…) and no leading 0 after +959
  *  9.  Fake numbers blocked: all-same digit (000000000, 111111111…)
  * 10.  Sequential digits blocked: 123456789, 987654321…
  *
@@ -39,6 +39,8 @@ public final class PhoneValidationUtil {
     public static final String DOUBLE_CC_ERROR =
         "Phone number contains a duplicated country code (+95959...). " +
         "Enter only the subscriber digits after +959.";
+    public static final String SUBSCRIBER_PREFIX_ERROR =
+        "The digit immediately after +959 must not be 0. Enter a valid Myanmar mobile number.";
     public static final String TOO_SHORT_ERROR =
         "Phone number is too short. +959 must be followed by exactly 7 or 9 digits.";
     public static final String INVALID_LENGTH_ERROR =
@@ -89,6 +91,9 @@ public final class PhoneValidationUtil {
         if (digits.startsWith("95") || digits.startsWith("059") || digits.startsWith("09")) {
             return DOUBLE_CC_ERROR;
         }
+
+        // A Myanmar mobile subscriber number cannot begin with 0 after +959.
+        if (digits.startsWith("0")) return SUBSCRIBER_PREFIX_ERROR;
 
         // Guard: digits must be all digits
         if (!digits.matches("\\d*")) return INVALID_CHARS_ERROR;
