@@ -934,17 +934,17 @@ body {
 /* ─── CTA Box 3D ─── */
 /* Light mode: vivid indigo→violet */
 .cta-box-3d {
-  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #6d28d9 100%);
+  background: linear-gradient(135deg, #031b68 0%, #0756c9 48%, #042477 100%);
   border-radius: 24px;
   padding: 1.4rem;
   color: #fff;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 24px 60px rgba(79,70,229,0.4);
+  box-shadow: 0 24px 60px rgba(3,62,166,0.38);
 }
 [data-theme="dark"] .cta-box-3d {
-  background: linear-gradient(135deg, #1a3a5c 0%, #0f2540 50%, #1e3f6e 100%);
-  box-shadow: 0 24px 60px rgba(15,37,64,0.55);
+  background: linear-gradient(135deg, #021744 0%, #063b8f 50%, #031d58 100%);
+  box-shadow: 0 24px 60px rgba(1,31,89,0.6);
 }
 .cta-box-orb {
   position: absolute;
@@ -959,7 +959,7 @@ body {
 }
 .cta-box-orb-2 {
   width: 200px; height: 200px;
-  background: radial-gradient(circle, rgba(236,72,153,0.35), transparent 70%);
+  background: radial-gradient(circle, rgba(0,194,255,0.3), transparent 70%);
   bottom: -60px; left: -40px;
 }
 .cta-box-content {
@@ -997,10 +997,10 @@ body {
 }
 .cta-box-image-wrap {
   overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.28);
+  border: 1px solid rgba(77,210,255,0.48);
   border-radius: 17px;
   background: #071d6e;
-  box-shadow: 0 14px 32px rgba(10, 7, 67, 0.28);
+  box-shadow: 0 14px 32px rgba(0, 21, 85, 0.38);
 }
 .cta-box-image {
   display: block;
@@ -1013,7 +1013,7 @@ body {
   transform: scale(1.025);
 }
 [data-theme="dark"] .cta-box-image-wrap {
-  border-color: rgba(147,197,253,0.35);
+  border-color: rgba(65,190,255,0.45);
 }
 [data-theme="dark"] .cta-box-orb-1 {
   background: radial-gradient(circle, rgba(59,130,246,0.4), transparent 70%);
