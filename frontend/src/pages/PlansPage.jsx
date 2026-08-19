@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../context/AuthContext'
 import Navbar from '../components/Navbar'
@@ -348,21 +348,6 @@ export default function PlansPage() {
           </div>
         )}
 
-        {!user && (
-          <div className="card-custom text-center mt-5 py-4">
-            <i className="bi bi-person-lock" style={{ fontSize: '2rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}></i>
-            <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-              {t('plans.loginPrompt')}
-            </div>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1rem' }}>
-              {t('plans.loginPromptSub')}
-            </p>
-            <div className="d-flex gap-2 justify-content-center">
-              <Link to="/register" className="btn-primary-custom">{t('plans.createAccountBtn')}</Link>
-              <Link to="/login" className="btn-outline-custom">{t('plans.logInBtn')}</Link>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )
