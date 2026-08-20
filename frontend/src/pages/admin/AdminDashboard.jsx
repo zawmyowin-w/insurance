@@ -2,12 +2,15 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthContext'
+import { useNotifCount } from '../../context/NotifCountContext'
 import api from '../../services/api'
 
 export default function AdminDashboard() {
   const { t, i18n } = useTranslation()
   const { user } = useAuth()
+  const { unreadCount } = useNotifCount()
   const [stats, setStats] = useState({ totalCustomers: 0, totalAgents: 0, pendingApplications: 0, pendingClaims: 0, verifiedApplications: 0, verifiedClaims: 0, totalPackages: 0, totalPolicyTransfers: 0 })
+  const [todayReminders, setTodayReminders] = useState(0)
   const [recentActivities, setRecentActivities] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -15,9 +18,11 @@ export default function AdminDashboard() {
     Promise.all([
       api.get('/admin/dashboard/stats').catch(() => ({ data: stats })),
       api.get('/admin/recent-activities').catch(() => ({ data: [] })),
-    ]).then(([s, a]) => {
+      api.get('/admin/autocheck/status').catch(() => ({ data: { todayReminders: 0 } })),
+    ]).then(([s, a, reminderStatus]) => {
       setStats(s.data)
       setRecentActivities(Array.isArray(a.data) ? a.data.slice(0, 8) : [])
+      setTodayReminders(reminderStatus.data?.todayReminders ?? 0)
     }).finally(() => setLoading(false))
   }, [])
 
@@ -26,8 +31,8 @@ export default function AdminDashboard() {
     { label: t('admin.dashboard.totalAgents'),          value: stats.totalAgents,          icon: 'bi-person-badge-fill',         grad: 'linear-gradient(135deg,#a855f7,#7c3aed)', link: '/admin/users?tab=AGENT' },
     { label: t('admin.dashboard.pendingApplications'),  value: stats.pendingApplications,  icon: 'bi-file-earmark-text-fill',    grad: 'linear-gradient(135deg,#f59e0b,#d97706)', link: '/admin/applications?filter=PENDING' },
     { label: t('admin.dashboard.pendingClaims'),        value: stats.pendingClaims,        icon: 'bi-file-earmark-medical-fill', grad: 'linear-gradient(135deg,#ef4444,#dc2626)', link: '/admin/claims?filter=PENDING' },
-    { label: t('admin.dashboard.verifiedApplications'), value: stats.verifiedApplications, icon: 'bi-file-earmark-check-fill',   grad: 'linear-gradient(135deg,#22c55e,#16a34a)', link: '/admin/applications?filter=VERIFIED' },
-    { label: t('admin.dashboard.verifiedClaims'), value: stats.verifiedClaims, icon: 'bi-shield-fill-check', grad: 'linear-gradient(135deg,#06b6d4,#0891b2)', link: '/admin/claims?filter=VERIFIED' },
+    { label: t('admin.dashboard.notifications'), value: unreadCount, icon: 'bi-bell-fill', grad: 'linear-gradient(135deg,#a855f7,#7c3aed)', link: '/admin/notifications' },
+    { label: t('admin.dashboard.reminder'), value: todayReminders, icon: 'bi-alarm-fill', grad: 'linear-gradient(135deg,#f59e0b,#b45309)', link: '/admin/autocheck' },
     { label: t('admin.dashboard.totalPackages'),  value: stats.totalPackages,  icon: 'bi-box-seam-fill', grad: 'linear-gradient(135deg,#8b5cf6,#6d28d9)', link: '/admin/packages' },
     { label: t('admin.dashboard.totalPolicyTransfers'), value: stats.totalPolicyTransfers, icon: 'bi-arrow-left-right', grad: 'linear-gradient(135deg,#f59e0b,#b45309)', link: '/admin/policy-transfers' },
   ]
