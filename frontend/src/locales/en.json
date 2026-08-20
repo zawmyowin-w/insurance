@@ -1688,7 +1688,15 @@
       "holdingPeriodDesc": "Customers must hold the policy for this period before requesting a transfer.",
       "yearsLabel": "Years",
       "additionalMonths": "Additional months",
-      "holdingPeriodNote": "Note: Regardless of the holding period, at least one premium payment must be verified by admin before a transfer request can be initiated. After transfer is approved, the new owner can immediately submit claims using the previous owner's payment history."
+      "holdingPeriodNote": "Note: Regardless of the holding period, at least one premium payment must be verified by admin before a transfer request can be initiated. After transfer is approved, the new owner can immediately submit claims using the previous owner's payment history.",
+      "premiumWaiverSectionLabel": "⑬ Premium Waiver Benefit",
+      "premiumWaiverEnabledBadge": "Enabled",
+      "premiumWaiverDisabledBadge": "Disabled",
+      "premiumWaiverEnabled": "Premium Waiver Benefit Enabled",
+      "premiumWaiverDisabled": "Premium Waiver Benefit Disabled",
+      "premiumWaiverEnabledDesc": "Where the policy payer dies, the policyholder may submit an emergency declaration. Upon approval by the administrator, all outstanding premiums shall be waived and the policy shall continue to maturity.",
+      "premiumWaiverDisabledDesc": "Enable this benefit to permit emergency declarations in the event of the policy payer's death.",
+      "premiumWaiverFormNotice": "Important: Create an Emergency form template for this package in Manage Forms to enable policyholders to submit an emergency declaration."
     },
     "insuranceTypes": {
       "title": "Insurance Types",

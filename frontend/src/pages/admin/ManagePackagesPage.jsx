@@ -975,9 +975,11 @@ export default function ManagePackagesPage() {
 
               {/* ── Section 14: PREMIUM WAIVER BENEFIT ── */}
               <div style={{ border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', marginBottom: '0.75rem' }}>
-                <SectionHeader id="waiver" icon="bi-shield-heart"
-                  label="Premium Waiver Benefit"
-                  badge={form.premiumWaiverBenefit ? 'Enabled' : 'Disabled'} />
+                <SectionHeader id="waiver" icon="bi-shield-fill-check"
+                  label={t('admin.packages.premiumWaiverSectionLabel')}
+                  badge={form.premiumWaiverBenefit
+                    ? t('admin.packages.premiumWaiverEnabledBadge')
+                    : t('admin.packages.premiumWaiverDisabledBadge')} />
                 {openSection === 'waiver' && (
                   <div style={{ padding: '1.25rem' }}>
                     <div
@@ -986,21 +988,26 @@ export default function ManagePackagesPage() {
                       <div style={{ width: 44, height: 24, borderRadius: 99, background: form.premiumWaiverBenefit ? '#0891b2' : '#cbd5e1', display: 'flex', alignItems: 'center', padding: '0 3px', flexShrink: 0, transition: 'background 0.2s' }}>
                         <div style={{ width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'transform 0.2s', transform: form.premiumWaiverBenefit ? 'translateX(20px)' : 'translateX(0)' }}></div>
                       </div>
+                      <div style={{ width: 34, height: 34, borderRadius: 9, background: form.premiumWaiverBenefit ? '#ccfbf1' : '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <i className="bi bi-shield-fill-check" style={{ color: form.premiumWaiverBenefit ? '#0f766e' : '#64748b', fontSize: '1rem' }}></i>
+                      </div>
                       <div>
                         <div style={{ fontWeight: 700, fontSize: '0.88rem', color: form.premiumWaiverBenefit ? '#0e7490' : 'var(--text-secondary)' }}>
-                          {form.premiumWaiverBenefit ? 'Premium Waiver Benefit Enabled' : 'Premium Waiver Benefit Disabled'}
+                          {form.premiumWaiverBenefit
+                            ? t('admin.packages.premiumWaiverEnabled')
+                            : t('admin.packages.premiumWaiverDisabled')}
                         </div>
                         <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 2 }}>
                           {form.premiumWaiverBenefit
-                            ? 'If the payer dies, the customer can submit an emergency declaration. On admin approval, all remaining premiums are waived and the policy matures normally.'
-                            : 'Enable to allow emergency declarations when the payer passes away.'}
+                            ? t('admin.packages.premiumWaiverEnabledDesc')
+                            : t('admin.packages.premiumWaiverDisabledDesc')}
                         </div>
                       </div>
                     </div>
                     {form.premiumWaiverBenefit && (
                       <div style={{ background: '#e0f2fe', border: '1px solid #7dd3fc', borderRadius: 8, padding: '0.65rem 0.9rem', fontSize: '0.8rem', color: '#0369a1' }}>
                         <i className="bi bi-info-circle-fill me-1"></i>
-                        <strong>Remember:</strong> Create an <strong>Emergency</strong> form template for this package in Manage Forms so customers can fill their emergency declaration.
+                        {t('admin.packages.premiumWaiverFormNotice')}
                       </div>
                     )}
                   </div>
