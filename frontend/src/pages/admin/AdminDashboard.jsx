@@ -124,6 +124,9 @@ export default function AdminDashboard() {
           <Link to="/admin/payment-methods" className="btn-primary-sm" style={{ fontSize: '0.85rem', padding: '0.4rem 0.9rem', background: '#0891b2' }}>
             <i className="bi bi-qr-code me-1"></i>{t('admin.dashboard.addPaymentMethod')}
           </Link>
+          <Link to="/admin/profile" className="btn-primary-sm" style={{ fontSize: '0.85rem', padding: '0.4rem 0.9rem', background: '#475569' }}>
+            <i className="bi bi-person-circle me-1"></i>{t('admin.dashboard.myProfile')}
+          </Link>
         </div>
       </div>
 
