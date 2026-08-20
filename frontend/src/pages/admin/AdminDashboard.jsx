@@ -118,6 +118,9 @@ export default function AdminDashboard() {
           <Link to="/admin/reports" className="btn-primary-sm" style={{ fontSize: '0.85rem', padding: '0.4rem 0.9rem', background: '#0f766e' }}>
             <i className="bi bi-bar-chart-line me-1"></i>{t('admin.dashboard.reviewReports')}
           </Link>
+          <Link to="/admin/forms" className="btn-primary-sm" style={{ fontSize: '0.85rem', padding: '0.4rem 0.9rem', background: '#2563eb' }}>
+            <i className="bi bi-ui-checks me-1"></i>{t('admin.dashboard.manageFormTemplates')}
+          </Link>
         </div>
       </div>
 
