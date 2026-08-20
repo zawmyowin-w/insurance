@@ -7,12 +7,13 @@ import FormDetailModal from '../../components/FormDetailModal'
 import DigitalSignatureCanvas from '../../components/DigitalSignatureCanvas'
 import { apiError } from '../../utils/apiError'
 
-const FILTERS = ['ALL', 'PENDING', 'VERIFIED', 'REVISION_REQUESTED', 'REJECTED']
+const FILTERS = ['ALL', 'PENDING', 'VERIFIED', 'APPROVED', 'REVISION_REQUESTED', 'REJECTED']
 
 export default function AgentClaimsPage() {
   const { t, i18n } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const [claims, setClaims] = useState([])
+  const [statusCounts, setStatusCounts] = useState({})
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState(null)
   const [note, setNote] = useState('')
@@ -32,6 +33,7 @@ export default function AgentClaimsPage() {
   const CLAIM_STATUS_MAP = {
     PENDING: t('agent.claims.statusPending'),
     VERIFIED: t('agent.claims.statusVerified'),
+    APPROVED: t('agent.claims.statusApproved'),
     REVISION_REQUESTED: t('agent.claims.statusRevision'),
     REJECTED: t('agent.claims.statusRejected'),
   }
@@ -40,19 +42,42 @@ export default function AgentClaimsPage() {
     ALL:                t('agent.apps.filterAll'),
     PENDING:            t('agent.apps.filterPending'),
     VERIFIED:           t('agent.apps.filterVerified'),
+    APPROVED:           t('agent.apps.filterApproved'),
     REVISION_REQUESTED: t('agent.apps.filterRevision'),
     REJECTED:           t('agent.apps.filterRejected'),
   }
 
   const fetchClaims = () => {
     setLoading(true)
-    const url = filter && filter !== 'ALL' ? `/agent/claims?status=${filter}` : '/agent/claims?status=ALL'
-    api.get(url)
-      .then(res => setClaims(Array.isArray(res.data) ? res.data : []))
-      .catch(() => setClaims([]))
+    const allUrl = '/agent/claims?status=ALL'
+    const selectedUrl = filter !== 'ALL' ? `/agent/claims?status=${filter}` : allUrl
+    const selectedRequest = api.get(selectedUrl)
+    const allRequest = filter === 'ALL' ? selectedRequest : api.get(allUrl)
+
+    Promise.all([selectedRequest, allRequest])
+      .then(([selectedRes, allRes]) => {
+        const selectedClaims = Array.isArray(selectedRes.data) ? selectedRes.data : []
+        const allClaims = Array.isArray(allRes.data) ? allRes.data : []
+        const counts = allClaims.reduce((result, claim) => {
+          result.ALL += 1
+          result[claim.status] = (result[claim.status] || 0) + 1
+          return result
+        }, { ALL: 0 })
+
+        setClaims(selectedClaims)
+        setStatusCounts(counts)
+      })
+      .catch(() => {
+        setClaims([])
+        setStatusCounts({})
+      })
       .finally(() => setLoading(false))
   }
-  useEffect(() => { fetchClaims() }, [filter])
+  useEffect(() => {
+    fetchClaims()
+    const refreshInterval = window.setInterval(fetchClaims, 30000)
+    return () => window.clearInterval(refreshInterval)
+  }, [filter])
 
   const clearActions = () => {
     setSelected(null); setNote('')
@@ -114,14 +139,31 @@ export default function AgentClaimsPage() {
 
       {/* Filter tabs */}
       <div className="d-flex gap-2 flex-wrap mb-4">
-        {FILTERS.map(f => (
-          <button key={f} onClick={() => setSearchParams(f === 'ALL' ? {} : { filter: f })} style={{
-            padding: '0.35rem 0.85rem', borderRadius: 8, fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer',
-            border: `1.5px solid ${filter === f ? 'var(--primary)' : 'var(--border)'}`,
-            background: filter === f ? 'var(--primary)' : 'var(--bg-card)',
-            color: filter === f ? '#fff' : 'var(--text-secondary)'
-          }}>{FILTER_LABELS[f] || f}</button>
-        ))}
+        {FILTERS.map(f => {
+          const count = statusCounts[f] || 0
+          const isActive = filter === f
+          return (
+            <button key={f} onClick={() => setSearchParams(f === 'ALL' ? {} : { filter: f })} style={{
+              padding: '0.35rem 0.7rem 0.35rem 0.85rem', borderRadius: 8, fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer',
+              border: `1.5px solid ${isActive ? 'var(--primary)' : 'var(--border)'}`,
+              background: isActive ? 'var(--primary)' : 'var(--bg-card)',
+              color: isActive ? '#fff' : 'var(--text-secondary)',
+              display: 'inline-flex', alignItems: 'center', gap: '0.45rem'
+            }}>
+              {FILTER_LABELS[f] || f}
+              {count > 0 && (
+                <span style={{
+                  minWidth: 18, height: 18, padding: '0 0.3rem', borderRadius: 99,
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  background: isActive ? '#fff' : '#dc2626', color: isActive ? 'var(--primary)' : '#fff',
+                  fontSize: '0.67rem', fontWeight: 800, lineHeight: 1
+                }}>
+                  {count > 99 ? '99+' : count}
+                </span>
+              )}
+            </button>
+          )
+        })}
       </div>
 
       {loading ? (

@@ -1079,6 +1079,7 @@
       "signatureRequired": "တောင်းဆိုလွှာပုံစံ အတည်မပြုမီ လက်မှတ်ရေးထိုးပါ",
       "statusPending": "စစ်ဆေးဆဲ",
       "statusVerified": "အတည်ပြုပြီး",
+      "statusApproved": "ခွင့်ပြုပြီး",
       "statusRevision": "ပြင်ဆင်ရန်",
       "statusRejected": "ပယ်ချပြီးပါပြီး"
     },
