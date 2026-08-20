@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Digital Insurance Portal — ER Diagram</title>
+  <style>
+    :root {
+      --ink: #17213a;
+      --muted: #596780;
+      --line: #9aabc5;
+      --paper: #ffffff;
+      --canvas: #f4f7fc;
+      --blue: #2563eb;
+      --violet: #7c3aed;
+      --green: #059669;
+      --orange: #d97706;
+      --slate: #475569;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--canvas);
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    header {
+      padding: 28px clamp(22px, 5vw, 68px) 24px;
+      background: linear-gradient(135deg, #0f2b65, #2457b8);
+      color: white;
+      box-shadow: 0 5px 22px rgba(22, 54, 115, .2);
+    }
+    h1 { margin: 0; font-size: clamp(1.45rem, 3vw, 2.25rem); letter-spacing: -.03em; }
+    header p { margin: 8px 0 0; color: #dceaff; font-size: .95rem; }
+    .meta { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+    .chip { padding: 5px 10px; border-radius: 999px; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.2); font-size: .78rem; font-weight: 700; }
+    main { padding: 28px clamp(18px, 4vw, 58px) 44px; }
+    .legend {
+      display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+      max-width: 2020px; margin: 0 auto 14px; padding: 13px 16px;
+      background: white; border: 1px solid #dce5f2; border-radius: 12px;
+      color: var(--muted); font-size: .82rem;
+    }
+    .legend strong { color: var(--ink); }
+    .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; }
+    .diagram-wrap {
+      max-width: 2020px; margin: 0 auto; overflow: auto; background: var(--paper);
+      border: 1px solid #dce5f2; border-radius: 16px; box-shadow: 0 12px 30px rgba(34, 55, 93, .09);
+    }
+    svg { display: block; min-width: 1980px; width: 100%; height: auto; }
+    .entity rect { stroke-width: 1.4; }
+    .entity .head { font-size: 15px; font-weight: 800; letter-spacing: .04em; }
+    .entity .field { font-size: 11.8px; fill: #28354d; }
+    .entity .key { font-size: 10.7px; font-weight: 800; }
+    .entity .rule { stroke: rgba(29, 45, 71, .16); stroke-width: 1; }
+    .connector { fill: none; stroke: var(--line); stroke-width: 2; marker-end: url(#arrow); }
+    .connector.dashed { stroke-dasharray: 6 5; }
+    .relation-label { font-size: 11px; font-weight: 800; fill: #65758f; paint-order: stroke; stroke: white; stroke-width: 4px; stroke-linejoin: round; }
+    .group-label { font-size: 13px; font-weight: 800; letter-spacing: .12em; fill: #6b7a91; }
+    .note { font-size: 11px; fill: #71809a; font-style: italic; }
+    footer { max-width: 2020px; margin: 16px auto 0; color: #68768d; font-size: .8rem; line-height: 1.55; }
+    @media print {
+      body { background: white; }
+      header { padding: 16px 24px; box-shadow: none; }
+      main { padding: 14px; }
+      .diagram-wrap { border: 0; box-shadow: none; overflow: visible; }
+      svg { width: 100%; min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Digital Insurance Portal — Entity Relationship Diagram</h1>
+    <p>Derived from the Spring JPA entity model. Core foreign-key relationships are shown with 1 : N arrows.</p>
+    <div class="meta">
+      <span class="chip">MySQL / JPA</span>
+      <span class="chip">16 Entity Tables</span>
+      <span class="chip">Policy, Payment, Claim &amp; Reporting Workflows</span>
+    </div>
+  </header>
+
+  <main>
+    <div class="legend">
+      <span><strong>PK</strong> = Primary Key</span>
+      <span><strong>FK</strong> = Foreign Key</span>
+      <span><strong>1 ──&lt;</strong> = one-to-many relationship</span>
+      <span><span class="dot" style="background:#2563eb"></span>Identity</span>
+      <span><span class="dot" style="background:#059669"></span>Product / Configuration</span>
+      <span><span class="dot" style="background:#7c3aed"></span>Policy Lifecycle</span>
+      <span><span class="dot" style="background:#d97706"></span>Financial / Claim</span>
+    </div>
+
+    <div class="diagram-wrap">
+      <svg viewBox="0 0 1980 1300" role="img" aria-label="Insurance portal database entity relationship diagram">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#9aabc5"/>
+          </marker>
+        </defs>
+
+        <rect x="0" y="0" width="1980" height="1300" fill="#fbfcff"/>
+        <text x="50" y="42" class="group-label">IDENTITY &amp; REFERENCE DATA</text>
+        <text x="405" y="42" class="group-label">PRODUCT &amp; FORM CONFIGURATION</text>
+        <text x="805" y="42" class="group-label">POLICY LIFECYCLE</text>
+        <text x="1265" y="42" class="group-label">CLAIMS &amp; PAYMENTS</text>
+        <text x="1650" y="42" class="group-label">OPERATIONS</text>
+
+        <!-- Relationship connectors, behind entity cards -->
+        <path class="connector" d="M 665 250 H 805"/>
+        <text x="686" y="239" class="relation-label">1 ──&lt; package_id</text>
+
+        <path class="connector" d="M 665 568 H 720 V 504 H 805"/>
+        <text x="676" y="492" class="relation-label">1 ──&lt; package_id</text>
+
+        <path class="connector" d="M 535 702 V 772"/>
+        <text x="548" y="742" class="relation-label">1 ──&lt; template_id</text>
+
+        <path class="connector" d="M 1135 255 H 1265"/>
+        <text x="1150" y="243" class="relation-label">1 ──&lt; application_id</text>
+
+        <path class="connector" d="M 1135 470 H 1200 V 575 H 1265"/>
+        <text x="1155" y="552" class="relation-label">1 ──&lt; application_id</text>
+
+        <path class="connector" d="M 970 500 V 596"/>
+        <text x="984" y="552" class="relation-label">1 ──&lt; application_id</text>
+
+        <path class="connector dashed" d="M 310 220 H 365 V 94 H 768 V 205 H 805"/>
+        <text x="540" y="86" class="relation-label">1 ──&lt; customer / agent / approved_by</text>
+
+        <path class="connector dashed" d="M 310 315 H 350 V 1040 H 1565"/>
+        <text x="930" y="1029" class="relation-label">1 ──&lt; recipient_id / customer_id</text>
+
+        <!-- Users -->
+        <g class="entity">
+          <rect x="50" y="85" width="260" height="270" rx="12" fill="#eaf1ff" stroke="#6590e9"/>
+          <text x="70" y="112" class="head" fill="#1e50b6">USERS</text>
+          <line x1="70" x2="290" y1="124" y2="124" class="rule"/>
+          <text x="70" y="148" class="key" fill="#1e50b6">PK</text><text x="104" y="148" class="field">id</text>
+          <text x="70" y="168" class="key" fill="#1e50b6">UQ</text><text x="104" y="168" class="field">email</text>
+          <text x="70" y="190" class="field">name, password, role</text>
+          <text x="70" y="210" class="field">phone, address</text>
+          <text x="70" y="230" class="field">insurance_type (agent)</text>
+          <text x="70" y="250" class="field">profile_picture, active</text>
+          <text x="70" y="270" class="field">created_at, updated_at</text>
+          <line x1="70" x2="290" y1="284" y2="284" class="rule"/>
+          <text x="70" y="309" class="note">Customer / Agent / Admin roles</text>
+          <text x="70" y="329" class="note">Parent for workflow ownership</text>
+        </g>
+
+        <!-- Insurance Types -->
+        <g class="entity">
+          <rect x="50" y="440" width="260" height="180" rx="12" fill="#ecfdf5" stroke="#55b78d"/>
+          <text x="70" y="467" class="head" fill="#047857">INSURANCE_TYPES</text>
+          <line x1="70" x2="290" y1="480" y2="480" class="rule"/>
+          <text x="70" y="504" class="key" fill="#047857">PK</text><text x="104" y="504" class="field">id</text>
+          <text x="70" y="524" class="key" fill="#047857">UQ</text><text x="104" y="524" class="field">name</text>
+          <text x="70" y="546" class="field">description</text>
+          <text x="70" y="566" class="field">benefits, rules</text>
+          <text x="70" y="586" class="field">created_at</text>
+          <text x="70" y="606" class="note">Logical lookup for package.type</text>
+        </g>
+
+        <!-- Payment Methods -->
+        <g class="entity">
+          <rect x="50" y="700" width="260" height="190" rx="12" fill="#effcf6" stroke="#65b991"/>
+          <text x="70" y="727" class="head" fill="#047857">PAYMENT_METHOD_CONFIGS</text>
+          <line x1="70" x2="290" y1="740" y2="740" class="rule"/>
+          <text x="70" y="764" class="key" fill="#047857">PK</text><text x="104" y="764" class="field">id</text>
+          <text x="70" y="784" class="key" fill="#047857">UQ</text><text x="104" y="784" class="field">method_key</text>
+          <text x="70" y="806" class="field">name, color</text>
+          <text x="70" y="826" class="field">logo_path, qr_code_path</text>
+          <text x="70" y="846" class="field">active</text>
+          <text x="70" y="866" class="field">created_at, updated_at</text>
+        </g>
+
+        <!-- Insurance Packages -->
+        <g class="entity">
+          <rect x="405" y="85" width="260" height="320" rx="12" fill="#ecfdf5" stroke="#55b78d"/>
+          <text x="425" y="112" class="head" fill="#047857">INSURANCE_PACKAGES</text>
+          <line x1="425" x2="645" y1="124" y2="124" class="rule"/>
+          <text x="425" y="148" class="key" fill="#047857">PK</text><text x="459" y="148" class="field">id</text>
+          <text x="425" y="170" class="field">name, type, description</text>
+          <text x="425" y="190" class="field">coverage_min, coverage_max</text>
+          <text x="425" y="210" class="field">premium_rate, duration_tiers</text>
+          <text x="425" y="230" class="field">payment_frequency</text>
+          <text x="425" y="250" class="field">allowed_payment_frequencies</text>
+          <text x="425" y="270" class="field">premium_waiver_benefit</text>
+          <text x="425" y="290" class="field">eligibility, exclusions, terms</text>
+          <text x="425" y="310" class="field">active, created_at, updated_at</text>
+          <line x1="425" x2="645" y1="325" y2="325" class="rule"/>
+          <text x="425" y="350" class="note">1 ──&lt; Form Templates</text>
+          <text x="425" y="370" class="note">1 ──&lt; Policy Applications</text>
+        </g>
+
+        <!-- Form Templates -->
+        <g class="entity">
+          <rect x="405" y="480" width="260" height="222" rx="12" fill="#eef7ff" stroke="#75aee8"/>
+          <text x="425" y="507" class="head" fill="#1265b0">FORM_TEMPLATES</text>
+          <line x1="425" x2="645" y1="520" y2="520" class="rule"/>
+          <text x="425" y="544" class="key" fill="#1265b0">PK</text><text x="459" y="544" class="field">id</text>
+          <text x="425" y="566" class="key" fill="#1265b0">FK</text><text x="459" y="566" class="field">package_id → packages.id</text>
+          <text x="425" y="588" class="key" fill="#1265b0">UQ</text><text x="459" y="588" class="field">(package_id, form_type)</text>
+          <text x="425" y="610" class="field">name, form_type</text>
+          <text x="425" y="630" class="field">description, active</text>
+          <text x="425" y="650" class="field">created_at, updated_at</text>
+          <text x="425" y="680" class="note">1 ──&lt; Form Fields</text>
+        </g>
+
+        <!-- Form Fields -->
+        <g class="entity">
+          <rect x="405" y="772" width="260" height="175" rx="12" fill="#f3efff" stroke="#a98ae8"/>
+          <text x="425" y="799" class="head" fill="#6d35c1">FORM_FIELDS</text>
+          <line x1="425" x2="645" y1="812" y2="812" class="rule"/>
+          <text x="425" y="836" class="key" fill="#6d35c1">PK</text><text x="459" y="836" class="field">id</text>
+          <text x="425" y="858" class="key" fill="#6d35c1">FK</text><text x="459" y="858" class="field">template_id → templates.id</text>
+          <text x="425" y="880" class="field">field_label, field_type</text>
+          <text x="425" y="900" class="field">field_options, required</text>
+          <text x="425" y="920" class="field">sort_order</text>
+        </g>
+
+        <!-- Feedback -->
+        <g class="entity">
+          <rect x="405" y="1025" width="260" height="175" rx="12" fill="#fff8df" stroke="#e7ba4a"/>
+          <text x="425" y="1052" class="head" fill="#a96800">FEEDBACKS</text>
+          <line x1="425" x2="645" y1="1065" y2="1065" class="rule"/>
+          <text x="425" y="1089" class="key" fill="#a96800">PK</text><text x="459" y="1089" class="field">id</text>
+          <text x="425" y="1111" class="key" fill="#a96800">FK</text><text x="459" y="1111" class="field">customer_id → users.id</text>
+          <text x="425" y="1133" class="field">rating, category, message</text>
+          <text x="425" y="1153" class="field">read, created_at</text>
+        </g>
+
+        <!-- Policy Applications -->
+        <g class="entity">
+          <rect x="805" y="85" width="330" height="415" rx="12" fill="#f4efff" stroke="#a98ae8"/>
+          <text x="825" y="112" class="head" fill="#6d35c1">POLICY_APPLICATIONS</text>
+          <line x1="825" x2="1115" y1="124" y2="124" class="rule"/>
+          <text x="825" y="148" class="key" fill="#6d35c1">PK</text><text x="859" y="148" class="field">id</text>
+          <text x="825" y="170" class="key" fill="#6d35c1">FK</text><text x="859" y="170" class="field">customer_id → users.id</text>
+          <text x="825" y="192" class="key" fill="#6d35c1">FK</text><text x="859" y="192" class="field">agent_id → users.id</text>
+          <text x="825" y="214" class="key" fill="#6d35c1">FK</text><text x="859" y="214" class="field">package_id → packages.id</text>
+          <text x="825" y="236" class="key" fill="#6d35c1">FK</text><text x="859" y="236" class="field">approved_by_id → users.id</text>
+          <text x="825" y="260" class="field">policy_number, status, risk_level</text>
+          <text x="825" y="280" class="field">premium_amount, form_data</text>
+          <text x="825" y="300" class="field">selected_payment_frequency</text>
+          <text x="825" y="320" class="field">claim_eligible_from</text>
+          <text x="825" y="340" class="field">emergency_status, emergency_form_data</text>
+          <text x="825" y="360" class="field">waiver &amp; signature fields</text>
+          <text x="825" y="380" class="field">documents_path, created_at</text>
+          <line x1="825" x2="1115" y1="395" y2="395" class="rule"/>
+          <text x="825" y="420" class="note">1 ──&lt; Claims · Payments · Transfers</text>
+          <text x="825" y="442" class="note">Approved application becomes active policy</text>
+        </g>
+
+        <!-- Policy Transfers -->
+        <g class="entity">
+          <rect x="805" y="596" width="330" height="275" rx="12" fill="#fff5e8" stroke="#e7a448"/>
+          <text x="825" y="623" class="head" fill="#b65f05">POLICY_TRANSFERS</text>
+          <line x1="825" x2="1115" y1="636" y2="636" class="rule"/>
+          <text x="825" y="660" class="key" fill="#b65f05">PK</text><text x="859" y="660" class="field">id</text>
+          <text x="825" y="682" class="key" fill="#b65f05">FK</text><text x="859" y="682" class="field">application_id → applications.id</text>
+          <text x="825" y="704" class="key" fill="#b65f05">FK</text><text x="859" y="704" class="field">from_customer_id → users.id</text>
+          <text x="825" y="726" class="key" fill="#b65f05">FK</text><text x="859" y="726" class="field">to_customer_id → users.id</text>
+          <text x="825" y="748" class="key" fill="#b65f05">FK</text><text x="859" y="748" class="field">approved_by_id → users.id</text>
+          <text x="825" y="770" class="field">status, relationship, reason</text>
+          <text x="825" y="790" class="field">evidence_files_json</text>
+          <text x="825" y="810" class="field">signatures, approved_at</text>
+          <text x="825" y="830" class="field">created_at, updated_at</text>
+        </g>
+
+        <!-- Monthly Reports -->
+        <g class="entity">
+          <rect x="805" y="955" width="330" height="225" rx="12" fill="#f5f3ff" stroke="#b0a1df"/>
+          <text x="825" y="982" class="head" fill="#6254a5">MONTHLY_REPORT_SNAPSHOTS</text>
+          <line x1="825" x2="1115" y1="995" y2="995" class="rule"/>
+          <text x="825" y="1019" class="key" fill="#6254a5">PK</text><text x="859" y="1019" class="field">id</text>
+          <text x="825" y="1041" class="field">year, month</text>
+          <text x="825" y="1061" class="field">period_start, period_end</text>
+          <text x="825" y="1081" class="field">total_revenue, total_claims_paid</text>
+          <text x="825" y="1101" class="field">net_profit, policy / claim totals</text>
+          <text x="825" y="1121" class="field">pdf_path, created_at</text>
+          <text x="825" y="1150" class="note">Archived reporting snapshot · no FK</text>
+        </g>
+
+        <!-- Claims -->
+        <g class="entity">
+          <rect x="1265" y="85" width="280" height="285" rx="12" fill="#fff5e8" stroke="#e7a448"/>
+          <text x="1285" y="112" class="head" fill="#b65f05">CLAIMS</text>
+          <line x1="1285" x2="1525" y1="124" y2="124" class="rule"/>
+          <text x="1285" y="148" class="key" fill="#b65f05">PK</text><text x="1319" y="148" class="field">id</text>
+          <text x="1285" y="170" class="key" fill="#b65f05">FK</text><text x="1319" y="170" class="field">application_id → applications.id</text>
+          <text x="1285" y="192" class="key" fill="#b65f05">FK</text><text x="1319" y="192" class="field">customer_id → users.id</text>
+          <text x="1285" y="214" class="key" fill="#b65f05">FK</text><text x="1319" y="214" class="field">agent_id → users.id (nullable)</text>
+          <text x="1285" y="238" class="field">claim_type, amount, status</text>
+          <text x="1285" y="258" class="field">incident_date, form_data</text>
+          <text x="1285" y="278" class="field">documents, signatures, notes</text>
+          <text x="1285" y="298" class="field">revision_deadline</text>
+          <text x="1285" y="318" class="field">created_at, updated_at</text>
+        </g>
+
+        <!-- Payments -->
+        <g class="entity">
+          <rect x="1265" y="465" width="280" height="250" rx="12" fill="#effcf6" stroke="#65b991"/>
+          <text x="1285" y="492" class="head" fill="#047857">PAYMENTS</text>
+          <line x1="1285" x2="1525" y1="504" y2="504" class="rule"/>
+          <text x="1285" y="528" class="key" fill="#047857">PK</text><text x="1319" y="528" class="field">id</text>
+          <text x="1285" y="550" class="key" fill="#047857">FK</text><text x="1319" y="550" class="field">application_id → applications.id</text>
+          <text x="1285" y="572" class="key" fill="#047857">FK</text><text x="1319" y="572" class="field">customer_id → users.id</text>
+          <text x="1285" y="596" class="field">amount, method, payment_type</text>
+          <text x="1285" y="616" class="field">status, period_number, batch_ref</text>
+          <text x="1285" y="636" class="field">receipt_path, notes</text>
+          <text x="1285" y="656" class="field">submitted_at, verified_at</text>
+          <text x="1285" y="676" class="field">created_at, updated_at</text>
+          <text x="1285" y="700" class="note">method logically uses method_key</text>
+        </g>
+
+        <!-- Reporting Control -->
+        <g class="entity">
+          <rect x="1265" y="800" width="280" height="175" rx="12" fill="#f5f3ff" stroke="#b0a1df"/>
+          <text x="1285" y="827" class="head" fill="#6254a5">ANALYTICS_RESET_RECORDS</text>
+          <line x1="1285" x2="1525" y1="840" y2="840" class="rule"/>
+          <text x="1285" y="864" class="key" fill="#6254a5">PK</text><text x="1319" y="864" class="field">id</text>
+          <text x="1285" y="886" class="field">reset_at, period_start</text>
+          <text x="1285" y="906" class="field">pdf_path, created_at</text>
+          <text x="1285" y="940" class="note">Analytics control record · no FK</text>
+        </g>
+
+        <!-- Notifications -->
+        <g class="entity">
+          <rect x="1650" y="85" width="270" height="225" rx="12" fill="#eef7ff" stroke="#75aee8"/>
+          <text x="1670" y="112" class="head" fill="#1265b0">NOTIFICATIONS</text>
+          <line x1="1670" x2="1900" y1="124" y2="124" class="rule"/>
+          <text x="1670" y="148" class="key" fill="#1265b0">PK</text><text x="1704" y="148" class="field">id</text>
+          <text x="1670" y="170" class="key" fill="#1265b0">FK</text><text x="1704" y="170" class="field">recipient_id → users.id</text>
+          <text x="1670" y="194" class="field">title, message, type</text>
+          <text x="1670" y="214" class="field">target_role, read</text>
+          <text x="1670" y="234" class="field">reference_id, reference_type</text>
+          <text x="1670" y="254" class="field">created_at</text>
+          <text x="1670" y="284" class="note">User inbox / workflow alerts</text>
+        </g>
+
+        <!-- Scheduler -->
+        <g class="entity">
+          <rect x="1650" y="385" width="270" height="195" rx="12" fill="#f2f4f7" stroke="#9aa8bd"/>
+          <text x="1670" y="412" class="head" fill="#475569">SCHEDULER_SETTINGS</text>
+          <line x1="1670" x2="1900" y1="424" y2="424" class="rule"/>
+          <text x="1670" y="448" class="key" fill="#475569">PK</text><text x="1704" y="448" class="field">id (singleton)</text>
+          <text x="1670" y="470" class="field">enabled</text>
+          <text x="1670" y="490" class="field">verify_cron, reminder_cron</text>
+          <text x="1670" y="510" class="field">revision_cleanup_cron</text>
+          <text x="1670" y="530" class="field">min_pending_hours</text>
+          <text x="1670" y="550" class="field">updated_at</text>
+        </g>
+
+        <!-- Auto check logs -->
+        <g class="entity">
+          <rect x="1650" y="650" width="270" height="195" rx="12" fill="#f2f4f7" stroke="#9aa8bd"/>
+          <text x="1670" y="677" class="head" fill="#475569">AUTO_CHECK_LOGS</text>
+          <line x1="1670" x2="1900" y1="690" y2="690" class="rule"/>
+          <text x="1670" y="714" class="key" fill="#475569">PK</text><text x="1704" y="714" class="field">id</text>
+          <text x="1670" y="736" class="field">check_type, status</text>
+          <text x="1670" y="756" class="field">summary, details</text>
+          <text x="1670" y="776" class="field">total_checked, affected_count</text>
+          <text x="1670" y="796" class="field">ai_assisted, created_at</text>
+          <text x="1670" y="826" class="note">Scheduled job audit trail · no FK</text>
+        </g>
+
+        <text x="50" y="1255" class="note">Notes: InsurancePackage.type ↔ InsuranceType.name and Payment.method ↔ PaymentMethodConfig.method_key are application-level logical references, not database foreign keys. Form data, evidence, benefits, duration tiers, and multi-file paths are stored as JSON/TEXT fields where noted.</text>
+      </svg>
+    </div>
+    <footer>
+      This ERD documents the current domain model, including configurable forms, policy applications, premium payment schedules, premium-waiver emergency declarations, claims, policy transfers, and reporting/automation records.
+    </footer>
+  </main>
+</body>
+</html>
