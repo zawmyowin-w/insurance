@@ -7,7 +7,7 @@ import api from '../../services/api'
 export default function AgentDashboard() {
   const { user } = useAuth()
   const { t, i18n } = useTranslation()
-  const [stats, setStats] = useState({ allApplications: 0, pending: 0, verified: 0, pendingClaims: 0, verifiedClaims: 0, unreadNotifications: 0 })
+  const [stats, setStats] = useState({ allApplications: 0, allClaims: 0, pending: 0, verified: 0, pendingClaims: 0, verifiedClaims: 0, unreadNotifications: 0 })
   const [recentApps, setRecentApps] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -40,7 +40,7 @@ export default function AgentDashboard() {
   const statCards = [
     { label: t('agent.dash.allApplications'), value: stats.allApplications,    icon: 'bi-file-earmark-text-fill',    grad: 'linear-gradient(135deg,#f59e0b,#d97706)', link: '/agent/applications' },
     { label: t('agent.dash.verifiedApps'),  value: stats.verified,            icon: 'bi-check-circle-fill',          grad: 'linear-gradient(135deg,#22c55e,#16a34a)', link: '/agent/applications?filter=VERIFIED' },
-    { label: t('agent.dash.pendingClaims'), value: stats.pendingClaims,        icon: 'bi-file-earmark-medical-fill', grad: 'linear-gradient(135deg,#ef4444,#dc2626)', link: '/agent/claims?filter=PENDING', allLink: '/agent/claims', allLabel: t('agent.dash.allClaims') },
+    { label: t('agent.dash.allClaims'),       value: stats.allClaims,            icon: 'bi-file-earmark-medical-fill', grad: 'linear-gradient(135deg,#ef4444,#dc2626)', link: '/agent/claims' },
     { label: t('agent.dash.verifiedClaims'),value: stats.verifiedClaims,       icon: 'bi-shield-fill-check',         grad: 'linear-gradient(135deg,#3b82f6,#1d4ed8)', link: '/agent/claims?filter=VERIFIED' },
     { label: t('agent.dash.notifications'), value: stats.unreadNotifications,  icon: 'bi-bell-fill',                 grad: 'linear-gradient(135deg,#a855f7,#7c3aed)', link: '/agent/notifications' },
   ]
