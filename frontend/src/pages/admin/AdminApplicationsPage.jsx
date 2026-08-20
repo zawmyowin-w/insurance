@@ -13,6 +13,7 @@ export default function AdminApplicationsPage() {
   const { t } = useTranslation()
   const [searchParams] = useSearchParams()
   const [apps, setApps] = useState([])
+  const [statusCounts, setStatusCounts] = useState({})
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState(() => {
     const f = searchParams.get('filter')
@@ -42,21 +43,45 @@ export default function AdminApplicationsPage() {
 
   const fetchApps = () => {
     // EMERGENCY filter: fetch ALL, then client-side filter by emergencyStatus=PENDING
-    const url = (filter === 'EMERGENCY' || filter === 'ALL')
-      ? '/admin/applications'
+    const allUrl = '/admin/applications'
+    const selectedUrl = (filter === 'EMERGENCY' || filter === 'ALL')
+      ? allUrl
       : `/admin/applications?status=${filter}`
-    api.get(url)
-      .then(res => {
-        let data = Array.isArray(res.data) ? res.data : []
+    const selectedRequest = api.get(selectedUrl)
+    const allRequest = (filter === 'EMERGENCY' || filter === 'ALL')
+      ? selectedRequest
+      : api.get(allUrl)
+
+    Promise.all([selectedRequest, allRequest])
+      .then(([selectedRes, allRes]) => {
+        let selectedApps = Array.isArray(selectedRes.data) ? selectedRes.data : []
+        const allApps = Array.isArray(allRes.data) ? allRes.data : []
         if (filter === 'EMERGENCY') {
-          data = data.filter(a => a.emergencyStatus === 'PENDING')
+          selectedApps = selectedApps.filter(a => a.emergencyStatus === 'PENDING')
         }
-        setApps(data)
+
+        const counts = allApps.reduce((result, app) => {
+          result.ALL += 1
+          result[app.status] = (result[app.status] || 0) + 1
+          if (app.emergencyStatus === 'PENDING') result.EMERGENCY += 1
+          return result
+        }, { ALL: 0, EMERGENCY: 0 })
+
+        setApps(selectedApps)
+        setStatusCounts(counts)
       })
-      .catch(() => setApps([]))
+      .catch(() => {
+        setApps([])
+        setStatusCounts({})
+      })
       .finally(() => setLoading(false))
   }
-  useEffect(() => { setLoading(true); fetchApps() }, [filter])
+  useEffect(() => {
+    setLoading(true)
+    fetchApps()
+    const refreshInterval = window.setInterval(fetchApps, 30000)
+    return () => window.clearInterval(refreshInterval)
+  }, [filter])
 
   const handleWaiverApprove = async (id) => {
     if (!waiverSignature) { toast.error('Admin signature is required'); return }
@@ -140,15 +165,33 @@ export default function AdminApplicationsPage() {
 
       {/* Status filter buttons */}
       <div className="d-flex gap-2 mb-4 flex-wrap">
-        {STATUS_KEYS.map(f => (
-          <button key={f} onClick={() => setFilter(f)} style={{
-            padding: '0.4rem 1rem', borderRadius: 20, border: '1px solid',
-            borderColor: filter === f ? 'var(--primary)' : 'var(--border)',
-            background: filter === f ? 'var(--primary)' : 'var(--bg-card)',
-            color: filter === f ? '#fff' : 'var(--text-secondary)',
-            fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.15s'
-          }}>{statusLabel(f)}</button>
-        ))}
+        {STATUS_KEYS.map(f => {
+          const count = statusCounts[f] || 0
+          const isActive = filter === f
+          return (
+            <button key={f} onClick={() => setFilter(f)} style={{
+              padding: '0.4rem 0.75rem 0.4rem 1rem', borderRadius: 20, border: '1px solid',
+              borderColor: isActive ? 'var(--primary)' : 'var(--border)',
+              background: isActive ? 'var(--primary)' : 'var(--bg-card)',
+              color: isActive ? '#fff' : 'var(--text-secondary)',
+              fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.15s',
+              display: 'inline-flex', alignItems: 'center', gap: '0.45rem'
+            }}>
+              {statusLabel(f)}
+              {count > 0 && (
+                <span style={{
+                  minWidth: 18, height: 18, padding: '0 0.3rem', borderRadius: 99,
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  background: isActive ? '#fff' : '#dc2626',
+                  color: isActive ? 'var(--primary)' : '#fff',
+                  fontSize: '0.67rem', fontWeight: 800, lineHeight: 1
+                }}>
+                  {count > 99 ? '99+' : count}
+                </span>
+              )}
+            </button>
+          )
+        })}
       </div>
 
       {loading ? (
