@@ -22,6 +22,15 @@ const formatMyanmarDateTime = epochMs => new Intl.DateTimeFormat('en-GB', {
   hour: '2-digit',
   minute: '2-digit',
 }).format(new Date(epochMs))
+// The reset timestamp remains the real analytics boundary. This display-only
+// offset keeps the reset day itself out of the period label without changing
+// any report calculations or stored data.
+const formatDisplayedPeriodStart = resetAt => {
+  const start = new Date(resetAt)
+  if (Number.isNaN(start.getTime())) return '—'
+  start.setDate(start.getDate() + 1)
+  return start.toLocaleDateString('en', { day: '2-digit', month: 'short', year: 'numeric' })
+}
 
 // ── SVG Chart Primitives ──────────────────────────────────────────────────────
 function niceMax(rawMax, ticks) {
@@ -463,7 +472,7 @@ export default function AdminReportsPage() {
                 <i className="bi bi-calendar2-range" style={{ fontSize: '1rem' }} />
                 <span>{t('admin.reports.reportPeriodLabel')}</span>
                 <span style={{ fontWeight: 800, color: '#78350f' }}>
-                  {lastReset ? new Date(lastReset.resetAt).toLocaleDateString('en', { day: '2-digit', month: 'short', year: 'numeric' }) : t('admin.reports.inception')}
+                  {lastReset ? formatDisplayedPeriodStart(lastReset.resetAt) : t('admin.reports.inception')}
                 </span>
                 <span style={{ opacity: 0.6 }}>→</span>
                 <span style={{ fontWeight: 800, color: '#78350f' }}>{formatMyanmarDateTime(currentTimeMs)}</span>
@@ -506,7 +515,7 @@ export default function AdminReportsPage() {
           <div style={{ marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 6, background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 20, padding: '0.25rem 0.85rem', fontSize: '0.78rem', fontWeight: 600, color: '#1d4ed8' }}>
             <i className="bi bi-calendar2-range"></i>
             {lastReset
-              ? <>{t('admin.reports.currentPeriodLabel')} {new Date(lastReset.resetAt).toLocaleDateString('en', { day: '2-digit', month: 'short', year: 'numeric' })} → {formatMyanmarDateTime(currentTimeMs)}</>
+              ? <>{t('admin.reports.currentPeriodLabel')} {formatDisplayedPeriodStart(lastReset.resetAt)} → {formatMyanmarDateTime(currentTimeMs)}</>
               : <>{t('admin.reports.currentPeriodLabel')} {t('admin.reports.inception')} → {formatMyanmarDateTime(currentTimeMs)}</>
             }
           </div>
@@ -958,7 +967,7 @@ export default function AdminReportsPage() {
                 </div>
                 <div style={{ fontSize: '1.3rem', fontWeight: 900, color: '#fff', lineHeight: 1.25, marginBottom: 8 }}>
                   {lastReset
-                    ? new Date(lastReset.resetAt).toLocaleDateString('en', { day: '2-digit', month: 'short', year: 'numeric' })
+                    ? formatDisplayedPeriodStart(lastReset.resetAt)
                     : t('admin.reports.inception')
                   }
                   <span style={{ color: 'rgba(255,255,255,0.5)', margin: '0 8px', fontWeight: 400 }}>→</span>
@@ -1022,7 +1031,7 @@ export default function AdminReportsPage() {
                   {t('admin.reports.resetHowTitle')}
                 </div>
                 <ul style={{ margin: 0, padding: '0 0 0 1.1rem', color: 'var(--text-secondary)', fontSize: '0.83rem', lineHeight: 1.7 }}>
-                  <li>{t('admin.reports.resetHowExport', { start: lastReset ? new Date(lastReset.resetAt).toLocaleDateString('en', { day: '2-digit', month: 'short', year: 'numeric' }) : t('admin.reports.inception'), end: currentMonthName + ' ' + currentYear })}</li>
+                  <li>{t('admin.reports.resetHowExport', { start: lastReset ? formatDisplayedPeriodStart(lastReset.resetAt) : t('admin.reports.inception'), end: currentMonthName + ' ' + currentYear })}</li>
                   <li>{t('admin.reports.resetHowZero')}</li>
                   <li>{t('admin.reports.resetHowArchive')}</li>
                   <li>{t('admin.reports.resetHowNoDelete')}</li>
