@@ -16,3 +16,4 @@
 - [Agent revise + one-edit cycle](agent-revise-cycle.md) — customerEditedSinceRevision boolean on PolicyApplication+Claim; reset by admin/agent revise, set true by customer on submission; DTOs expose the flag
 - [Multi-period advance payment + policy expiry](multi-period-payment-expiry.md) — periodsJson batch payment, EXPIRED status, daily expiry job, real-time countdown in policy cards
 - [Duration unit + customer payment schedule](duration-unit-payment-schedule.md) — tiers now YEARS/MONTHS/WEEKS; customers pick schedule at apply; PAY_ALL=1 installment; coverage validated real-time
+- [GitHub sync](github-sync.md) — if the Git CLI remote lacks auth, use the secure GitHub connection API and align the identical local tree afterward.
