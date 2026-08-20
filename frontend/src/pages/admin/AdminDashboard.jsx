@@ -121,6 +121,9 @@ export default function AdminDashboard() {
           <Link to="/admin/forms" className="btn-primary-sm" style={{ fontSize: '0.85rem', padding: '0.4rem 0.9rem', background: '#2563eb' }}>
             <i className="bi bi-ui-checks me-1"></i>{t('admin.dashboard.manageFormTemplates')}
           </Link>
+          <Link to="/admin/payment-methods" className="btn-primary-sm" style={{ fontSize: '0.85rem', padding: '0.4rem 0.9rem', background: '#0891b2' }}>
+            <i className="bi bi-qr-code me-1"></i>{t('admin.dashboard.addPaymentMethod')}
+          </Link>
         </div>
       </div>
 
