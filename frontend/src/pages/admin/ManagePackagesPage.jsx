@@ -1088,7 +1088,7 @@ export default function ManagePackagesPage() {
                       <FormBadge label={t('admin.packages.claimFormLabel')} exists={!!pForms.CLAIM}
                         onClick={() => navigate('/admin/forms', { state: { packageId: pkg.id } })} />
                       {pkg.premiumWaiverBenefit && (
-                        <FormBadge label="Emergency" exists={!!pForms.EMERGENCY}
+                        <FormBadge label={t('admin.packages.emergencyDeclarationForm')} exists={!!pForms.EMERGENCY}
                           onClick={() => navigate('/admin/forms', { state: { packageId: pkg.id } })} />
                       )}
                     </div>
