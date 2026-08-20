@@ -10,25 +10,49 @@ const STATUS_LABEL = {
   APPROVED: { labelKey: 'statusAPPROVED', color: '#15803d', bg: '#f0fdf4' },
   REJECTED: { labelKey: 'statusREJECTED', color: '#dc2626', bg: '#fef2f2' },
 }
+const STATUS_KEYS = ['ALL', 'PENDING_ADMIN_APPROVAL', 'PENDING_TRANSFEREE_SIGNATURE', 'APPROVED', 'REJECTED']
 
 export default function AdminPolicyTransfersPage() {
   const { t } = useTranslation()
   const [transfers, setTransfers] = useState([])
+  const [statusCounts, setStatusCounts] = useState({})
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('ALL')
   const [actionModal, setActionModal] = useState(null)
   const [note, setNote] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  const fetchData = () => {
-    setLoading(true)
-    api.get(`/admin/policy-transfers${filter !== 'ALL' ? `?status=${filter}` : ''}`)
-      .then(res => setTransfers(Array.isArray(res.data) ? res.data : []))
-      .catch(() => setTransfers([]))
+  const fetchData = (showLoading = false) => {
+    if (showLoading) setLoading(true)
+    const allUrl = '/admin/policy-transfers'
+    const selectedRequest = api.get(filter === 'ALL' ? allUrl : `${allUrl}?status=${filter}`)
+    const allRequest = filter === 'ALL' ? selectedRequest : api.get(allUrl)
+
+    Promise.all([selectedRequest, allRequest])
+      .then(([selectedRes, allRes]) => {
+        const selectedTransfers = Array.isArray(selectedRes.data) ? selectedRes.data : []
+        const allTransfers = Array.isArray(allRes.data) ? allRes.data : []
+        const counts = allTransfers.reduce((result, transfer) => {
+          result.ALL += 1
+          result[transfer.status] = (result[transfer.status] || 0) + 1
+          return result
+        }, { ALL: 0 })
+
+        setTransfers(selectedTransfers)
+        setStatusCounts(counts)
+      })
+      .catch(() => {
+        setTransfers([])
+        setStatusCounts({})
+      })
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { fetchData() }, [filter])
+  useEffect(() => {
+    fetchData(true)
+    const refreshInterval = window.setInterval(() => fetchData(false), 30000)
+    return () => window.clearInterval(refreshInterval)
+  }, [filter])
 
   const handleAction = async () => {
     if (!actionModal) return
@@ -45,7 +69,7 @@ export default function AdminPolicyTransfersPage() {
     } finally { setSubmitting(false) }
   }
 
-  const pending = transfers.filter(t => t.status === 'PENDING_ADMIN_APPROVAL')
+  const pending = statusCounts.PENDING_ADMIN_APPROVAL || 0
 
   return (
     <div className="fade-in">
@@ -67,16 +91,30 @@ export default function AdminPolicyTransfersPage() {
 
       {/* Filter tabs */}
       <div className="d-flex gap-2 mb-4 flex-wrap">
-        {['ALL', 'PENDING_ADMIN_APPROVAL', 'PENDING_TRANSFEREE_SIGNATURE', 'APPROVED', 'REJECTED'].map(s => {
+        {STATUS_KEYS.map(s => {
           const label = s === 'ALL' ? t('admin.transfers.tabAll') : t(`admin.transfers.${STATUS_LABEL[s]?.labelKey}`)
+          const count = statusCounts[s] || 0
+          const isActive = filter === s
           return (
             <button key={s} onClick={() => setFilter(s)}
               style={{
-                padding: '0.4rem 1rem', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600,
-                background: filter === s ? 'var(--primary)' : 'var(--bg-secondary)',
-                color: filter === s ? 'white' : 'var(--text-secondary)'
+                padding: '0.4rem 0.75rem 0.4rem 1rem', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600,
+                background: isActive ? 'var(--primary)' : 'var(--bg-secondary)',
+                color: isActive ? 'white' : 'var(--text-secondary)',
+                display: 'inline-flex', alignItems: 'center', gap: '0.45rem'
               }}>
               {label}
+              {count > 0 && (
+                <span style={{
+                  minWidth: 18, height: 18, padding: '0 0.3rem', borderRadius: 99,
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  background: isActive ? '#fff' : '#dc2626',
+                  color: isActive ? 'var(--primary)' : '#fff',
+                  fontSize: '0.67rem', fontWeight: 800, lineHeight: 1
+                }}>
+                  {count > 99 ? '99+' : count}
+                </span>
+              )}
             </button>
           )
         })}
