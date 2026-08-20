@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import api from '../../services/api'
 import { downloadBlob } from '../../utils/download'
+import { serverNow } from '../../utils/serverTime'
 
 // ── Colour palette by insurance type ────────────────────────────────────────
 const TYPE_COLORS = {
@@ -13,6 +14,14 @@ const typeColor = t => TYPE_COLORS[t] || TYPE_COLORS.OTHER
 const MMK = n => (n == null ? '—' : Number(n).toLocaleString() + ' MMK')
 const Pct = n => (n == null ? '—' : Number(n).toFixed(1) + '%')
 const shortMonth = key => key?.split(' ')[0] || key
+const formatMyanmarDateTime = epochMs => new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'Asia/Yangon',
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+}).format(new Date(epochMs))
 
 // ── SVG Chart Primitives ──────────────────────────────────────────────────────
 function niceMax(rawMax, ticks) {
@@ -229,6 +238,7 @@ export default function AdminReportsPage() {
   const [toast,         setToast]         = useState(null)
   // Last reset info — determines the "current analytics period" start date
   const [lastReset,     setLastReset]     = useState(undefined) // undefined = not yet loaded
+  const [currentTimeMs, setCurrentTimeMs] = useState(() => serverNow())
 
   const showToast = (msg, ok = true) => {
     setToast({ msg, ok })
@@ -236,14 +246,21 @@ export default function AdminReportsPage() {
   }
 
   useEffect(() => {
-    Promise.all([
-      api.get('/admin/reports'),
-      api.get('/admin/reports/last-reset'),
-    ]).then(([reportsRes, resetRes]) => {
-      setReports(reportsRes.data)
-      setLastReset(resetRes.data || null)
-    }).catch(() => setReports(null))
-    .finally(() => setLoading(false))
+    api.get('/admin/reports')
+      .then(res => setReports(res.data))
+      .catch(() => setReports(null))
+      .finally(() => setLoading(false))
+
+    // Keep the current-period indicator available even if report data cannot
+    // be loaded yet in a fresh local environment.
+    api.get('/admin/reports/last-reset')
+      .then(res => setLastReset(res.data?.resetAt ? res.data : null))
+      .catch(() => setLastReset(null))
+  }, [])
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTimeMs(serverNow()), 30_000)
+    return () => clearInterval(timer)
   }, [])
 
   useEffect(() => {
@@ -448,8 +465,8 @@ export default function AdminReportsPage() {
                 <span style={{ fontWeight: 800, color: '#78350f' }}>
                   {lastReset ? new Date(lastReset.resetAt).toLocaleDateString('en', { day: '2-digit', month: 'short', year: 'numeric' }) : t('admin.reports.inception')}
                 </span>
-                {/* <span style={{ opacity: 0.6 }}>{t('admin.reports.throughToday')}</span>
-                <span style={{ fontWeight: 800, color: '#78350f' }}>{currentMonthName} {currentYear}</span> */}
+                <span style={{ opacity: 0.6 }}>→</span>
+                <span style={{ fontWeight: 800, color: '#78350f' }}>{formatMyanmarDateTime(currentTimeMs)}</span>
               </div>
 
               {/* Divider */}
@@ -489,8 +506,8 @@ export default function AdminReportsPage() {
           <div style={{ marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 6, background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 20, padding: '0.25rem 0.85rem', fontSize: '0.78rem', fontWeight: 600, color: '#1d4ed8' }}>
             <i className="bi bi-calendar2-range"></i>
             {lastReset
-              ? <>{t('admin.reports.currentPeriodLabel')} {new Date(lastReset.resetAt).toLocaleDateString('en', { day: '2-digit', month: 'short', year: 'numeric' })} {t('admin.reports.throughToday')}</>
-              : <>{t('admin.reports.currentPeriodLabel')} {t('admin.reports.inception')} {t('admin.reports.throughToday')}</>
+              ? <>{t('admin.reports.currentPeriodLabel')} {new Date(lastReset.resetAt).toLocaleDateString('en', { day: '2-digit', month: 'short', year: 'numeric' })} → {formatMyanmarDateTime(currentTimeMs)}</>
+              : <>{t('admin.reports.currentPeriodLabel')} {t('admin.reports.inception')} → {formatMyanmarDateTime(currentTimeMs)}</>
             }
           </div>
         )}
