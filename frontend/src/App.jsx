@@ -17,7 +17,6 @@ import VerifyEmailPage from './pages/VerifyEmailPage'
 import ConfirmEmailPage from './pages/ConfirmEmailPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
-import ERDiagramPage from './pages/ERDiagramPage'
 
 // Customer pages
 import CustomerLayout from './pages/customer/CustomerLayout'
@@ -82,7 +81,6 @@ export default function App() {
             <Route path="/verify-email/confirm" element={<ConfirmEmailPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
-            <Route path="/erd" element={<ERDiagramPage />} />
 
             {/* Customer */}
             <Route path="/customer" element={<ProtectedRoute role="CUSTOMER"><CustomerLayout /></ProtectedRoute>}>
