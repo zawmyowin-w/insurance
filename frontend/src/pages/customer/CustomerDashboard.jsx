@@ -141,16 +141,8 @@ export default function CustomerDashboard() {
             <div style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.85rem', marginTop: '0.3rem', marginBottom: '1.1rem' }}>
               {now.toLocaleDateString(i18n.language?.startsWith('my') ? 'my-MM' : 'en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </div>
-            <div className="d-flex gap-2 flex-wrap">
-              <Link to="/customer/apply" className="banner-action-btn">
-                <i className="bi bi-plus-circle me-1"></i>{t('dash.applyPolicy')}
-              </Link>
-              <Link to="/customer/claims" className="banner-action-btn banner-action-btn-outline">
-                <i className="bi bi-file-earmark-medical me-1"></i>{t('dash.submitClaim')}
-              </Link>
-              <div className="dashboard-banner-badge ms-1">
-                <i className="bi bi-person-fill me-1"></i> {t('customer.customerBadge')}
-              </div>
+            <div className="dashboard-banner-badge">
+              <i className="bi bi-person-fill me-1"></i> {t('customer.customerBadge')}
             </div>
           </div>
 
