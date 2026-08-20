@@ -8,15 +8,18 @@ import DigitalSignatureCanvas from '../../components/DigitalSignatureCanvas'
 import { apiError } from '../../utils/apiError'
 import PdfDropdownButton from '../../components/PdfDropdownButton'
 
+const STATUS_KEYS = ['ALL', 'PENDING', 'VERIFIED', 'APPROVED', 'REJECTED']
+
 export default function AdminClaimsPage() {
   const { t } = useTranslation()
 
   const [searchParams] = useSearchParams()
   const [claims, setClaims] = useState([])
+  const [statusCounts, setStatusCounts] = useState({})
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState(() => {
     const f = searchParams.get('filter')
-    return f && ['ALL','PENDING','VERIFIED','APPROVED','REJECTED'].includes(f) ? f : 'VERIFIED'
+    return f && STATUS_KEYS.includes(f) ? f : 'VERIFIED'
   })
   const [selected, setSelected] = useState(null)
   const [actionNote, setActionNote] = useState('')
@@ -24,12 +27,36 @@ export default function AdminClaimsPage() {
   const [viewItem, setViewItem] = useState(null)
   const [signatureData, setSignatureData] = useState(null)
   const fetchClaims = () => {
-    api.get(`/admin/claims${filter !== 'ALL' ? `?status=${filter}` : ''}`)
-      .then(res => setClaims(Array.isArray(res.data) ? res.data : []))
-      .catch(() => setClaims([]))
+    const allUrl = '/admin/claims'
+    const selectedUrl = filter !== 'ALL' ? `${allUrl}?status=${filter}` : allUrl
+    const selectedRequest = api.get(selectedUrl)
+    const allRequest = filter === 'ALL' ? selectedRequest : api.get(allUrl)
+
+    Promise.all([selectedRequest, allRequest])
+      .then(([selectedRes, allRes]) => {
+        const selectedClaims = Array.isArray(selectedRes.data) ? selectedRes.data : []
+        const allClaims = Array.isArray(allRes.data) ? allRes.data : []
+        const counts = allClaims.reduce((result, claim) => {
+          result.ALL += 1
+          result[claim.status] = (result[claim.status] || 0) + 1
+          return result
+        }, { ALL: 0 })
+
+        setClaims(selectedClaims)
+        setStatusCounts(counts)
+      })
+      .catch(() => {
+        setClaims([])
+        setStatusCounts({})
+      })
       .finally(() => setLoading(false))
   }
-  useEffect(() => { setLoading(true); fetchClaims() }, [filter])
+  useEffect(() => {
+    setLoading(true)
+    fetchClaims()
+    const refreshInterval = window.setInterval(fetchClaims, 30000)
+    return () => window.clearInterval(refreshInterval)
+  }, [filter])
 
   const handleAction = async (id, action) => {
     if ((action === 'reject' || action === 'revise') && !actionNote.trim()) { toast.error(t('admin.claims.reasonRequired')); return }
@@ -54,15 +81,33 @@ export default function AdminClaimsPage() {
         <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>{t('admin.claims.subtitle')}</p>
       </div>
       <div className="d-flex gap-2 mb-4 flex-wrap">
-        {['ALL', 'PENDING', 'VERIFIED', 'APPROVED', 'REJECTED'].map(f => (
-          <button key={f} onClick={() => setFilter(f)} style={{
-            padding: '0.4rem 1rem', borderRadius: 20, border: '1px solid',
-            borderColor: filter === f ? 'var(--primary)' : 'var(--border)',
-            background: filter === f ? 'var(--primary)' : 'var(--bg-card)',
-            color: filter === f ? '#fff' : 'var(--text-secondary)',
-            fontSize: '0.85rem', cursor: 'pointer'
-          }}>{t(`admin.claims.status_${f}`)}</button>
-        ))}
+        {STATUS_KEYS.map(f => {
+          const count = statusCounts[f] || 0
+          const isActive = filter === f
+          return (
+            <button key={f} onClick={() => setFilter(f)} style={{
+              padding: '0.4rem 0.75rem 0.4rem 1rem', borderRadius: 20, border: '1px solid',
+              borderColor: isActive ? 'var(--primary)' : 'var(--border)',
+              background: isActive ? 'var(--primary)' : 'var(--bg-card)',
+              color: isActive ? '#fff' : 'var(--text-secondary)',
+              fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.15s',
+              display: 'inline-flex', alignItems: 'center', gap: '0.45rem'
+            }}>
+              {t(`admin.claims.status_${f}`)}
+              {count > 0 && (
+                <span style={{
+                  minWidth: 18, height: 18, padding: '0 0.3rem', borderRadius: 99,
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  background: isActive ? '#fff' : '#dc2626',
+                  color: isActive ? 'var(--primary)' : '#fff',
+                  fontSize: '0.67rem', fontWeight: 800, lineHeight: 1
+                }}>
+                  {count > 99 ? '99+' : count}
+                </span>
+              )}
+            </button>
+          )
+        })}
       </div>
 
       {loading ? (
