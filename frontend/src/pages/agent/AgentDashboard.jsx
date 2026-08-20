@@ -64,16 +64,6 @@ export default function AgentDashboard() {
               {t('agent.dash.subtitle')}
             </div>
           </div>
-          <div className="d-flex gap-2">
-            <Link to="/agent/applications" className="banner-action-btn">
-              <i className="bi bi-file-earmark-text me-1"></i>
-              {t('agent.dash.applicationsBtn')}
-            </Link>
-            <Link to="/agent/claims" className="banner-action-btn banner-action-btn-outline">
-              <i className="bi bi-file-earmark-medical me-1"></i>
-              {t('agent.dash.claimsBtn')}
-            </Link>
-          </div>
         </div>
       </div>
 
