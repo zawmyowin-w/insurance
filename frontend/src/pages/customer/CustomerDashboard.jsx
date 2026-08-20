@@ -116,6 +116,9 @@ export default function CustomerDashboard() {
     { to: '/customer/submit-claim', icon: 'bi-file-earmark-plus-fill',label: t('dash.submitClaim'), grad: 'linear-gradient(135deg,#f59e0b,#d97706)', shadow: 'rgba(217,119,6,0.4)' },
     { to: '/customer/payments',     icon: 'bi-credit-card-fill',      label: t('dash.payments'),    grad: 'linear-gradient(135deg,#06b6d4,#0891b2)', shadow: 'rgba(8,145,178,0.4)' },
     { to: '/plans',                 icon: 'bi-search-heart-fill',     label: t('dash.browsePlans'), grad: 'linear-gradient(135deg,#a855f7,#7c3aed)', shadow: 'rgba(124,58,237,0.4)' },
+    { to: '/customer/policy-transfers', icon: 'bi-arrow-left-right',  label: t('customer.policyTransfer'), grad: 'linear-gradient(135deg,#0f766e,#0d9488)', shadow: 'rgba(13,148,136,0.4)' },
+    { to: '/customer/feedback',      icon: 'bi-chat-heart-fill',       label: t('sidebar.feedback'),   grad: 'linear-gradient(135deg,#ec4899,#db2777)', shadow: 'rgba(219,39,119,0.4)' },
+    { to: '/customer/profile',       icon: 'bi-person-circle',         label: t('sidebar.profile'),    grad: 'linear-gradient(135deg,#64748b,#475569)', shadow: 'rgba(71,85,105,0.4)' },
   ]
 
   return (

@@ -38,9 +38,9 @@ export default function AgentDashboard() {
   }
 
   const statCards = [
-    { label: t('agent.dash.pendingApps'),   value: stats.pending,             icon: 'bi-file-earmark-text-fill',    grad: 'linear-gradient(135deg,#f59e0b,#d97706)', link: '/agent/applications?filter=PENDING' },
+    { label: t('agent.dash.pendingApps'),   value: stats.pending,             icon: 'bi-file-earmark-text-fill',    grad: 'linear-gradient(135deg,#f59e0b,#d97706)', link: '/agent/applications?filter=PENDING', allLink: '/agent/applications', allLabel: t('agent.dash.allApplications') },
     { label: t('agent.dash.verifiedApps'),  value: stats.verified,            icon: 'bi-check-circle-fill',          grad: 'linear-gradient(135deg,#22c55e,#16a34a)', link: '/agent/applications?filter=VERIFIED' },
-    { label: t('agent.dash.pendingClaims'), value: stats.pendingClaims,        icon: 'bi-file-earmark-medical-fill', grad: 'linear-gradient(135deg,#ef4444,#dc2626)', link: '/agent/claims?filter=PENDING' },
+    { label: t('agent.dash.pendingClaims'), value: stats.pendingClaims,        icon: 'bi-file-earmark-medical-fill', grad: 'linear-gradient(135deg,#ef4444,#dc2626)', link: '/agent/claims?filter=PENDING', allLink: '/agent/claims', allLabel: t('agent.dash.allClaims') },
     { label: t('agent.dash.verifiedClaims'),value: stats.verifiedClaims,       icon: 'bi-shield-fill-check',         grad: 'linear-gradient(135deg,#3b82f6,#1d4ed8)', link: '/agent/claims?filter=VERIFIED' },
     { label: t('agent.dash.notifications'), value: stats.unreadNotifications,  icon: 'bi-bell-fill',                 grad: 'linear-gradient(135deg,#a855f7,#7c3aed)', link: '/agent/notifications' },
   ]
@@ -81,7 +81,7 @@ export default function AgentDashboard() {
       <div className="row g-3 mb-4">
         {statCards.map(card => (
           <div key={card.label} className="col-6 col-lg-4 col-xl-2-4">
-            <Link to={card.link} style={{ textDecoration: 'none' }}>
+            <Link to={card.link} style={{ textDecoration: 'none', display: 'block' }}>
               <div className="stat-card-3d">
                 <div className="stat-card-3d-icon-wrap" style={{ background: card.grad }}>
                   <i className={`bi ${card.icon}`} style={{ fontSize: '1.3rem', color: '#fff' }}></i>
@@ -98,6 +98,15 @@ export default function AgentDashboard() {
                 <i className="bi bi-arrow-right-short stat-card-arrow"></i>
               </div>
             </Link>
+            {card.allLink && (
+              <Link
+                to={card.allLink}
+                className="d-flex align-items-center justify-content-end gap-1 mt-2"
+                style={{ color: 'var(--primary)', fontSize: '0.75rem', textDecoration: 'none', fontWeight: 600 }}
+              >
+                {card.allLabel} <i className="bi bi-arrow-right-short"></i>
+              </Link>
+            )}
           </div>
         ))}
       </div>

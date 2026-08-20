@@ -22,6 +22,7 @@ FILE_STORAGE_DIR="${FILE_STORAGE_DIR:-$ROOT_DIR/backend/uploads}"
 MYSQL_DATA_DIR="$ROOT_DIR/.mysql/data"
 MYSQL_RUN_DIR="$ROOT_DIR/.mysql/run"
 MYSQL_SOCK="$MYSQL_RUN_DIR/mysqld.sock"
+MYSQL_PID_FILE="$MYSQL_RUN_DIR/mysqld.pid"
 MYSQL_LOG="$ROOT_DIR/.mysql/mysqld.log"
 MYSQL_PID=""
 
@@ -46,11 +47,19 @@ else
     mysqld --initialize-insecure --datadir="$MYSQL_DATA_DIR"
   fi
 
+  # A workflow stop can leave these files behind even though mysqld is gone.
+  # Trust an actual socket ping rather than the PID file: PIDs can be stale or
+  # reused after a workflow restart.
+  if [ -S "$MYSQL_SOCK" ] && ! mysqladmin -S"$MYSQL_SOCK" -u"$DB_USER" ping > /dev/null 2>&1; then
+    echo "[start-backend] Removing stale MySQL socket files..."
+    rm -f "$MYSQL_SOCK" "$MYSQL_SOCK.lock" "$MYSQL_PID_FILE"
+  fi
+
   echo "[start-backend] Starting project-local MySQL..."
   mysqld \
     --datadir="$MYSQL_DATA_DIR" \
     --socket="$MYSQL_SOCK" \
-    --pid-file="$MYSQL_RUN_DIR/mysqld.pid" \
+    --pid-file="$MYSQL_PID_FILE" \
     --port="$DB_PORT" \
     --bind-address=127.0.0.1 \
     --skip-mysqlx \

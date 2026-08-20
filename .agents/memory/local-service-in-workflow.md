@@ -22,3 +22,13 @@ launches `mysqld &`, waits for it to accept connections, then `exec`s the real
 app in the foreground). This keeps the service alive for as long as the workflow
 runs, and it restarts naturally with the workflow. Persist its data directory
 inside the project (e.g. `.mysql/data`, gitignored) so it survives workflow restarts.
+
+Workflow termination can leave a stale MySQL socket, lock file, and PID file even
+after the database process is gone. Before launching MySQL, test the socket itself;
+if it cannot answer a ping, remove only those runtime files before starting again.
+
+**Why:** PID values can be stale or reused, while a socket ping directly proves
+whether a database is listening. A dead socket blocks the next MySQL startup.
+
+**How to apply:** Keep the cleanup limited to runtime files (`.sock`, `.sock.lock`,
+and `.pid`) after a failed socket ping—never remove the persistent data directory.

@@ -7,12 +7,13 @@ import FormDetailModal from '../../components/FormDetailModal'
 import DigitalSignatureCanvas from '../../components/DigitalSignatureCanvas'
 import { apiError } from '../../utils/apiError'
 
-const FILTERS = ['ALL', 'PENDING', 'VERIFIED', 'REVISION_REQUESTED', 'REJECTED']
+const FILTERS = ['ALL', 'PENDING', 'VERIFIED', 'APPROVED', 'REVISION_REQUESTED', 'REJECTED']
 
 export default function AgentApplicationsPage() {
   const { t, i18n } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const [apps, setApps] = useState([])
+  const [statusCounts, setStatusCounts] = useState({})
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState(null)
   const [note, setNote] = useState('')
@@ -32,6 +33,7 @@ export default function AgentApplicationsPage() {
   const APP_STATUS_MAP = {
     PENDING: t('agent.apps.statusPending'),
     VERIFIED: t('agent.apps.statusVerified'),
+    APPROVED: t('agent.apps.statusApproved'),
     REVISION_REQUESTED: t('agent.apps.statusRevision'),
     REJECTED: t('agent.apps.statusRejected'),
   }
@@ -40,19 +42,42 @@ export default function AgentApplicationsPage() {
     ALL:                t('agent.apps.filterAll'),
     PENDING:            t('agent.apps.filterPending'),
     VERIFIED:           t('agent.apps.filterVerified'),
+    APPROVED:           t('agent.apps.filterApproved'),
     REVISION_REQUESTED: t('agent.apps.filterRevision'),
     REJECTED:           t('agent.apps.filterRejected'),
   }
 
   const fetchApps = () => {
     setLoading(true)
-    const url = filter && filter !== 'ALL' ? `/agent/applications?status=${filter}` : '/agent/applications?status=ALL'
-    api.get(url)
-      .then(res => setApps(Array.isArray(res.data) ? res.data : []))
-      .catch(() => setApps([]))
+    const allUrl = '/agent/applications?status=ALL'
+    const selectedUrl = filter !== 'ALL' ? `/agent/applications?status=${filter}` : allUrl
+    const selectedRequest = api.get(selectedUrl)
+    const allRequest = filter === 'ALL' ? selectedRequest : api.get(allUrl)
+
+    Promise.all([selectedRequest, allRequest])
+      .then(([selectedRes, allRes]) => {
+        const selectedApps = Array.isArray(selectedRes.data) ? selectedRes.data : []
+        const allApps = Array.isArray(allRes.data) ? allRes.data : []
+        const counts = allApps.reduce((result, app) => {
+          result.ALL += 1
+          result[app.status] = (result[app.status] || 0) + 1
+          return result
+        }, { ALL: 0 })
+
+        setApps(selectedApps)
+        setStatusCounts(counts)
+      })
+      .catch(() => {
+        setApps([])
+        setStatusCounts({})
+      })
       .finally(() => setLoading(false))
   }
-  useEffect(() => { fetchApps() }, [filter])
+  useEffect(() => {
+    fetchApps()
+    const refreshInterval = window.setInterval(fetchApps, 30000)
+    return () => window.clearInterval(refreshInterval)
+  }, [filter])
 
   const clearActions = () => {
     setSelected(null); setNote('')
@@ -114,14 +139,31 @@ export default function AgentApplicationsPage() {
 
       {/* Filter tabs */}
       <div className="d-flex gap-2 flex-wrap mb-4">
-        {FILTERS.map(f => (
-          <button key={f} onClick={() => setSearchParams(f === 'ALL' ? {} : { filter: f })} style={{
-            padding: '0.35rem 0.85rem', borderRadius: 8, fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer',
-            border: `1.5px solid ${filter === f ? 'var(--primary)' : 'var(--border)'}`,
-            background: filter === f ? 'var(--primary)' : 'var(--bg-card)',
-            color: filter === f ? '#fff' : 'var(--text-secondary)'
-          }}>{FILTER_LABELS[f] || f}</button>
-        ))}
+        {FILTERS.map(f => {
+          const count = statusCounts[f] || 0
+          const isActive = filter === f
+          return (
+            <button key={f} onClick={() => setSearchParams(f === 'ALL' ? {} : { filter: f })} style={{
+              padding: '0.35rem 0.7rem 0.35rem 0.85rem', borderRadius: 8, fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer',
+              border: `1.5px solid ${isActive ? 'var(--primary)' : 'var(--border)'}`,
+              background: isActive ? 'var(--primary)' : 'var(--bg-card)',
+              color: isActive ? '#fff' : 'var(--text-secondary)',
+              display: 'inline-flex', alignItems: 'center', gap: '0.45rem'
+            }}>
+              {FILTER_LABELS[f] || f}
+              {count > 0 && (
+                <span style={{
+                  minWidth: 18, height: 18, padding: '0 0.3rem', borderRadius: 99,
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  background: isActive ? '#fff' : '#dc2626', color: isActive ? 'var(--primary)' : '#fff',
+                  fontSize: '0.67rem', fontWeight: 800, lineHeight: 1
+                }}>
+                  {count > 99 ? '99+' : count}
+                </span>
+              )}
+            </button>
+          )
+        })}
       </div>
 
       {loading ? (
