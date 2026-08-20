@@ -36,6 +36,7 @@ public class AgentController {
     public Map<String, Object> getStats(@AuthenticationPrincipal UserDetails principal) {
         User agent = getAgent(principal);
         Map<String, Object> stats = new HashMap<>();
+        stats.put("allApplications", appRepo.findAllByAgent(agent).size());
         stats.put("pending", appRepo.findAllByAgentAndStatus(agent, ApplicationStatus.PENDING).size());
         stats.put("verified", appRepo.findAllByAgentAndStatus(agent, ApplicationStatus.VERIFIED).size());
         stats.put("pendingClaims", claimRepo.findAllByAgentAndStatus(agent, ClaimStatus.PENDING).size());
