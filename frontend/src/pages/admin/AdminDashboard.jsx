@@ -115,6 +115,9 @@ export default function AdminDashboard() {
           <Link to="/admin/feedback" className="btn-primary-sm" style={{ fontSize: '0.85rem', padding: '0.4rem 0.9rem', background: '#9333ea' }}>
             <i className="bi bi-chat-heart me-1"></i>{t('admin.dashboard.reviewSuggestions')}
           </Link>
+          <Link to="/admin/reports" className="btn-primary-sm" style={{ fontSize: '0.85rem', padding: '0.4rem 0.9rem', background: '#0f766e' }}>
+            <i className="bi bi-bar-chart-line me-1"></i>{t('admin.dashboard.reviewReports')}
+          </Link>
         </div>
       </div>
 
