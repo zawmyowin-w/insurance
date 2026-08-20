@@ -30,6 +30,7 @@ public class AdminController {
 
     private final UserRepository userRepo;
     private final PolicyApplicationRepository appRepo;
+    private final PolicyTransferRepository policyTransferRepo;
     private final ClaimRepository claimRepo;
     private final PaymentRepository paymentRepo;
     private final NotificationRepository notifRepo;
@@ -104,6 +105,7 @@ public class AdminController {
         stats.put("verifiedApplications",  appRepo.countByStatus(ApplicationStatus.VERIFIED));
         stats.put("verifiedClaims",        claimRepo.countByStatus(ClaimStatus.VERIFIED));
         stats.put("totalPackages",         packageRepo.count());
+        stats.put("totalPolicyTransfers",  policyTransferRepo.count());
 
         LocalDateTime startOfMonth  = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
         LocalDateTime lastResetTime = resetRepo.findTopByOrderByResetAtDesc()

@@ -7,7 +7,7 @@ import api from '../../services/api'
 export default function AdminDashboard() {
   const { t, i18n } = useTranslation()
   const { user } = useAuth()
-  const [stats, setStats] = useState({ totalCustomers: 0, totalAgents: 0, pendingApplications: 0, pendingClaims: 0, verifiedApplications: 0, verifiedClaims: 0, totalPackages: 0, monthlyRevenue: 0 })
+  const [stats, setStats] = useState({ totalCustomers: 0, totalAgents: 0, pendingApplications: 0, pendingClaims: 0, verifiedApplications: 0, verifiedClaims: 0, totalPackages: 0, totalPolicyTransfers: 0 })
   const [recentActivities, setRecentActivities] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -29,7 +29,7 @@ export default function AdminDashboard() {
     { label: t('admin.dashboard.verifiedApplications'), value: stats.verifiedApplications, icon: 'bi-file-earmark-check-fill',   grad: 'linear-gradient(135deg,#22c55e,#16a34a)', link: '/admin/applications?filter=VERIFIED' },
     { label: t('admin.dashboard.verifiedClaims'), value: stats.verifiedClaims, icon: 'bi-shield-fill-check', grad: 'linear-gradient(135deg,#06b6d4,#0891b2)', link: '/admin/claims?filter=VERIFIED' },
     { label: t('admin.dashboard.totalPackages'),  value: stats.totalPackages,  icon: 'bi-box-seam-fill', grad: 'linear-gradient(135deg,#8b5cf6,#6d28d9)', link: '/admin/packages' },
-    { label: t('admin.dashboard.monthlyRevenue'), value: stats.monthlyRevenue ? Number(stats.monthlyRevenue).toLocaleString() : '0', icon: 'bi-cash-coin', grad: 'linear-gradient(135deg,#f59e0b,#b45309)', link: '#' },
+    { label: t('admin.dashboard.totalPolicyTransfers'), value: stats.totalPolicyTransfers, icon: 'bi-arrow-left-right', grad: 'linear-gradient(135deg,#f59e0b,#b45309)', link: '/admin/policy-transfers' },
   ]
 
   const now = new Date()
