@@ -19,7 +19,7 @@ export default function AdminClaimsPage() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState(() => {
     const f = searchParams.get('filter')
-    return f && STATUS_KEYS.includes(f) ? f : 'VERIFIED'
+    return f && STATUS_KEYS.includes(f) ? f : 'ALL'
   })
   const [selected, setSelected] = useState(null)
   const [actionNote, setActionNote] = useState('')
