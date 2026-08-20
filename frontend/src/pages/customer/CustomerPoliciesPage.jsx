@@ -468,9 +468,9 @@ export default function CustomerPoliciesPage() {
 
           {/* Actions */}
           <div className="d-flex flex-wrap gap-2 mt-auto">
-            <button onClick={() => setCertPolicy(policy)} className="btn-primary-sm" style={{ flex: '1 1 auto' }}>
+            {/* <button onClick={() => setCertPolicy(policy)} className="btn-primary-sm" style={{ flex: '1 1 auto' }}>
               <i className="bi bi-file-earmark-text me-1"></i>{t('policies.certificate')}
-            </button>
+            </button> */}
             <div style={{ flex: '1 1 auto' }}>
               <PdfDropdownButton
                 fetchPdf={() => api.get(`/customer/applications/${policy.id}/policy-contract`, { responseType: 'blob' }).then(r => r.data)}
