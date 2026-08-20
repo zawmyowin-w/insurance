@@ -95,8 +95,8 @@ export default function AdminDashboard() {
           <Link to="/admin/packages?action=new" className="btn-primary-custom" style={{ fontSize: '0.85rem', padding: '0.4rem 0.9rem' }}>
             <i className="bi bi-plus-circle me-1"></i>{t('admin.dashboard.addPackage')}
           </Link>
-          <Link to="/admin/users?tab=AGENT&action=create" className="btn-primary-sm" style={{ fontSize: '0.85rem', padding: '0.4rem 0.9rem' }}>
-            <i className="bi bi-person-plus me-1"></i>{t('admin.dashboard.addAgent')}
+          <Link to="/admin/insurance-types" className="btn-primary-sm" style={{ fontSize: '0.85rem', padding: '0.4rem 0.9rem' }}>
+            <i className="bi bi-tags me-1"></i>{t('admin.dashboard.reviewTypes')}
           </Link>
           <Link to="/admin/applications?filter=ALL" className="btn-primary-sm" style={{ fontSize: '0.85rem', padding: '0.4rem 0.9rem', background: '#f59e0b' }}>
             <i className="bi bi-file-earmark-check me-1"></i>{t('admin.dashboard.reviewApplications')}
