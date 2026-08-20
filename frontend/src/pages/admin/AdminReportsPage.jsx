@@ -471,9 +471,9 @@ export default function AdminReportsPage() {
               <div style={{ background: 'linear-gradient(135deg, #fffbeb, #fef3c7)', border: '1.5px solid #fcd34d', borderRadius: 12, padding: '0.75rem 1rem', marginBottom: '1.75rem', fontSize: '0.85rem', color: '#92400e', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                 <i className="bi bi-calendar2-range" style={{ fontSize: '1rem' }} />
                 <span>{t('admin.reports.reportPeriodLabel')}</span>
-                <span style={{ fontWeight: 800, color: '#78350f' }}>
+                {/* <span style={{ fontWeight: 800, color: '#78350f' }}>
                   {lastReset ? formatDisplayedPeriodStart(lastReset.resetAt) : t('admin.reports.inception')}
-                </span>
+                </span> */}
                 <span style={{ opacity: 0.6 }}>→</span>
                 <span style={{ fontWeight: 800, color: '#78350f' }}>{formatMyanmarDateTime(currentTimeMs)}</span>
               </div>
@@ -516,7 +516,7 @@ export default function AdminReportsPage() {
             <i className="bi bi-calendar2-range"></i>
             {lastReset
               ? <>{t('admin.reports.currentPeriodLabel')} {formatDisplayedPeriodStart(lastReset.resetAt)} → {formatMyanmarDateTime(currentTimeMs)}</>
-              : <>{t('admin.reports.currentPeriodLabel')} {t('admin.reports.inception')} → {formatMyanmarDateTime(currentTimeMs)}</>
+              : <>{t('admin.reports.currentPeriodLabel')} → {formatMyanmarDateTime(currentTimeMs)}</> //{t('admin.reports.inception')}
             }
           </div>
         )}
@@ -966,11 +966,11 @@ export default function AdminReportsPage() {
                   {t('admin.reports.monthlyReportTitle')}
                 </div>
                 <div style={{ fontSize: '1.3rem', fontWeight: 900, color: '#fff', lineHeight: 1.25, marginBottom: 8 }}>
-                  {lastReset
+                  {/* {lastReset
                     ? formatDisplayedPeriodStart(lastReset.resetAt)
                     : t('admin.reports.inception')
-                  }
-                  <span style={{ color: 'rgba(255,255,255,0.5)', margin: '0 8px', fontWeight: 400 }}>→</span>
+                  } */}
+                  <span style={{ color: 'rgba(255,255,255,0.5)', margin: '0px', fontWeight: 400 }}></span>
                   {currentMonthName} {currentYear}
                 </div>
                 <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.85rem', margin: 0, lineHeight: 1.6 }}>
