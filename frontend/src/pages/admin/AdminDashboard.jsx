@@ -112,6 +112,9 @@ export default function AdminDashboard() {
           <Link to="/admin/payments?filter=ALL" className="btn-primary-sm" style={{ fontSize: '0.85rem', padding: '0.4rem 0.9rem', background: '#0891b2' }}>
             <i className="bi bi-credit-card me-1"></i>{t('admin.dashboard.reviewPayments')}
           </Link>
+          <Link to="/admin/feedback" className="btn-primary-sm" style={{ fontSize: '0.85rem', padding: '0.4rem 0.9rem', background: '#9333ea' }}>
+            <i className="bi bi-chat-heart me-1"></i>{t('admin.dashboard.reviewSuggestions')}
+          </Link>
         </div>
       </div>
 
