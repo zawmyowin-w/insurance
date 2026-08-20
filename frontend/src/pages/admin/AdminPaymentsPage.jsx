@@ -10,10 +10,11 @@ export default function AdminPaymentsPage() {
   const { t } = useTranslation()
   const [searchParams] = useSearchParams()
   const [payments, setPayments] = useState([])
+  const [statusCounts, setStatusCounts] = useState({})
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState(() => {
     const f = searchParams.get('filter')
-    return f && ['ALL','PENDING','VERIFIED','APPROVED','REJECTED'].includes(f) ? f : 'PENDING'
+    return f && ['ALL','PENDING','VERIFIED','APPROVED','REJECTED'].includes(f) ? f : 'ALL'
   })
   const [actionId, setActionId] = useState(null)
   const [actionNote, setActionNote] = useState('')
@@ -25,12 +26,36 @@ export default function AdminPaymentsPage() {
   const [search, setSearch] = useState('')
 
   const fetchPayments = () => {
-    api.get(`/admin/payments${filter !== 'ALL' ? `?status=${filter}` : ''}`)
-      .then(res => setPayments(Array.isArray(res.data) ? res.data : []))
-      .catch(() => setPayments([]))
+    const allUrl = '/admin/payments'
+    const selectedUrl = filter === 'ALL' ? allUrl : `${allUrl}?status=${filter}`
+    const selectedRequest = api.get(selectedUrl)
+    const allRequest = filter === 'ALL' ? selectedRequest : api.get(allUrl)
+
+    Promise.all([selectedRequest, allRequest])
+      .then(([selectedRes, allRes]) => {
+        const selectedPayments = Array.isArray(selectedRes.data) ? selectedRes.data : []
+        const allPayments = Array.isArray(allRes.data) ? allRes.data : []
+        const counts = allPayments.reduce((result, payment) => {
+          result.ALL += 1
+          result[payment.status] = (result[payment.status] || 0) + 1
+          return result
+        }, { ALL: 0 })
+
+        setPayments(selectedPayments)
+        setStatusCounts(counts)
+      })
+      .catch(() => {
+        setPayments([])
+        setStatusCounts({})
+      })
       .finally(() => setLoading(false))
   }
-  useEffect(() => { setLoading(true); fetchPayments() }, [filter])
+  useEffect(() => {
+    setLoading(true)
+    fetchPayments()
+    const refreshInterval = window.setInterval(fetchPayments, 30000)
+    return () => window.clearInterval(refreshInterval)
+  }, [filter])
 
   const filtered = search.trim()
     ? payments.filter(p => {
@@ -113,15 +138,33 @@ export default function AdminPaymentsPage() {
           { key: 'PENDING',  label: t('admin.payments.filterPending') },
           { key: 'VERIFIED', label: t('admin.payments.filterVerified') },
           { key: 'REJECTED', label: t('admin.payments.filterRejected') },
-        ].map(({ key, label }) => (
+        ].map(({ key, label }) => {
+          const count = statusCounts[key] || 0
+          const isActive = filter === key
+          return (
           <button key={key} onClick={() => setFilter(key)} style={{
             padding: '0.4rem 1rem', borderRadius: 20, border: '1px solid',
-            borderColor: filter === key ? 'var(--primary)' : 'var(--border)',
-            background: filter === key ? 'var(--primary)' : 'var(--bg-card)',
-            color: filter === key ? '#fff' : 'var(--text-secondary)',
-            fontSize: '0.85rem', cursor: 'pointer',
-          }}>{label}</button>
-        ))}
+             borderColor: isActive ? 'var(--primary)' : 'var(--border)',
+             background: isActive ? 'var(--primary)' : 'var(--bg-card)',
+             color: isActive ? '#fff' : 'var(--text-secondary)',
+             fontSize: '0.85rem', cursor: 'pointer', transition: 'all 0.15s',
+             display: 'inline-flex', alignItems: 'center', gap: '0.45rem',
+           }}>
+             {label}
+             {count > 0 && (
+               <span style={{
+                 minWidth: 18, height: 18, padding: '0 0.3rem', borderRadius: 99,
+                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                 background: isActive ? '#fff' : '#dc2626',
+                 color: isActive ? 'var(--primary)' : '#fff',
+                 fontSize: '0.67rem', fontWeight: 800, lineHeight: 1,
+               }}>
+                 {count > 99 ? '99+' : count}
+               </span>
+             )}
+           </button>
+          )
+        })}
       </div>
 
       {loading ? (
