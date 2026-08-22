@@ -199,7 +199,7 @@ public class AutoCheckService {
         String message = generateAiMessage("payment_confirmed", customerName,
                 Map.of("policyName", policyName, "amount", amount, "period", periodInfo.trim()),
                 String.format("%s အတွက်%s ပေးချေငွေ %s MMK ကို စနစ်မှ အလိုအလျောက် အတည်ပြုပြီးပါပြီ။ " +
-                        "ပါလစီဆိုင်ရာ အကျိုးခံစားခွင့်များ ဆက်လက်ရရှိနိုင်ပါပြီ။", policyName, periodInfo, amount));
+                        "ပေါ်လစီဆိုင်ရာ အကျိုးခံစားခွင့်များ ဆက်လက်ရရှိနိုင်ပါပြီ။", policyName, periodInfo, amount));
 
         sendNotification(p.getCustomer(),
                 "✅ ငွေပေးချေမှု အတည်ပြုပြီး",
@@ -650,7 +650,7 @@ public class AutoCheckService {
             case "OVERDUE"  -> String.format(
                     "%s အာမခံ%s ငွေပေးချေရမည့်ရက် (%s) ကျော်လွန်နေပါပြီ။ " +
                     "ပမာဏ: %s MMK — ချက်ချင်းပေးသွင်းပါ။ " +
-                    "ပါလစီ အကျိုးခံစားခွင့်များ ထိခိုက်နိုင်သည်။", policy, p, dueDate, amount);
+                    "ပေါ်လစီ အကျိုးခံစားခွင့်များ ထိခိုက်နိုင်သည်။", policy, p, dueDate, amount);
             case "TODAY"    -> String.format(
                     "%s အာမခံ%s ငွေပေးချေရမည့်ရက် ယနေ့ (%s) ဖြစ်ပါသည်။ " +
                     "ပမာဏ: %s MMK — ယနေ့ပင် ပေးသွင်းပါ။", policy, p, dueDate, amount);
@@ -681,9 +681,9 @@ public class AutoCheckService {
                 String policyNum  = app.getPolicyNumber() != null ? app.getPolicyNumber() : "#" + app.getId();
                 String policyName = app.getInsurancePackage() != null ? app.getInsurancePackage().getName() : "Policy";
                 sendNotification(app.getCustomer(),
-                        "📋 ပါလစီသက်တမ်းကုန်ဆုံးပြီ",
+                        "📋 ပေါ်လစီသက်တမ်းကုန်ဆုံးပြီ",
                         String.format("%s (%s) ၏ သက်တမ်းကာလ %s ရက်နေ့တွင် ပြည့်ဆုံးကာ ကုန်ဆုံးသွားပါပြီ။ " +
-                                "ပါလစီကို ဆက်လက်အသုံးပြု၍မရတော့ပါ။",
+                                "ပေါ်လစီကို ဆက်လက်အသုံးပြု၍မရတော့ပါ။",
                                 policyName, policyNum, maturityDate),
                         NotificationType.INFO);
                 expiredCount++;
