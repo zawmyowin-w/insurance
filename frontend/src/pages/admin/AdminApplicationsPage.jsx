@@ -393,7 +393,7 @@ export default function AdminApplicationsPage() {
                         <div>
                           <div style={{ marginBottom: '0.5rem', fontSize: '0.82rem', color: '#92400e', fontWeight: 600 }}>
                             <i className="bi bi-exclamation-triangle-fill me-1 text-warning"></i>
-                            Cancel this policy due to non-payment?
+                            Delete this Emergency due to non-payment?
                           </div>
                           <textarea
                             rows={2}
@@ -409,7 +409,7 @@ export default function AdminApplicationsPage() {
                               disabled={cancelling}
                               style={{ background: '#dc2626', color: '#fff', border: 'none', borderRadius: 6, padding: '0.4rem 0.8rem', fontSize: '0.82rem', fontWeight: 600, cursor: 'pointer' }}
                             >
-                              {cancelling ? <span className="spinner-border spinner-border-sm"></span> : '✗ Confirm Cancel'}
+                              {cancelling ? <span className="spinner-border spinner-border-sm"></span> : '✗ Confirm Delete'}
                             </button>
                             <button
                               className="btn-outline-custom"
@@ -430,7 +430,7 @@ export default function AdminApplicationsPage() {
                             cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5
                           }}
                         >
-                          <i className="bi bi-x-circle-fill"></i> Cancel Policy
+                          <i className="bi bi-x-circle-fill"></i> Delete Emergency
                         </button>
                       )
                     )}
