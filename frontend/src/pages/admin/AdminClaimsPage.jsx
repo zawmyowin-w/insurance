@@ -26,6 +26,7 @@ export default function AdminClaimsPage() {
   const [submitting, setSubmitting] = useState(false)
   const [viewItem, setViewItem] = useState(null)
   const [signatureData, setSignatureData] = useState(null)
+  const statusLabel = (key) => t(`admin.claims.status_${key}`)
   const fetchClaims = () => {
     const allUrl = '/admin/claims'
     const selectedUrl = filter !== 'ALL' ? `${allUrl}?status=${filter}` : allUrl
@@ -131,7 +132,7 @@ export default function AdminClaimsPage() {
                         </h6>
                         <small style={{ color: 'var(--text-muted)' }}>{claim.claimType}</small>
                       </div>
-                      <span className={`badge-status badge-${claim.status?.toLowerCase()}`}>{claim.status}</span>
+                      <span className={`badge-status badge-${claim.status?.toLowerCase()}`}>{statusLabel(claim.status) || claim.status}</span>
                     </div>
                     <div className="d-flex gap-3 flex-wrap mb-2">
                       {[

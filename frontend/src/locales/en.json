@@ -1250,7 +1250,10 @@
       "status_PENDING": "Pending",
       "status_VERIFIED": "Verified",
       "status_APPROVED": "Approved",
-      "status_REJECTED": "Rejected"
+      "status_REJECTED": "Rejected",
+      "status_REVISION_REQUESTED": "Revised",
+      "status_CANCELLED": "Canceled",
+      "status_CLAIMED": "Claimed"
     },
     "claims": {
       "title": "Claims Management",
@@ -1279,7 +1282,10 @@
       "status_VERIFIED": "Verified",
       "status_APPROVED": "Approved",
       "status_REJECTED": "Rejected",
-      "downloadVoucher": "Download payout voucher PDF"
+      "downloadVoucher": "Download payout voucher PDF",
+      "status_REVISION_REQUESTED": "Revised",
+      "status_CANCELLED": "Canceled",
+      "status_CLAIMED": "Claimed"
     },
     "payments": {
       "title": "Payments Management",

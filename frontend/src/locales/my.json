@@ -1250,7 +1250,10 @@
       "status_PENDING": "စောင့်ဆိုင်းဆဲ",
       "status_VERIFIED": "အတည်ပြုပြီး",
       "status_APPROVED": "ခွင့်ပြုပြီး",
-      "status_REJECTED": "ငြင်းပယ်ပြီး"
+      "status_REJECTED": "ငြင်းပယ်ပြီး",
+      "status_REVISION_REQUESTED": "ပြင်ဆင်ဆဲ",
+      "status_CANCELLED": "ပယ်ဖျက်ပြီး",
+      "status_CLAIMED": "တောင်းဆိုပြီး"
     },
     "claims": {
       "title": "တောင်းဆိုမှု စီမံရန်",
@@ -1278,7 +1281,9 @@
       "status_PENDING": "စောင့်ဆိုင်းဆဲ",
       "status_VERIFIED": "စစ်ဆေးပြီး",
       "status_APPROVED": "ခွင့်ပြုပြီး",
-      "status_REJECTED": "ငြင်းပယ်ပြီး",
+      "status_REVISION_REQUESTED": "ပြင်ဆင်ဆဲ",
+      "status_CANCELLED": "ပယ်ဖျက်ပြီး",
+      "status_CLAIMED": "တောင်းဆိုပြီး",
       "downloadVoucher": "ငွေထုတ်ပြေစာ PDF ဒေါင်းလုဒ်"
     },
     "payments": {
