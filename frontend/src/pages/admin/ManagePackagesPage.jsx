@@ -1099,12 +1099,12 @@ export default function ManagePackagesPage() {
                         onClick={() => setDetailPkg(pkg)} title={t('admin.packages.detailsBtn')}>
                         <i className="bi bi-eye me-1"></i>{t('admin.packages.detailsBtn')}
                       </button>
-                      {pkg.termsAndConditions && (
+                      /* {pkg.termsAndConditions && (
                         <button className="btn-outline-custom" style={{ padding: '0.3rem 0.7rem', fontSize: '0.78rem' }}
                           onClick={() => setTermsModal(pkg)} title={t('admin.packages.termsBtn')}>
                           <i className="bi bi-file-text me-1"></i>{t('admin.packages.termsBtn')}
                         </button>
-                      )}
+                      )} */
                       <button className="btn-primary-sm" onClick={() => handleEdit(pkg)} style={{ padding: '0.3rem 0.6rem' }}
                         title={t('admin.packages.editBtn')}><i className="bi bi-pencil"></i></button>
                       <button className="btn-outline-custom" style={{ padding: '0.3rem 0.6rem', fontSize: '0.78rem' }}
